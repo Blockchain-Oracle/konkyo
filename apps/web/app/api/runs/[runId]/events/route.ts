@@ -52,9 +52,9 @@ export async function GET(request: Request, ctx: { params: Promise<{ runId: stri
           if (closed) return
           for (const row of await eventsAfter(runId.data, last)) {
             last = row.id
-            controller.enqueue(
-              encoder.encode(`id: ${row.id}\ndata: ${JSON.stringify(row.data)}\n\n`),
-            )
+            // Each event carries when it happened, so the view can show how long the run took.
+            const event = { ...(row.data as object), at: row.at.toISOString() }
+            controller.enqueue(encoder.encode(`id: ${row.id}\ndata: ${JSON.stringify(event)}\n\n`))
             if ((row.data as { type?: string }).type === "end") return close()
           }
         })

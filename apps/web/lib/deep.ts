@@ -139,7 +139,7 @@ export async function steerDeep(ownerId: string, runId: string, text: string) {
 /** Events after the given id, oldest first (the SSE replay). */
 export async function eventsAfter(runId: string, after: number) {
   return db
-    .select({ id: runEvents.id, data: runEvents.data })
+    .select({ id: runEvents.id, data: runEvents.data, at: runEvents.createdAt })
     .from(runEvents)
     .where(and(eq(runEvents.runId, runId), gt(runEvents.id, after)))
     .orderBy(asc(runEvents.id))

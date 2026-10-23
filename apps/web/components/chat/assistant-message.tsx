@@ -49,8 +49,11 @@ export function AssistantMessage({
   onFindSources,
   onDeepSettled,
   onDeepRetry,
+  question,
 }: {
   message: KonkyoMessage
+  /** The question this answers (Save to note uses it as the heading). */
+  question?: string
   running: boolean
   /** Only on the latest answer, once it has finished. */
   onRegenerate?: () => void
@@ -72,6 +75,7 @@ export function AssistantMessage({
           <AssistantMessage
             message={{ ...answer, parts: answer.parts.filter((p) => p.type !== "data-deep") }}
             running={live}
+            question={question}
           />
         )}
       />
@@ -145,6 +149,7 @@ export function AssistantMessage({
             caveat={final.caveat}
             citations={final.citations}
             onRegenerate={onRegenerate}
+            question={question}
           />
         )}
       </div>

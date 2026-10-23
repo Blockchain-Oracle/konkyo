@@ -1,6 +1,6 @@
 "use client"
 
-import { type DeepEvent, type DeepState, emptyDeep, reduceDeep } from "@konkyo/agents/deep"
+import { type DeepState, emptyDeep, reduceDeep, type TimedDeepEvent } from "@konkyo/agents/deep"
 import { useEffect, useState } from "react"
 
 /**
@@ -16,7 +16,7 @@ export function useDeepRun(runId: string) {
     setState(current)
     const source = new EventSource(`/api/runs/${runId}/events`)
     source.onmessage = (message) => {
-      const event = JSON.parse(message.data) as DeepEvent
+      const event = JSON.parse(message.data) as TimedDeepEvent
       current = reduceDeep(current, event)
       if (event.type === "end") source.close()
       cancelAnimationFrame(frame)

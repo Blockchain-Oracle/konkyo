@@ -286,6 +286,9 @@ export function ChatView({
                     }
                   : undefined
               }
+              question={messages[i - 1]?.parts
+                .flatMap((p) => (p.type === "text" ? [p.text] : []))
+                .join(" ")}
               onDeepSettled={deepSettled}
               onDeepRetry={(question) => void startDeep(question)}
             />

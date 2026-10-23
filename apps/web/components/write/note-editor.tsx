@@ -25,14 +25,16 @@ import {
   SearchIcon,
 } from "lucide-react"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useRef, useState } from "react"
+import { toast } from "sonner"
 import { api } from "@/lib/fetcher"
 import type { NoteDetail } from "@/lib/notes"
 import { readBackup, useAutosave, useDraftCheck } from "@/lib/use-note"
 import { CheckPanel } from "./check-panel"
 import { Citation, type CitationAttrs } from "./citation-node"
 import { ClaimMarks, sentenceEnd } from "./claim-marks"
-import { ExportDialog } from "./export-dialog"
+import { ExportDialog, exportToGoogle, openDocToast } from "./export-dialog"
 import { RecordPanel, VersionsPanel } from "./history-panels"
 import { SourcesPanel } from "./sources-panel"
 
@@ -140,6 +142,17 @@ export function NoteEditor({ note }: { note: NoteDetail }) {
     },
   })
   editorRef.current = editor
+
+  // Back from Google with Drive access granted: finish the Google Docs export.
+  const params = useSearchParams()
+  // biome-ignore lint/correctness/useExhaustiveDependencies: once, on return from Google
+  useEffect(() => {
+    if (params.get("export") !== "google") return
+    window.history.replaceState(null, "", `/write/${note.id}`)
+    exportToGoogle(note.id, params.get("style") ?? "apa")
+      .then((url) => url && openDocToast(url))
+      .catch((error: Error) => toast.error(error.message))
+  }, [])
 
   // An unsaved copy from this browser goes to the server first thing.
   // biome-ignore lint/correctness/useExhaustiveDependencies: once, on open

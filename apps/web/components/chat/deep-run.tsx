@@ -31,17 +31,16 @@ const clock = (ms: number) => {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`
 }
 
-/** Seconds since the run began, ticking until it ends. */
-function useElapsed(since: string | undefined, ended: boolean) {
+/** How long the run has taken: ticking while it runs, fixed at its last event once it ends. */
+function useElapsed(since: string | undefined, endedAt: string | undefined) {
   const [now, setNow] = useState(() => Date.now())
-  const endedAt = useRef<number | null>(null)
-  if (ended && endedAt.current == null) endedAt.current = Date.now()
   useEffect(() => {
-    if (ended) return
+    if (endedAt) return
     const timer = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(timer)
-  }, [ended])
-  return since ? (endedAt.current ?? now) - new Date(since).getTime() : 0
+  }, [endedAt])
+  if (!since) return 0
+  return (endedAt ? new Date(endedAt).getTime() : now) - new Date(since).getTime()
 }
 
 /**
@@ -300,7 +299,7 @@ export function DeepRun({
   const question = deep?.type === "data-deep" ? deep.data.question : ""
   const state = useDeepRun(runId)
   const ended = Boolean(state.end)
-  const elapsed = useElapsed(message.metadata?.createdAt, ended)
+  const elapsed = useElapsed(message.metadata?.createdAt ?? state.startedAt, state.endedAt)
   const [open, setOpen] = useState(false)
   const [steer, setSteer] = useState("")
   const settled = useRef(false)

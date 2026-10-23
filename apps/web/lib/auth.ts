@@ -17,9 +17,11 @@ export const auth = betterAuth({
     google: {
       clientId: env.GOOGLE_CLIENT_ID,
       clientSecret: env.GOOGLE_CLIENT_SECRET,
-      // Sign-in asks only for name, email and photo; Drive access is requested later,
-      // and only when someone exports to Google Docs.
+      // Sign-in asks only for name, email and photo; Drive access (drive.file: only files
+      // Konkyo creates) is requested later, and only when someone exports to Google Docs.
+      // Offline access keeps that export working after the first hour.
       prompt: "select_account",
+      accessType: "offline",
     },
   },
   session: {

@@ -15,7 +15,39 @@ import { useQuery } from "@tanstack/react-query"
 import { CheckIcon, FileTextIcon, SearchIcon } from "lucide-react"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
+import { authClient } from "@/lib/auth-client"
 import { api } from "@/lib/fetcher"
+
+const DRIVE_FILE_SCOPE = "https://www.googleapis.com/auth/drive.file"
+
+/**
+ * Sends a note to Google Docs. The first time, Google asks the person to let Konkyo create
+ * files in their Drive (drive.file: only the files Konkyo makes), then brings them back to the
+ * note, where the export finishes.
+ */
+export async function exportToGoogle(noteId: string, style: string) {
+  const res = await api<{ url?: string; needsScope?: boolean }>(
+    `/api/notes/${noteId}/export/google`,
+    { method: "POST", json: { style } },
+  )
+  if (res.needsScope) {
+    await authClient.linkSocial({
+      provider: "google",
+      scopes: [DRIVE_FILE_SCOPE],
+      callbackURL: `/write/${noteId}?export=google&style=${encodeURIComponent(style)}`,
+    })
+    return null
+  }
+  return res.url ?? null
+}
+
+export function openDocToast(url: string) {
+  toast.success("In Google Docs", {
+    description: "With your citations and reference list.",
+    action: { label: "Open", onClick: () => window.open(url, "_blank", "noopener") },
+    duration: 15_000,
+  })
+}
 
 type Style = { id: string; name: string }
 
@@ -41,7 +73,9 @@ export function ExportDialog({
   const [query, setQuery] = useState("")
   const [debounced, setDebounced] = useState("")
   const [makeDefault, setMakeDefault] = useState(false)
-  const [busy, setBusy] = useState(false)
+  const [busy, setBusy] = useState<"word" | "google" | null>(null)
+  const { data: session } = authClient.useSession()
+  const guest = Boolean(session?.user.isAnonymous)
   useEffect(() => {
     const t = setTimeout(() => setDebounced(query), 250)
     return () => clearTimeout(t)
@@ -54,8 +88,24 @@ export function ExportDialog({
   })
   const chosen = style ?? settings?.citationStyle ?? "apa"
 
+  const google = async () => {
+    setBusy("google")
+    try {
+      if (makeDefault)
+        await api("/api/settings", { method: "PATCH", json: { citationStyle: chosen } })
+      const url = await exportToGoogle(noteId, chosen)
+      if (url) {
+        openDocToast(url)
+        onClose()
+      }
+    } catch (error) {
+      toast.error((error as Error).message)
+      setBusy(null)
+    }
+  }
+
   const download = async () => {
-    setBusy(true)
+    setBusy("word")
     try {
       if (makeDefault)
         await api("/api/settings", { method: "PATCH", json: { citationStyle: chosen } })
@@ -74,7 +124,7 @@ export function ExportDialog({
     } catch (error) {
       toast.error((error as Error).message)
     } finally {
-      setBusy(false)
+      setBusy(null)
     }
   }
 
@@ -83,7 +133,7 @@ export function ExportDialog({
       <DialogContent className="sm:max-w-md">
         <DialogTitle className="text-subhead font-normal">Export</DialogTitle>
         <DialogDescription>
-          A Word document with your citations and reference list in the style you choose.
+          Word or Google Docs, with your citations and reference list in the style you choose.
         </DialogDescription>
         <div className="relative mt-1">
           <SearchIcon
@@ -144,9 +194,19 @@ export function ExportDialog({
           <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={download} disabled={busy}>
+          <Button
+            variant="secondary"
+            onClick={google}
+            disabled={busy != null || guest}
+            title={
+              guest ? "Continue with Google (account menu) to export to Google Docs" : undefined
+            }
+          >
+            {busy === "google" ? "Sending…" : "Google Docs"}
+          </Button>
+          <Button onClick={download} disabled={busy != null}>
             <FileTextIcon strokeWidth={1.5} />
-            {busy ? "Exporting…" : "Export to Word"}
+            {busy === "word" ? "Exporting…" : "Export to Word"}
           </Button>
         </DialogFooter>
       </DialogContent>

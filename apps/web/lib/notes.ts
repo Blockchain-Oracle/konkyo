@@ -241,3 +241,27 @@ export async function listNotes(ownerId: string) {
     excerpt: r.text.replace(/\s+/g, " ").slice(0, 160),
   }))
 }
+
+/**
+ * "Save to note" (plan F17): an answer, with its citations, added to the end of a note. Its
+ * text is re-read for chat like any edit.
+ */
+export async function appendToNote(
+  ownerId: string,
+  fileId: string,
+  input: { content: unknown[]; text: string },
+) {
+  await ownNote(ownerId, fileId)
+  const note = await db.query.notes.findFirst({ where: eq(notes.fileId, fileId) })
+  if (!note) throw new LibraryError("No such note", 404)
+  const doc = note.content as NoteDoc
+  // An empty first paragraph (a new note) is replaced rather than kept above the answer.
+  const existing = (doc.content ?? []).filter(
+    (n, i, all) => !(all.length === 1 && (n as { content?: unknown[] }).content == null),
+  )
+  const text = [note.text.trim(), input.text.trim()].filter(Boolean).join("\n\n")
+  await saveNote(ownerId, fileId, {
+    content: { type: "doc", content: [...existing, ...input.content] },
+    text,
+  })
+}

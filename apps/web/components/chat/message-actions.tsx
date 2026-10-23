@@ -6,10 +6,20 @@ import { Popover, PopoverContent, PopoverTrigger } from "@konkyo/ui/components/p
 import { Textarea } from "@konkyo/ui/components/textarea"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@konkyo/ui/components/tooltip"
 import { cn } from "@konkyo/ui/lib/utils"
-import { CheckIcon, CopyIcon, RotateCcwIcon, ThumbsDownIcon, ThumbsUpIcon } from "lucide-react"
+import { useQuery } from "@tanstack/react-query"
+import {
+  CheckIcon,
+  CopyIcon,
+  NotebookPenIcon,
+  PlusIcon,
+  RotateCcwIcon,
+  ThumbsDownIcon,
+  ThumbsUpIcon,
+} from "lucide-react"
 import { useRouter } from "next/navigation"
 import { type ReactElement, useState } from "react"
 import { toast } from "sonner"
+import { answerToNote } from "@/lib/answer-to-note"
 import { api } from "@/lib/fetcher"
 import { whereIs } from "./citation-chip"
 
@@ -78,6 +88,7 @@ export function MessageActions({
   caveat,
   citations,
   onRegenerate,
+  question = "",
 }: {
   message: KonkyoMessage
   body: string
@@ -85,6 +96,8 @@ export function MessageActions({
   citations: Citation[]
   /** Only on the latest answer. */
   onRegenerate?: () => void
+  /** The question it answers: the saved note's heading. */
+  question?: string
 }) {
   const router = useRouter()
   const [rating, setRating] = useState<Rating>(message.metadata?.feedback ?? null)
@@ -108,6 +121,44 @@ export function MessageActions({
         })
     } catch (error) {
       setRating(previous)
+      toast.error((error as Error).message)
+    }
+  }
+
+  const [saving, setSaving] = useState(false)
+  const { data: notes } = useQuery({
+    queryKey: ["notes"],
+    queryFn: () =>
+      api<{ notes: { id: string; title: string }[] }>("/api/notes").then((r) => r.notes),
+    enabled: saving,
+  })
+  // Save to note (F17): a new note, or the end of one you have.
+  const saveTo = async (noteId: string | null) => {
+    setSaving(false)
+    const { nodes, text } = answerToNote(question, body, caveat, citations)
+    try {
+      const id = noteId
+        ? (await api(`/api/notes/${noteId}/append`, {
+            method: "POST",
+            json: { content: nodes, text },
+          }),
+          noteId)
+        : (
+            await api<{ id: string }>("/api/notes", {
+              method: "POST",
+              json: {
+                title: question.slice(0, 120) || "From a chat",
+                content: { type: "doc", content: nodes },
+                text,
+              },
+            })
+          ).id
+      const title = noteId ? notes?.find((n) => n.id === noteId)?.title : null
+      toast.success(title ? `Added to “${title}”` : "Saved to a new note", {
+        description: "With its citations.",
+        action: { label: "Open", onClick: () => router.push(`/write/${id}` as never) },
+      })
+    } catch (error) {
       toast.error((error as Error).message)
     }
   }
@@ -200,6 +251,32 @@ export function MessageActions({
               </Button>
             </div>
           </form>
+        </PopoverContent>
+      </Popover>
+      <Popover open={saving} onOpenChange={setSaving}>
+        <Action label="Save to note" render={(button) => <PopoverTrigger render={button} />}>
+          <NotebookPenIcon />
+        </Action>
+        <PopoverContent className="w-64 p-1">
+          <button
+            type="button"
+            onClick={() => void saveTo(null)}
+            className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-snippet text-bone-white hover:bg-white/6"
+          >
+            <PlusIcon className="size-3.5 text-ash-gray" strokeWidth={1.75} />
+            New note
+          </button>
+          {notes?.slice(0, 5).map((n) => (
+            <button
+              key={n.id}
+              type="button"
+              onClick={() => void saveTo(n.id)}
+              className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-snippet text-silver-mist hover:bg-white/6"
+            >
+              <NotebookPenIcon className="size-3.5 shrink-0 text-ash-gray" strokeWidth={1.5} />
+              <span className="truncate">{n.title}</span>
+            </button>
+          ))}
         </PopoverContent>
       </Popover>
       {onRegenerate && (

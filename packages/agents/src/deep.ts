@@ -53,6 +53,9 @@ export type DeepEvent =
 
 export type DeepFile = Extract<DeepEvent, { type: "file" }>
 
+/** As the stream delivers it: every event with when it was written. */
+export type TimedDeepEvent = DeepEvent & { at?: string }
+
 export type DeepState = {
   stages: StepData[]
   found: FoundSummary[]
@@ -63,6 +66,9 @@ export type DeepState = {
   answer: AnswerEvent[]
   steers: string[]
   end?: Extract<DeepEvent, { type: "end" }>
+  /** When the first and the last event were written (the run's duration, once it has ended). */
+  startedAt?: string
+  endedAt?: string
 }
 
 export const emptyDeep = (): DeepState => ({
@@ -74,7 +80,14 @@ export const emptyDeep = (): DeepState => ({
 })
 
 /** One event into the state (the run view replays every event in order, so this is pure). */
-export function reduceDeep(state: DeepState, event: DeepEvent): DeepState {
+export function reduceDeep(input: DeepState, event: TimedDeepEvent): DeepState {
+  const state: DeepState = event.at
+    ? {
+        ...input,
+        startedAt: input.startedAt ?? event.at,
+        ...(event.type === "end" ? { endedAt: event.at } : {}),
+      }
+    : input
   switch (event.type) {
     case "stage": {
       const step: StepData = {
