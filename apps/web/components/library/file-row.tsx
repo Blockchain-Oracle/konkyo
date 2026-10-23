@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@konkyo/ui/components/button"
+import { Checkbox } from "@konkyo/ui/components/checkbox"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@konkyo/ui/components/dropdown-menu"
 import { Progress } from "@konkyo/ui/components/progress"
+import { cn } from "@konkyo/ui/lib/utils"
 import {
   DownloadIcon,
   EllipsisIcon,
@@ -136,11 +138,18 @@ export function FileRow({
   upload,
   onRetryUpload,
   onPickReplacement,
+  selected = false,
+  selecting = false,
+  onSelect,
 }: {
   file: LibraryFile
   upload?: UploadState
   onRetryUpload: () => void
   onPickReplacement: () => void
+  selected?: boolean
+  /** Something is selected: every row shows its checkbox. */
+  selecting?: boolean
+  onSelect?: (event: { shiftKey: boolean }) => void
 }) {
   const { remove } = useFileActions()
   const uploading = file.stage === "Uploading" && upload != null && !upload.failed
@@ -156,8 +165,30 @@ export function FileRow({
         event.dataTransfer.setData(FILE_DRAG_TYPE, JSON.stringify([file.id]))
         event.dataTransfer.effectAllowed = "move"
       }}
-      className="group relative flex min-h-16 items-center gap-3 border-b border-border px-2 py-3 transition-colors duration-(--duration-press) hover:bg-panel"
+      className={cn(
+        // Off-screen rows skip layout and paint, so a library of thousands scrolls smoothly.
+        "group relative flex min-h-16 items-center gap-3 border-b border-border px-2 py-3 transition-colors duration-(--duration-press) [contain-intrinsic-size:auto_4rem] [content-visibility:auto] hover:bg-panel",
+        selected && "bg-panel",
+      )}
     >
+      {onSelect && (
+        // Shows on hover or focus, and on every row once something is selected.
+        <span
+          className={cn(
+            "relative z-10 -mr-1 flex w-4 shrink-0 items-center opacity-0 transition-opacity duration-(--duration-press) group-focus-within:opacity-100 group-hover:opacity-100 max-md:hidden",
+            (selecting || selected) && "opacity-100 max-md:flex",
+          )}
+        >
+          <Checkbox
+            checked={selected}
+            aria-label={`Select ${file.title}`}
+            onClick={(event) => {
+              event.preventDefault()
+              onSelect({ shiftKey: event.shiftKey })
+            }}
+          />
+        </span>
+      )}
       <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-panel group-hover:bg-raised">
         <KindIcon kind={file.kind} />
       </span>

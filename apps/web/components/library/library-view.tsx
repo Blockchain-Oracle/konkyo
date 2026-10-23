@@ -14,6 +14,7 @@ import { cn } from "@konkyo/ui/lib/utils"
 import {
   ChevronDownIcon,
   ChevronRightIcon,
+  DownloadIcon,
   EllipsisIcon,
   FolderIcon,
   FolderPlusIcon,
@@ -25,12 +26,13 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { type DragEvent, useMemo, useState } from "react"
+import { type DragEvent, useEffect, useMemo, useRef, useState } from "react"
 import { EmptyState } from "@/components/empty-state"
 import { openImport, openNewFolder, openRenameFolder } from "@/components/shell/app-dialogs"
 import { useFolderActions, useFolderPath, useFolderTree } from "@/lib/use-folders"
 import { type LibraryFile, useFiles } from "@/lib/use-library"
 import { filesFromDrop } from "@/lib/use-uploader"
+import { BulkBar } from "./bulk-bar"
 import { FileRow } from "./file-row"
 import { useUploads } from "./uploads-provider"
 
@@ -57,6 +59,9 @@ export function LibraryView({ folderId }: { folderId?: string }) {
   const { folders } = useFolderTree()
   const [filter, setFilter] = useState<Filter>("all")
   const [dragging, setDragging] = useState(false)
+  const [selected, setSelected] = useState<Set<string>>(() => new Set())
+  const [selectMode, setSelectMode] = useState(false) // phones: no hover to reveal checkboxes
+  const anchor = useRef<string | null>(null)
 
   const subfolders = useMemo(
     () => (folderId ? (folders ?? []).filter((f) => f.parentId === folderId) : []),
@@ -73,6 +78,45 @@ export function LibraryView({ folderId }: { folderId?: string }) {
     () => files?.filter(FILTERS.find((f) => f.value === filter)?.match ?? (() => true)) ?? [],
     [files, filter],
   )
+
+  // A new folder or filter starts a new selection; Esc clears it.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset when the view changes
+  useEffect(() => {
+    setSelected(new Set())
+    setSelectMode(false)
+  }, [folderId, filter])
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && selected.size) {
+        setSelected(new Set())
+        setSelectMode(false)
+      }
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [selected])
+
+  /** Click toggles one row; Shift+click selects every row between it and the last one clicked. */
+  const toggle = (id: string, shiftKey: boolean) => {
+    setSelected((prev) => {
+      const next = new Set(prev)
+      const ids = visible.map((f) => f.id)
+      const from = anchor.current ? ids.indexOf(anchor.current) : -1
+      const to = ids.indexOf(id)
+      if (shiftKey && from !== -1 && to !== -1) {
+        const [a, b] = from < to ? [from, to] : [to, from]
+        for (const rid of ids.slice(a, b + 1)) next.add(rid)
+      } else if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+    anchor.current = id
+  }
+  const clearSelection = () => {
+    setSelected(new Set())
+    setSelectMode(false)
+  }
+  const selecting = selected.size > 0 || selectMode
 
   // Files from the desktop, not rows dragged within the app.
   const onDragOver = (event: DragEvent) => {
@@ -106,6 +150,16 @@ export function LibraryView({ folderId }: { folderId?: string }) {
           <h1 className="hidden text-heading-2xs font-normal md:block">Library</h1>
         )}
         <div className="ml-auto flex items-center gap-2">
+          {(files?.length ?? 0) > 0 && (
+            <Button
+              variant="ghost"
+              className="md:hidden"
+              aria-pressed={selectMode}
+              onClick={() => (selectMode ? clearSelection() : setSelectMode(true))}
+            >
+              {selectMode ? "Done" : "Select"}
+            </Button>
+          )}
           <Button variant="ghost" onClick={() => openImport(folderId)}>
             <LinkIcon strokeWidth={1.5} />
             <span className="max-sm:sr-only">Import by URL</span>
@@ -218,6 +272,9 @@ export function LibraryView({ folderId }: { folderId?: string }) {
                 upload={uploads[file.id]}
                 onRetryUpload={() => retryUpload(file.id)}
                 onPickReplacement={() => pickFiles(folderId)}
+                selected={selected.has(file.id)}
+                selecting={selecting}
+                onSelect={({ shiftKey }) => toggle(file.id, shiftKey)}
               />
             ))}
           </ul>
@@ -226,6 +283,8 @@ export function LibraryView({ folderId }: { folderId?: string }) {
           )}
         </>
       )}
+
+      {selected.size > 0 && <BulkBar ids={[...selected]} onClear={clearSelection} />}
 
       {/* Drop anywhere: the whole view becomes the target. */}
       <div
@@ -296,6 +355,16 @@ function FolderHeading({ folderId }: { folderId: string }) {
             <DropdownMenuItem onClick={() => openNewFolder(folder.id)}>
               <FolderPlusIcon strokeWidth={1.5} />
               New folder inside
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              render={
+                <a href={`/api/files/archive?folder=${folder.id}`} download>
+                  Download as .zip
+                </a>
+              }
+            >
+              <DownloadIcon strokeWidth={1.5} />
+              Download as .zip
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem

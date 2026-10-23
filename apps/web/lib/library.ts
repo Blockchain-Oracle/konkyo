@@ -317,6 +317,15 @@ export async function getFileDetail(ownerId: string, fileId: string) {
 
 export type FileDetail = Awaited<ReturnType<typeof getFileDetail>>
 
+/**
+ * A download's file name: the title, with the stored file's extension when the title lost it
+ * (a found title replaces "arxiv-1711.05391.pdf" with the paper's name).
+ */
+export function downloadName(title: string, key: string) {
+  const ext = key.match(/\.[a-z0-9]{2,5}$/i)?.[0] ?? ""
+  return ext && !title.toLowerCase().endsWith(ext.toLowerCase()) ? `${title}${ext}` : title
+}
+
 /** The storage key behind a file's content route, only for its owner. */
 export async function fileContentKey(
   ownerId: string,
@@ -326,7 +335,10 @@ export async function fileContentKey(
   const file = await ownFile(ownerId, fileId)
   const key = as === "original" ? file.originalKey : file.renditionKey
   if (!key) throw new LibraryError("This file has no stored copy", 404)
-  const name = as === "original" ? file.title : `${file.title.replace(/\.[a-z0-9]+$/i, "")}.pdf`
+  const name =
+    as === "original"
+      ? downloadName(file.title, key)
+      : `${file.title.replace(/\.[a-z0-9]+$/i, "")}.pdf`
   return { key, name, mime: as === "original" ? file.mime : "application/pdf" }
 }
 

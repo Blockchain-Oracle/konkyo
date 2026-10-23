@@ -56,6 +56,8 @@ class ProblemError extends Error {
 
 type DocResult = {
   passages: NewPassage[]
+  /** A link that turned out to be a PDF is a PDF in the library, not a "web page". */
+  kind?: FileRow["kind"]
   rendition?: Uint8Array
   pages?: FileRow["pages"]
   fromScan?: boolean
@@ -220,7 +222,8 @@ async function readSource(file: FileRow): Promise<DocResult> {
         await stage(file.id, "Finding an open copy", 0.1)
         for (const url of await openAccessPdfs(doi)) {
           const copy = await fetchSource(url).catch(() => null)
-          if (copy?.contentType.includes("pdf")) return fromPdf(file, copy.bytes, PDF_HYPHENS.pdf)
+          if (copy?.contentType.includes("pdf"))
+            return { ...(await fromPdf(file, copy.bytes, PDF_HYPHENS.pdf)), kind: "pdf" }
         }
         throw new ProblemError(
           "unreachable",
@@ -229,7 +232,8 @@ async function readSource(file: FileRow): Promise<DocResult> {
       }
       await stage(file.id, "Fetching the page", 0.15)
       const source = await fetchSource(file.sourceUrl)
-      if (source.contentType.includes("pdf")) return fromPdf(file, source.bytes, PDF_HYPHENS.pdf)
+      if (source.contentType.includes("pdf"))
+        return { ...(await fromPdf(file, source.bytes, PDF_HYPHENS.pdf)), kind: "pdf" }
       if (!source.contentType.includes("html")) {
         throw new ProblemError(
           "unsupported",
@@ -433,6 +437,7 @@ export async function ingestFile(fileId: string, { lastAttempt = true } = {}): P
       stage: null,
       progress: 1,
       title: details.title ?? result.title ?? file.title,
+      kind: result.kind ?? file.kind,
       meta: details.meta,
       renditionKey: result.rendition ? objectKey("renditions", `${fileId}.pdf`) : null,
       pages: result.pages ?? null,

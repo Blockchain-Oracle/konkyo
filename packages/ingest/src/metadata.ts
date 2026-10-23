@@ -18,7 +18,9 @@ type Work = {
   publication_date: string | null
   type: string | null
   authorships?: { author?: { display_name?: string } }[]
-  primary_location?: { source?: { display_name?: string; host_organization_name?: string } | null }
+  primary_location?: {
+    source?: { display_name?: string; host_organization_name?: string; type?: string } | null
+  }
   biblio?: {
     volume?: string | null
     issue?: string | null
@@ -90,12 +92,20 @@ const CSL_TYPE: Record<string, string> = {
   report: "report",
 }
 
+/** OpenAlex calls journal and conference papers both "article"; the venue's type tells them apart. */
+function cslType(work: Work) {
+  const venue = work.primary_location?.source?.type
+  if (work.type === "article" && venue === "conference") return "paper-conference"
+  if (work.type === "article" && venue === "repository") return "article"
+  return CSL_TYPE[work.type ?? ""] ?? "article"
+}
+
 function toCsl(work: Work): CslItem {
   const date = work.publication_date?.split("-").map(Number)
   const { first_page, last_page, volume, issue } = work.biblio ?? {}
   const source = work.primary_location?.source
   return {
-    type: CSL_TYPE[work.type ?? ""] ?? "article",
+    type: cslType(work),
     title: work.display_name ?? undefined,
     author: work.authorships
       ?.map((a) => a.author?.display_name)
@@ -120,6 +130,39 @@ function toCsl(work: Work): CslItem {
     abstract: abstractText(work.abstract_inverted_index),
   }
 }
+
+const xml = (entry: string, tag: string) =>
+  entry
+    .match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`))?.[1]
+    ?.replace(/\s+/g, " ")
+    .trim()
+
+/** The arXiv listing itself: authoritative for an arXiv paper's title, authors and date. */
+async function arxivRecord(id: string): Promise<CslItem | null> {
+  const res = await fetch(`https://export.arxiv.org/api/query?id_list=${encodeURIComponent(id)}`, {
+    headers: { "user-agent": INGEST.userAgent },
+    signal: AbortSignal.timeout(INGEST.metadataTimeoutMs),
+  })
+  if (!res.ok) return null
+  const entry = (await res.text()).match(/<entry>([\s\S]*?)<\/entry>/)?.[1]
+  const title = entry && xml(entry, "title")
+  if (!entry || !title) return null
+  const published = xml(entry, "published")?.slice(0, 10).split("-").map(Number)
+  return {
+    type: "article",
+    title,
+    author: [...entry.matchAll(/<author>\s*<name>([^<]+)<\/name>/g)].map((m) =>
+      splitName(m[1] ?? ""),
+    ),
+    issued: published?.length ? { "date-parts": [published] } : undefined,
+    "container-title": "arXiv",
+    DOI: `10.48550/arXiv.${id}`,
+    URL: `https://arxiv.org/abs/${id}`,
+    abstract: xml(entry, "summary"),
+  }
+}
+
+const yearOfCsl = (csl?: CslItem) => csl?.issued?.["date-parts"]?.[0]?.[0]
 
 /**
  * Finds the published record of a document in OpenAlex: by the DOI printed in it or in its link,
@@ -146,17 +189,34 @@ export async function findMetadata(input: {
       : null
 
   const doi = (input.sourceUrl?.match(DOI_RE) ?? head.match(DOI_RE))?.[1]?.replace(/[.,;)]+$/, "")
-  if (doi) {
+  // arXiv's own DOIs (10.48550/arXiv.<id>) take the arXiv path below, which checks for reposts.
+  const arxivDoi = doi?.match(/^10\.48550\/arxiv\.(\d{4}\.\d{4,5})/i)?.[1]
+  if (doi && !arxivDoi) {
     const hit = found(await byDoi(doi), "doi")
     if (hit) return hit
   }
 
-  const arxiv = (input.fileName.match(ARXIV_RE) ??
-    input.sourceUrl?.match(ARXIV_RE) ??
-    head.match(ARXIV_RE))?.[1]
+  const arxiv =
+    arxivDoi ??
+    (input.fileName.match(ARXIV_RE) ??
+      input.sourceUrl?.match(ARXIV_RE) ??
+      head.match(ARXIV_RE))?.[1]
   if (arxiv) {
-    const hit = found(await byDoi(`10.48550/arXiv.${arxiv}`), "arxiv")
-    if (hit) return hit
+    // OpenAlex may hold the peer-reviewed version (keep it), or a later repost merged into the
+    // arXiv record (wrong year and DOI). Its record is used only when it is the same paper from
+    // about the same time; otherwise the arXiv listing is the record.
+    const [listing, work] = await Promise.all([
+      arxivRecord(arxiv).catch(() => null),
+      byDoi(`10.48550/arXiv.${arxiv}`).catch(() => null),
+    ])
+    const hit = found(work, "arxiv")
+    const sameTime =
+      listing && hit?.csl
+        ? Math.abs((yearOfCsl(hit.csl) ?? 0) - (yearOfCsl(listing) ?? 0)) <= 3 &&
+          titleSimilarity(listing.title ?? "", hit.csl.title ?? "") >= 0.85
+        : Boolean(hit)
+    if (hit && sameTime) return hit
+    if (listing) return { csl: listing, foundBy: "arxiv" }
   }
 
   const title = input.title?.trim()
