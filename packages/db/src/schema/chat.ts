@@ -110,6 +110,8 @@ export const userSettings = pgTable("user_settings", {
     .references(() => user.id, { onDelete: "cascade" }),
   /** Deep search imports what it finds without asking first (F18). */
   autoImportSources: boolean().default(false).notNull(),
+  /** The citation style exports start with (F26); each export can pick another. CSL id. */
+  citationStyle: text().default("apa").notNull(),
   updatedAt: timestamp({ withTimezone: true })
     .defaultNow()
     .notNull()

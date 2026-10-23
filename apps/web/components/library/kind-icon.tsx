@@ -7,6 +7,7 @@ import {
   FileTypeIcon,
   FilmIcon,
   GlobeIcon,
+  NotebookPenIcon,
   PresentationIcon,
 } from "lucide-react"
 
@@ -19,6 +20,7 @@ const KIND_ICON = {
   web: GlobeIcon,
   audio: AudioLinesIcon,
   video: FilmIcon,
+  note: NotebookPenIcon,
 } as const
 
 export const KIND_LABEL: Record<FileKind, string> = {
@@ -31,6 +33,7 @@ export const KIND_LABEL: Record<FileKind, string> = {
   youtube: "YouTube",
   audio: "Recording",
   video: "Video",
+  note: "Note",
 }
 
 export function KindIcon({ kind, className }: { kind: FileKind; className?: string }) {

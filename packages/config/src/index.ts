@@ -91,7 +91,7 @@ export const FILE_TYPES = {
   ".webm": "video",
 } as const
 
-export type FileKind = (typeof FILE_TYPES)[keyof typeof FILE_TYPES] | "web" | "youtube"
+export type FileKind = (typeof FILE_TYPES)[keyof typeof FILE_TYPES] | "web" | "youtube" | "note"
 
 export const kindForName = (name: string): FileKind | undefined => {
   const ext = name.slice(name.lastIndexOf(".")).toLowerCase()
@@ -158,6 +158,15 @@ export const LIMITS = {
 export const DEEP = {
   importWaitMs: 8 * 60_000,
   pollMs: 2_500,
+} as const
+
+/** Notes (plan F21, F24): how often the editor saves, and how often a version is kept. */
+export const NOTES = {
+  autosaveMs: 1_200,
+  /** An autosave starts a new version once the last one is this old. */
+  versionEveryMs: 10 * 60_000,
+  /** The note is re-read for chat (passages, embeddings, Zetaris) this long after typing stops. */
+  indexAfterMs: 20_000,
 } as const
 
 /** Trash keeps files, folders, chats and notes this long before deleting them for good (F04). */

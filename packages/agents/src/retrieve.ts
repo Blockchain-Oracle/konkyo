@@ -109,9 +109,12 @@ export async function hybridSearch(
   queries: string[],
   scope: Scope = {},
   limit = 16,
+  /** Check my draft and search citation look only at sources: a note never supports a note. */
+  options: { excludeNotes?: boolean } = {},
 ): Promise<{ candidates: Candidate[]; scopedFiles: number | null }> {
   const files = await scopeFileIds(ownerId, scope)
   if (files && !files.length) return { candidates: [], scopedFiles: 0 }
+  const notNotes = options.excludeNotes ? sql`and f.kind <> 'note'` : sql``
   const inScope = files
     ? sql`and p.file_id in (${sql.join(
         files.map((id) => sql`${id}::uuid`),
@@ -131,7 +134,7 @@ export async function hybridSearch(
         tx.execute<{ id: string; sim: number }>(sql`
           select p.id, 1 - (p.embedding <=> ${vector}::vector) as sim
           from passages p join files f on f.id = p.file_id
-          where p.owner_id = ${ownerId} and f.deleted_at is null and f.status = 'ready'
+          where p.owner_id = ${ownerId} and f.deleted_at is null and f.status = 'ready' ${notNotes}
             and p.embedding is not null ${inScope}
           order by p.embedding <=> ${vector}::vector
           limit ${PER_LIST}
@@ -140,7 +143,7 @@ export async function hybridSearch(
           select p.id, 0 as sim
           from passages p join files f on f.id = p.file_id,
             websearch_to_tsquery('english', ${query}) q
-          where p.owner_id = ${ownerId} and f.deleted_at is null and f.status = 'ready'
+          where p.owner_id = ${ownerId} and f.deleted_at is null and f.status = 'ready' ${notNotes}
             and p.tsv @@ q ${inScope}
           order by ts_rank_cd(p.tsv, q) desc
           limit ${PER_LIST}

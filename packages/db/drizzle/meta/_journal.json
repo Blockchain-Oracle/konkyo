@@ -57,6 +57,20 @@
       "when": 1792787700000,
       "tag": "0007_run_events_order",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792793400000,
+      "tag": "0008_notes",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792799100000,
+      "tag": "0009_citation_style",
+      "breakpoints": true
     }
   ]
 }

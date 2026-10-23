@@ -40,6 +40,7 @@ import {
   publishPdfText,
 } from "@konkyo/zetaris"
 import { and, eq, inArray, isNull, ne } from "drizzle-orm"
+import { indexNote } from "./notes"
 
 const { files, passages, embeddingCache } = schema
 
@@ -221,6 +222,8 @@ function fromWords(file: FileRow, words: Word[]): NewPassage[] {
 
 async function readSource(file: FileRow): Promise<DocResult> {
   switch (file.kind) {
+    case "note":
+      throw new Error("Notes are read by indexNote")
     case "pdf": {
       if (!file.originalKey) throw new Error("PDF has no stored original")
       return fromPdf(file, await getBytes(file.originalKey), PDF_HYPHENS.pdf)
@@ -311,7 +314,7 @@ async function readSource(file: FileRow): Promise<DocResult> {
 // ------------------------------------------------------------------ embeddings
 
 /** Embeds passages, reusing cached vectors for text already embedded anywhere. */
-async function embed(rows: NewPassage[]): Promise<number> {
+export async function embed(rows: NewPassage[]): Promise<number> {
   const hashes = rows.map((r) => embeddingHash(r.text))
   const cached = new Map<string, number[]>()
   for (let i = 0; i < hashes.length; i += 500) {
@@ -408,6 +411,8 @@ async function describe(
 export async function ingestFile(fileId: string, { lastAttempt = true } = {}): Promise<void> {
   const file = await db.query.files.findFirst({ where: eq(files.id, fileId) })
   if (!file || file.deletedAt) return
+  // A note is always ready to edit: it is only re-read for chat, never "processing".
+  if (file.kind === "note") return indexNote(fileId)
   await update(fileId, {
     status: "processing",
     stage: "Starting",
@@ -525,7 +530,7 @@ export async function ingestFile(fileId: string, { lastAttempt = true } = {}): P
   }
 }
 
-function groupByPage(rows: NewPassage[]): EvidenceDoc["pages"] {
+export function groupByPage(rows: NewPassage[]): EvidenceDoc["pages"] {
   const pages = new Map<number, EvidenceDoc["pages"][number]>()
   for (const row of rows) {
     const page = row.page ?? 0

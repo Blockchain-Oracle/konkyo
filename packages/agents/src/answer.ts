@@ -217,7 +217,8 @@ function passagesBlock(sources: SourceRef[]) {
             : ""
       // Older passages may hold control characters (symbol-font glyphs); the model would
       // "copy" them as some other letter and the quote would never match.
-      return `[${s.label}] (${s.title}${where ? `, ${where}` : ""})\n${s.text.replace(/\p{Cc}/gu, " ")}`
+      const what = s.kind === "note" ? `the person's own note “${s.title}”` : s.title
+      return `[${s.label}] (${what}${where ? `, ${where}` : ""})\n${s.text.replace(/\p{Cc}/gu, " ")}`
     })
     .join("\n\n")
 }
@@ -480,7 +481,8 @@ async function verify(
         fileId: source.fileId,
         passageId: source.passageId,
         quote: line.quote,
-        transcript: source.tStart != null && source.page == null,
+        // Recordings and notes have no PDF: their quotes are checked against their passages.
+        transcript: source.page == null,
       })),
     ),
     withFallback("verifier", input.tracer, "support", (c) =>

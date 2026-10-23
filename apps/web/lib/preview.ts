@@ -93,3 +93,15 @@ export function usePreview() {
 if (process.env.NODE_ENV === "development" && typeof window !== "undefined") {
   ;(window as unknown as { konkyoOpenSource: typeof openSource }).konkyoOpenSource = openSource
 }
+
+/**
+ * Opens a file where it's read: a note in the editor (Write), anything else in the source pane.
+ * `push` is the router's, from the caller.
+ */
+export function openFile(
+  file: { id: string; title: string; kind: FileKind },
+  push: (href: string) => void,
+) {
+  if (file.kind === "note") push(`/write/${file.id}`)
+  else openSource({ fileId: file.id, title: file.title, kind: file.kind })
+}

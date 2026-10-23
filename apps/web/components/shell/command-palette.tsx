@@ -24,7 +24,7 @@ import { toast } from "sonner"
 import { KindIcon } from "@/components/library/kind-icon"
 import { useUploads } from "@/components/library/uploads-provider"
 import { FOOTER_NAV, MAIN_NAV } from "@/lib/navigation"
-import { openSource } from "@/lib/preview"
+import { openFile, openSource } from "@/lib/preview"
 import { useFolders } from "@/lib/use-folders"
 import { useFileActions, useFiles } from "@/lib/use-library"
 import { openImport, openNewFolder } from "./app-dialogs"
@@ -142,9 +142,7 @@ export function CommandPalette() {
                 <CommandItem
                   key={file.id}
                   value={`file:${file.id}`}
-                  onSelect={run(() =>
-                    openSource({ fileId: file.id, title: file.title, kind: file.kind }),
-                  )}
+                  onSelect={run(() => openFile(file, (href) => router.push(href as Route)))}
                 >
                   <KindIcon kind={file.kind} className="shrink-0" />
                   <span className="truncate">{file.title}</span>

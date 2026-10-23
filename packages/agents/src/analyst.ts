@@ -208,7 +208,7 @@ export async function analyse(
       fileId: cell.fileId,
       passageId: cell.passageId,
       quote: cell.quote,
-      transcript: cell.tStart != null && cell.page == null,
+      transcript: cell.page == null,
     })),
   )
   tracer.log({

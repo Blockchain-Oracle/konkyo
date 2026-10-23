@@ -24,7 +24,7 @@ import type { Route } from "next"
 import { useRouter } from "next/navigation"
 import { openMoveFiles } from "@/components/shell/app-dialogs"
 import { chatWithHref } from "@/lib/focus"
-import { openSource } from "@/lib/preview"
+import { openFile } from "@/lib/preview"
 import { type LibraryFile, useFileActions } from "@/lib/use-library"
 import type { UploadState } from "@/lib/use-uploader"
 import { openDetails } from "./file-details"
@@ -202,7 +202,7 @@ export function FileRow({
           // The whole row reads as one target: the title button stretches over it (::after).
           <button
             type="button"
-            onClick={() => openSource({ fileId: file.id, title: file.title, kind: file.kind })}
+            onClick={() => openFile(file, (href) => router.push(href as Route))}
             className="block max-w-full truncate text-left text-ui text-bone-white after:absolute after:inset-0 after:rounded-lg after:content-[''] focus-visible:outline-none focus-visible:after:ring-1 focus-visible:after:ring-silver-mist"
             title={file.title}
           >
@@ -250,9 +250,7 @@ export function FileRow({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
           {file.status === "ready" && (
-            <DropdownMenuItem
-              onClick={() => openSource({ fileId: file.id, title: file.title, kind: file.kind })}
-            >
+            <DropdownMenuItem onClick={() => openFile(file, (href) => router.push(href as Route))}>
               <PanelRightOpenIcon strokeWidth={1.5} />
               Open
             </DropdownMenuItem>

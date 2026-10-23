@@ -62,6 +62,7 @@ export const fileKind = pgEnum("file_kind", [
   "youtube",
   "audio",
   "video",
+  "note",
 ])
 
 /** Where a file is in its life (plan F03): one word the UI can show, plus a stage while working. */

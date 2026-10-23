@@ -1,6 +1,7 @@
 import { boss, QUEUES } from "@konkyo/jobs"
 import { warmUp } from "@konkyo/zetaris"
 import { deepJob } from "./deep"
+import { indexNote } from "./notes"
 import { ingestFile } from "./pipeline"
 import { purgeExpired, purgeFiles } from "./purge"
 
@@ -27,6 +28,10 @@ await queues.work(QUEUES.deep.name, { localConcurrency: 3 }, async ([job]) => {
   if (!job) return
   const { runId, phase } = QUEUES.deep.payload.parse(job.data)
   await deepJob(runId, phase)
+})
+
+await queues.work(QUEUES.noteIndex.name, async ([job]) => {
+  if (job) await indexNote(QUEUES.noteIndex.payload.parse(job.data).fileId)
 })
 
 await queues.work(QUEUES.purge.name, async ([job]) => {

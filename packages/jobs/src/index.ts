@@ -24,6 +24,13 @@ export const QUEUES = {
     options: { retryLimit: 0, expireInSeconds: 20 * 60 },
     send: { heartbeatSeconds: 30 },
   },
+  /** A note's text read into passages for chat (F21), once typing pauses. */
+  noteIndex: {
+    name: "note-index",
+    payload: z.object({ fileId: z.uuid() }),
+    options: { retryLimit: 2, retryDelay: 10, retryBackoff: true, expireInSeconds: 10 * 60 },
+    send: {},
+  },
   /** Removes a deleted file's stored bytes and Zetaris evidence (the rows are already gone). */
   purge: {
     name: "purge",
@@ -69,4 +76,18 @@ export async function enqueue<Q extends QueueName>(
 ) {
   const parsed = QUEUES[queue].payload.parse(data)
   return (await boss()).send(QUEUES[queue].name, parsed, { ...QUEUES[queue].send, singletonKey })
+}
+
+/**
+ * Enqueues a job at most once per window per key: a note saved every second while it's typed is
+ * read into passages once the typing pauses.
+ */
+export async function enqueueDebounced<Q extends QueueName>(
+  queue: Q,
+  data: Payload<Q>,
+  seconds: number,
+  key: string,
+) {
+  const parsed = QUEUES[queue].payload.parse(data)
+  return (await boss()).sendDebounced(QUEUES[queue].name, parsed, QUEUES[queue].send, seconds, key)
 }

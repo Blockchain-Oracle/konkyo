@@ -170,3 +170,93 @@
   --duration-modal: 220ms;
   --duration-pane: 240ms;
 }
+
+/* ------------------------------------------------------------------ notes (plan F21–F23) */
+
+/* The note editor's reading type: 16px / 1.7, a 68-character measure. */
+.note-prose {
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--color-bone-white);
+  max-width: 68ch;
+  outline: none;
+}
+.note-prose > * + * {
+  margin-top: 0.9em;
+}
+.note-prose h1 {
+  font-size: 1.6em;
+  line-height: 1.25;
+  font-weight: 500;
+  margin-top: 1.4em;
+}
+.note-prose h2 {
+  font-size: 1.3em;
+  line-height: 1.3;
+  font-weight: 500;
+  margin-top: 1.3em;
+}
+.note-prose h3 {
+  font-size: 1.1em;
+  font-weight: 600;
+  margin-top: 1.2em;
+}
+.note-prose ul,
+.note-prose ol {
+  padding-left: 1.4em;
+}
+.note-prose ul {
+  list-style: disc;
+}
+.note-prose ol {
+  list-style: decimal;
+}
+.note-prose li + li {
+  margin-top: 0.3em;
+}
+.note-prose blockquote {
+  border-left: 2px solid rgb(255 255 255 / 0.18);
+  padding-left: 1em;
+  color: var(--color-silver-mist);
+}
+.note-prose strong {
+  font-weight: 600;
+}
+.note-prose p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--color-ash-gray);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Check my draft's verdicts, under the sentence: solid for supported, dotted while checking. */
+.claim {
+  text-decoration-line: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.3em;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: background-color var(--duration-press);
+}
+.claim-checking {
+  text-decoration-style: dotted;
+  text-decoration-color: rgb(255 184 41 / 0.5);
+}
+.claim-supported {
+  text-decoration-color: var(--color-supports);
+}
+.claim-partly {
+  text-decoration-color: var(--color-partly);
+}
+.claim-contradicted {
+  text-decoration-color: var(--color-contradicts);
+}
+.claim-not-found {
+  text-decoration-style: wavy;
+  text-decoration-color: var(--color-contradicts);
+}
+.claim-active,
+.claim:hover {
+  background: rgb(255 255 255 / 0.07);
+}
