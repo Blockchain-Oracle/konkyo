@@ -1,9 +1,15 @@
 import "server-only"
 import { randomUUID } from "node:crypto"
-import { type KonkyoMessage, rateRecalled, recordCorrection } from "@konkyo/agents"
+import {
+  type KonkyoMessage,
+  rateRecalled,
+  recordCorrection,
+  recordWrongPassage,
+} from "@konkyo/agents"
+import { LIMITS } from "@konkyo/config"
 import { db, schema } from "@konkyo/db"
 import type { ChatScope } from "@konkyo/db/schema"
-import { and, asc, desc, eq, gt, isNull, lt } from "drizzle-orm"
+import { and, asc, count, desc, eq, gt, gte, isNull, lt } from "drizzle-orm"
 import { LibraryError } from "./library"
 
 const { chats, messages, runs } = schema
@@ -107,6 +113,28 @@ export async function dropAfter(chatId: string, messageId: string) {
   const at = await savedAt(chatId, messageId)
   if (at)
     await db.delete(messages).where(and(eq(messages.chatId, chatId), gt(messages.createdAt, at)))
+}
+
+/**
+ * Whether this person may ask now (plan §3 rate limits): a cap per ten minutes and per day, lower
+ * for guests. Returns the reason in plain words when they can't.
+ */
+export async function answerLimit(ownerId: string, guest: boolean): Promise<string | null> {
+  const since = (ms: number) =>
+    db
+      .select({ n: count() })
+      .from(runs)
+      .where(and(eq(runs.ownerId, ownerId), gte(runs.createdAt, new Date(Date.now() - ms))))
+      .then((r) => r[0]?.n ?? 0)
+  const [recent, today] = await Promise.all([since(10 * 60_000), since(86_400_000)])
+  if (recent >= LIMITS.answersPerTenMinutes)
+    return "That's a lot of questions in a few minutes. Try again shortly."
+  const perDay = guest ? LIMITS.guestAnswersPerDay : LIMITS.answersPerDay
+  if (today >= perDay)
+    return guest
+      ? "Guests can ask 60 questions a day. Continue with Google to keep going."
+      : "You've reached today's limit of questions. It resets tomorrow."
+  return null
 }
 
 export async function startRun(ownerId: string, chatId: string, runId: string, question: string) {
@@ -244,4 +272,38 @@ export async function rateMessage(ownerId: string, messageId: string, input: Rat
     return { remembered: true }
   }
   return { remembered: false }
+}
+
+const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`
+
+/**
+ * "Right passage?" on a cited passage (plan F11, F33). A 👎 becomes a correction the Writer reads
+ * before citing for a similar question again; a 👍 needs nothing remembered.
+ */
+export async function rateCitation(ownerId: string, messageId: string, n: number, right: boolean) {
+  const message = await db.query.messages.findFirst({
+    where: and(eq(messages.id, messageId), eq(messages.ownerId, ownerId)),
+  })
+  if (message?.role !== "assistant") throw new LibraryError("No such answer", 404)
+  const final = (message.parts as KonkyoMessage["parts"]).find((p) => p.type === "data-final")
+  const citation = final?.type === "data-final" ? final.data.citations.find((c) => c.n === n) : null
+  if (!citation) throw new LibraryError("No such citation", 404)
+  if (right) return { remembered: false }
+  const run = message.runId
+    ? await db.query.runs.findFirst({ where: eq(runs.id, message.runId) })
+    : undefined
+  recordWrongPassage(ownerId, {
+    question: run?.question ?? "this question",
+    title: citation.title,
+    where:
+      citation.page != null
+        ? `p. ${citation.page}`
+        : citation.tStart != null
+          ? clock(citation.tStart)
+          : "",
+    quote: citation.quote,
+    chatId: message.chatId,
+    messageId,
+  })
+  return { remembered: true }
 }

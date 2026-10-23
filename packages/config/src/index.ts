@@ -138,6 +138,19 @@ export const QUERY = {
   staleTimeMs: 60_000,
 } as const
 
+/**
+ * Rate limits (plan §3 "Model calls"). Model calls share one token bucket per server process,
+ * set below the OpenAI account's tier; each person has a cap on answers, so a public guest
+ * sign-in can't run up the bill.
+ */
+export const LIMITS = {
+  modelRequestsPerMinute: 400,
+  modelCallsInFlight: 24,
+  answersPerTenMinutes: 20,
+  guestAnswersPerDay: 60,
+  answersPerDay: 300,
+} as const
+
 /** Trash keeps files, folders, chats and notes this long before deleting them for good (F04). */
 export const TRASH = { keepDays: 30 } as const
 

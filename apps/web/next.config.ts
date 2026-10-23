@@ -13,6 +13,7 @@ const nextConfig: NextConfig = {
     "@konkyo/agents",
     "@konkyo/config",
     "@konkyo/db",
+    "@konkyo/ingest",
     "@konkyo/env",
     "@konkyo/jobs",
     "@konkyo/storage",

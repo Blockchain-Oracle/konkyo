@@ -3,7 +3,15 @@ import { answer, type KonkyoMessage, Tracer } from "@konkyo/agents"
 import { consumeStream, createUIMessageStream, createUIMessageStreamResponse } from "ai"
 import { NextResponse } from "next/server"
 import { z } from "zod"
-import { dropAfter, ensureChat, finishRun, historyFor, saveMessage, startRun } from "@/lib/chats"
+import {
+  answerLimit,
+  dropAfter,
+  ensureChat,
+  finishRun,
+  historyFor,
+  saveMessage,
+  startRun,
+} from "@/lib/chats"
 import { LibraryError } from "@/lib/library"
 import { endRun, registerRun } from "@/lib/run-registry"
 import { getSession } from "@/lib/session"
@@ -52,6 +60,9 @@ export async function POST(request: Request) {
       ? `About this passage from "${quote.data.title}"${quote.data.page ? ` (page ${quote.data.page})` : ""}: “${quote.data.text}”\n\n${question}`
       : question
 
+  const limited = await answerLimit(ownerId, Boolean(session.user.isAnonymous))
+  if (limited) return NextResponse.json({ error: limited }, { status: 429 })
+
   let chat: Awaited<ReturnType<typeof ensureChat>>
   try {
     chat = await ensureChat(ownerId, chatId, question, scope)
@@ -60,7 +71,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: error.status })
     throw error
   }
-  if (parsed.data.trigger === "regenerate-message") await dropAfter(chatId, userMessage.id)
+  // Regenerate, or an edited question: what came after it is replaced by the new answer.
+  await dropAfter(chatId, userMessage.id)
   const history = await historyFor(chatId, userMessage.id)
   await saveMessage(ownerId, chatId, userMessage)
 

@@ -3,9 +3,10 @@
 import { useChat } from "@ai-sdk/react"
 import type { KonkyoMessage } from "@konkyo/agents"
 import { Button } from "@konkyo/ui/components/button"
+import { Textarea } from "@konkyo/ui/components/textarea"
 import { useQueryClient } from "@tanstack/react-query"
 import { DefaultChatTransport } from "ai"
-import { RotateCcwIcon } from "lucide-react"
+import { PencilIcon, RotateCcwIcon } from "lucide-react"
 import { useSearchParams } from "next/navigation"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { Composer, type ComposerSubmit } from "@/components/composer"
@@ -16,11 +17,76 @@ import { ChatStart } from "./chat-start"
 
 type ChatScope = { fileIds?: string[]; folderIds?: string[] }
 
-function UserMessage({ message }: { message: KonkyoMessage }) {
+function UserMessage({
+  message,
+  onEdit,
+}: {
+  message: KonkyoMessage
+  /** Not while an answer is being written. */
+  onEdit?: (text: string) => void
+}) {
   const quote = message.parts.find((p) => p.type === "data-quote")
   const text = message.parts.flatMap((p) => (p.type === "text" ? [p.text] : [])).join("\n")
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(text)
+
+  if (editing && onEdit) {
+    return (
+      <form
+        className="ml-auto max-w-[85%]"
+        onSubmit={(e) => {
+          e.preventDefault()
+          if (!draft.trim()) return
+          setEditing(false)
+          if (draft.trim() !== text) onEdit(draft.trim())
+        }}
+      >
+        <Textarea
+          autoFocus
+          value={draft}
+          rows={3}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setEditing(false)
+            if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+              e.preventDefault()
+              e.currentTarget.form?.requestSubmit()
+            }
+          }}
+          aria-label="Edit your question"
+          className="min-h-20 resize-none rounded-2xl bg-raised text-reading"
+        />
+        <div className="mt-2 flex items-center justify-end gap-2">
+          <span className="mr-auto text-meta text-ash-gray">
+            The answers after it are replaced.
+          </span>
+          <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(false)}>
+            Cancel
+          </Button>
+          <Button type="submit" size="sm" disabled={!draft.trim()}>
+            Ask again
+          </Button>
+        </div>
+      </form>
+    )
+  }
+
   return (
-    <div className="flex justify-end">
+    <div className="group flex items-start justify-end gap-1">
+      {onEdit && (
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Edit your question"
+          className="mt-1.5 text-ash-gray opacity-100 hover:text-bone-white md:opacity-0 md:group-focus-within:opacity-100 md:group-hover:opacity-100 [&_svg]:stroke-[1.5]"
+          onClick={() => {
+            setDraft(text)
+            setEditing(true)
+          }}
+        >
+          <PencilIcon />
+        </Button>
+      )}
       <div className="max-w-[85%] rounded-2xl bg-raised px-4 py-2.5">
         {quote?.type === "data-quote" && (
           <blockquote className="mb-2 border-l-2 border-partly/70 pl-3 text-snippet text-ash-gray">
@@ -35,6 +101,15 @@ function UserMessage({ message }: { message: KonkyoMessage }) {
       </div>
     </div>
   )
+}
+
+/** The server's own words for a failed request (it answers `{ error }`), not the raw body. */
+function errorText(error: Error) {
+  try {
+    return (JSON.parse(error.message) as { error?: string }).error ?? error.message
+  } catch {
+    return error.message
+  }
 }
 
 /**
@@ -125,7 +200,23 @@ export function ChatView({
         )}
         {messages.map((message, i) =>
           message.role === "user" ? (
-            <UserMessage key={message.id} message={message} />
+            <UserMessage
+              key={message.id}
+              message={message}
+              onEdit={
+                running
+                  ? undefined
+                  : (text) =>
+                      void sendMessage({
+                        messageId: message.id,
+                        role: "user",
+                        parts: [
+                          ...message.parts.filter((p) => p.type === "data-quote"),
+                          { type: "text" as const, text },
+                        ],
+                      })
+              }
+            />
           ) : (
             <AssistantMessage
               key={message.id}
@@ -145,9 +236,7 @@ export function ChatView({
         {/* An answer that started says so itself; this is for one that never started. */}
         {error && last?.role === "user" && (
           <div className="flex items-center gap-3 rounded-xl border border-contradicts/30 bg-contradicts/5 px-4 py-3">
-            <p className="flex-1 text-snippet text-silver-mist">
-              That answer didn't finish. {error.message}
-            </p>
+            <p className="flex-1 text-snippet text-silver-mist">{errorText(error)}</p>
             <Button variant="secondary" size="sm" onClick={() => regenerate()}>
               <RotateCcwIcon strokeWidth={1.75} />
               Try again

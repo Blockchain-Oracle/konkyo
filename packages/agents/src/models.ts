@@ -1,6 +1,7 @@
 import { createOpenAI } from "@ai-sdk/openai"
 import { env } from "@konkyo/env/server"
-import type { LanguageModel } from "ai"
+import { type LanguageModel, wrapLanguageModel } from "ai"
+import { limiter } from "./limiter"
 
 export const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY })
 
@@ -41,7 +42,15 @@ export const MODELS = {
 
 export type Role = keyof typeof MODELS
 
-export const model = (choice: ModelChoice): LanguageModel => openai(choice.id)
+/** Every model call goes through the shared rate limiter (a stream holds its slot until it starts). */
+export const model = (choice: ModelChoice): LanguageModel =>
+  wrapLanguageModel({
+    model: openai(choice.id),
+    middleware: {
+      wrapGenerate: ({ doGenerate }) => limiter.run(doGenerate),
+      wrapStream: ({ doStream }) => limiter.run(doStream),
+    },
+  })
 export const reasoning = (choice: ModelChoice) => ({
   openai: { reasoningEffort: choice.reasoning },
 })

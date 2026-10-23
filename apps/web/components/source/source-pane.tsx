@@ -10,6 +10,7 @@ import { openDetails } from "@/components/library/file-details"
 import { KindIcon } from "@/components/library/kind-icon"
 import { closeAllSources, closeSource, type SourceTab, showSource, usePreview } from "@/lib/preview"
 import { useFileDetail, usePassage } from "@/lib/use-source"
+import { CitedBar } from "./cited-bar"
 import { MediaViewer } from "./media-viewer"
 
 // PDFium runs as WebAssembly in a worker: load the viewer only in the browser, only when needed.
@@ -68,7 +69,16 @@ export function SourcePane({ className }: { className?: string }) {
         </Tooltip>
       </header>
       {/* Keyed by file: switching tabs opens that document fresh. */}
-      <SourceBody key={active.fileId} tab={active} />
+      <div className="relative flex min-h-0 flex-1 flex-col">
+        <SourceBody key={active.fileId} tab={active} />
+        {active.target?.cited && (
+          <CitedBar
+            key={active.target.nonce}
+            messageId={active.target.cited.messageId}
+            n={active.target.cited.n}
+          />
+        )}
+      </div>
     </section>
   )
 }

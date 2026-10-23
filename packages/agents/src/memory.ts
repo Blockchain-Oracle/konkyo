@@ -96,6 +96,35 @@ export function recordCorrection(
   })
 }
 
+/** 👎 on a cited passage ("Right passage?"): that passage didn't support the answer. */
+export function recordWrongPassage(
+  userId: string,
+  input: {
+    question: string
+    title: string
+    where: string
+    quote: string
+    chatId: string
+    messageId: string
+  },
+): MemoryRecord {
+  return memoryFor(userId).add({
+    content: `About “${input.question}”: the person said “${input.title}”${input.where ? ` (${input.where})` : ""} was the wrong passage to cite (it was cited for “${input.quote}”).`,
+    type: "factual",
+    layer: "working",
+    tags: ["correction", "wrong-passage"],
+    confidence: 0.8,
+    source: `chat:${input.chatId}`,
+    provenance: {
+      origin: "user_correction",
+      learnedAt: Date.now(),
+      label: "Thumbs down on a cited passage",
+      refs: [input.messageId],
+    },
+    chatId: input.chatId,
+  })
+}
+
 /** 👍 / 👎 on an answer reaches the memories that shaped it (H-MEM feedback deltas). */
 export function rateRecalled(userId: string, memoryIds: string[], helpful: boolean) {
   const memory = memoryFor(userId)

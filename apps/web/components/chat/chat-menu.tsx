@@ -10,7 +10,15 @@ import {
   DropdownMenuTrigger,
 } from "@konkyo/ui/components/dropdown-menu"
 import { Input } from "@konkyo/ui/components/input"
-import { EllipsisIcon, PencilIcon, PinIcon, PinOffIcon, Trash2Icon } from "lucide-react"
+import {
+  DownloadIcon,
+  EllipsisIcon,
+  FileTextIcon,
+  PencilIcon,
+  PinIcon,
+  PinOffIcon,
+  Trash2Icon,
+} from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { useChatActions } from "@/lib/use-chats"
@@ -57,6 +65,25 @@ export function ChatMenu({
           <DropdownMenuItem onClick={() => pin.mutate({ id: chat.id, pinned: !chat.pinnedAt })}>
             {chat.pinnedAt ? <PinOffIcon strokeWidth={1.5} /> : <PinIcon strokeWidth={1.5} />}
             {chat.pinnedAt ? "Unpin" : "Pin"}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            render={
+              // biome-ignore lint/a11y/useAnchorContent: the menu item renders the label
+              <a href={`/api/chats/${chat.id}/export?format=pdf`} download />
+            }
+          >
+            <DownloadIcon strokeWidth={1.5} />
+            Export as PDF
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            render={
+              // biome-ignore lint/a11y/useAnchorContent: the menu item renders the label
+              <a href={`/api/chats/${chat.id}/export?format=md`} download />
+            }
+          >
+            <FileTextIcon strokeWidth={1.5} />
+            Export as Markdown
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem

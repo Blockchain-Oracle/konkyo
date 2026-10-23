@@ -11,6 +11,7 @@
     "vendor": "node scripts/vendor.mjs"
   },
   "dependencies": {
+    "@ai-sdk/react": "4.0.144",
     "@embedpdf/core": "2.15.1",
     "@embedpdf/engines": "2.15.1",
     "@embedpdf/models": "2.15.1",
@@ -25,16 +26,20 @@
     "@embedpdf/plugin-tiling": "2.15.1",
     "@embedpdf/plugin-viewport": "2.15.1",
     "@embedpdf/plugin-zoom": "2.15.1",
+    "@konkyo/agents": "workspace:*",
     "@konkyo/config": "workspace:*",
     "@konkyo/db": "workspace:*",
     "@konkyo/env": "workspace:*",
+    "@konkyo/ingest": "workspace:*",
     "@konkyo/jobs": "workspace:*",
     "@konkyo/storage": "workspace:*",
     "@konkyo/ui": "workspace:*",
+    "@konkyo/zetaris": "workspace:*",
     "@tanstack/react-query": "5.104.2",
     "@uppy/aws-s3": "6.2.2",
     "@uppy/core": "6.2.0",
     "@uppy/react": "6.0.0",
+    "ai": "7.0.141",
     "better-auth": "1.7.8",
     "drizzle-orm": "0.45.4",
     "fflate": "0.8.3",
@@ -45,11 +50,7 @@
     "react-dom": "19.3.1",
     "server-only": "0.0.1",
     "sonner": "2.0.8",
-    "zod": "4.6.7",
-    "@konkyo/agents": "workspace:*",
-    "@ai-sdk/react": "4.0.144",
-    "ai": "7.0.141",
-    "@konkyo/zetaris": "workspace:*"
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@konkyo/typescript-config": "workspace:*",

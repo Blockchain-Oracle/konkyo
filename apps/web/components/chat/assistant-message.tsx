@@ -8,6 +8,7 @@ import { useUploads } from "@/components/library/uploads-provider"
 import { openImport } from "@/components/shell/app-dialogs"
 import { AgreeMatrix } from "./agree-matrix"
 import { AnswerText } from "./answer-text"
+import { CitedIn } from "./citation-chip"
 import { MessageActions } from "./message-actions"
 import { LiveSteps, RunReceipt } from "./run-receipt"
 
@@ -87,7 +88,9 @@ export function AssistantMessage({
   if (final) {
     return (
       <div>
-        <AnswerText body={final.body} citations={final.citations} rewritten={final.rewritten} />
+        <CitedIn.Provider value={message.id}>
+          <AnswerText body={final.body} citations={final.citations} rewritten={final.rewritten} />
+        </CitedIn.Provider>
         {final.caveat && (
           <p className="mt-4 border-l-2 border-white/14 pl-3 text-snippet text-ash-gray">
             {final.caveat}

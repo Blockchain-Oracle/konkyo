@@ -4,12 +4,16 @@ import type { Citation } from "@konkyo/agents"
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@konkyo/ui/components/hover-card"
 import { cn } from "@konkyo/ui/lib/utils"
 import { ArrowUpRightIcon } from "lucide-react"
+import { createContext, useContext } from "react"
 import { KindIcon } from "@/components/library/kind-icon"
 import { openSource } from "@/lib/preview"
 
 const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`
 export const whereIs = (c: { page: number | null; tStart: number | null }) =>
   c.page != null ? `p. ${c.page}` : c.tStart != null ? clock(c.tStart) : ""
+
+/** The answer a chip belongs to, so the passage it opens can ask "Right passage?". */
+export const CitedIn = createContext<string | null>(null)
 
 /** The verified tick, drawn in once (plan §7.4 #1). */
 function Tick({ className }: { className?: string }) {
@@ -35,6 +39,7 @@ function Tick({ className }: { className?: string }) {
  * opens the passage in the source pane, highlighted.
  */
 export function CitationChip({ n, citation }: { n: number; citation?: Citation }) {
+  const messageId = useContext(CitedIn)
   if (!citation) {
     return (
       <span
@@ -53,6 +58,7 @@ export function CitationChip({ n, citation }: { n: number; citation?: Citation }
       kind: citation.kind as Parameters<typeof openSource>[0]["kind"],
       passageId: citation.passageId,
       quote: citation.quote,
+      cited: messageId ? { messageId, n } : undefined,
     })
   return (
     <HoverCard>

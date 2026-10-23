@@ -10,6 +10,8 @@ export type SourceTarget = {
   /** The cited words: only the lines they span are marked, not the whole passage. */
   quote?: string
   seconds?: number
+  /** Opened from an answer's citation: which answer and which number (for "Right passage?"). */
+  cited?: { messageId: string; n: number }
   /** Bumped on every open, so asking for the same passage twice still scrolls and sweeps again. */
   nonce: number
 }
@@ -42,10 +44,10 @@ function set(next: State) {
 export function openSource(
   source: Omit<SourceTab, "target"> & Omit<Partial<SourceTarget>, "nonce">,
 ) {
-  const { fileId, title, kind, page, passageId, seconds, quote } = source
+  const { fileId, title, kind, page, passageId, seconds, quote, cited } = source
   const target =
     page != null || passageId || seconds != null
-      ? { page, passageId, seconds, quote, nonce: ++nonce }
+      ? { page, passageId, seconds, quote, cited, nonce: ++nonce }
       : undefined
   const existing = state.tabs.find((tab) => tab.fileId === fileId)
   const tabs = existing

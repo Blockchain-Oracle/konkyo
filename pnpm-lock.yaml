@@ -92,6 +92,9 @@ importers:
       '@konkyo/env':
         specifier: workspace:*
         version: link:../../packages/env
+      '@konkyo/ingest':
+        specifier: workspace:*
+        version: link:../../packages/ingest
       '@konkyo/jobs':
         specifier: workspace:*
         version: link:../../packages/jobs
