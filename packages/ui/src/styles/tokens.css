@@ -1,0 +1,104 @@
+/*
+ * Konkyo design tokens. Source of truth: context/DESIGN.md (Dala) and plan §7.1–7.2.
+ * Spacing stays on Tailwind's default 4px scale: never define numeric --spacing-N names,
+ * they silently resize every shadcn/21st component (p-6 would become 6px).
+ */
+
+@theme {
+  /* Dala brand colours (unchanged from DESIGN.md) */
+  --color-void: #000000;
+  --color-bone-white: #ffffff;
+  --color-ash-gray: #9a9a9a;
+  --color-silver-mist: #bdbdbd;
+  --color-electric-iris: #8052ff;
+  --color-saffron-spark: #ffb829;
+  --color-deep-verdant: #15846e;
+
+  /* App surfaces over the void: panel → raised/hover → popover/modal */
+  --color-panel: #0b0b0c;
+  --color-raised: #141414;
+  --color-overlay: #1a1a1a;
+  --color-line-strong: rgb(255 255 255 / 0.22);
+
+  /*
+   * State colours. Dala has no red, so contradicts/error borrow Raycast's #ff6363.
+   * Verdant #15846e is 4.27:1 on panels: marks only; its text form is #449d8b.
+   * Every state also has its own glyph and underline style; colour is never alone.
+   */
+  --color-supports: #15846e;
+  --color-supports-text: #449d8b;
+  --color-partly: #ffb829;
+  --color-contradicts: #ff6363;
+  --color-not-found: #9a9a9a;
+  --color-info: #bdbdbd;
+  --color-highlight: rgb(255 184 41 / 0.35);
+
+  /* Particle palette, sampled from the live Dala canvas (landing, celebrations) */
+  --color-particle-magenta: #c265aa;
+  --color-particle-teal: #339f87;
+  --color-particle-blue: #2d6caf;
+
+  /* Marketing type scale (DESIGN.md): one class sets size, leading and tracking */
+  --text-caption: 12px;
+  --text-caption--line-height: 1.5;
+  --text-nav-label: 14px;
+  --text-nav-label--line-height: 1.2;
+  --text-nav-label--letter-spacing: 0.35px;
+  --text-body: 18px;
+  --text-body--line-height: 1.5;
+  --text-heading-2xs: 24px;
+  --text-heading-2xs--line-height: 1.25;
+  --text-heading-2xs--letter-spacing: -0.48px;
+  --text-heading-xs: 27px;
+  --text-heading-xs--line-height: 1;
+  --text-subheading: 36px;
+  --text-subheading--line-height: 1.2;
+  --text-subheading--letter-spacing: -0.04em;
+  --text-heading-sm: 42px;
+  --text-heading-sm--line-height: 1.2;
+  --text-heading-sm--letter-spacing: -1.68px;
+  --text-heading: 48px;
+  --text-heading--line-height: 1.1;
+  --text-heading--letter-spacing: -1.68px;
+  --text-heading-lg: 78px;
+  --text-heading-lg--line-height: 1.1;
+  --text-heading-lg--letter-spacing: -3.12px;
+  --text-display: 113px;
+  --text-display--line-height: 1.1;
+  --text-display--letter-spacing: -4.52px;
+
+  /* App type scale (Linear/Raycast density at Dala's weights; plan §7.2) */
+  --text-micro: 11px;
+  --text-micro--line-height: 1.2;
+  --text-micro--letter-spacing: 0.05em;
+  --text-micro--font-weight: 600;
+  --text-meta: 12px;
+  --text-meta--line-height: 1.4;
+  --text-snippet: 13px;
+  --text-snippet--line-height: 1.4;
+  --text-ui: 14px;
+  --text-ui--line-height: 1.45;
+  --text-ui--letter-spacing: -0.01em;
+  --text-reading: 15px;
+  --text-reading--line-height: 1.6;
+  --text-editor: 16px;
+  --text-editor--line-height: 1.7;
+  --text-subhead: 17px;
+  --text-subhead--line-height: 1.35;
+
+  /* Radius under its own name (shadcn's bridge rewrites --radius-3xl to 22px) */
+  --radius-card: 24px;
+
+  /* Motion (Emil Kowalski's curves). These replace Tailwind's weaker defaults. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+:root {
+  --duration-press: 140ms;
+  --duration-tooltip: 150ms;
+  --duration-menu: 180ms;
+  --duration-modal: 220ms;
+  --duration-pane: 240ms;
+}

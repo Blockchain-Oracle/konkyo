@@ -1,0 +1,10 @@
+{
+  "extends": "@konkyo/typescript-config/react-library.json",
+  "compilerOptions": {
+    "paths": {
+      "@konkyo/ui/*": ["./src/*"]
+    }
+  },
+  "include": ["."],
+  "exclude": ["node_modules", "dist"]
+}

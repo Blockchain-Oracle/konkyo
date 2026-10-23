@@ -1,0 +1,59 @@
+# Local app stack. Zetaris runs from its own hackathon bundle (see README: "Zetaris").
+# Every port binds to 127.0.0.1 only; the numbers match LOCAL_PORTS in packages/config.
+name: konkyo
+
+services:
+  postgres:
+    image: pgvector/pgvector:0.8.7-pg17
+    environment:
+      POSTGRES_USER: konkyo
+      POSTGRES_PASSWORD: konkyo
+      POSTGRES_DB: konkyo
+    ports:
+      - "127.0.0.1:54320:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U konkyo -d konkyo"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # S3-compatible object storage. MinIO's community edition stopped shipping images in
+  # Oct 2025 and was archived in 2026; RustFS 1.0 (Apache-2.0) takes the same role.
+  s3:
+    image: rustfs/rustfs:1.0.1
+    command: ["/data"]
+    environment:
+      RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY_ID:-konkyo-dev}
+      RUSTFS_SECRET_KEY: ${S3_SECRET_ACCESS_KEY:-konkyo-dev-secret-change-me}
+      RUSTFS_ADDRESS: ":9000"
+      RUSTFS_CONSOLE_ADDRESS: ":9001"
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_CORS_ALLOWED_ORIGINS: ${APP_ORIGIN:-http://localhost:3210}
+      RUSTFS_OBS_LOGGER_LEVEL: error
+    ports:
+      - "127.0.0.1:9200:9000"
+      - "127.0.0.1:9201:9001"
+    volumes:
+      - s3data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:9000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # DOCX/PPTX/HTML → PDF, so every document gets one viewer format.
+  gotenberg:
+    image: gotenberg/gotenberg:8.38.1
+    ports:
+      - "127.0.0.1:3220:3000"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  pgdata:
+  s3data:

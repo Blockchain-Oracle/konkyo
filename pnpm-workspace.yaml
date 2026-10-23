@@ -1,0 +1,11 @@
+packages:
+  - apps/*
+  - packages/*
+
+# Supply-chain guard: never install a version published less than a day ago
+# (compromised releases are usually caught and pulled within hours).
+minimumReleaseAge: 1440
+
+# Only these packages may run install scripts.
+allowBuilds:
+  esbuild: true

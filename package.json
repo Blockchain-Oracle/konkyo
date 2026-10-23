@@ -1,0 +1,33 @@
+{
+  "name": "konkyo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "typecheck": "turbo typecheck",
+    "check": "biome check .",
+    "check:fix": "biome check --write .",
+    "ci": "biome ci . && turbo typecheck build",
+    "db:generate": "pnpm --filter @konkyo/db generate",
+    "db:migrate": "pnpm --filter @konkyo/db migrate",
+    "services:up": "docker compose -f infra/compose.yaml --env-file .env up -d --wait",
+    "services:down": "docker compose -f infra/compose.yaml --env-file .env down",
+    "services:check": "node --env-file-if-exists=.env scripts/check-services.ts"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.15",
+    "@konkyo/env": "workspace:*",
+    "@konkyo/storage": "workspace:*",
+    "@konkyo/typescript-config": "workspace:*",
+    "@types/node": "24.19.2",
+    "postgres": "3.4.9",
+    "turbo": "2.11.8",
+    "typescript": "7.0.2"
+  },
+  "packageManager": "pnpm@11.24.0",
+  "engines": {
+    "node": ">=22.18"
+  }
+}

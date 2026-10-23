@@ -1,0 +1,10 @@
+{
+  "extends": "@konkyo/typescript-config/base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "types": ["node"]
+  },
+  "include": ["src", "drizzle.config.ts"]
+}
