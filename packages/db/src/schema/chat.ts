@@ -121,6 +121,9 @@ export const userSettings = pgTable("user_settings", {
   streakFreezes: integer().default(2).notNull(),
   /** The person's time zone, so a streak day is their day. */
   timeZone: text(),
+  /** Review reminders (F29): on by default, at this hour of the person's day. */
+  reviewReminders: boolean().default(true).notNull(),
+  reminderHour: integer().default(18).notNull(),
   updatedAt: timestamp({ withTimezone: true })
     .defaultNow()
     .notNull()

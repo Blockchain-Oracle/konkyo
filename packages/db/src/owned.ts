@@ -5,11 +5,13 @@ import {
   files,
   folders,
   highlights,
+  inboxItems,
   messages,
   noteEvents,
   notes,
   noteVersions,
   passages,
+  pushSubscriptions,
   runs,
   studyCards,
   studyDays,
@@ -41,6 +43,9 @@ const movers: Array<(tx: Tx, fromUserId: string, toUserId: string) => Promise<un
   (tx, from, to) =>
     tx.update(noteVersions).set({ ownerId: to }).where(eq(noteVersions.ownerId, from)),
   (tx, from, to) => tx.update(noteEvents).set({ ownerId: to }).where(eq(noteEvents.ownerId, from)),
+  (tx, from, to) => tx.update(inboxItems).set({ ownerId: to }).where(eq(inboxItems.ownerId, from)),
+  (tx, from, to) =>
+    tx.update(pushSubscriptions).set({ ownerId: to }).where(eq(pushSubscriptions.ownerId, from)),
   (tx, from, to) => tx.update(studySets).set({ ownerId: to }).where(eq(studySets.ownerId, from)),
   (tx, from, to) => tx.update(studyItems).set({ ownerId: to }).where(eq(studyItems.ownerId, from)),
   (tx, from, to) => tx.update(studyCards).set({ ownerId: to }).where(eq(studyCards.ownerId, from)),

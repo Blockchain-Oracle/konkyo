@@ -8,6 +8,7 @@ import {
   SidebarGroup,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
@@ -16,6 +17,7 @@ import {
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { FOOTER_NAV, isActive, MAIN_NAV } from "@/lib/navigation"
+import { useUnread } from "@/lib/use-inbox"
 import { BrandMark } from "../brand-mark"
 import { AccountMenu, type ShellUser } from "./account-menu"
 import { CreateMenu } from "./create-menu"
@@ -56,6 +58,7 @@ export function AppSidebar({ user }: { user: ShellUser }) {
                   <item.icon strokeWidth={1.5} />
                   <span>{item.label}</span>
                 </SidebarMenuButton>
+                {item.href === "/inbox" && <UnreadBadge />}
                 {item.href === "/chats" && <RecentChats />}
               </SidebarMenuItem>
             ))}
@@ -87,5 +90,17 @@ export function AppSidebar({ user }: { user: ShellUser }) {
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
+  )
+}
+
+/** Unread Inbox items, beside Inbox. */
+function UnreadBadge() {
+  const { data: unread } = useUnread()
+  if (!unread) return null
+  return (
+    <SidebarMenuBadge className="rounded-full bg-electric-iris px-1.5 text-[11px] text-white tabular-nums">
+      {unread > 99 ? "99+" : unread}
+      <span className="sr-only"> unread</span>
+    </SidebarMenuBadge>
   )
 }

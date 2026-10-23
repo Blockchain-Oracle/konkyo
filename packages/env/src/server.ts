@@ -42,6 +42,11 @@ export const env = createEnv({
     /** Where the worker writes evidence files, and where Zetaris reads the same folder. */
     EVIDENCE_DIR: z.string().min(1),
     ZETARIS_EVIDENCE_URI: z.string().min(1),
+
+    /** Web Push (F41): without the keys, the Inbox still works and push is simply off. */
+    VAPID_PUBLIC_KEY: z.string().min(1).optional(),
+    VAPID_PRIVATE_KEY: z.string().min(1).optional(),
+    VAPID_SUBJECT: z.string().min(1).default("https://konkyo.xyz"),
   },
   runtimeEnv: process.env,
   emptyStringAsUndefined: true,

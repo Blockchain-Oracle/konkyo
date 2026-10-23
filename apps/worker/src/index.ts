@@ -4,6 +4,7 @@ import { deepJob } from "./deep"
 import { indexNote } from "./notes"
 import { ingestFile } from "./pipeline"
 import { purgeExpired, purgeFiles } from "./purge"
+import { sendReminders } from "./reminders"
 import { makeSet } from "./study"
 
 /** Files processed at once in this worker (OCR, conversion and transcription are heavy). */
@@ -53,8 +54,17 @@ await queues.work(SWEEP, async () => {
   if (removed) console.info(`[trash] deleted ${removed} files kept past 30 days`)
 })
 
+// Review reminders (F29): hourly, each person at their own hour in their own time zone.
+const REMINDERS = "review-reminders"
+await queues.createQueue(REMINDERS)
+await queues.schedule(REMINDERS, "0 * * * *", {}, { tz: "UTC" })
+await queues.work(REMINDERS, async () => {
+  const sent = await sendReminders()
+  if (sent) console.info(`[reminders] sent ${sent}`)
+})
+
 console.info(
-  `[worker] listening on "${QUEUES.ingest.name}" (×${INGEST_CONCURRENCY}), "deep" (×3), "study" (×3), "purge", daily sweep`,
+  `[worker] listening on "${QUEUES.ingest.name}" (×${INGEST_CONCURRENCY}), "deep" (×3), "study" (×3), "purge", daily sweep, hourly reminders`,
 )
 
 // On shutdown stop taking jobs and exit promptly: a job cut off here stops sending heartbeats and

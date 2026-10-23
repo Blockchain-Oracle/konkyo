@@ -4,12 +4,14 @@ import { cn } from "@konkyo/ui/lib/utils"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { isActive, MAIN_NAV, MOBILE_TABS } from "@/lib/navigation"
+import { useUnread } from "@/lib/use-inbox"
 
 const TABS = MAIN_NAV.filter((item) => MOBILE_TABS.includes(item.href))
 
 /** Phones (<768px): a native-feeling bottom bar; the sidebar opens as a sheet for the rest. */
 export function MobileTabBar() {
   const pathname = usePathname()
+  const { data: unread } = useUnread()
   return (
     <nav
       aria-label="Main"
@@ -28,7 +30,14 @@ export function MobileTabBar() {
                   active && "text-bone-white",
                 )}
               >
-                <item.icon className="size-5" strokeWidth={1.5} />
+                <span className="relative">
+                  <item.icon className="size-5" strokeWidth={1.5} />
+                  {item.href === "/inbox" && Boolean(unread) && (
+                    <span className="absolute -top-0.5 -right-1 size-2 rounded-full bg-electric-iris">
+                      <span className="sr-only">{unread} unread</span>
+                    </span>
+                  )}
+                </span>
                 {item.label}
               </Link>
             </li>

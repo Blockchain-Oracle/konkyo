@@ -1,5 +1,6 @@
 export * from "./auth"
 export * from "./chat"
+export * from "./inbox"
 export * from "./library"
 export * from "./notes"
 export * from "./study"

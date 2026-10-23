@@ -9,6 +9,8 @@ export type Settings = {
   citationStyle: string
   studySound: boolean
   dailyNew: number
+  reviewReminders: boolean
+  reminderHour: number
 }
 
 /** The person's settings, with defaults for anything never set. */
@@ -19,6 +21,8 @@ export async function getSettings(userId: string): Promise<Settings> {
     citationStyle: row?.citationStyle ?? "apa",
     studySound: row?.studySound ?? true,
     dailyNew: row?.dailyNew ?? 15,
+    reviewReminders: row?.reviewReminders ?? true,
+    reminderHour: row?.reminderHour ?? 18,
   }
 }
 

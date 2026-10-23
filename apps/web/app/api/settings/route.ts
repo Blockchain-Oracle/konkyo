@@ -10,6 +10,8 @@ export const PATCH = route<Record<string, never>, Partial<Settings>>(
     autoImportSources: z.boolean().optional(),
     studySound: z.boolean().optional(),
     dailyNew: z.number().int().min(0).max(100).optional(),
+    reviewReminders: z.boolean().optional(),
+    reminderHour: z.number().int().min(0).max(23).optional(),
     citationStyle: z
       .string()
       .regex(/^[a-z0-9-]{2,120}$/)

@@ -17,6 +17,7 @@
     "@konkyo/env": "workspace:*",
     "@konkyo/ingest": "workspace:*",
     "@konkyo/jobs": "workspace:*",
+    "@konkyo/notify": "workspace:*",
     "@konkyo/storage": "workspace:*",
     "@konkyo/study": "workspace:*",
     "@konkyo/zetaris": "workspace:*",
