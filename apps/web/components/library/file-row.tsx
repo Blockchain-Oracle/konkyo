@@ -13,6 +13,7 @@ import {
   DownloadIcon,
   EllipsisIcon,
   FolderInputIcon,
+  InfoIcon,
   PanelRightOpenIcon,
   Trash2Icon,
 } from "lucide-react"
@@ -20,6 +21,7 @@ import { openMoveFiles } from "@/components/shell/app-dialogs"
 import { openSource } from "@/lib/preview"
 import { type LibraryFile, useFileActions } from "@/lib/use-library"
 import type { UploadState } from "@/lib/use-uploader"
+import { openDetails } from "./file-details"
 import { FileStatus } from "./file-status"
 import { KIND_LABEL, KindIcon } from "./kind-icon"
 
@@ -81,6 +83,11 @@ function FixIt({
       return file.kind === "youtube" ? (
         <Button size="sm" variant="secondary" className={small} onClick={onPick}>
           Upload the video file instead
+        </Button>
+      ) : file.sourceUrl?.includes("doi.org/") ? (
+        // A paper with no free copy: trying again won't change that; its PDF will.
+        <Button size="sm" variant="secondary" className={small} onClick={onPick}>
+          Upload the PDF
         </Button>
       ) : (
         <Button
@@ -214,6 +221,10 @@ export function FileRow({
               Open
             </DropdownMenuItem>
           )}
+          <DropdownMenuItem onClick={() => openDetails(file.id)}>
+            <InfoIcon strokeWidth={1.5} />
+            Details
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={() => openMoveFiles([file.id])}>
             <FolderInputIcon strokeWidth={1.5} />
             Move to…

@@ -1,5 +1,12 @@
 import "server-only"
-import { type FileKind, isYouTube, kindForName, STORAGE } from "@konkyo/config"
+import {
+  type CslItem,
+  type FileKind,
+  type FileMeta,
+  isYouTube,
+  kindForName,
+  STORAGE,
+} from "@konkyo/config"
 import { db, schema } from "@konkyo/db"
 import { enqueue } from "@konkyo/jobs"
 import { headObject, objectKey, presignOperation, type S3Operation } from "@konkyo/storage"
@@ -229,7 +236,24 @@ async function ownFile(ownerId: string, fileId: string) {
   return file
 }
 
-/** "Try again" for a file that couldn't be processed or reached. */
+/** The person's own corrections to a file's title and citation record (plan F06). */
+export async function editDetails(
+  ownerId: string,
+  fileId: string,
+  edit: { title?: string; csl?: CslItem },
+) {
+  const file = await ownFile(ownerId, fileId)
+  const meta = (file.meta ?? {}) as FileMeta
+  await db
+    .update(files)
+    .set({
+      title: edit.title?.trim() || file.title,
+      meta: edit.csl ? { ...meta, csl: { ...meta.csl, ...edit.csl }, foundBy: "you" } : meta,
+    })
+    .where(eq(files.id, fileId))
+}
+
+/** "Try again" for a file that couldn't be processed or reached, and Re-process for any file. */
 export async function retryFile(ownerId: string, fileId: string) {
   await ownFile(ownerId, fileId)
   await db
@@ -282,6 +306,8 @@ export async function getFileDetail(ownerId: string, fileId: string) {
     durationSeconds: file.durationSeconds,
     fromScan: file.fromScan,
     pages: file.pages,
+    sizeBytes: file.sizeBytes,
+    meta: (file.meta ?? {}) as FileMeta,
     createdAt: file.createdAt,
     renditionUrl: file.renditionKey ? content : null,
     mediaUrl: playable && file.originalKey ? `${content}?as=original` : null,

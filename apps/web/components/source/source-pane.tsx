@@ -3,9 +3,10 @@
 import { Button } from "@konkyo/ui/components/button"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@konkyo/ui/components/tooltip"
 import { cn } from "@konkyo/ui/lib/utils"
-import { PanelRightCloseIcon, XIcon } from "lucide-react"
+import { InfoIcon, PanelRightCloseIcon, XIcon } from "lucide-react"
 import dynamic from "next/dynamic"
 import { useMemo } from "react"
+import { openDetails } from "@/components/library/file-details"
 import { KindIcon } from "@/components/library/kind-icon"
 import { closeAllSources, closeSource, type SourceTab, showSource, usePreview } from "@/lib/preview"
 import { useFileDetail, usePassage } from "@/lib/use-source"
@@ -33,6 +34,22 @@ export function SourcePane({ className }: { className?: string }) {
             <SourceTabButton key={tab.fileId} tab={tab} active={tab.fileId === active.fileId} />
           ))}
         </div>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Details"
+                onClick={() => openDetails(active.fileId)}
+                className="shrink-0 text-ash-gray hover:text-bone-white"
+              />
+            }
+          >
+            <InfoIcon strokeWidth={1.5} />
+          </TooltipTrigger>
+          <TooltipContent>Details</TooltipContent>
+        </Tooltip>
         <Tooltip>
           <TooltipTrigger
             render={

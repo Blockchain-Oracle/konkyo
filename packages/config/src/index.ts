@@ -1,3 +1,4 @@
+export * from "./meta"
 /**
  * Every product constant lives here: limits, timeouts, sizes, ports and names.
  * Code elsewhere imports these instead of writing numbers inline.
@@ -126,6 +127,10 @@ export const INGEST = {
   embeddingBatch: 96,
   embeddingParallel: 2,
   transcriptionModel: "scribe_v2",
+  /** Short file summaries (cost benchmark: Luna with no reasoning writes grounded text cheaply). */
+  summaryModel: "gpt-6-luna",
+  /** OpenAlex lookups are a nicety; a slow answer must not hold a file back. */
+  metadataTimeoutMs: 8_000,
 } as const
 
 export const QUERY = {

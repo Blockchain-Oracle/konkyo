@@ -1,3 +1,4 @@
+import type { FileMeta } from "@konkyo/config"
 import { sql } from "drizzle-orm"
 import {
   type AnyPgColumn,
@@ -107,8 +108,8 @@ export const files = pgTable(
     durationSeconds: real(),
     /** Page sizes and rotations, for placing highlight boxes: [{page,width,height,rotate}] */
     pages: jsonb().$type<{ page: number; width: number; height: number; rotate: number }[]>(),
-    /** Bibliographic metadata (CSL-JSON shaped) used for citations. */
-    meta: jsonb().$type<Record<string, unknown>>(),
+    /** The citation record (CSL-JSON), a short summary, and where they came from. */
+    meta: jsonb().$type<FileMeta>(),
     /** When Zetaris confirmed this file's passages (the evidence store has it). */
     publishedAt: timestamp({ withTimezone: true }),
     ...timestamps,

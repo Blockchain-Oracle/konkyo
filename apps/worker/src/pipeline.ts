@@ -4,19 +4,25 @@ import { db, schema } from "@konkyo/db"
 import {
   articleToPdf,
   documentHtml,
+  doiFromUrl,
   embeddingHash,
   embedTexts,
   extractPassages,
+  type FileMeta,
   fetchSource,
   fetchYouTube,
+  findMetadata,
   htmlToPdf,
   isYouTube,
   LockedPdfError,
+  looksLikeFileName,
   markdownToPdf,
   ocrPdf,
   officeToPdf,
+  openAccessPdfs,
   openPdf,
   renderRGBA,
+  summarize,
   textToHtml,
   transcribe,
   UnreachableError,
@@ -208,7 +214,20 @@ async function readSource(file: FileRow): Promise<DocResult> {
     }
     case "web": {
       if (!file.sourceUrl) throw new Error("Web import has no URL")
-      await stage(file.id, "Fetching the page", 0.1)
+      // A pasted DOI: read the paper's open-access PDF, never the publisher's abstract page.
+      const doi = doiFromUrl(file.sourceUrl)
+      if (doi) {
+        await stage(file.id, "Finding an open copy", 0.1)
+        for (const url of await openAccessPdfs(doi)) {
+          const copy = await fetchSource(url).catch(() => null)
+          if (copy?.contentType.includes("pdf")) return fromPdf(file, copy.bytes, PDF_HYPHENS.pdf)
+        }
+        throw new ProblemError(
+          "unreachable",
+          "This paper has no free copy online. Upload its PDF to read it here.",
+        )
+      }
+      await stage(file.id, "Fetching the page", 0.15)
       const source = await fetchSource(file.sourceUrl)
       if (source.contentType.includes("pdf")) return fromPdf(file, source.bytes, PDF_HYPHENS.pdf)
       if (!source.contentType.includes("html")) {
@@ -282,6 +301,59 @@ async function embed(rows: NewPassage[]): Promise<number> {
   return tokens
 }
 
+// ------------------------------------------------------------------ details (F06)
+
+/** The opening line or two of page 1, where a paper prints its title. */
+function openingLines(rows: NewPassage[]): string | undefined {
+  const first = rows.find((r) => (r.page ?? 1) === 1 && r.kind === "text")
+  if (!first) return undefined
+  const starts = first.lineStarts ?? [0]
+  const lines = [0, 1].map((i) =>
+    first.text.slice(starts[i] ?? first.text.length, starts[i + 1] ?? first.text.length).trim(),
+  )
+  const joined = lines.filter(Boolean).join(" ")
+  return joined && joined.length < 200 ? joined : lines[0] || undefined
+}
+
+/**
+ * The published record (OpenAlex) and a short summary, both best-effort: a file is never held
+ * back or failed because a lookup was slow or found nothing. Details the person edited stay.
+ */
+async function describe(
+  file: FileRow,
+  result: DocResult,
+): Promise<{ meta: FileMeta; title?: string }> {
+  const previous = (file.meta ?? {}) as FileMeta
+  const text = result.passages.map((p) => p.text).join("\n")
+  const isDocument = file.kind !== "audio" && file.kind !== "video" && file.kind !== "youtube"
+  const titleHint =
+    result.title ?? (looksLikeFileName(file.title) ? openingLines(result.passages) : file.title)
+  const [found, summary] = await Promise.all([
+    isDocument && previous.foundBy !== "you"
+      ? findMetadata({
+          fileName: file.title,
+          title: titleHint,
+          text,
+          sourceUrl: file.sourceUrl,
+        }).catch((error: Error) => {
+          console.warn(`[details] ${file.id} OpenAlex: ${error.message}`)
+          return null
+        })
+      : null,
+    summarize(result.title ?? titleHint ?? file.title, text).catch((error: Error) => {
+      console.warn(`[details] ${file.id} summary: ${error.message}`)
+      return undefined
+    }),
+  ])
+  const meta: FileMeta = {
+    ...previous,
+    ...(found ?? {}),
+    summary: summary ?? previous.summary,
+  }
+  const better = found?.csl?.title
+  return { meta, title: better && looksLikeFileName(file.title) ? better : undefined }
+}
+
 // ------------------------------------------------------------------ the job
 
 /**
@@ -329,7 +401,8 @@ export async function ingestFile(fileId: string, { lastAttempt = true } = {}): P
     }
 
     await stage(fileId, `Indexing ${result.passages.length} passages`, 0.6)
-    await embed(result.passages)
+    // Details are looked up while the passages are embedded, so they add no time.
+    const [, details] = await Promise.all([embed(result.passages), describe(file, result)])
     await db.transaction(async (tx) => {
       await tx.delete(passages).where(eq(passages.fileId, fileId))
       for (let i = 0; i < result.passages.length; i += 200) {
@@ -343,7 +416,7 @@ export async function ingestFile(fileId: string, { lastAttempt = true } = {}): P
     const doc: EvidenceDoc = {
       doc_id: fileId,
       kind: file.kind,
-      title: result.title ?? file.title,
+      title: details.title ?? result.title ?? file.title,
       pages: groupByPage(result.passages),
     }
     await publishPassages(doc)
@@ -359,7 +432,8 @@ export async function ingestFile(fileId: string, { lastAttempt = true } = {}): P
       status: "ready",
       stage: null,
       progress: 1,
-      title: result.title ?? file.title,
+      title: details.title ?? result.title ?? file.title,
+      meta: details.meta,
       renditionKey: result.rendition ? objectKey("renditions", `${fileId}.pdf`) : null,
       pages: result.pages ?? null,
       pageCount: result.pages?.length ?? null,

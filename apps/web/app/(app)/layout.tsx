@@ -4,6 +4,7 @@ import { Skeleton } from "@konkyo/ui/components/skeleton"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { Suspense } from "react"
+import { FileDetailsSheet } from "@/components/library/file-details"
 import { UploadsProvider } from "@/components/library/uploads-provider"
 import { AppDialogs } from "@/components/shell/app-dialogs"
 import { AppSidebar } from "@/components/shell/app-sidebar"
@@ -37,6 +38,7 @@ async function Shell({ children }: { children: React.ReactNode }) {
         <MobileTabBar />
         <CommandPalette />
         <AppDialogs />
+        <FileDetailsSheet />
       </UploadsProvider>
     </SidebarProvider>
   )
