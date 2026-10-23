@@ -1,4 +1,5 @@
 import { boss, QUEUES } from "@konkyo/jobs"
+import { warmUp } from "@konkyo/zetaris"
 import { ingestFile } from "./pipeline"
 import { purgeExpired, purgeFiles } from "./purge"
 
@@ -6,6 +7,7 @@ import { purgeExpired, purgeFiles } from "./purge"
 const INGEST_CONCURRENCY = 2
 
 const queues = await boss({ worker: true })
+void warmUp().then((ms) => console.info(`[zetaris] session ready in ${ms} ms`))
 
 await queues.work(
   QUEUES.ingest.name,

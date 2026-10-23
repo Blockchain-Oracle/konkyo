@@ -1,0 +1,27 @@
+import type { UIMessage } from "ai"
+import type { Citation, Receipt, SourceRef } from "./answer"
+
+/** An agent step as the chat shows it live (plan F15); one part per step, updated in place. */
+export type StepData = {
+  id: string
+  label: string
+  state: "running" | "done" | "failed"
+  detail?: string
+}
+
+/** The data parts of an answer message (AI SDK UI message parts named `data-<key>`). */
+export type KonkyoData = {
+  step: StepData
+  /** The passages the Writer was given (p1…pN), sent before it starts writing. */
+  sources: { sources: SourceRef[] }
+  /** The verified answer: replaces the streamed draft once the Verifier is done. */
+  final: { body: string; caveat?: string; citations: Citation[]; rewritten: string[] }
+  receipt: Receipt
+  notFound: { question: string }
+  revising: { round: number; reasons: string[] }
+  /** On a question: the passage it is about (selection toolbar "Ask"). */
+  quote: { fileId: string; title: string; page?: number; text: string }
+}
+
+export type KonkyoMetadata = { runId?: string; createdAt?: string }
+export type KonkyoMessage = UIMessage<KonkyoMetadata, KonkyoData>

@@ -39,7 +39,7 @@ import { MinusIcon, MoonIcon, PlusIcon, ScanIcon } from "lucide-react"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useHighlights } from "@/lib/use-highlights"
 import type { SourcePassage } from "@/lib/use-source"
-import { CitationLayer, MarkLayer } from "./citation-layer"
+import { boxesFor, CitationLayer, MarkLayer } from "./citation-layer"
 import { SelectionToolbar } from "./selection-toolbar"
 
 /** Served from /public by scripts/vendor.mjs (no third-party CDN at runtime). */
@@ -75,7 +75,7 @@ function useEngine() {
 
 const PAGE_GAP = 12
 
-export type PdfTarget = { page?: number; passage?: SourcePassage; nonce: number }
+export type PdfTarget = { page?: number; passage?: SourcePassage; quote?: string; nonce: number }
 
 /**
  * The source viewer (plan F07): EmbedPDF renders only the pages near the viewport, so a 500-page
@@ -214,7 +214,8 @@ function LoadedDocument({
     const page = target.passage?.page ?? target.page
     if (!page) return
     jumped.current = target.nonce
-    const first = target.passage?.bboxes?.[0]
+    // The first line of the quote itself, so the eye lands on the proof, not the passage's start.
+    const first = target.passage ? boxesFor(target.passage, target.quote)[0] : undefined
     scroller.scrollToPage({
       pageNumber: page,
       ...(first ? { pageCoordinates: { x: first[0], y: first[1] }, alignY: 25 } : {}),
@@ -263,6 +264,7 @@ function LoadedDocument({
                 key={`${cited.id}:${target?.nonce}`}
                 fileId={fileId}
                 passage={cited}
+                quote={target?.quote}
                 scale={scale}
               />
             )}

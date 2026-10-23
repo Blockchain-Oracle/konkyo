@@ -108,6 +108,31 @@
       clip-path: inset(0);
     }
   }
+  /* Citation states (plan §7.4 #1): checking pulses without moving; a tick draws in; a
+     rewritten sentence resolves from a 2px blur. */
+  --animate-checking: checking 1.4s ease-in-out infinite;
+  --animate-tick: tick 200ms var(--ease-out) both;
+  --animate-rewrite: rewrite 420ms var(--ease-out) both;
+
+  @keyframes checking {
+    50% {
+      opacity: 0.45;
+    }
+  }
+  @keyframes tick {
+    from {
+      stroke-dashoffset: 12;
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+  @keyframes rewrite {
+    from {
+      filter: blur(2px);
+      opacity: 0.35;
+    }
+  }
   @keyframes pane-in {
     from {
       transform: translateX(24px);
@@ -121,8 +146,15 @@
   .animate-sweep {
     animation-name: fade-in;
   }
-  .animate-pane-in {
+  .animate-pane-in,
+  .animate-tick {
     animation: none;
+  }
+  .animate-checking {
+    animation-duration: 3s;
+  }
+  .animate-rewrite {
+    animation-name: fade-in;
   }
 }
 @keyframes fade-in {

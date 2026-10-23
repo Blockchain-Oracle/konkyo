@@ -23,12 +23,12 @@ export const EMBEDDING_DIMENSIONS = 1536
 
 const tsvector = customType<{ data: string }>({ dataType: () => "tsvector" })
 
-const owner = () =>
+export const owner = () =>
   text()
     .notNull()
     .references(() => user.id, { onDelete: "cascade" })
 
-const timestamps = {
+export const timestamps = {
   createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp({ withTimezone: true })
     .defaultNow()

@@ -140,3 +140,18 @@ export async function run(
 /** Quotes a value as a Spark SQL string literal. */
 export const literal = (value: string) =>
   `'${value.replaceAll("\\", "\\\\").replaceAll("'", "\\'")}'`
+
+/**
+ * Logs in and runs a trivial query, so the first real question doesn't pay for the session and
+ * Spark's first-query warm-up (about 15 s on a fresh process). Failures only log: Zetaris may be
+ * starting up too, and the first real call retries the login anyway.
+ */
+export async function warmUp(): Promise<number> {
+  const started = performance.now()
+  try {
+    await run("SELECT 1 AS ok", { limit: 1 })
+  } catch (error) {
+    console.warn(`[zetaris] warm-up failed: ${(error as Error).message}`)
+  }
+  return Math.round(performance.now() - started)
+}

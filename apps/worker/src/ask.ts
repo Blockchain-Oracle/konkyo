@@ -47,5 +47,7 @@ const result = await answer({
       )
   },
 })
-console.log(`\nfirst draft streamed ${streamed.length} chars · status ${result.status} · trace ${tracer.file}`)
+console.log(
+  `\nfirst draft streamed ${streamed.length} chars · status ${result.status} · trace ${tracer.file}`,
+)
 process.exit(0)

@@ -36,6 +36,13 @@
       "when": 1792770600000,
       "tag": "0004_highlights",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792776300000,
+      "tag": "0005_chats",
+      "breakpoints": true
     }
   ]
 }

@@ -45,7 +45,11 @@
     "react-dom": "19.3.1",
     "server-only": "0.0.1",
     "sonner": "2.0.8",
-    "zod": "4.6.7"
+    "zod": "4.6.7",
+    "@konkyo/agents": "workspace:*",
+    "@ai-sdk/react": "4.0.144",
+    "ai": "7.0.141",
+    "@konkyo/zetaris": "workspace:*"
   },
   "devDependencies": {
     "@konkyo/typescript-config": "workspace:*",

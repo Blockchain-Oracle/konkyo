@@ -23,6 +23,28 @@ export type Candidate = {
   score: number
   /** Best cosine similarity to any of the queries (0–1), for the "not in your library" call. */
   similarity: number
+  /** "Xie, Liu and Hero · 2017" from the file's citation record, when it has one. */
+  byline?: string
+}
+
+type Csl = {
+  author?: { family?: string; literal?: string }[]
+  issued?: { "date-parts"?: number[][] }
+}
+
+/** "Vaswani et al. · 2017": family names (three at most), then the year. */
+function bylineOf(meta: { csl?: Csl } | null): string | undefined {
+  const csl = meta?.csl
+  if (!csl) return undefined
+  const names = (csl.author ?? []).map((a) => a.family ?? a.literal).filter(Boolean) as string[]
+  const who =
+    names.length > 3
+      ? `${names[0]} et al.`
+      : names.length > 1
+        ? `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`
+        : names[0]
+  const year = csl.issued?.["date-parts"]?.[0]?.[0]
+  return [who, year].filter(Boolean).join(" · ") || undefined
 }
 
 /** The same key the ingest cache uses, so a question about a passage reuses its vector. */
@@ -150,8 +172,9 @@ export async function hybridSearch(
     t_end: number | null
     speaker: string | null
     text: string
+    meta: { csl?: Csl } | null
   }>(sql`
-    select p.id, p.file_id, f.title, f.kind::text as kind, p.page, p.t_start, p.t_end, p.speaker, p.text
+    select p.id, p.file_id, f.title, f.kind::text as kind, p.page, p.t_start, p.t_end, p.speaker, p.text, f.meta
     from passages p join files f on f.id = p.file_id
     where p.id in (${sql.join(
       top.map(([id]) => sql`${id}`),
@@ -175,6 +198,7 @@ export async function hybridSearch(
             text: r.text,
             score,
             similarity,
+            byline: bylineOf(r.meta),
           },
         ]
       : []

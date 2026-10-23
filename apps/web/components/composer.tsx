@@ -7,7 +7,14 @@ import {
   InputGroupTextarea,
 } from "@konkyo/ui/components/input-group"
 import { cn } from "@konkyo/ui/lib/utils"
-import { ArrowUpIcon, LibraryBigIcon, PlusIcon, TelescopeIcon, XIcon } from "lucide-react"
+import {
+  ArrowUpIcon,
+  LibraryBigIcon,
+  PlusIcon,
+  SquareIcon,
+  TelescopeIcon,
+  XIcon,
+} from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 import { type QuotedPassage, quoteInComposer, useComposerQuote } from "@/lib/composer-draft"
 
@@ -21,10 +28,15 @@ export function Composer({
   onSubmit,
   placeholder = "Ask your library…",
   className,
+  running = false,
+  onStop,
 }: {
   onSubmit: (value: ComposerSubmit) => void
   placeholder?: string
   className?: string
+  /** An answer is being written: the send button becomes Stop (plan F15). */
+  running?: boolean
+  onStop?: () => void
 }) {
   const formRef = useRef<HTMLFormElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -44,7 +56,10 @@ export function Composer({
       className={className}
       onSubmit={(event) => {
         event.preventDefault()
-        if (canSend) onSubmit({ text: text.trim(), deep, quote: quote ?? undefined })
+        if (!canSend || running) return
+        onSubmit({ text: text.trim(), deep, quote: quote ?? undefined })
+        setText("")
+        quoteInComposer(null)
       }}
     >
       <InputGroup className="rounded-card border-input bg-panel has-[[data-slot=input-group-control]:focus-visible]:border-line-strong has-[[data-slot=input-group-control]:focus-visible]:ring-0 dark:bg-panel">
@@ -115,16 +130,29 @@ export function Composer({
             Deep search
           </InputGroupButton>
           {/* Violet only while there's text, so a view never shows two violet actions (§7.4 #9). */}
-          <InputGroupButton
-            type="submit"
-            size="icon-sm"
-            variant={canSend ? "default" : "secondary"}
-            disabled={!canSend}
-            className="ml-auto rounded-full"
-            aria-label="Send"
-          >
-            <ArrowUpIcon strokeWidth={2} />
-          </InputGroupButton>
+          {running ? (
+            <InputGroupButton
+              type="button"
+              size="icon-sm"
+              variant="secondary"
+              onClick={onStop}
+              className="ml-auto rounded-full"
+              aria-label="Stop"
+            >
+              <SquareIcon className="size-3 fill-current" strokeWidth={0} />
+            </InputGroupButton>
+          ) : (
+            <InputGroupButton
+              type="submit"
+              size="icon-sm"
+              variant={canSend ? "default" : "secondary"}
+              disabled={!canSend}
+              className="ml-auto rounded-full"
+              aria-label="Send"
+            >
+              <ArrowUpIcon strokeWidth={2} />
+            </InputGroupButton>
+          )}
         </InputGroupAddon>
       </InputGroup>
     </form>

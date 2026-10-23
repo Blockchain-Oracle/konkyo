@@ -10,12 +10,15 @@ const nextConfig: NextConfig = {
   typedRoutes: true,
   // Workspace packages ship TypeScript source; Next compiles them with the app.
   transpilePackages: [
+    "@konkyo/agents",
     "@konkyo/config",
     "@konkyo/db",
     "@konkyo/env",
     "@konkyo/jobs",
+    "@konkyo/meterless",
     "@konkyo/storage",
     "@konkyo/ui",
+    "@konkyo/zetaris",
   ],
   async redirects() {
     // The Dala landing page takes "/" in S10; until then the root opens the app.

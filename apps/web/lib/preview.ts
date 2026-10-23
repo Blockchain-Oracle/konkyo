@@ -7,6 +7,8 @@ import { useSyncExternalStore } from "react"
 export type SourceTarget = {
   page?: number
   passageId?: string
+  /** The cited words: only the lines they span are marked, not the whole passage. */
+  quote?: string
   seconds?: number
   /** Bumped on every open, so asking for the same passage twice still scrolls and sweeps again. */
   nonce: number
@@ -40,10 +42,10 @@ function set(next: State) {
 export function openSource(
   source: Omit<SourceTab, "target"> & Omit<Partial<SourceTarget>, "nonce">,
 ) {
-  const { fileId, title, kind, page, passageId, seconds } = source
+  const { fileId, title, kind, page, passageId, seconds, quote } = source
   const target =
     page != null || passageId || seconds != null
-      ? { page, passageId, seconds, nonce: ++nonce }
+      ? { page, passageId, seconds, quote, nonce: ++nonce }
       : undefined
   const existing = state.tabs.find((tab) => tab.fileId === fileId)
   const tabs = existing

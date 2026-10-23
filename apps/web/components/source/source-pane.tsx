@@ -110,7 +110,10 @@ function SourceBody({ tab }: { tab: SourceTab }) {
   const { data: file, isPending, isError, error } = useFileDetail(tab.fileId)
   const { data: passage } = usePassage(tab.target?.passageId)
   const pdfTarget = useMemo(
-    () => (tab.target ? { page: tab.target.page, passage, nonce: tab.target.nonce } : undefined),
+    () =>
+      tab.target
+        ? { page: tab.target.page, passage, quote: tab.target.quote, nonce: tab.target.nonce }
+        : undefined,
     [tab.target, passage],
   )
 

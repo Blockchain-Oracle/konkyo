@@ -3,6 +3,7 @@
 import { Button } from "@konkyo/ui/components/button"
 import { ArrowRightIcon, LinkIcon, UploadIcon } from "lucide-react"
 import Link from "next/link"
+import { useSyncExternalStore } from "react"
 import { EmptyState } from "@/components/empty-state"
 import { FileStatus } from "@/components/library/file-status"
 import { KIND_LABEL, KindIcon } from "@/components/library/kind-icon"
@@ -10,11 +11,19 @@ import { openSource } from "@/lib/preview"
 import { useFiles } from "@/lib/use-library"
 
 const RECENT = 5
+const noop = () => () => {}
 
 /** Home's library block: what was added last (each opens beside the chat), or how to start. */
 export function HomeLibrary() {
   const { data: files, isPending } = useFiles()
-  if (isPending) return null // the block is below the fold of the composer; no skeleton flash
+  // The server never has the list; the client may already have it cached. Both render nothing
+  // until the browser has mounted, so the first paint matches and hydration holds.
+  const mounted = useSyncExternalStore(
+    noop,
+    () => true,
+    () => false,
+  )
+  if (!mounted || isPending) return null // below the composer's fold; no skeleton flash
   if (!files?.length) {
     return (
       <EmptyState

@@ -53,7 +53,10 @@ export function splitSentences(body: string): Sentence[] {
       const lead = text.match(/^(\s*\[\d[^\]]*\]\s*)+/)?.[0]
       if (lead && out.length) {
         const prev = out[out.length - 1] as Sentence
-        prev.text = `${prev.text} ${lead.trim()}`
+        // Markers belong before the sentence's own closing punctuation: "… solution [4][2]."
+        prev.text = /[.!?]["”’)]*$/.test(prev.text)
+          ? prev.text.replace(/\s*([.!?]["”’)]*)$/, ` ${lead.trim()}$1`)
+          : `${prev.text} ${lead.trim()}`
         prev.cites = citesOf(prev.text)
         text = text.slice(lead.length).trim()
         if (!text) continue

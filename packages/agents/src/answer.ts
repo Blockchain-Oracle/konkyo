@@ -24,6 +24,7 @@ export type SourceRef = {
   page: number | null
   tStart: number | null
   text: string
+  byline?: string
 }
 
 export type CitationState = "verified" | "rewritten"
@@ -537,6 +538,7 @@ function toSources(candidates: Candidate[]): SourceRef[] {
     page: c.page,
     tStart: c.tStart,
     text: c.text,
+    byline: c.byline,
   }))
 }
 
