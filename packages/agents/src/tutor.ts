@@ -221,7 +221,7 @@ const Quoted = z.object({
 const Hints = z
   .array(z.string())
   .describe(
-    "Exactly two hints. The first points to the idea or where to look; the second narrows it down (a first letter, a part of the answer, what it is contrasted with). Neither states the answer.",
+    "Exactly two hints. The first points to the idea or where to look; the second narrows it down (a first letter, how many words, what it is contrasted with). Neither states the answer, a synonym of it, or a description that amounts to it.",
   )
 
 const Why = z
@@ -229,6 +229,30 @@ const Why = z
   .describe(
     "One or two sentences explaining why the answer is right, from the passage, ending with [1]",
   )
+
+const Recall = z.object({
+  question: z.string(),
+  answer: z.string().describe("1-6 words"),
+  point: z
+    .string()
+    .describe(
+      "The fact the question tests, as one statement in your own words: nothing the quoted words don't say",
+    ),
+  accepted: z.array(z.string()).describe("Other ways to say the same answer (0-3)"),
+  hints: Hints,
+  quote: Quoted,
+  why: Why,
+})
+
+const Cloze = z.object({
+  passage: z.string().describe("The label of the passage the sentence is from"),
+  sentence: z.string().describe("One sentence copied exactly from that passage"),
+  blank: z
+    .string()
+    .describe("The 1-4 key words to blank out, copied exactly as they appear in the sentence"),
+  hints: Hints,
+  why: Why,
+})
 
 const Bundle = z.object({
   usable: z
@@ -238,32 +262,8 @@ const Bundle = z.object({
     ),
   topic: z.string().describe("The concept, in 2-4 words (used to mix topics in a round)"),
   claim: z.string().describe("The passages' main point, in one plain sentence"),
-  recall: z
-    .object({
-      question: z.string(),
-      answer: z.string().describe("1-6 words"),
-      point: z
-        .string()
-        .describe(
-          "The fact the question tests, as one statement in your own words: nothing the quoted words don't say",
-        ),
-      accepted: z.array(z.string()).describe("Other ways to say the same answer (0-3)"),
-      hints: Hints,
-      quote: Quoted,
-      why: Why,
-    })
-    .nullable(),
-  cloze: z
-    .object({
-      passage: z.string().describe("The label of the passage the sentence is from"),
-      sentence: z.string().describe("One sentence copied exactly from that passage"),
-      blank: z
-        .string()
-        .describe("The 1-4 key words to blank out, copied exactly as they appear in the sentence"),
-      hints: Hints,
-      why: Why,
-    })
-    .nullable(),
+  recall: Recall.nullable(),
+  cloze: Cloze.nullable(),
   truefalse: z
     .object({
       passage: z.string().describe("The label of the passage the sentence is from"),
@@ -303,6 +303,17 @@ Items:
 - order: only for a real sequence.`
 
 type Bundled = z.infer<typeof Bundle>
+
+/**
+ * A flashcard is a question and its answer: recall and cloze are required, and the other kinds
+ * can only be null. With all four optional, Luna wrote a true/false and no card (in testing).
+ */
+const FlashcardBundle = Bundle.extend({
+  recall: Recall,
+  cloze: Cloze,
+  truefalse: z.null(),
+  order: z.null(),
+})
 
 const VerifyResult = z.object({
   items: z.array(
@@ -553,9 +564,11 @@ export async function makeItems(
     generateText({
       model: model(c),
       providerOptions: reasoning(c),
-      output: Output.object({ schema: Bundle }),
+      output: Output.object({ schema: focus ? FlashcardBundle : Bundle }),
       instructions: TUTOR_INSTRUCTIONS + corrections,
-      prompt: `From "${w.title}". Make the true/false statement ${makeFalse ? "FALSE" : "TRUE"}.${focus ? `\nAsk only about this part, which the student selected: "${clean(focus).slice(0, 1200)}"` : ""}\n\n${passageText(w)}`,
+      prompt: focus
+        ? `From "${w.title}". These become flashcards: ask only about this part, which the student selected: "${clean(focus).slice(0, 1200)}"\n\n${passageText(w)}`
+        : `From "${w.title}". Make the true/false statement ${makeFalse ? "FALSE" : "TRUE"}.\n\n${passageText(w)}`,
     }),
   )
   const bundle = result.output
