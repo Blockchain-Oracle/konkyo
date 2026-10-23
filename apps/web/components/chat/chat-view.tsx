@@ -168,12 +168,22 @@ export function ChatView({
    * A deep search (plan F18): the worker runs it; the chat shows its message, which follows the
    * run's events. With a question (Deep search on), the question is saved first.
    */
-  const startDeep = async (question: string, userMessage?: KonkyoMessage) => {
+  const startDeep = async (
+    question: string,
+    userMessage?: KonkyoMessage,
+    intoFolderId?: string,
+  ) => {
     if (userMessage) setMessages((prev) => [...prev, userMessage])
     try {
       const { message } = await api<{ message: KonkyoMessage }>("/api/deep", {
         method: "POST",
-        json: { chatId: id, question, message: userMessage, scope: scopeRef.current },
+        json: {
+          chatId: id,
+          question,
+          message: userMessage,
+          scope: scopeRef.current,
+          intoFolderId,
+        },
       })
       setMessages((prev) => [...prev, message])
       void queryClient.invalidateQueries({ queryKey: ["chats"] })
@@ -194,12 +204,13 @@ export function ChatView({
     text,
     quote,
     deep,
-  }: Pick<ComposerSubmit, "text" | "quote"> & { deep?: boolean }) => {
+    intoFolderId,
+  }: Pick<ComposerSubmit, "text" | "quote"> & { deep?: boolean; intoFolderId?: string }) => {
     const parts: KonkyoMessage["parts"] = [
       ...(quote ? [{ type: "data-quote" as const, data: quote }] : []),
       { type: "text" as const, text },
     ]
-    if (deep) return startDeep(text, { id: crypto.randomUUID(), role: "user", parts })
+    if (deep) return startDeep(text, { id: crypto.randomUUID(), role: "user", parts }, intoFolderId)
     return sendMessage({ role: "user", parts })
   }
 

@@ -24,6 +24,8 @@ type DeepRunState = {
   candidates?: (DeepCandidate & { source: FoundSource })[]
   approved?: { keys: string[]; folderName: string }
   folderId?: string
+  /** "Find sources on this topic": import into this folder instead of a new one. */
+  intoFolderId?: string
   steer?: string[]
 }
 
@@ -221,12 +223,16 @@ async function search(runId: string) {
     ...(auto ? { approved: { keys: candidates.map((c) => c.key), folderName: plan.topic } } : {}),
   }
   await setRun(runId, { state: next, status: auto ? "importing" : "awaiting" })
+  const into = state.intoFolderId
+    ? await db.query.folders.findFirst({ where: eq(folders.id, state.intoFolderId) })
+    : undefined
   await emit(runId, {
     type: "shortlist",
     candidates: candidates.map(({ source: _source, ...c }) => c),
-    folderName: plan.topic,
+    folderName: into?.name ?? plan.topic,
     report,
     auto,
+    intoFolder: Boolean(into),
   })
   await tracer.flush()
   if (auto) return importAndAnswer(runId)
@@ -268,7 +274,17 @@ async function importAndAnswer(runId: string) {
   await setRun(runId, { status: "importing" })
   await emit(runId, { type: "stage", id: "approve", label: "Sources chosen", state: "done" })
 
-  const folder = await newFolder(run.ownerId, state.approved?.folderName ?? state.topic ?? "")
+  const existing = state.intoFolderId
+    ? await db.query.folders.findFirst({
+        where: and(
+          eq(folders.id, state.intoFolderId),
+          eq(folders.ownerId, run.ownerId),
+          isNull(folders.deletedAt),
+        ),
+      })
+    : undefined
+  const folder =
+    existing ?? (await newFolder(run.ownerId, state.approved?.folderName ?? state.topic ?? ""))
   await setRun(runId, { state: { ...state, folderId: folder.id } })
   await emit(runId, {
     type: "approved",

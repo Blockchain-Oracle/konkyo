@@ -153,13 +153,17 @@ function Approve({ runId, state }: { runId: string; state: DeepState }) {
         </p>
         <div className="mt-3 flex items-center gap-2">
           <FolderIcon className="size-4 shrink-0 text-ash-gray" strokeWidth={1.5} aria-hidden />
-          <Input
-            value={folder}
-            onChange={(e) => setFolder(e.target.value)}
-            maxLength={80}
-            aria-label="Folder to import into"
-            className="h-9 rounded-lg"
-          />
+          {shortlist.intoFolder ? (
+            <span className="text-snippet text-silver-mist">Into “{shortlist.folderName}”</span>
+          ) : (
+            <Input
+              value={folder}
+              onChange={(e) => setFolder(e.target.value)}
+              maxLength={80}
+              aria-label="Folder to import into"
+              className="h-9 rounded-lg"
+            />
+          )}
         </div>
       </div>
       <ul className="max-h-96 divide-y divide-border overflow-y-auto">

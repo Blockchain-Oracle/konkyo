@@ -16,6 +16,7 @@ const Body = z.object({
       parts: z.array(z.object({ type: z.string() }).passthrough()).min(1),
     })
     .optional(),
+  intoFolderId: z.uuid().optional(),
   scope: z
     .object({
       fileIds: z.array(z.uuid()).max(200).optional(),
@@ -32,13 +33,14 @@ export async function POST(request: Request) {
   if (!parsed.success)
     return NextResponse.json({ error: "That request wasn't valid" }, { status: 400 })
   try {
-    const { chatId, question, message, scope } = parsed.data
+    const { chatId, question, message, scope, intoFolderId } = parsed.data
     return NextResponse.json(
       await startDeep(session.user.id, Boolean(session.user.isAnonymous), {
         chatId,
         question,
         userMessage: message as unknown as KonkyoMessage | undefined,
         scope,
+        intoFolderId,
       }),
     )
   } catch (error) {

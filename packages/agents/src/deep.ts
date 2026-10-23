@@ -29,6 +29,8 @@ export type DeepEvent =
       report: ScreeningReport
       /** Imported without asking (the person's setting). */
       auto: boolean
+      /** Goes into an existing folder (Find sources on this topic), not a new one. */
+      intoFolder?: boolean
     }
   | { type: "approved"; keys: string[]; folderName: string; folderId: string }
   | {

@@ -22,6 +22,7 @@ import {
   LinkIcon,
   MessageSquareIcon,
   PencilIcon,
+  TelescopeIcon,
   Trash2Icon,
   UploadIcon,
 } from "lucide-react"
@@ -32,6 +33,7 @@ import { type DragEvent, useEffect, useMemo, useRef, useState } from "react"
 import { EmptyState } from "@/components/empty-state"
 import { openImport, openNewFolder, openRenameFolder } from "@/components/shell/app-dialogs"
 import { chatWithHref } from "@/lib/focus"
+import { holdQuestion } from "@/lib/pending-question"
 import { useFolderActions, useFolderPath, useFolderTree } from "@/lib/use-folders"
 import { type LibraryFile, useFiles } from "@/lib/use-library"
 import { filesFromDrop } from "@/lib/use-uploader"
@@ -313,6 +315,17 @@ function FolderHeading({ folderId }: { folderId: string }) {
   const { data: path } = useFolderPath(folderId)
   const { trash } = useFolderActions()
   const router = useRouter()
+  // A deep search on the folder's topic, in a chat focused on it; what's found lands here (F18).
+  const findSourcesFor = (folder: { id: string; name: string }) => {
+    const chatId = crypto.randomUUID()
+    holdQuestion(chatId, {
+      text: `Find more sources on ${folder.name}`,
+      deep: true,
+      focus: { fileIds: [], folderIds: [folder.id] },
+      intoFolderId: folder.id,
+    })
+    router.push(`/chats/${chatId}` as Route)
+  }
   const folder = path?.at(-1)
   return (
     <div className="flex min-w-0 items-center gap-1">
@@ -356,6 +369,10 @@ function FolderHeading({ folderId }: { folderId: string }) {
             >
               <MessageSquareIcon strokeWidth={1.5} />
               Chat with this folder
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => findSourcesFor(folder)}>
+              <TelescopeIcon strokeWidth={1.5} />
+              Find sources on this topic
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => openRenameFolder(folder.id, folder.name)}>
               <PencilIcon strokeWidth={1.5} />

@@ -4,7 +4,14 @@ import type { QuotedPassage } from "./composer-draft"
 import type { Focus } from "./focus"
 
 /** A question asked on Home, waiting for its new chat page to send it (one per chat id). */
-export type PendingQuestion = { text: string; quote?: QuotedPassage; deep?: boolean; focus?: Focus }
+export type PendingQuestion = {
+  text: string
+  quote?: QuotedPassage
+  deep?: boolean
+  focus?: Focus
+  /** "Find sources on this topic": the deep search imports into this folder. */
+  intoFolderId?: string
+}
 
 const pending = new Map<string, PendingQuestion>()
 

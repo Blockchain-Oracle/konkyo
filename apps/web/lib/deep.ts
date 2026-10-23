@@ -35,7 +35,14 @@ const ACTIVE = new Set(["queued", "searching", "awaiting", "importing", "answeri
 export async function startDeep(
   ownerId: string,
   guest: boolean,
-  input: { chatId: string; question: string; userMessage?: KonkyoMessage; scope?: ChatScope },
+  input: {
+    chatId: string
+    question: string
+    userMessage?: KonkyoMessage
+    scope?: ChatScope
+    /** "Find sources on this topic" in a folder: what's found goes into that folder. */
+    intoFolderId?: string
+  },
 ) {
   const [today] = await db
     .select({ n: count() })
@@ -74,7 +81,7 @@ export async function startDeep(
     kind: "deep",
     status: "queued",
     messageId: message.id,
-    state: {},
+    state: input.intoFolderId ? { intoFolderId: input.intoFolderId } : {},
   })
   await saveMessage(ownerId, input.chatId, message, runId)
   await enqueue("deep", { runId, phase: "search" }, `${runId}:search`)
