@@ -93,6 +93,40 @@
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* The cited passage is marked like a highlighter pen, one line after another (plan §7.4 #2). */
+  --animate-sweep: sweep 280ms var(--ease-out) both;
+  --animate-pane-in: pane-in var(--duration-pane) var(--ease-drawer) both;
+
+  @keyframes sweep {
+    from {
+      clip-path: inset(0 100% 0 0);
+    }
+    to {
+      clip-path: inset(0);
+    }
+  }
+  @keyframes pane-in {
+    from {
+      transform: translateX(24px);
+      opacity: 0;
+    }
+  }
+}
+
+/* Reduced motion: the highlight fades in and panes appear in place. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-sweep {
+    animation-name: fade-in;
+  }
+  .animate-pane-in {
+    animation: none;
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
 }
 
 :root {

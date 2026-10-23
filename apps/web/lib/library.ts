@@ -3,9 +3,9 @@ import { type FileKind, isYouTube, kindForName, STORAGE } from "@konkyo/config"
 import { db, schema } from "@konkyo/db"
 import { enqueue } from "@konkyo/jobs"
 import { headObject, objectKey, presignOperation, type S3Operation } from "@konkyo/storage"
-import { and, desc, eq, isNull } from "drizzle-orm"
+import { and, asc, desc, eq, isNull } from "drizzle-orm"
 
-const { files, folders, fileFolders } = schema
+const { files, folders, fileFolders, passages } = schema
 
 export class LibraryError extends Error {
   constructor(
@@ -237,4 +237,86 @@ export async function keepExisting(ownerId: string, fileId: string) {
 export async function trashFile(ownerId: string, fileId: string) {
   await ownFile(ownerId, fileId)
   await db.update(files).set({ deletedAt: new Date() }).where(eq(files.id, fileId))
+}
+
+// ------------------------------------------------------------------ sources (the preview pane)
+
+/** One file for the preview pane: where to read it (a PDF for every document kind) or play it. */
+export async function getFileDetail(ownerId: string, fileId: string) {
+  const file = await ownFile(ownerId, fileId)
+  if (file.deletedAt) throw new LibraryError("This file is in Trash", 404)
+  const playable = file.kind === "audio" || file.kind === "video"
+  const content = `/api/files/${file.id}/content`
+  return {
+    id: file.id,
+    title: file.title,
+    kind: file.kind,
+    status: file.status,
+    mime: file.mime,
+    sourceUrl: file.sourceUrl,
+    pageCount: file.pageCount,
+    durationSeconds: file.durationSeconds,
+    fromScan: file.fromScan,
+    pages: file.pages,
+    createdAt: file.createdAt,
+    renditionUrl: file.renditionKey ? content : null,
+    mediaUrl: playable && file.originalKey ? `${content}?as=original` : null,
+    downloadUrl: file.originalKey ? `${content}?as=original&download=1` : null,
+  }
+}
+
+export type FileDetail = Awaited<ReturnType<typeof getFileDetail>>
+
+/** The storage key behind a file's content route, only for its owner. */
+export async function fileContentKey(
+  ownerId: string,
+  fileId: string,
+  as: "rendition" | "original",
+) {
+  const file = await ownFile(ownerId, fileId)
+  const key = as === "original" ? file.originalKey : file.renditionKey
+  if (!key) throw new LibraryError("This file has no stored copy", 404)
+  const name = as === "original" ? file.title : `${file.title.replace(/\.[a-z0-9]+$/i, "")}.pdf`
+  return { key, name, mime: as === "original" ? file.mime : "application/pdf" }
+}
+
+const passageColumns = {
+  id: passages.id,
+  fileId: passages.fileId,
+  ordinal: passages.ordinal,
+  page: passages.page,
+  kind: passages.kind,
+  text: passages.text,
+  bboxes: passages.bboxes,
+  lineStarts: passages.lineStarts,
+  tStart: passages.tStart,
+  tEnd: passages.tEnd,
+  speaker: passages.speaker,
+}
+
+/** A file's passages in reading order (a transcript, or the passages on one page). */
+export async function listPassages(ownerId: string, fileId: string, page?: number) {
+  return db
+    .select(passageColumns)
+    .from(passages)
+    .where(
+      and(
+        eq(passages.ownerId, ownerId),
+        eq(passages.fileId, fileId),
+        page != null ? eq(passages.page, page) : undefined,
+      ),
+    )
+    .orderBy(asc(passages.ordinal))
+}
+
+export type SourcePassage = Awaited<ReturnType<typeof listPassages>>[number]
+
+/** One passage by its id: what a citation points at. */
+export async function getPassage(ownerId: string, passageId: string) {
+  const [row] = await db
+    .select(passageColumns)
+    .from(passages)
+    .where(and(eq(passages.ownerId, ownerId), eq(passages.id, passageId)))
+  if (!row) throw new LibraryError("That passage isn't in your library", 404)
+  return row
 }

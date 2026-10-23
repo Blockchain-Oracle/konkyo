@@ -1,10 +1,10 @@
 import { Button } from "@konkyo/ui/components/button"
-import { FileTextIcon, FolderIcon, LinkIcon, UploadIcon } from "lucide-react"
+import { FileTextIcon, FolderIcon, UploadIcon } from "lucide-react"
 import type { Metadata } from "next"
 import Link from "next/link"
-import { EmptyState } from "@/components/empty-state"
 import { MobileHeader } from "@/components/page-header"
 import { HomeComposer } from "./home-composer"
+import { HomeLibrary } from "./home-library"
 
 export const metadata: Metadata = { title: "Home" }
 
@@ -42,22 +42,7 @@ export default function HomePage() {
         </nav>
 
         <div className="mt-24">
-          <EmptyState
-            label="Your library"
-            title="Nothing here yet"
-            description="Upload files or a whole folder, or import a paper by its DOI. Every answer will point to the exact passage it came from."
-          >
-            <div className="flex flex-wrap gap-2">
-              <Button render={<Link href="/library" />} nativeButton={false} variant="secondary">
-                <UploadIcon strokeWidth={1.5} />
-                Upload files
-              </Button>
-              <Button render={<Link href="/library" />} nativeButton={false} variant="ghost">
-                <LinkIcon strokeWidth={1.5} />
-                Import by URL or DOI
-              </Button>
-            </div>
-          </EmptyState>
+          <HomeLibrary />
         </div>
       </div>
     </>

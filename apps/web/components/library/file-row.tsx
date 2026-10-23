@@ -8,53 +8,12 @@ import {
   DropdownMenuTrigger,
 } from "@konkyo/ui/components/dropdown-menu"
 import { Progress } from "@konkyo/ui/components/progress"
-import {
-  AudioLinesIcon,
-  EllipsisIcon,
-  FileCode2Icon,
-  FileTextIcon,
-  FileTypeIcon,
-  FilmIcon,
-  GlobeIcon,
-  PresentationIcon,
-  Trash2Icon,
-} from "lucide-react"
+import { EllipsisIcon, Trash2Icon } from "lucide-react"
+import { openSource } from "@/lib/preview"
 import { type LibraryFile, useFileActions } from "@/lib/use-library"
 import type { UploadState } from "@/lib/use-uploader"
 import { FileStatus } from "./file-status"
-
-const KIND_ICON = {
-  pdf: FileTextIcon,
-  docx: FileTypeIcon,
-  pptx: PresentationIcon,
-  markdown: FileCode2Icon,
-  text: FileTextIcon,
-  web: GlobeIcon,
-  audio: AudioLinesIcon,
-  video: FilmIcon,
-} as const
-
-const KIND_LABEL: Record<LibraryFile["kind"], string> = {
-  pdf: "PDF",
-  docx: "Word",
-  pptx: "Slides",
-  markdown: "Markdown",
-  text: "Text",
-  web: "Web page",
-  youtube: "YouTube",
-  audio: "Recording",
-  video: "Video",
-}
-
-function KindIcon({ kind }: { kind: LibraryFile["kind"] }) {
-  if (kind === "youtube") {
-    // A real logo, not a generic icon (plan §7.9).
-    // biome-ignore lint/performance/noImgElement: static brand SVG
-    return <img src="/logos/youtube.svg" alt="" className="h-3.5 w-5 object-contain" />
-  }
-  const Icon = KIND_ICON[kind]
-  return <Icon className="size-4 text-ash-gray" strokeWidth={1.5} aria-hidden />
-}
+import { KIND_LABEL, KindIcon } from "./kind-icon"
 
 const duration = (s: number) =>
   `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`
@@ -176,9 +135,21 @@ export function FileRow({
         <KindIcon kind={file.kind} />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-ui text-bone-white" title={file.title}>
-          {file.title}
-        </p>
+        {file.status === "ready" ? (
+          // The whole row reads as one target: the title button stretches over it (::after).
+          <button
+            type="button"
+            onClick={() => openSource({ fileId: file.id, title: file.title, kind: file.kind })}
+            className="block max-w-full truncate text-left text-ui text-bone-white after:absolute after:inset-0 after:rounded-lg after:content-[''] focus-visible:outline-none focus-visible:after:ring-1 focus-visible:after:ring-silver-mist"
+            title={file.title}
+          >
+            {file.title}
+          </button>
+        ) : (
+          <p className="truncate text-ui text-bone-white" title={file.title}>
+            {file.title}
+          </p>
+        )}
         <p className="mt-0.5 truncate text-meta text-ash-gray">
           {file.status === "needs_you" && file.problemDetail ? file.problemDetail : details(file)}
         </p>
@@ -208,7 +179,7 @@ export function FileRow({
               variant="ghost"
               size="icon-sm"
               aria-label={`More for ${file.title}`}
-              className="text-ash-gray hover:text-bone-white"
+              className="relative z-10 text-ash-gray hover:text-bone-white"
             />
           }
         >

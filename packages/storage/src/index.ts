@@ -187,6 +187,25 @@ export async function ensureBucket(): Promise<void> {
   await s3.send(new CreateBucketCommand({ Bucket: bucket }))
 }
 
+/**
+ * Streams an object (or the byte range a viewer asked for), so the app can serve files from its
+ * own origin: no storage CORS, and every byte is checked against the reader's session.
+ */
+export async function streamObject(key: string, range?: string | null) {
+  const out = await s3.send(
+    new GetObjectCommand({ Bucket: bucket, Key: key, Range: range ?? undefined }),
+  )
+  if (!out.Body) throw new Error(`Empty object: ${key}`)
+  return {
+    body: out.Body.transformToWebStream(),
+    partial: Boolean(out.ContentRange),
+    contentRange: out.ContentRange,
+    contentLength: out.ContentLength,
+    contentType: out.ContentType,
+    etag: out.ETag,
+  }
+}
+
 /** Health probe used by `pnpm services:check` and the readiness route. */
 export async function storageReady(): Promise<boolean> {
   try {

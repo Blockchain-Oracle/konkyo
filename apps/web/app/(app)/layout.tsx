@@ -7,6 +7,7 @@ import { Suspense } from "react"
 import { AppSidebar } from "@/components/shell/app-sidebar"
 import { CommandPalette } from "@/components/shell/command-palette"
 import { MobileTabBar } from "@/components/shell/mobile-tab-bar"
+import { Workspace } from "@/components/source/workspace"
 import { getSession } from "@/lib/session"
 
 /** shadcn's sidebar remembers its open/closed state in this cookie. */
@@ -28,7 +29,7 @@ async function Shell({ children }: { children: React.ReactNode }) {
         }}
       />
       <SidebarInset className="min-w-0 pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0">
-        {children}
+        <Workspace>{children}</Workspace>
       </SidebarInset>
       <MobileTabBar />
       <CommandPalette />
