@@ -3,6 +3,7 @@ import type { Db } from "./index"
 import {
   agentRuns,
   agents,
+  briefs,
   chats,
   files,
   folderShares,
@@ -49,6 +50,7 @@ const movers: Array<(tx: Tx, fromUserId: string, toUserId: string) => Promise<un
     tx.update(noteVersions).set({ ownerId: to }).where(eq(noteVersions.ownerId, from)),
   (tx, from, to) => tx.update(noteEvents).set({ ownerId: to }).where(eq(noteEvents.ownerId, from)),
   (tx, from, to) => tx.update(agents).set({ ownerId: to }).where(eq(agents.ownerId, from)),
+  (tx, from, to) => tx.update(briefs).set({ ownerId: to }).where(eq(briefs.ownerId, from)),
   (tx, from, to) => tx.update(agentRuns).set({ ownerId: to }).where(eq(agentRuns.ownerId, from)),
   (tx, from, to) => tx.update(inboxItems).set({ ownerId: to }).where(eq(inboxItems.ownerId, from)),
   (tx, from, to) =>
@@ -95,16 +97,20 @@ export async function reownUserData(db: Db, fromUserId: string, toUserId: string
 
 /** What deleting a person leaves outside Postgres: stored bytes, Zetaris evidence, watch tables. */
 export async function ownedOutsidePostgres(db: Db, userId: string) {
-  const [owned, watches] = await Promise.all([
+  const [owned, watches, spoken] = await Promise.all([
     db
       .select({ id: files.id, originalKey: files.originalKey, renditionKey: files.renditionKey })
       .from(files)
       .where(eq(files.ownerId, userId)),
     db.select({ table: agents.zetarisTable }).from(agents).where(eq(agents.ownerId, userId)),
+    db.select({ key: briefs.audioKey }).from(briefs).where(eq(briefs.ownerId, userId)),
   ])
   return {
     fileIds: owned.map((f) => f.id),
-    keys: owned.flatMap((f) => [f.originalKey, f.renditionKey].filter((k): k is string => !!k)),
+    keys: [
+      ...owned.flatMap((f) => [f.originalKey, f.renditionKey]),
+      ...spoken.map((b) => b.key),
+    ].filter((k): k is string => !!k),
     tables: watches.map((w) => w.table).filter((t): t is string => !!t),
   }
 }

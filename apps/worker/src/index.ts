@@ -1,6 +1,7 @@
 import { boss, QUEUES } from "@konkyo/jobs"
 import { warmUp } from "@konkyo/zetaris"
 import { queueDueAgents, runAgent } from "./agents"
+import { makeBrief } from "./brief"
 import { deepJob } from "./deep"
 import { closeInterrupted } from "./interrupted"
 import { indexNote } from "./notes"
@@ -32,6 +33,11 @@ await queues.work(QUEUES.deep.name, { localConcurrency: 3 }, async ([job]) => {
   if (!job) return
   const { runId, phase } = QUEUES.deep.payload.parse(job.data)
   await deepJob(runId, phase)
+})
+
+// Audio briefs: one at a time per worker (each is a long ElevenLabs request).
+await queues.work(QUEUES.brief.name, async ([job]) => {
+  if (job) await makeBrief(QUEUES.brief.payload.parse(job.data).briefId)
 })
 
 // Practice sets run a few at a time beside ingest (each is mostly waiting on model calls).
@@ -76,7 +82,7 @@ await queues.work(AGENTS_DUE, async () => {
 // Practice, deep searches and agent runs a restart cut off are closed (checked with agents-due).
 async function reportInterrupted() {
   const closed = await closeInterrupted()
-  if (closed.sets + closed.deep + closed.agentRuns)
+  if (closed.sets + closed.deep + closed.agentRuns + closed.briefs)
     console.info(`[interrupted] closed ${JSON.stringify(closed)}`)
 }
 void reportInterrupted()

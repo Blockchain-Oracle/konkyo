@@ -99,6 +99,13 @@
       "when": 1792821900000,
       "tag": "0013_shares",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792827600000,
+      "tag": "0014_briefs",
+      "breakpoints": true
     }
   ]
 }

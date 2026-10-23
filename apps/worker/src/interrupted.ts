@@ -41,6 +41,13 @@ export async function closeInterrupted() {
   for (const run of deep)
     await finish(run.id, "failed", "The search was interrupted. Try again.").catch(() => undefined)
 
+  // A brief's slowest step is the dialogue request (about 30 s for two minutes of audio).
+  const briefs = await db.execute<{ id: string }>(sql`
+    update briefs set status = 'failed', problem = 'Making this brief was interrupted. Try again.'
+    where status = 'making' and updated_at < now() - interval '10 minutes'
+    returning id
+  `)
+
   // An agent run's job expires after 15 minutes.
   const agentRuns = await db.execute<{ id: string }>(sql`
     update agent_runs set status = 'failed', summary = 'Interrupted. It runs again at its next time.',
@@ -48,5 +55,10 @@ export async function closeInterrupted() {
     where status = 'running' and started_at < now() - interval '20 minutes'
     returning id
   `)
-  return { sets: sets.length, deep: deep.length, agentRuns: agentRuns.length }
+  return {
+    sets: sets.length,
+    deep: deep.length,
+    agentRuns: agentRuns.length,
+    briefs: briefs.length,
+  }
 }

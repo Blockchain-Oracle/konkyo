@@ -39,6 +39,13 @@ export const QUEUES = {
     options: { retryLimit: 2, retryDelay: 10, retryBackoff: true, expireInSeconds: 10 * 60 },
     send: {},
   },
+  /** An audio brief (F37): script, checks, two voices, timing. Not retried: each run pays twice. */
+  brief: {
+    name: "brief",
+    payload: z.object({ briefId: z.uuid() }),
+    options: { retryLimit: 0, expireInSeconds: 15 * 60 },
+    send: { heartbeatSeconds: 30 },
+  },
   /** One agent run (F34): a watch checks for new papers, a quiz agent makes practice. */
   agent: {
     name: "agent",

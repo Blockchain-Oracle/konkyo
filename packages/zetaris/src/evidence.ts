@@ -111,6 +111,42 @@ async function createEvidenceTables(): Promise<void> {
   }
 }
 
+/**
+ * Page furniture in Zetaris's PDFBox reading, which Konkyo's own extraction drops by position:
+ * a preprint's margin line numbers ("… at high levels it 915\n inhibits …") and running heads
+ * and feet on every page. Left in, a quote running past one failed the check though it is
+ * verbatim in the paper (in testing: 3 of 10 brief quotes). Only provable furniture goes: a trailing
+ * number that continues the previous or next line's by one, and a short line that repeats three
+ * or more times, numbers aside. Removing text can only make a match harder, never pass a quote
+ * the paper doesn't contain.
+ */
+export function withoutPageFurniture(text: string): string {
+  const lines = text.split("\n")
+  const trailing = lines.map((l) => {
+    const m = l.match(/\s(\d{1,5})\s*$/)
+    return m ? Number(m[1]) : null
+  })
+  const numbered = (i: number) => {
+    const n = trailing[i]
+    if (n == null) return false
+    const prev = trailing[i - 1]
+    const next = trailing[i + 1]
+    return (prev != null && n === prev + 1) || (next != null && n === next - 1)
+  }
+  const shape = (l: string) => l.replace(/\d+/g, "#").trim()
+  const counts = new Map<string, number>()
+  for (const l of lines) {
+    const s = shape(l)
+    if (s.length >= 4 && s.length <= 120) counts.set(s, (counts.get(s) ?? 0) + 1)
+  }
+  return lines
+    .map((l, i) => {
+      if ((counts.get(shape(l)) ?? 0) >= 3 || /^\s*\d{1,5}\s*$/.test(l)) return ""
+      return numbered(i) ? l.replace(/\s\d{1,5}\s*$/, "") : l
+    })
+    .join("\n")
+}
+
 /** Writes a document's passages; uncached FILESTORE tables see new files on the next query (S00). */
 export async function publishPassages(doc: EvidenceDoc): Promise<void> {
   await writeAtomic(FOLDERS.passages, `${doc.doc_id}.json`, JSON.stringify(doc))
@@ -131,18 +167,17 @@ export async function publishPdfText(fileId: string, pdf: Uint8Array): Promise<{
     `CREATE LIGHTNING FILESTORE TABLE ${table} FROM ${DB} FORMAT PDF OPTIONS (path "${zetarisPath(FOLDERS.originals, `${fileId}.pdf`)}", preview_len "2000000", preview_max_bytes "200000000")`,
   )
   try {
-    const { rows } = await run(
-      `SELECT ${EVIDENCE_KEY_SQL("preview")} AS p, length(preview) AS n_chars FROM ${DB}.${table}`,
-      { timeoutMs: ZETARIS.queryTimeoutMs * 4 },
-    )
-    const p = rows.map((r) => r.p ?? "").join("")
-    const chars = rows.reduce((sum, r) => sum + Number(r.n_chars ?? 0), 0)
+    const { rows } = await run(`SELECT preview FROM ${DB}.${table}`, {
+      timeoutMs: ZETARIS.queryTimeoutMs * 4,
+    })
+    const text = rows.map((r) => r.preview ?? "").join("\n")
+    const p = evidenceKey(withoutPageFurniture(text))
     await writeAtomic(
       FOLDERS.pdfText,
       `${fileId}.json`,
-      JSON.stringify({ doc_id: fileId, n_chars: chars, p }),
+      JSON.stringify({ doc_id: fileId, n_chars: text.length, p }),
     )
-    return { chars }
+    return { chars: text.length }
   } finally {
     await run(`DROP LIGHTNING DATABASE TABLE ${DB}.${table}`).catch(() => undefined)
   }

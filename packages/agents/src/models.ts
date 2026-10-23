@@ -2,6 +2,7 @@ import { createOpenAI } from "@ai-sdk/openai"
 import { env } from "@konkyo/env/server"
 import { type LanguageModel, wrapLanguageModel } from "ai"
 import { limiter } from "./limiter"
+import type { TraceEvent, Tracer } from "./trace"
 
 export const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY })
 
@@ -109,3 +110,30 @@ export const reasoning = (choice: ModelChoice) => ({
 })
 
 export const EMBEDDING_MODEL = "text-embedding-3-small"
+
+/**
+ * Runs a call on the role's model, and once more on its fallback if that fails (an outage, a
+ * malformed reply), logging the switch. Stopped runs and an empty account don't fall back.
+ */
+export async function withFallback<T>(
+  role: Role,
+  agent: TraceEvent["agent"],
+  tracer: Tracer | undefined,
+  step: string,
+  fn: (choice: ModelChoice) => Promise<T>,
+): Promise<{ result: T; choice: ModelChoice }> {
+  const { primary, fallback } = MODELS[role]
+  try {
+    return { result: await fn(primary), choice: primary }
+  } catch (error) {
+    if (noFallback(error)) throw error
+    tracer?.log({
+      agent,
+      step,
+      action: "escalated_to_fallback",
+      model: fallback.id,
+      detail: { reason: (error as Error).message.slice(0, 300) },
+    })
+    return { result: await fn(fallback), choice: fallback }
+  }
+}

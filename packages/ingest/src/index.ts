@@ -1,4 +1,5 @@
 export * from "./convert"
+export * from "./dialogue"
 export * from "./embed"
 export * from "./metadata"
 export * from "./normalize"

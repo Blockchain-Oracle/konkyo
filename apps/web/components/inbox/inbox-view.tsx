@@ -10,6 +10,7 @@ import {
   CheckCheckIcon,
   FileSearchIcon,
   GraduationCapIcon,
+  HeadphonesIcon,
   XIcon,
 } from "lucide-react"
 import type { Route } from "next"
@@ -26,6 +27,7 @@ const ICON = {
   practice: GraduationCapIcon,
   "new-source": FileSearchIcon,
   "agent-run": BotIcon,
+  brief: HeadphonesIcon,
   system: BellRingIcon,
 } as const
 
@@ -81,7 +83,9 @@ function Row({ item }: { item: InboxItem }) {
                 ? "Start review"
                 : item.kind === "practice"
                   ? "Practise"
-                  : "Open",
+                  : item.kind === "brief"
+                    ? "Listen"
+                    : "Open",
             run: open,
           }
         : null

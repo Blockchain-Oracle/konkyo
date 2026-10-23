@@ -5,7 +5,7 @@ import { owner } from "./library"
  * What lands in the Inbox (plan F41): review reminders, sources a watch found, finished agent
  * runs, and practice an agent made.
  */
-export type InboxKind = "review" | "new-source" | "agent-run" | "practice" | "system"
+export type InboxKind = "review" | "new-source" | "agent-run" | "practice" | "brief" | "system"
 
 export type InboxData = {
   /** new-source: what Import brings in (a DOI, or a page's address). */

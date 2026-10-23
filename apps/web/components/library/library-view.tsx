@@ -21,6 +21,7 @@ import {
   FolderUpIcon,
   GlobeIcon,
   GraduationCapIcon,
+  HeadphonesIcon,
   LinkIcon,
   MessageSquareIcon,
   PencilIcon,
@@ -32,6 +33,7 @@ import type { Route } from "next"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { type DragEvent, useEffect, useMemo, useRef, useState } from "react"
+import { FolderBriefs } from "@/components/briefs/folder-briefs"
 import { EmptyState } from "@/components/empty-state"
 import {
   openImport,
@@ -41,6 +43,7 @@ import {
 } from "@/components/shell/app-dialogs"
 import { chatWithHref } from "@/lib/focus"
 import { holdQuestion } from "@/lib/pending-question"
+import { useMakeBrief } from "@/lib/use-briefs"
 import { useFolderActions, useFolderPath, useFolderTree } from "@/lib/use-folders"
 import { type LibraryFile, useFiles } from "@/lib/use-library"
 import { useStudyActions } from "@/lib/use-study"
@@ -255,6 +258,7 @@ export function LibraryView({ folderId }: { folderId?: string }) {
         </div>
       ) : (
         <>
+          {folderId && <FolderBriefs folderId={folderId} />}
           {(files?.length ?? 0) > 0 && (
             <ToggleGroup
               value={[filter]}
@@ -323,6 +327,7 @@ function FolderHeading({ folderId }: { folderId: string }) {
   const { data: path } = useFolderPath(folderId)
   const { trash } = useFolderActions()
   const study = useStudyActions()
+  const makeBrief = useMakeBrief()
   const router = useRouter()
   // A deep search on the folder's topic, in a chat focused on it; what's found lands here (F18).
   const findSourcesFor = (folder: { id: string; name: string }) => {
@@ -392,6 +397,10 @@ function FolderHeading({ folderId }: { folderId: string }) {
             >
               <GraduationCapIcon strokeWidth={1.5} />
               Quiz me on this folder
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => makeBrief.mutate(folder.id)}>
+              <HeadphonesIcon strokeWidth={1.5} />
+              Make an audio brief
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => openShareFolder(folder.id, folder.name)}>
               <GlobeIcon strokeWidth={1.5} />

@@ -27,6 +27,7 @@ export const STORAGE = {
     renditions: "renditions",
     pages: "pages",
     audio: "audio",
+    briefs: "briefs",
     exports: "exports",
   },
   /** Presigned upload URLs expire quickly; uploads start right after signing. */
@@ -175,6 +176,26 @@ export const PUBLIC = {
   answersPerDayPerFolder: 300,
   historyTurns: 6,
   moderationModel: "omni-moderation-latest",
+} as const
+
+/**
+ * Audio briefs (plan F37): two voices talk through a folder. One Text-to-Dialogue request stays
+ * reliable to about 2,000 characters (S00), so a brief is one request of about two minutes.
+ * Voices and the model are the ones the S00 spike measured.
+ */
+export const BRIEF = {
+  maxChars: 1_900,
+  model: "eleven_v3",
+  outputFormat: "mp3_44100_128",
+  voices: {
+    A: { name: "Bella", id: "hpp4J3VqNfWAUOO0d1Us" },
+    B: { name: "George", id: "JBFqnCBsd6RMkjVDRZzb" },
+  },
+  /** Passage windows the script is written from. */
+  windows: 8,
+  /** The ElevenLabs plan has no overage, so briefs are few a day. */
+  guestPerDay: 1,
+  perDay: 5,
 } as const
 
 /** Deep search (plan F18): how long it waits for imports before answering from what's ready. */

@@ -39,6 +39,9 @@
   --color-particle-magenta: #c265aa;
   --color-particle-teal: #339f87;
   --color-particle-blue: #2d6caf;
+  /* Audio brief voices (F37): teal and a deeper amber step, checked for colour-blind separation. */
+  --color-voice-a: #339f87;
+  --color-voice-b: #c08419;
 
   /* Marketing type scale (DESIGN.md): one class sets size, leading and tracking */
   --text-caption: 12px;
