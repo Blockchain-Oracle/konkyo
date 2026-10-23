@@ -39,7 +39,8 @@ export type Analysis = {
   matrix: Matrix
   sql: string
   model: string
-  worldModel: { namespace: string; claims: number; relations: number }
+  /** Absent for a public folder's visitor: their questions don't write to the owner's model. */
+  worldModel?: { namespace: string; claims: number; relations: number }
 }
 
 const AnalystSchema = z.object({
@@ -251,7 +252,19 @@ export async function analyse(
   }))
   const matrix = shape(verified, sources, "done")
 
-  // The World Model keeps every source's stance on every claim, with where it was read.
+  const worldModel = input.visitor ? undefined : await recordInWorld(input, question, matrix)
+  onMatrix(matrix)
+  return {
+    matrix,
+    sql: zetaris.sql,
+    model: choice.id,
+    worldModel,
+  }
+}
+
+/** The World Model keeps every source's stance on every claim, with where it was read. */
+async function recordInWorld(input: AnswerInput, question: string, matrix: Matrix) {
+  const { tracer } = input
   const { world, namespace } = worldFor(input.ownerId)
   const at = new Date()
   const by = (passageId?: string): Provenance => ({
@@ -311,11 +324,5 @@ export async function analyse(
     rowsReturned: relations,
     detail: { namespace, claims: matrix.claims.length, sources: matrix.sources.length },
   })
-  onMatrix(matrix)
-  return {
-    matrix,
-    sql: zetaris.sql,
-    model: choice.id,
-    worldModel: { namespace, claims: matrix.claims.length, relations },
-  }
+  return { namespace, claims: matrix.claims.length, relations }
 }

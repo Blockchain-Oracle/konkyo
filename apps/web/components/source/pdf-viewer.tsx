@@ -37,6 +37,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@konkyo/ui/components/t
 import { cn } from "@konkyo/ui/lib/utils"
 import { MinusIcon, MoonIcon, PlusIcon, ScanIcon } from "lucide-react"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useSourceAccess } from "@/lib/source-access"
 import { useHighlights } from "@/lib/use-highlights"
 import type { SourcePassage } from "@/lib/use-source"
 import { boxesFor, CitationLayer, MarkLayer } from "./citation-layer"
@@ -198,6 +199,7 @@ function LoadedDocument({
   const pages = activeDocument?.document?.pages
   const [dim, setDim] = useState(false)
   const scale = zoom.currentZoomLevel
+  const { owner } = useSourceAccess()
   const { data: highlights } = useHighlights(fileId)
   const marksByPage = useMemo(() => {
     const byPage = new Map<number, [number, number, number, number][]>()
@@ -273,20 +275,24 @@ function LoadedDocument({
               pageIndex={page.pageIndex}
               scale={scale}
               textStyle={{ background: "rgb(128 82 255 / 0.28)" }}
-              selectionMenu={(props: SelectionSelectionMenuProps) => (
-                <SelectionToolbar
-                  {...props}
-                  documentId={documentId}
-                  fileId={fileId}
-                  title={title}
-                />
-              )}
+              selectionMenu={
+                owner
+                  ? (props: SelectionSelectionMenuProps) => (
+                      <SelectionToolbar
+                        {...props}
+                        documentId={documentId}
+                        fileId={fileId}
+                        title={title}
+                      />
+                    )
+                  : undefined
+              }
             />
           </PagePointerProvider>
         </Rotate>
       )
     },
-    [documentId, fileId, title, pages, scale, target, dim, marksByPage],
+    [documentId, fileId, title, pages, scale, target, dim, marksByPage, owner],
   )
 
   return (

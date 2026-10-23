@@ -92,6 +92,13 @@
       "when": 1792816200000,
       "tag": "0012_agents",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792821900000,
+      "tag": "0013_shares",
+      "breakpoints": true
     }
   ]
 }

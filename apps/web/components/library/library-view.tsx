@@ -19,6 +19,7 @@ import {
   FolderIcon,
   FolderPlusIcon,
   FolderUpIcon,
+  GlobeIcon,
   GraduationCapIcon,
   LinkIcon,
   MessageSquareIcon,
@@ -32,7 +33,12 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { type DragEvent, useEffect, useMemo, useRef, useState } from "react"
 import { EmptyState } from "@/components/empty-state"
-import { openImport, openNewFolder, openRenameFolder } from "@/components/shell/app-dialogs"
+import {
+  openImport,
+  openNewFolder,
+  openRenameFolder,
+  openShareFolder,
+} from "@/components/shell/app-dialogs"
 import { chatWithHref } from "@/lib/focus"
 import { holdQuestion } from "@/lib/pending-question"
 import { useFolderActions, useFolderPath, useFolderTree } from "@/lib/use-folders"
@@ -386,6 +392,10 @@ function FolderHeading({ folderId }: { folderId: string }) {
             >
               <GraduationCapIcon strokeWidth={1.5} />
               Quiz me on this folder
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => openShareFolder(folder.id, folder.name)}>
+              <GlobeIcon strokeWidth={1.5} />
+              Share…
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => openRenameFolder(folder.id, folder.name)}>
               <PencilIcon strokeWidth={1.5} />

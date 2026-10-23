@@ -10,6 +10,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@konkyo/ui/components/tooltip"
 import { cn } from "@konkyo/ui/lib/utils"
 import {
+  DownloadIcon,
   GraduationCapIcon,
   InfoIcon,
   NotebookPenIcon,
@@ -22,6 +23,7 @@ import { useMemo } from "react"
 import { openDetails } from "@/components/library/file-details"
 import { KindIcon } from "@/components/library/kind-icon"
 import { closeAllSources, closeSource, type SourceTab, showSource, usePreview } from "@/lib/preview"
+import { useSourceAccess } from "@/lib/source-access"
 import { useFileDetail, usePassage } from "@/lib/use-source"
 import { useStudyActions } from "@/lib/use-study"
 import { CitedBar } from "./cited-bar"
@@ -36,6 +38,7 @@ const PdfViewer = dynamic(() => import("./pdf-viewer").then((m) => m.PdfViewer),
 /** The right pane (plan §7.3): every open source as a tab, the active one below. */
 export function SourcePane({ className }: { className?: string }) {
   const { tabs, active } = usePreview()
+  const { owner } = useSourceAccess()
   if (!active) return null
   return (
     <section aria-label="Source" className={cn("flex h-full min-h-0 flex-col bg-panel", className)}>
@@ -49,23 +52,26 @@ export function SourcePane({ className }: { className?: string }) {
             <SourceTabButton key={tab.fileId} tab={tab} active={tab.fileId === active.fileId} />
           ))}
         </div>
-        {active.kind !== "note" && <StudyMenu tab={active} />}
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                aria-label="Details"
-                onClick={() => openDetails(active.fileId)}
-                className="shrink-0 text-ash-gray hover:text-bone-white"
-              />
-            }
-          >
-            <InfoIcon strokeWidth={1.5} />
-          </TooltipTrigger>
-          <TooltipContent>Details</TooltipContent>
-        </Tooltip>
+        {owner && active.kind !== "note" && <StudyMenu tab={active} />}
+        {!owner && <VisitorDownload fileId={active.fileId} />}
+        {owner && (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Details"
+                  onClick={() => openDetails(active.fileId)}
+                  className="shrink-0 text-ash-gray hover:text-bone-white"
+                />
+              }
+            >
+              <InfoIcon strokeWidth={1.5} />
+            </TooltipTrigger>
+            <TooltipContent>Details</TooltipContent>
+          </Tooltip>
+        )}
         <Tooltip>
           <TooltipTrigger
             render={
@@ -86,7 +92,7 @@ export function SourcePane({ className }: { className?: string }) {
       {/* Keyed by file: switching tabs opens that document fresh. */}
       <div className="relative flex min-h-0 flex-1 flex-col">
         <SourceBody key={active.fileId} tab={active} />
-        {active.target?.cited && (
+        {owner && active.target?.cited && (
           <CitedBar
             key={active.target.nonce}
             messageId={active.target.cited.messageId}
@@ -167,6 +173,31 @@ function SourceBody({ tab }: { tab: SourceTab }) {
   if (tab.target?.passageId && !passage) return <div className="flex-1 bg-panel" />
   return (
     <PdfViewer url={file.renditionUrl} fileId={file.id} title={file.title} target={pdfTarget} />
+  )
+}
+
+/** A public folder's file, when its owner lets visitors download (plan F36). */
+function VisitorDownload({ fileId }: { fileId: string }) {
+  const { data: file } = useFileDetail(fileId)
+  if (!file?.downloadUrl) return null
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Download"
+            render={<a href={file.downloadUrl} download />}
+            nativeButton={false}
+            className="shrink-0 text-ash-gray hover:text-bone-white"
+          />
+        }
+      >
+        <DownloadIcon strokeWidth={1.5} />
+      </TooltipTrigger>
+      <TooltipContent>Download</TooltipContent>
+    </Tooltip>
   )
 }
 

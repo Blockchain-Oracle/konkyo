@@ -14,6 +14,7 @@ import { CheckIcon, FolderIcon, LibraryBigIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useMemo, useState, useSyncExternalStore } from "react"
 import { toast } from "sonner"
+import { ShareDialog } from "@/components/library/share-dialog"
 import { type FolderNode, useFolderActions, useFolderTree } from "@/lib/use-folders"
 import { useFileActions } from "@/lib/use-library"
 
@@ -23,6 +24,7 @@ type DialogState =
   | { type: "rename-folder"; id: string; name: string }
   | { type: "import"; folderId?: string }
   | { type: "move-files"; ids: string[] }
+  | { type: "share-folder"; id: string; name: string }
   | null
 
 let current: DialogState = null
@@ -37,6 +39,7 @@ export const openRenameFolder = (id: string, name: string) =>
   set({ type: "rename-folder", id, name })
 export const openImport = (folderId?: string) => set({ type: "import", folderId })
 export const openMoveFiles = (ids: string[]) => set({ type: "move-files", ids })
+export const openShareFolder = (id: string, name: string) => set({ type: "share-folder", id, name })
 
 function useDialog() {
   return useSyncExternalStore(
@@ -68,6 +71,10 @@ export function AppDialogs() {
       <MoveDialog
         open={dialog?.type === "move-files"}
         ids={dialog?.type === "move-files" ? dialog.ids : []}
+        onClose={close}
+      />
+      <ShareDialog
+        folder={dialog?.type === "share-folder" ? { id: dialog.id, name: dialog.name } : null}
         onClose={close}
       />
     </>

@@ -85,6 +85,11 @@ export type AnswerInput = {
   abortSignal?: AbortSignal
   /** Weigh the sources against each other whatever the Planner says (deep search's answers). */
   compare?: boolean
+  /**
+   * A visitor to a public folder (F36): the owner's corrections aren't read (they're personal)
+   * and nothing is written to the owner's World Model; every check runs as usual.
+   */
+  visitor?: boolean
 }
 
 const MAX_ROUNDS = 2
@@ -667,7 +672,7 @@ export async function answer(input: AnswerInput) {
     emit({ type: "step", id, label, state, detail })
 
   // The person's corrections memory (Meterless H-MEM), read before planning, every run.
-  const memories = await recall(input.ownerId, input.question)
+  const memories = input.visitor ? [] : await recall(input.ownerId, input.question)
   if (memories.length)
     step(
       "memory",
@@ -687,7 +692,8 @@ export async function answer(input: AnswerInput) {
   const planned = await plan(input, memories)
   step("plan", "Planning", "done", planned.standalone)
 
-  step("search", "Searching your library", "running")
+  const searching = input.visitor ? "Searching this folder" : "Searching your library"
+  step("search", searching, "running")
   const searchStarted = performance.now()
   // A comparison needs every source heard: fetch wider, then keep at most 3 passages per file
   // (best first), so two long papers can't crowd out the rest.
@@ -715,7 +721,7 @@ export async function answer(input: AnswerInput) {
   const files = new Set(candidates.map((c) => c.fileId))
   step(
     "search",
-    "Searching your library",
+    searching,
     "done",
     `${candidates.length} passages from ${files.size} file${files.size === 1 ? "" : "s"}`,
   )
@@ -904,7 +910,8 @@ export async function answer(input: AnswerInput) {
           analyst: {
             claims: analysed.matrix.counts.claims,
             sources: analysed.matrix.counts.sources,
-            relations: analysed.worldModel.relations,
+            // One per verified cell (each is a relation in the World Model when it's written).
+            relations: analysed.matrix.claims.reduce((n, c) => n + c.cells.length, 0),
             sql: analysed.sql,
           },
         }

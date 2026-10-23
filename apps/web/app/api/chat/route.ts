@@ -3,6 +3,7 @@ import { answer, type KonkyoMessage, Tracer } from "@konkyo/agents"
 import { consumeStream, createUIMessageStream, createUIMessageStreamResponse } from "ai"
 import { NextResponse } from "next/server"
 import { z } from "zod"
+import { answerWriter } from "@/lib/answer-stream"
 import {
   answerLimit,
   dropAfter,
@@ -90,7 +91,7 @@ export async function POST(request: Request) {
         type: "start",
         messageMetadata: { runId, createdAt: new Date().toISOString() },
       })
-      let drafting = false
+      const out = answerWriter(writer)
       const result = await answer({
         ownerId,
         question: asked,
@@ -99,67 +100,10 @@ export async function POST(request: Request) {
         tracer,
         // Not request.signal: leaving the page must not throw the answer away; Stop aborts.
         abortSignal: stopSignal,
-        emit: (event) => {
-          switch (event.type) {
-            case "step":
-              // One part per step, rewritten in place as it runs and finishes (F15).
-              writer.write({ type: "data-step", id: `step-${event.id}`, data: event })
-              break
-            case "sources":
-              writer.write({
-                type: "data-sources",
-                id: "sources",
-                data: { sources: event.sources },
-              })
-              break
-            case "text":
-              if (!drafting) {
-                writer.write({ type: "text-start", id: "draft" })
-                drafting = true
-              }
-              writer.write({ type: "text-delta", id: "draft", delta: event.delta })
-              break
-            case "revising":
-              writer.write({ type: "data-revising", id: "revising", data: event })
-              break
-            case "final":
-              if (drafting) {
-                writer.write({ type: "text-end", id: "draft" })
-                drafting = false
-              }
-              writer.write({
-                type: "data-final",
-                id: "final",
-                data: {
-                  body: event.body,
-                  caveat: event.caveat,
-                  citations: event.citations,
-                  rewritten: event.rewritten,
-                },
-              })
-              break
-            case "not-found":
-              if (drafting) {
-                writer.write({ type: "text-end", id: "draft" })
-                drafting = false
-              }
-              writer.write({
-                type: "data-notFound",
-                id: "not-found",
-                data: { question: event.question },
-              })
-              break
-            case "matrix":
-              writer.write({ type: "data-matrix", id: "matrix", data: event.matrix })
-              break
-            case "receipt":
-              receipt = event.receipt
-              writer.write({ type: "data-receipt", id: "receipt", data: event.receipt })
-              break
-          }
-        },
+        emit: out.emit,
       })
-      if (drafting) writer.write({ type: "text-end", id: "draft" })
+      out.endDraft()
+      receipt = out.receipt()
       status = result.status
     },
     onError: (error) => {

@@ -5,16 +5,20 @@ import { toast } from "sonner"
 import { api } from "./fetcher"
 import type { Highlight } from "./highlights"
 import { qk } from "./query-keys"
+import { useSourceAccess } from "./source-access"
 
 export type { Highlight }
 
 type Box = [number, number, number, number]
 
+/** The owner's highlights; a public folder's visitors see none. */
 export function useHighlights(fileId: string) {
+  const { owner } = useSourceAccess()
   return useQuery({
     queryKey: qk.highlights(fileId),
     queryFn: () =>
       api<{ highlights: Highlight[] }>(`/api/files/${fileId}/highlights`).then((r) => r.highlights),
+    enabled: owner,
   })
 }
 

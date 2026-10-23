@@ -46,7 +46,7 @@ async function ownFolder(ownerId: string, folderId: string) {
 }
 
 /** The folder and every folder inside it (ids), for moves and Trash. */
-async function subtree(ownerId: string, folderId: string): Promise<string[]> {
+export async function subtree(ownerId: string, folderId: string): Promise<string[]> {
   const rows = await db.execute<{ id: string }>(sql`
     with recursive tree as (
       select id from ${folders} where id = ${folderId} and owner_id = ${ownerId}

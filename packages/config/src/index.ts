@@ -165,6 +165,18 @@ export const LIMITS = {
   filesPerDay: 300,
 } as const
 
+/**
+ * Public folders (plan F36): anyone with the link can ask, so each visitor and each folder has a
+ * cap (the owner's account pays for the answers), and only the last few turns travel back.
+ */
+export const PUBLIC = {
+  answersPerTenMinutesPerVisitor: 5,
+  answersPerDayPerVisitor: 20,
+  answersPerDayPerFolder: 300,
+  historyTurns: 6,
+  moderationModel: "omni-moderation-latest",
+} as const
+
 /** Deep search (plan F18): how long it waits for imports before answering from what's ready. */
 export const DEEP = {
   importWaitMs: 8 * 60_000,
