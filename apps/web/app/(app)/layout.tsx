@@ -4,6 +4,8 @@ import { Skeleton } from "@konkyo/ui/components/skeleton"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { Suspense } from "react"
+import { UploadsProvider } from "@/components/library/uploads-provider"
+import { AppDialogs } from "@/components/shell/app-dialogs"
 import { AppSidebar } from "@/components/shell/app-sidebar"
 import { CommandPalette } from "@/components/shell/command-palette"
 import { MobileTabBar } from "@/components/shell/mobile-tab-bar"
@@ -20,19 +22,22 @@ async function Shell({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider defaultOpen={cookieStore.get(SIDEBAR_COOKIE)?.value !== "false"}>
-      <AppSidebar
-        user={{
-          name: user.name,
-          email: user.email,
-          image: user.image ?? null,
-          isGuest: Boolean(user.isAnonymous),
-        }}
-      />
-      <SidebarInset className="min-w-0 pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0">
-        <Workspace>{children}</Workspace>
-      </SidebarInset>
-      <MobileTabBar />
-      <CommandPalette />
+      <UploadsProvider>
+        <AppSidebar
+          user={{
+            name: user.name,
+            email: user.email,
+            image: user.image ?? null,
+            isGuest: Boolean(user.isAnonymous),
+          }}
+        />
+        <SidebarInset className="min-w-0 pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0">
+          <Workspace>{children}</Workspace>
+        </SidebarInset>
+        <MobileTabBar />
+        <CommandPalette />
+        <AppDialogs />
+      </UploadsProvider>
     </SidebarProvider>
   )
 }

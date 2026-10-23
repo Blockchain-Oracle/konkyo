@@ -68,7 +68,8 @@
         "rules": {
           "a11y": {
             "useSemanticElements": "off",
-            "useKeyWithClickEvents": "off"
+            "useKeyWithClickEvents": "off",
+            "noStaticElementInteractions": "off"
           },
           "suspicious": {
             "noDocumentCookie": "off"

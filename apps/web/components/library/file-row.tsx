@@ -5,15 +5,26 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@konkyo/ui/components/dropdown-menu"
 import { Progress } from "@konkyo/ui/components/progress"
-import { EllipsisIcon, Trash2Icon } from "lucide-react"
+import {
+  DownloadIcon,
+  EllipsisIcon,
+  FolderInputIcon,
+  PanelRightOpenIcon,
+  Trash2Icon,
+} from "lucide-react"
+import { openMoveFiles } from "@/components/shell/app-dialogs"
 import { openSource } from "@/lib/preview"
 import { type LibraryFile, useFileActions } from "@/lib/use-library"
 import type { UploadState } from "@/lib/use-uploader"
 import { FileStatus } from "./file-status"
 import { KIND_LABEL, KindIcon } from "./kind-icon"
+
+/** The drag payload for library rows (a JSON array of file ids). */
+export const FILE_DRAG_TYPE = "application/x-konkyo-files"
 
 const duration = (s: number) =>
   `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`
@@ -25,6 +36,7 @@ function details(file: LibraryFile): string {
   parts.push(
     new Date(file.createdAt).toLocaleDateString(undefined, { day: "numeric", month: "short" }),
   )
+  if (file.folderName) parts.push(file.folderName)
   return parts.join(" · ")
 }
 
@@ -130,7 +142,15 @@ export function FileRow({
       <FixIt file={file} onPick={onPickReplacement} onRetryUpload={onRetryUpload} />
     ) : null
   return (
-    <li className="group relative flex min-h-16 items-center gap-3 border-b border-border px-2 py-3 transition-colors duration-(--duration-press) hover:bg-panel">
+    <li
+      // Rows drag onto a folder in the sidebar to file them there.
+      draggable={file.status !== "needs_you" || file.problem === "duplicate"}
+      onDragStart={(event) => {
+        event.dataTransfer.setData(FILE_DRAG_TYPE, JSON.stringify([file.id]))
+        event.dataTransfer.effectAllowed = "move"
+      }}
+      className="group relative flex min-h-16 items-center gap-3 border-b border-border px-2 py-3 transition-colors duration-(--duration-press) hover:bg-panel"
+    >
       <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-panel group-hover:bg-raised">
         <KindIcon kind={file.kind} />
       </span>
@@ -185,7 +205,34 @@ export function FileRow({
         >
           <EllipsisIcon strokeWidth={1.5} />
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-44">
+        <DropdownMenuContent align="end" className="w-48">
+          {file.status === "ready" && (
+            <DropdownMenuItem
+              onClick={() => openSource({ fileId: file.id, title: file.title, kind: file.kind })}
+            >
+              <PanelRightOpenIcon strokeWidth={1.5} />
+              Open
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuItem onClick={() => openMoveFiles([file.id])}>
+            <FolderInputIcon strokeWidth={1.5} />
+            Move to…
+          </DropdownMenuItem>
+          {file.status === "ready" && (
+            <DropdownMenuItem
+              render={
+                // Uploaded files download as uploaded; imported pages as their saved PDF.
+                <a
+                  href={`/api/files/${file.id}/content?as=${file.sourceUrl ? "rendition" : "original"}&download=1`}
+                  download
+                />
+              }
+            >
+              <DownloadIcon strokeWidth={1.5} />
+              {file.sourceUrl ? "Download PDF" : "Download"}
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuSeparator />
           <DropdownMenuItem variant="destructive" onClick={() => remove.mutate(file.id)}>
             <Trash2Icon strokeWidth={1.5} />
             Move to Trash

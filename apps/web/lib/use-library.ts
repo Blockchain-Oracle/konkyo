@@ -11,11 +11,14 @@ export type { LibraryFile }
 
 const isWorking = (f: LibraryFile) => f.status === "queued" || f.status === "processing"
 
-/** The library list; refreshes on its own only while something is uploading or being read. */
-export function useFiles() {
+/** The library list (or one folder's); refreshes itself only while something is being read. */
+export function useFiles(folderId?: string) {
   return useQuery({
-    queryKey: qk.files.list(),
-    queryFn: () => api<{ files: LibraryFile[] }>("/api/files").then((r) => r.files),
+    queryKey: qk.files.list(folderId),
+    queryFn: () =>
+      api<{ files: LibraryFile[] }>(`/api/files${folderId ? `?folder=${folderId}` : ""}`).then(
+        (r) => r.files,
+      ),
     refetchInterval: (query) => (query.state.data?.some(isWorking) ? LIBRARY.pollMs : false),
   })
 }
@@ -23,17 +26,32 @@ export function useFiles() {
 /** Fix-it and remove actions; every one refreshes the list, and "Remove" disappears at once. */
 export function useFileActions() {
   const queryClient = useQueryClient()
-  const refresh = () => queryClient.invalidateQueries({ queryKey: qk.files.all })
+  const refresh = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: qk.files.all }),
+      queryClient.invalidateQueries({ queryKey: qk.folders.all }),
+      queryClient.invalidateQueries({ queryKey: qk.trash }),
+    ])
+  /** Applies a change to every file list on screen (the library and any folder), for undo. */
+  const patchLists = async (patch: (files: LibraryFile[]) => LibraryFile[]) => {
+    await queryClient.cancelQueries({ queryKey: qk.files.lists() })
+    const previous = queryClient.getQueriesData<LibraryFile[]>({ queryKey: qk.files.lists() })
+    queryClient.setQueriesData<LibraryFile[]>({ queryKey: qk.files.lists() }, (old) =>
+      old ? patch(old) : old,
+    )
+    return { previous }
+  }
+  const rollback = (context?: { previous: [readonly unknown[], LibraryFile[] | undefined][] }) => {
+    for (const [key, data] of context?.previous ?? []) queryClient.setQueryData(key, data)
+  }
   const onError = (error: Error) => toast.error(error.message)
 
   // Optimistic: the row shows "Waiting to be read" the moment Try again is pressed.
   const retry = useMutation({
     mutationFn: (id: string) => api(`/api/files/${id}/retry`, { method: "POST" }),
-    onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: qk.files.list() })
-      const previous = queryClient.getQueryData<LibraryFile[]>(qk.files.list())
-      queryClient.setQueryData<LibraryFile[]>(qk.files.list(), (old) =>
-        old?.map((f) =>
+    onMutate: (id) =>
+      patchLists((files) =>
+        files.map((f) =>
           f.id === id
             ? {
                 ...f,
@@ -45,11 +63,9 @@ export function useFileActions() {
               }
             : f,
         ),
-      )
-      return { previous }
-    },
+      ),
     onError: (error, _id, context) => {
-      queryClient.setQueryData(qk.files.list(), context?.previous)
+      rollback(context)
       onError(error)
     },
     onSettled: refresh,
@@ -62,29 +78,51 @@ export function useFileActions() {
     },
     onError,
   })
+  // Optimistic: the rows leave the list at once; they come back if the server says no.
   const remove = useMutation({
-    mutationFn: (id: string) => api(`/api/files/${id}`, { method: "DELETE" }),
-    // Optimistic: the row leaves the list immediately; it comes back if the server says no.
-    onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: qk.files.list() })
-      const previous = queryClient.getQueryData<LibraryFile[]>(qk.files.list())
-      queryClient.setQueryData<LibraryFile[]>(qk.files.list(), (old) =>
-        old?.filter((f) => f.id !== id),
-      )
-      return { previous }
+    mutationFn: (ids: string | string[]) =>
+      api<{ batch: string }>("/api/files/trash", {
+        method: "POST",
+        json: { fileIds: Array.isArray(ids) ? ids : [ids] },
+      }),
+    onMutate: (ids) => {
+      const gone = new Set(Array.isArray(ids) ? ids : [ids])
+      return patchLists((files) => files.filter((f) => !gone.has(f.id)))
     },
-    onError: (error, _id, context) => {
-      queryClient.setQueryData(qk.files.list(), context?.previous)
+    onError: (error, _ids, context) => {
+      rollback(context)
       onError(error)
     },
-    onSuccess: () => toast.success("Moved to Trash"),
+    onSuccess: ({ batch }, ids) => {
+      const n = Array.isArray(ids) ? ids.length : 1
+      toast.success(n > 1 ? `Moved ${n} files to Trash` : "Moved to Trash", {
+        action: {
+          label: "Undo",
+          onClick: () =>
+            api(`/api/trash/${batch}`, { method: "POST" }).then(refresh, (e: Error) => onError(e)),
+        },
+      })
+    },
+    onSettled: refresh,
+  })
+  /** Files into a folder (or back to the top level with `null`). */
+  const move = useMutation({
+    mutationFn: ({ ids, folderId }: { ids: string[]; folderId: string | null; name?: string }) =>
+      api("/api/files/move", { method: "POST", json: { fileIds: ids, folderId } }),
+    onSuccess: (_r, { ids, name }) =>
+      toast.success(
+        ids.length > 1
+          ? `Moved ${ids.length} files to ${name ?? "the library"}`
+          : `Moved to ${name ?? "the library"}`,
+      ),
+    onError,
     onSettled: refresh,
   })
   const importUrl = useMutation({
-    mutationFn: (url: string) =>
-      api<{ fileId: string }>("/api/files/import", { method: "POST", json: { url } }),
+    mutationFn: ({ url, folderId }: { url: string; folderId?: string }) =>
+      api<{ fileId: string }>("/api/files/import", { method: "POST", json: { url, folderId } }),
     onSuccess: refresh,
     onError,
   })
-  return { retry, keepExisting, remove, importUrl }
+  return { retry, keepExisting, remove, move, importUrl }
 }

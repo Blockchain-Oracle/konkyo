@@ -20,25 +20,27 @@ import {
 } from "lucide-react"
 import type { Route } from "next"
 import { useRouter } from "next/navigation"
+import { useUploads } from "@/components/library/uploads-provider"
+import { openImport, openNewFolder } from "./app-dialogs"
 
-type CreateItem = { label: string; icon: typeof PlusIcon; href: Route }
-
-/** Each item opens the place where that thing is made (plan §7.3 "Create ▾"). */
-const CREATE_GROUPS: CreateItem[][] = [
-  [
-    { label: "Agent", icon: BotIcon, href: "/agents" },
-    { label: "Note", icon: NotebookPenIcon, href: "/write" },
-    { label: "Folder", icon: FolderPlusIcon, href: "/library" },
-  ],
-  [
-    { label: "Upload files", icon: UploadIcon, href: "/library" },
-    { label: "Upload a folder", icon: FolderUpIcon, href: "/library" },
-    { label: "Import by URL or DOI", icon: LinkIcon, href: "/library" },
-  ],
-]
+type CreateItem = { label: string; icon: typeof PlusIcon; href?: Route; run?: () => void }
 
 export function CreateMenu() {
   const router = useRouter()
+  const { pickFiles, pickFolder } = useUploads()
+  // Folders, uploads and imports happen right here; agents and notes open where they're made.
+  const CREATE_GROUPS: CreateItem[][] = [
+    [
+      { label: "Agent", icon: BotIcon, href: "/agents" },
+      { label: "Note", icon: NotebookPenIcon, href: "/write" },
+      { label: "Folder", icon: FolderPlusIcon, run: () => openNewFolder(null) },
+    ],
+    [
+      { label: "Upload files", icon: UploadIcon, run: () => pickFiles() },
+      { label: "Upload a folder", icon: FolderUpIcon, run: () => pickFolder() },
+      { label: "Import by URL", icon: LinkIcon, run: () => openImport() },
+    ],
+  ]
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -57,7 +59,10 @@ export function CreateMenu() {
           <DropdownMenuGroup key={group[0]?.label}>
             {index > 0 && <DropdownMenuSeparator />}
             {group.map((item) => (
-              <DropdownMenuItem key={item.label} onClick={() => router.push(item.href)}>
+              <DropdownMenuItem
+                key={item.label}
+                onClick={() => (item.run ? item.run() : item.href && router.push(item.href))}
+              >
                 <item.icon strokeWidth={1.5} />
                 {item.label}
               </DropdownMenuItem>

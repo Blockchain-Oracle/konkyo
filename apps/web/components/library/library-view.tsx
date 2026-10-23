@@ -1,23 +1,38 @@
 "use client"
 
-import { ACCEPT } from "@konkyo/config"
 import { Button } from "@konkyo/ui/components/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@konkyo/ui/components/dropdown-menu"
 import { Skeleton } from "@konkyo/ui/components/skeleton"
 import { ToggleGroup, ToggleGroupItem } from "@konkyo/ui/components/toggle-group"
 import { cn } from "@konkyo/ui/lib/utils"
-import { ChevronDownIcon, FolderUpIcon, LinkIcon, UploadIcon } from "lucide-react"
-import { type DragEvent, useEffect, useMemo, useRef, useState } from "react"
+import {
+  ChevronDownIcon,
+  ChevronRightIcon,
+  EllipsisIcon,
+  FolderIcon,
+  FolderPlusIcon,
+  FolderUpIcon,
+  LinkIcon,
+  PencilIcon,
+  Trash2Icon,
+  UploadIcon,
+} from "lucide-react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { type DragEvent, useMemo, useState } from "react"
 import { EmptyState } from "@/components/empty-state"
+import { openImport, openNewFolder, openRenameFolder } from "@/components/shell/app-dialogs"
+import { useFolderActions, useFolderPath, useFolderTree } from "@/lib/use-folders"
 import { type LibraryFile, useFiles } from "@/lib/use-library"
-import { filesFromDrop, filesFromInput, useUploader } from "@/lib/use-uploader"
+import { filesFromDrop } from "@/lib/use-uploader"
 import { FileRow } from "./file-row"
-import { ImportDialog } from "./import-dialog"
+import { useUploads } from "./uploads-provider"
 
 type Filter = "all" | "working" | "ready" | "needs_you"
 
@@ -32,21 +47,21 @@ const FILTERS: { value: Filter; label: string; match: (f: LibraryFile) => boolea
   { value: "needs_you", label: "Needs you", match: (f) => f.status === "needs_you" },
 ]
 
-/** Library (plan F01–F03): drop anything anywhere, watch each file get read, fix what needs you. */
-export function LibraryView({ title }: { title: string }) {
-  const { data: files, isPending } = useFiles()
-  const { upload, uploads, retryUpload } = useUploader()
+/**
+ * Library (plan F01–F05): the whole library, or one folder with its subfolders. Drop anything
+ * anywhere, watch each file get read, fix what needs you, file things into folders.
+ */
+export function LibraryView({ folderId }: { folderId?: string }) {
+  const { data: files, isPending } = useFiles(folderId)
+  const { pickFiles, pickFolder, upload, uploads, retryUpload } = useUploads()
+  const { folders } = useFolderTree()
   const [filter, setFilter] = useState<Filter>("all")
   const [dragging, setDragging] = useState(false)
-  const [importOpen, setImportOpen] = useState(false)
-  const filesInput = useRef<HTMLInputElement>(null)
-  const folderInput = useRef<HTMLInputElement>(null)
 
-  // Folder picking needs the non-standard attribute, which React doesn't type.
-  useEffect(() => {
-    folderInput.current?.setAttribute("webkitdirectory", "")
-  }, [])
-
+  const subfolders = useMemo(
+    () => (folderId ? (folders ?? []).filter((f) => f.parentId === folderId) : []),
+    [folders, folderId],
+  )
   const counts = useMemo(
     () =>
       Object.fromEntries(
@@ -59,18 +74,20 @@ export function LibraryView({ title }: { title: string }) {
     [files, filter],
   )
 
+  // Files from the desktop, not rows dragged within the app.
   const onDragOver = (event: DragEvent) => {
     if (!event.dataTransfer.types.includes("Files")) return
     event.preventDefault()
     setDragging(true)
   }
   const onDrop = async (event: DragEvent) => {
+    if (!event.dataTransfer.types.includes("Files")) return
     event.preventDefault()
     setDragging(false)
-    await upload(await filesFromDrop(event.dataTransfer))
+    await upload(await filesFromDrop(event.dataTransfer), folderId)
   }
 
-  const hasFiles = (files?.length ?? 0) > 0
+  const isEmpty = !isPending && !files?.length && !subfolders.length
 
   return (
     <section
@@ -82,37 +99,19 @@ export function LibraryView({ title }: { title: string }) {
       }}
       onDrop={onDrop}
     >
-      <input
-        ref={filesInput}
-        type="file"
-        multiple
-        accept={ACCEPT}
-        hidden
-        onChange={(e) => {
-          void upload(filesFromInput(e.currentTarget.files))
-          e.currentTarget.value = ""
-        }}
-      />
-      <input
-        ref={folderInput}
-        type="file"
-        multiple
-        hidden
-        onChange={(e) => {
-          void upload(filesFromInput(e.currentTarget.files))
-          e.currentTarget.value = ""
-        }}
-      />
-
       <header className="flex flex-wrap items-center gap-3">
-        <h1 className="hidden text-heading-2xs font-normal md:block">{title}</h1>
+        {folderId ? (
+          <FolderHeading folderId={folderId} />
+        ) : (
+          <h1 className="hidden text-heading-2xs font-normal md:block">Library</h1>
+        )}
         <div className="ml-auto flex items-center gap-2">
-          <Button variant="ghost" onClick={() => setImportOpen(true)}>
+          <Button variant="ghost" onClick={() => openImport(folderId)}>
             <LinkIcon strokeWidth={1.5} />
-            Import by URL
+            <span className="max-sm:sr-only">Import by URL</span>
           </Button>
           <div className="flex">
-            <Button className="rounded-r-none pr-3" onClick={() => filesInput.current?.click()}>
+            <Button className="rounded-r-none pr-3" onClick={() => pickFiles(folderId)}>
               <UploadIcon strokeWidth={1.75} />
               Upload
             </Button>
@@ -128,13 +127,18 @@ export function LibraryView({ title }: { title: string }) {
                 <ChevronDownIcon strokeWidth={1.75} />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={() => filesInput.current?.click()}>
+                <DropdownMenuItem onClick={() => pickFiles(folderId)}>
                   <UploadIcon strokeWidth={1.5} />
                   Upload files
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => folderInput.current?.click()}>
+                <DropdownMenuItem onClick={() => pickFolder(folderId)}>
                   <FolderUpIcon strokeWidth={1.5} />
                   Upload a folder
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => openNewFolder(folderId)}>
+                  <FolderPlusIcon strokeWidth={1.5} />
+                  New folder
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -155,62 +159,72 @@ export function LibraryView({ title }: { title: string }) {
             </li>
           ))}
         </ul>
-      ) : hasFiles ? (
-        <>
-          <ToggleGroup
-            value={[filter]}
-            onValueChange={(value: string[]) => setFilter((value[0] as Filter) ?? "all")}
-            // On phones the pills scroll sideways, edge to edge, instead of being cut off.
-            className="-mx-6 mt-9 max-w-[calc(100%+3rem)] overflow-x-auto px-6 [scrollbar-width:none] sm:mx-0 sm:max-w-full sm:px-0"
-            aria-label="Show"
-          >
-            {FILTERS.map((f) => (
-              <ToggleGroupItem
-                key={f.value}
-                value={f.value}
-                className="h-8 shrink-0 rounded-full px-3 text-snippet"
-              >
-                {f.label}
-                <span className="ml-1.5 text-ash-gray tabular-nums">{counts[f.value]}</span>
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
-          <ul className="mt-4.5 border-t border-border">
-            {visible.map((file) => (
-              <FileRow
-                key={file.id}
-                file={file}
-                upload={uploads[file.id]}
-                onRetryUpload={() => retryUpload(file.id)}
-                onPickReplacement={() => filesInput.current?.click()}
-              />
-            ))}
-          </ul>
-          {visible.length === 0 && <p className="mt-9 text-ui text-ash-gray">Nothing here.</p>}
-        </>
-      ) : (
+      ) : isEmpty ? (
         <div className="mt-15">
           <EmptyState
-            label="Your library"
-            title="Drop files or a folder anywhere"
-            description="PDFs, Word, slides, Markdown, recordings, web pages and YouTube links. Every file is read, checked into Zetaris and ready to cite."
+            label={folderId ? "This folder" : "Your library"}
+            title={folderId ? "This folder is empty" : "Drop files or a folder anywhere"}
+            description={
+              folderId
+                ? "Drop files here, or move files in from the library. Chat with this folder once it has a few."
+                : "PDFs, Word, slides, Markdown, recordings, web pages and YouTube links. Every file is read, checked into Zetaris and ready to cite."
+            }
           >
             <div className="flex flex-wrap gap-2">
-              <Button variant="secondary" onClick={() => filesInput.current?.click()}>
+              <Button variant="secondary" onClick={() => pickFiles(folderId)}>
                 <UploadIcon strokeWidth={1.5} />
                 Upload files
               </Button>
-              <Button variant="ghost" onClick={() => folderInput.current?.click()}>
+              <Button variant="ghost" onClick={() => pickFolder(folderId)}>
                 <FolderUpIcon strokeWidth={1.5} />
                 Upload a folder
               </Button>
-              <Button variant="ghost" onClick={() => setImportOpen(true)}>
+              <Button variant="ghost" onClick={() => openImport(folderId)}>
                 <LinkIcon strokeWidth={1.5} />
                 Import by URL
               </Button>
             </div>
           </EmptyState>
         </div>
+      ) : (
+        <>
+          {(files?.length ?? 0) > 0 && (
+            <ToggleGroup
+              value={[filter]}
+              onValueChange={(value: string[]) => setFilter((value[0] as Filter) ?? "all")}
+              // On phones the pills scroll sideways, edge to edge, instead of being cut off.
+              className="-mx-6 mt-9 max-w-[calc(100%+3rem)] overflow-x-auto px-6 [scrollbar-width:none] sm:mx-0 sm:max-w-full sm:px-0"
+              aria-label="Show"
+            >
+              {FILTERS.map((f) => (
+                <ToggleGroupItem
+                  key={f.value}
+                  value={f.value}
+                  className="h-8 shrink-0 rounded-full px-3 text-snippet"
+                >
+                  {f.label}
+                  <span className="ml-1.5 text-ash-gray tabular-nums">{counts[f.value]}</span>
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+          )}
+          <ul className={cn("border-t border-border", files?.length ? "mt-4.5" : "mt-9")}>
+            {filter === "all" &&
+              subfolders.map((folder) => <SubfolderRow key={folder.id} folder={folder} />)}
+            {visible.map((file) => (
+              <FileRow
+                key={file.id}
+                file={file}
+                upload={uploads[file.id]}
+                onRetryUpload={() => retryUpload(file.id)}
+                onPickReplacement={() => pickFiles(folderId)}
+              />
+            ))}
+          </ul>
+          {visible.length === 0 && filter !== "all" && (
+            <p className="mt-9 text-ui text-ash-gray">Nothing here.</p>
+          )}
+        </>
       )}
 
       {/* Drop anywhere: the whole view becomes the target. */}
@@ -222,12 +236,109 @@ export function LibraryView({ title }: { title: string }) {
         )}
       >
         <div className="rounded-card border border-dashed border-line-strong bg-panel px-12 py-10 text-center">
-          <p className="text-subhead text-bone-white">Drop to add to your library</p>
+          <p className="text-subhead text-bone-white">
+            Drop to add to {folderId ? "this folder" : "your library"}
+          </p>
           <p className="mt-1.5 text-snippet text-ash-gray">Files and whole folders</p>
         </div>
       </div>
-
-      <ImportDialog open={importOpen} onOpenChange={setImportOpen} />
     </section>
+  )
+}
+
+/** "Library / Sleep papers / slides", with the folder's own actions beside it. */
+function FolderHeading({ folderId }: { folderId: string }) {
+  const { data: path } = useFolderPath(folderId)
+  const { trash } = useFolderActions()
+  const router = useRouter()
+  const folder = path?.at(-1)
+  return (
+    <div className="flex min-w-0 items-center gap-1">
+      <nav aria-label="Folder path" className="flex min-w-0 items-center gap-1 text-ui">
+        <Link href="/library" className="shrink-0 text-ash-gray hover:text-bone-white">
+          Library
+        </Link>
+        {path?.map((p, i) => (
+          <span key={p.id} className="flex min-w-0 items-center gap-1">
+            <ChevronRightIcon className="size-3.5 shrink-0 text-ash-gray" strokeWidth={1.5} />
+            {i === path.length - 1 ? (
+              <h1 className="truncate text-heading-2xs font-normal text-bone-white">{p.name}</h1>
+            ) : (
+              <Link
+                href={`/library/folders/${p.id}`}
+                className="truncate text-ash-gray hover:text-bone-white"
+              >
+                {p.name}
+              </Link>
+            )}
+          </span>
+        ))}
+      </nav>
+      {folder && (
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={`More for ${folder.name}`}
+                className="text-ash-gray hover:text-bone-white"
+              />
+            }
+          >
+            <EllipsisIcon strokeWidth={1.5} />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-48">
+            <DropdownMenuItem onClick={() => openRenameFolder(folder.id, folder.name)}>
+              <PencilIcon strokeWidth={1.5} />
+              Rename
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => openNewFolder(folder.id)}>
+              <FolderPlusIcon strokeWidth={1.5} />
+              New folder inside
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              variant="destructive"
+              onClick={() =>
+                trash.mutate(
+                  { id: folder.id, name: folder.name },
+                  {
+                    onSuccess: () => {
+                      const parent = path?.at(-2)
+                      router.push(parent ? `/library/folders/${parent.id}` : "/library")
+                    },
+                  },
+                )
+              }
+            >
+              <Trash2Icon strokeWidth={1.5} />
+              Move to Trash
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+    </div>
+  )
+}
+
+function SubfolderRow({ folder }: { folder: { id: string; name: string; fileCount: number } }) {
+  return (
+    <li className="relative flex min-h-16 items-center gap-3 border-b border-border px-2 py-3 transition-colors duration-(--duration-press) hover:bg-panel">
+      <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-panel">
+        <FolderIcon className="size-4 text-ash-gray" strokeWidth={1.5} aria-hidden />
+      </span>
+      <div className="min-w-0 flex-1">
+        <Link
+          href={`/library/folders/${folder.id}`}
+          className="block truncate text-ui text-bone-white after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
+        >
+          {folder.name}
+        </Link>
+        <p className="mt-0.5 text-meta text-ash-gray">
+          Folder · {folder.fileCount} file{folder.fileCount === 1 ? "" : "s"}
+        </p>
+      </div>
+    </li>
   )
 }

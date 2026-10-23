@@ -13,6 +13,13 @@ export const QUEUES = {
     // job is retried within about a minute instead of waiting out its 30-minute expiry.
     send: { heartbeatSeconds: 30 },
   },
+  /** Removes a deleted file's stored bytes and Zetaris evidence (the rows are already gone). */
+  purge: {
+    name: "purge",
+    payload: z.object({ fileIds: z.array(z.uuid()), keys: z.array(z.string()) }),
+    options: { retryLimit: 5, retryDelay: 60, retryBackoff: true, expireInSeconds: 10 * 60 },
+    send: {},
+  },
 } as const
 
 export type QueueName = keyof typeof QUEUES

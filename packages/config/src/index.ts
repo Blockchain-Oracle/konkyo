@@ -133,9 +133,14 @@ export const QUERY = {
   staleTimeMs: 60_000,
 } as const
 
+/** Trash keeps files, folders, chats and notes this long before deleting them for good (F04). */
+export const TRASH = { keepDays: 30 } as const
+
 export const ROUTES = {
   home: "/home",
   signIn: "/sign-in",
+  library: "/library",
+  trash: "/trash",
 } as const
 
 export const BREAKPOINTS = {

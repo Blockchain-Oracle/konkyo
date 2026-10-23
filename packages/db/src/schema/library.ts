@@ -35,6 +35,8 @@ const timestamps = {
     .notNull(),
   /** Set when moved to Trash; purged after 30 days. */
   deletedAt: timestamp({ withTimezone: true }),
+  /** Everything trashed in one action (a folder with its files) shares this id, so it is restored together. */
+  trashBatch: uuid(),
 }
 
 export const folders = pgTable(

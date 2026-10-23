@@ -9,7 +9,7 @@ export default function LibraryPage() {
     <>
       <MobileHeader title="Library" />
       <div className="mx-auto w-full max-w-5xl px-6 pt-9 pb-24 md:pt-15">
-        <LibraryView title="Library" />
+        <LibraryView />
       </div>
     </>
   )

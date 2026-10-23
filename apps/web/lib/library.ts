@@ -3,7 +3,7 @@ import { type FileKind, isYouTube, kindForName, STORAGE } from "@konkyo/config"
 import { db, schema } from "@konkyo/db"
 import { enqueue } from "@konkyo/jobs"
 import { headObject, objectKey, presignOperation, type S3Operation } from "@konkyo/storage"
-import { and, asc, desc, eq, isNull } from "drizzle-orm"
+import { and, asc, desc, eq, inArray, isNull } from "drizzle-orm"
 
 const { files, folders, fileFolders, passages } = schema
 
@@ -16,8 +16,21 @@ export class LibraryError extends Error {
   }
 }
 
-/** What the library list shows for each file (no internal storage keys). */
-export async function listFiles(ownerId: string) {
+/**
+ * What the library list shows for each file (no internal storage keys), optionally only the files
+ * filed in one folder. Each file carries its folder (the first one, if it is filed in several).
+ */
+export async function listFiles(ownerId: string, folderId?: string) {
+  const firstFolder = db
+    .selectDistinctOn([fileFolders.fileId], {
+      fileId: fileFolders.fileId,
+      folderId: fileFolders.folderId,
+      folderName: folders.name,
+    })
+    .from(fileFolders)
+    .innerJoin(folders, and(eq(folders.id, fileFolders.folderId), isNull(folders.deletedAt)))
+    .orderBy(fileFolders.fileId, asc(fileFolders.addedAt))
+    .as("first_folder")
   const rows = await db
     .select({
       id: files.id,
@@ -35,9 +48,26 @@ export async function listFiles(ownerId: string) {
       sourceUrl: files.sourceUrl,
       createdAt: files.createdAt,
       updatedAt: files.updatedAt,
+      folderId: firstFolder.folderId,
+      folderName: firstFolder.folderName,
     })
     .from(files)
-    .where(and(eq(files.ownerId, ownerId), isNull(files.deletedAt)))
+    .leftJoin(firstFolder, eq(firstFolder.fileId, files.id))
+    .where(
+      and(
+        eq(files.ownerId, ownerId),
+        isNull(files.deletedAt),
+        folderId
+          ? inArray(
+              files.id,
+              db
+                .select({ id: fileFolders.fileId })
+                .from(fileFolders)
+                .where(eq(fileFolders.folderId, folderId)),
+            )
+          : undefined,
+      ),
+    )
     .orderBy(desc(files.createdAt))
   // Every part of an upload is signed fresh, so an upload with no signature for longer than one
   // URL's lifetime has stopped (tab closed, connection lost): say so instead of "Uploading" forever.
@@ -231,12 +261,6 @@ export async function keepExisting(ownerId: string, fileId: string) {
   }
   await db.delete(files).where(eq(files.id, fileId))
   return { keptId: dup.duplicateOfId }
-}
-
-/** To Trash (restorable for 30 days). */
-export async function trashFile(ownerId: string, fileId: string) {
-  await ownFile(ownerId, fileId)
-  await db.update(files).set({ deletedAt: new Date() }).where(eq(files.id, fileId))
 }
 
 // ------------------------------------------------------------------ sources (the preview pane)

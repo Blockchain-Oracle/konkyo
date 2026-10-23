@@ -6,7 +6,6 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -20,6 +19,7 @@ import { FOOTER_NAV, isActive, MAIN_NAV } from "@/lib/navigation"
 import { BrandMark } from "../brand-mark"
 import { AccountMenu, type ShellUser } from "./account-menu"
 import { CreateMenu } from "./create-menu"
+import { FolderTree } from "./folder-tree"
 
 export function AppSidebar({ user }: { user: ShellUser }) {
   const pathname = usePathname()
@@ -61,12 +61,7 @@ export function AppSidebar({ user }: { user: ShellUser }) {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel className="text-micro text-saffron-spark uppercase">
-            Folders
-          </SidebarGroupLabel>
-          <p className="px-2 text-snippet text-ash-gray group-data-[collapsible=icon]:hidden">
-            Folders you create or import appear here.
-          </p>
+          <FolderTree />
         </SidebarGroup>
       </SidebarContent>
 
