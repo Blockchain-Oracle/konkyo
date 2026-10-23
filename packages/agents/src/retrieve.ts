@@ -33,7 +33,7 @@ type Csl = {
 }
 
 /** "Vaswani et al. · 2017": family names (three at most), then the year. */
-function bylineOf(meta: { csl?: Csl } | null): string | undefined {
+export function bylineOf(meta: { csl?: Csl } | null): string | undefined {
   const csl = meta?.csl
   if (!csl) return undefined
   const names = (csl.author ?? []).map((a) => a.family ?? a.literal).filter(Boolean) as string[]

@@ -2,6 +2,7 @@ import {
   bigserial,
   boolean,
   index,
+  integer,
   jsonb,
   pgTable,
   text,
@@ -112,6 +113,14 @@ export const userSettings = pgTable("user_settings", {
   autoImportSources: boolean().default(false).notNull(),
   /** The citation style exports start with (F26); each export can pick another. CSL id. */
   citationStyle: text().default("apa").notNull(),
+  /** Study sounds (plan §7.8): on by default, and only ever in Study. */
+  studySound: boolean().default(true).notNull(),
+  /** New items a day's review brings in, beside the ones already due (F29). */
+  dailyNew: integer().default(15).notNull(),
+  /** Streak freezes held (F31): two at most, one back every seven studied days. */
+  streakFreezes: integer().default(2).notNull(),
+  /** The person's time zone, so a streak day is their day. */
+  timeZone: text(),
   updatedAt: timestamp({ withTimezone: true })
     .defaultNow()
     .notNull()

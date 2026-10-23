@@ -4,6 +4,7 @@ import { deepJob } from "./deep"
 import { indexNote } from "./notes"
 import { ingestFile } from "./pipeline"
 import { purgeExpired, purgeFiles } from "./purge"
+import { makeSet } from "./study"
 
 /** Files processed at once in this worker (OCR, conversion and transcription are heavy). */
 const INGEST_CONCURRENCY = 2
@@ -30,6 +31,11 @@ await queues.work(QUEUES.deep.name, { localConcurrency: 3 }, async ([job]) => {
   await deepJob(runId, phase)
 })
 
+// Practice sets run a few at a time beside ingest (each is mostly waiting on model calls).
+await queues.work(QUEUES.study.name, { localConcurrency: 3 }, async ([job]) => {
+  if (job) await makeSet(QUEUES.study.payload.parse(job.data).setId)
+})
+
 await queues.work(QUEUES.noteIndex.name, async ([job]) => {
   if (job) await indexNote(QUEUES.noteIndex.payload.parse(job.data).fileId)
 })
@@ -48,7 +54,7 @@ await queues.work(SWEEP, async () => {
 })
 
 console.info(
-  `[worker] listening on "${QUEUES.ingest.name}" (×${INGEST_CONCURRENCY}), "deep" (×3), "purge", daily sweep`,
+  `[worker] listening on "${QUEUES.ingest.name}" (×${INGEST_CONCURRENCY}), "deep" (×3), "study" (×3), "purge", daily sweep`,
 )
 
 // On shutdown stop taking jobs and exit promptly: a job cut off here stops sending heartbeats and

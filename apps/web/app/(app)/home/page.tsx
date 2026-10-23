@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { MobileHeader } from "@/components/page-header"
+import { TodayCard } from "@/components/study/today-card"
 import { HomeComposer } from "./home-composer"
 import { HomeLibrary } from "./home-library"
 
@@ -14,7 +15,9 @@ export default function HomePage() {
         <h1 className="text-subheading font-normal sm:text-heading-sm">
           What do you want to know?
         </h1>
-        <HomeComposer />
+        <HomeComposer>
+          <TodayCard />
+        </HomeComposer>
 
         <div className="mt-24">
           <HomeLibrary />

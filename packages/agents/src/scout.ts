@@ -2,7 +2,7 @@ import { type FoundWork, searchWorks } from "@konkyo/ingest/metadata"
 import { Markovian } from "@konkyo/meterless/markovian"
 import { generateText, Output } from "ai"
 import { z } from "zod"
-import { MODELS, type ModelChoice, model, openai, reasoning } from "./models"
+import { MODELS, type ModelChoice, model, noFallback, openai, reasoning } from "./models"
 import type { Tracer } from "./trace"
 
 /** A source deep search found: a paper OpenAlex holds a PDF of, or a page from web search. */
@@ -32,7 +32,7 @@ async function withFallback<T>(
   try {
     return { result: await call(primary), choice: primary }
   } catch (error) {
-    if ((error as Error).name === "AbortError") throw error
+    if (noFallback(error)) throw error
     tracer.log({
       agent: "scout",
       step,

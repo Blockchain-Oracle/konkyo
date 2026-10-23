@@ -11,6 +11,12 @@ import {
   noteVersions,
   passages,
   runs,
+  studyCards,
+  studyDays,
+  studyItems,
+  studyReviews,
+  studyRounds,
+  studySets,
   user,
   userSettings,
 } from "./schema"
@@ -35,6 +41,25 @@ const movers: Array<(tx: Tx, fromUserId: string, toUserId: string) => Promise<un
   (tx, from, to) =>
     tx.update(noteVersions).set({ ownerId: to }).where(eq(noteVersions.ownerId, from)),
   (tx, from, to) => tx.update(noteEvents).set({ ownerId: to }).where(eq(noteEvents.ownerId, from)),
+  (tx, from, to) => tx.update(studySets).set({ ownerId: to }).where(eq(studySets.ownerId, from)),
+  (tx, from, to) => tx.update(studyItems).set({ ownerId: to }).where(eq(studyItems.ownerId, from)),
+  (tx, from, to) => tx.update(studyCards).set({ ownerId: to }).where(eq(studyCards.ownerId, from)),
+  (tx, from, to) =>
+    tx.update(studyReviews).set({ ownerId: to }).where(eq(studyReviews.ownerId, from)),
+  (tx, from, to) =>
+    tx.update(studyRounds).set({ ownerId: to }).where(eq(studyRounds.ownerId, from)),
+  // Streak days: the account's own days win where both studied on the same day.
+  async (tx, from, to) => {
+    const theirs = await tx
+      .select({ day: studyDays.day })
+      .from(studyDays)
+      .where(eq(studyDays.ownerId, to))
+    const taken = new Set(theirs.map((d) => d.day))
+    const mine = await tx.select().from(studyDays).where(eq(studyDays.ownerId, from))
+    for (const d of mine)
+      if (!taken.has(d.day)) await tx.insert(studyDays).values({ ...d, ownerId: to })
+    await tx.delete(studyDays).where(eq(studyDays.ownerId, from))
+  },
   // The account signed into keeps its own settings if it has them.
   async (tx, from, to) => {
     const existing = await tx.query.userSettings.findFirst({ where: eq(userSettings.userId, to) })

@@ -107,6 +107,9 @@ importers:
       '@konkyo/storage':
         specifier: workspace:*
         version: link:../../packages/storage
+      '@konkyo/study':
+        specifier: workspace:*
+        version: link:../../packages/study
       '@konkyo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -231,6 +234,9 @@ importers:
       '@konkyo/storage':
         specifier: workspace:*
         version: link:../../packages/storage
+      '@konkyo/study':
+        specifier: workspace:*
+        version: link:../../packages/study
       '@konkyo/zetaris':
         specifier: workspace:*
         version: link:../../packages/zetaris
@@ -455,6 +461,25 @@ importers:
       '@types/node':
         specifier: 24.19.2
         version: 24.19.2
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
+
+  packages/study:
+    dependencies:
+      ts-fsrs:
+        specifier: 5.4.2
+        version: 5.4.2
+    devDependencies:
+      '@konkyo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/node':
+        specifier: 24.19.2
+        version: 24.19.2
+      tsx:
+        specifier: 4.23.15
+        version: 4.23.15
       typescript:
         specifier: 7.0.2
         version: 7.0.2
@@ -4736,6 +4761,10 @@ packages:
     resolution: {integrity: sha512-BcDSDW+SIGWVOns1Zm6Yg91q9AEj7eaID0QDY9oIqJD1A8dscNwMcl9Sms2DeuWCNov1X0/oXanHGYQBSLwZsg==}
     engines: {node: ^22.14.0 || >=24.0.0}
 
+  ts-fsrs@5.4.2:
+    resolution: {integrity: sha512-z4qop4pzTcyTzuJ566d9EaX/4bZZzhYfeaPImfVr+xcYT65c5oBgFDijUhCE/D+C78eaolHIhKRZ04/RwF+v2g==}
+    engines: {node: '>=20.0.0'}
+
   ts-morph@26.0.0:
     resolution: {integrity: sha512-ztMO++owQnz8c/gIENcM9XfCEzgoGphTv+nKpYNM1bgsdOVC/jRZuEBf6N+mLLDNg68Kl+GgUZfOySaRiG1/Ug==}
 
@@ -8815,6 +8844,8 @@ snapshots:
   tr46@7.0.0:
     dependencies:
       punycode: 2.3.1
+
+  ts-fsrs@5.4.2: {}
 
   ts-morph@26.0.0:
     dependencies:

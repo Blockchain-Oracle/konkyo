@@ -8,6 +8,8 @@ export const PATCH = route<Record<string, never>, Partial<Settings>>(
   async ({ userId, body }) => updateSettings(userId, body),
   z.object({
     autoImportSources: z.boolean().optional(),
+    studySound: z.boolean().optional(),
+    dailyNew: z.number().int().min(0).max(100).optional(),
     citationStyle: z
       .string()
       .regex(/^[a-z0-9-]{2,120}$/)

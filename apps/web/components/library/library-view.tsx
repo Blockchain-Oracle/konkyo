@@ -19,6 +19,7 @@ import {
   FolderIcon,
   FolderPlusIcon,
   FolderUpIcon,
+  GraduationCapIcon,
   LinkIcon,
   MessageSquareIcon,
   PencilIcon,
@@ -36,6 +37,7 @@ import { chatWithHref } from "@/lib/focus"
 import { holdQuestion } from "@/lib/pending-question"
 import { useFolderActions, useFolderPath, useFolderTree } from "@/lib/use-folders"
 import { type LibraryFile, useFiles } from "@/lib/use-library"
+import { useStudyActions } from "@/lib/use-study"
 import { filesFromDrop } from "@/lib/use-uploader"
 import { BulkBar } from "./bulk-bar"
 import { FileRow } from "./file-row"
@@ -314,6 +316,7 @@ export function LibraryView({ folderId }: { folderId?: string }) {
 function FolderHeading({ folderId }: { folderId: string }) {
   const { data: path } = useFolderPath(folderId)
   const { trash } = useFolderActions()
+  const study = useStudyActions()
   const router = useRouter()
   // A deep search on the folder's topic, in a chat focused on it; what's found lands here (F18).
   const findSourcesFor = (folder: { id: string; name: string }) => {
@@ -373,6 +376,16 @@ function FolderHeading({ folderId }: { folderId: string }) {
             <DropdownMenuItem onClick={() => findSourcesFor(folder)}>
               <TelescopeIcon strokeWidth={1.5} />
               Find sources on this topic
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() =>
+                void study.quizMe({ fileIds: [], folderIds: [folder.id] }, folder.name, (href) =>
+                  router.push(href),
+                )
+              }
+            >
+              <GraduationCapIcon strokeWidth={1.5} />
+              Quiz me on this folder
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => openRenameFolder(folder.id, folder.name)}>
               <PencilIcon strokeWidth={1.5} />

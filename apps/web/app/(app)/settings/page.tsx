@@ -6,6 +6,7 @@ import { Suspense } from "react"
 import { PageShell } from "@/components/page-shell"
 import { getSession } from "@/lib/session"
 import { DeepSearchSetting } from "./deep-search-setting"
+import { StudySettings } from "./study-settings"
 
 export const metadata: Metadata = { title: "Settings" }
 
@@ -56,6 +57,14 @@ export default function SettingsPage() {
         </h2>
         <div className="mt-4.5">
           <DeepSearchSetting />
+        </div>
+      </section>
+      <section aria-labelledby="study-heading" className="mt-15">
+        <h2 id="study-heading" className="text-micro text-saffron-spark uppercase">
+          Study
+        </h2>
+        <div className="mt-4.5">
+          <StudySettings />
         </div>
       </section>
       <section aria-labelledby="memory-heading" className="mt-15">

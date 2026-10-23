@@ -3,10 +3,16 @@
 import type { SelectionSelectionMenuProps } from "@embedpdf/plugin-selection/react"
 import { useSelectionCapability } from "@embedpdf/plugin-selection/react"
 import { cn } from "@konkyo/ui/lib/utils"
-import { CopyIcon, HighlighterIcon, MessageSquareQuoteIcon } from "lucide-react"
+import {
+  CopyIcon,
+  GalleryVerticalEndIcon,
+  HighlighterIcon,
+  MessageSquareQuoteIcon,
+} from "lucide-react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { quoteInComposer } from "@/lib/composer-draft"
+import { api } from "@/lib/fetcher"
 import { useHighlightActions } from "@/lib/use-highlights"
 
 /**
@@ -37,6 +43,34 @@ export function SelectionToolbar({
     quoteInComposer({ fileId, title, page: context.pageIndex + 1, text })
     scope?.clear()
     router.push("/home")
+  }
+  // Make flashcard (F08): the Tutor asks about the selection; the Verifier and Zetaris check it.
+  const flashcard = async () => {
+    const text = await selectedText()
+    if (!text) return
+    scope?.clear()
+    const id = toast.loading("Making a flashcard…", {
+      description: "Checked against the source before it's saved.",
+    })
+    try {
+      const card = await api<{ setId: string; made: number; prompt: string }>(
+        "/api/study/flashcard",
+        {
+          method: "POST",
+          json: { fileId, page: context.pageIndex + 1, text },
+        },
+      )
+      toast.success(card.made > 1 ? `${card.made} flashcards made` : "Flashcard made", {
+        id,
+        description: card.prompt,
+        action: {
+          label: "Practise",
+          onClick: () => router.push(`/study/session?mode=quiz&set=${card.setId}` as never),
+        },
+      })
+    } catch (error) {
+      toast.error((error as Error).message, { id, description: undefined })
+    }
   }
   const copy = () => {
     scope?.copyToClipboard()
@@ -87,6 +121,10 @@ export function SelectionToolbar({
         <ToolbarAction onClick={highlight}>
           <HighlighterIcon />
           Highlight
+        </ToolbarAction>
+        <ToolbarAction onClick={flashcard}>
+          <GalleryVerticalEndIcon />
+          Flashcard
         </ToolbarAction>
         <ToolbarAction onClick={copy}>
           <CopyIcon />

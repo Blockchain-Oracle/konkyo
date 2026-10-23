@@ -2,7 +2,7 @@ import { checkQuotes, sqlHash } from "@konkyo/zetaris"
 import { generateText, Output } from "ai"
 import { z } from "zod"
 import { quoteKey } from "./citations"
-import { MODELS, type ModelChoice, model, reasoning } from "./models"
+import { MODELS, type ModelChoice, model, noFallback, reasoning } from "./models"
 import { type Candidate, hybridSearch } from "./retrieve"
 import type { Tracer } from "./trace"
 
@@ -61,7 +61,7 @@ async function call<T>(
   try {
     return { result: await fn(primary), choice: primary }
   } catch (error) {
-    if ((error as Error).name === "AbortError") throw error
+    if (noFallback(error)) throw error
     tracer.log({
       agent: "verifier",
       step,

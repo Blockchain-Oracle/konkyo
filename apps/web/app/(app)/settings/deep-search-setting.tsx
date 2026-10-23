@@ -17,7 +17,7 @@ export function DeepSearchSetting() {
       api<Settings>("/api/settings", { method: "PATCH", json: { autoImportSources } }),
     onMutate: (autoImportSources) => {
       const previous = queryClient.getQueryData<Settings>(key)
-      queryClient.setQueryData<Settings>(key, { autoImportSources })
+      if (previous) queryClient.setQueryData<Settings>(key, { ...previous, autoImportSources })
       return { previous }
     },
     onError: (error: Error, _v, context) => {

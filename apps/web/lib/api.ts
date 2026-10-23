@@ -27,6 +27,8 @@ export function route<P = Record<string, never>, B = undefined>(
       }
       if (error instanceof LibraryError)
         return NextResponse.json({ error: error.message }, { status: error.status })
+      if ((error as Error)?.name === "OutOfCreditError")
+        return NextResponse.json({ error: (error as Error).message }, { status: 503 })
       console.error("[api]", error)
       return NextResponse.json({ error: "Something went wrong on our side" }, { status: 500 })
     }

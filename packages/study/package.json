@@ -1,0 +1,22 @@
+{
+  "name": "@konkyo/study",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "tsx --test src/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@konkyo/typescript-config": "workspace:*",
+    "@types/node": "24.19.2",
+    "tsx": "4.23.15",
+    "typescript": "7.0.2"
+  },
+  "dependencies": {
+    "ts-fsrs": "5.4.2"
+  }
+}

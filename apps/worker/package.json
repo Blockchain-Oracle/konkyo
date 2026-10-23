@@ -11,15 +11,16 @@
     "ask": "node ../../scripts/with-env.mjs tsx src/ask.ts"
   },
   "dependencies": {
+    "@konkyo/agents": "workspace:*",
     "@konkyo/config": "workspace:*",
     "@konkyo/db": "workspace:*",
     "@konkyo/env": "workspace:*",
     "@konkyo/ingest": "workspace:*",
     "@konkyo/jobs": "workspace:*",
     "@konkyo/storage": "workspace:*",
+    "@konkyo/study": "workspace:*",
     "@konkyo/zetaris": "workspace:*",
-    "drizzle-orm": "0.45.4",
-    "@konkyo/agents": "workspace:*"
+    "drizzle-orm": "0.45.4"
   },
   "devDependencies": {
     "@konkyo/typescript-config": "workspace:*",

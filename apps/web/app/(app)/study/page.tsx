@@ -1,17 +1,20 @@
 import type { Metadata } from "next"
-import { EmptyState } from "@/components/empty-state"
 import { PageShell } from "@/components/page-shell"
+import { Games, MakePractice, SetList } from "@/components/study/study-overview"
+import { TodayCard } from "@/components/study/today-card"
 
 export const metadata: Metadata = { title: "Study" }
 
+/** Study (plan F27–F31): today's review and streak, make practice, the games, your sets. */
 export default function StudyPage() {
   return (
     <PageShell title="Study">
-      <EmptyState
-        label="Study"
-        title="Nothing to practise yet"
-        description="Make practice from any file or folder. You answer first; the passage it came from follows."
-      />
+      <div className="space-y-15">
+        <TodayCard variant="study" />
+        <MakePractice />
+        <Games />
+        <SetList />
+      </div>
     </PageShell>
   )
 }

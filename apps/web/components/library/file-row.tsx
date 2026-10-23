@@ -15,8 +15,10 @@ import {
   DownloadIcon,
   EllipsisIcon,
   FolderInputIcon,
+  GraduationCapIcon,
   InfoIcon,
   MessageSquareIcon,
+  NotebookPenIcon,
   PanelRightOpenIcon,
   Trash2Icon,
 } from "lucide-react"
@@ -26,6 +28,7 @@ import { openMoveFiles } from "@/components/shell/app-dialogs"
 import { chatWithHref } from "@/lib/focus"
 import { openFile } from "@/lib/preview"
 import { type LibraryFile, useFileActions } from "@/lib/use-library"
+import { useStudyActions } from "@/lib/use-study"
 import type { UploadState } from "@/lib/use-uploader"
 import { openDetails } from "./file-details"
 import { FileStatus } from "./file-status"
@@ -156,6 +159,7 @@ export function FileRow({
   onSelect?: (event: { shiftKey: boolean }) => void
 }) {
   const { remove } = useFileActions()
+  const study = useStudyActions()
   const router = useRouter()
   const uploading = file.stage === "Uploading" && upload != null && !upload.failed
   const fixIt =
@@ -261,6 +265,26 @@ export function FileRow({
             >
               <MessageSquareIcon strokeWidth={1.5} />
               Chat with this file
+            </DropdownMenuItem>
+          )}
+          {file.status === "ready" && file.kind !== "note" && (
+            <DropdownMenuItem
+              onClick={() =>
+                void study.quizMe({ fileIds: [file.id], folderIds: [] }, undefined, (href) =>
+                  router.push(href),
+                )
+              }
+            >
+              <GraduationCapIcon strokeWidth={1.5} />
+              Quiz me
+            </DropdownMenuItem>
+          )}
+          {file.status === "ready" && file.kind !== "note" && (
+            <DropdownMenuItem
+              onClick={() => void study.makeNotes(file, (href) => router.push(href))}
+            >
+              <NotebookPenIcon strokeWidth={1.5} />
+              Make notes
             </DropdownMenuItem>
           )}
           <DropdownMenuItem onClick={() => openDetails(file.id)}>

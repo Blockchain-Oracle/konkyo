@@ -37,6 +37,7 @@ export function FocusPicker({
   trigger,
   open,
   onOpenChange,
+  side = "top",
 }: {
   items: FocusItem[]
   focus: Focus
@@ -44,6 +45,7 @@ export function FocusPicker({
   trigger: ReactElement
   open?: boolean
   onOpenChange?: (open: boolean) => void
+  side?: "top" | "bottom"
 }) {
   const folders = items.filter((i) => i.type === "folder")
   const files = items.filter((i) => i.type === "file")
@@ -67,7 +69,7 @@ export function FocusPicker({
   return (
     <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger render={trigger} />
-      <PopoverContent side="top" align="start" className="w-80 p-0">
+      <PopoverContent side={side} align="start" className="w-80 p-0">
         <Command>
           <CommandInput
             placeholder="Search files and folders"

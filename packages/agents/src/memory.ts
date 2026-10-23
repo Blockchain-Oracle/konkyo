@@ -122,6 +122,31 @@ export function recordWrongPassage(
   })
 }
 
+/**
+ * "This is wrong" on a practice item (F27) that the Verifier agreed was wrong: the Tutor reads it
+ * before making practice from the same material again.
+ */
+export function recordWrongItem(
+  userId: string,
+  input: { title: string; question: string; answer: string; reason?: string; itemId: string },
+): MemoryRecord {
+  const reason = input.reason?.trim().replace(/[.\s]+$/, "")
+  return memoryFor(userId).add({
+    content: `A practice item from “${input.title}” was wrong: “${input.question}” with the answer “${input.answer}”${reason ? `. The person said: ${reason}` : ""}.`,
+    type: "factual",
+    layer: "working",
+    tags: ["correction", "wrong-item"],
+    confidence: 0.8,
+    source: `study:${input.itemId}`,
+    provenance: {
+      origin: "user_correction",
+      learnedAt: Date.now(),
+      label: "This is wrong, on a practice item",
+      refs: [input.itemId],
+    },
+  })
+}
+
 /** 👍 / 👎 on an answer reaches the memories that shaped it (H-MEM feedback deltas). */
 export function rateRecalled(userId: string, memoryIds: string[], helpful: boolean) {
   const memory = memoryFor(userId)

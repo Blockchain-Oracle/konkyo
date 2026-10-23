@@ -1,15 +1,29 @@
 "use client"
 
 import { Button } from "@konkyo/ui/components/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@konkyo/ui/components/dropdown-menu"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@konkyo/ui/components/tooltip"
 import { cn } from "@konkyo/ui/lib/utils"
-import { InfoIcon, PanelRightCloseIcon, XIcon } from "lucide-react"
+import {
+  GraduationCapIcon,
+  InfoIcon,
+  NotebookPenIcon,
+  PanelRightCloseIcon,
+  XIcon,
+} from "lucide-react"
 import dynamic from "next/dynamic"
+import { useRouter } from "next/navigation"
 import { useMemo } from "react"
 import { openDetails } from "@/components/library/file-details"
 import { KindIcon } from "@/components/library/kind-icon"
 import { closeAllSources, closeSource, type SourceTab, showSource, usePreview } from "@/lib/preview"
 import { useFileDetail, usePassage } from "@/lib/use-source"
+import { useStudyActions } from "@/lib/use-study"
 import { CitedBar } from "./cited-bar"
 import { MediaViewer } from "./media-viewer"
 
@@ -35,6 +49,7 @@ export function SourcePane({ className }: { className?: string }) {
             <SourceTabButton key={tab.fileId} tab={tab} active={tab.fileId === active.fileId} />
           ))}
         </div>
+        {active.kind !== "note" && <StudyMenu tab={active} />}
         <Tooltip>
           <TooltipTrigger
             render={
@@ -152,5 +167,54 @@ function SourceBody({ tab }: { tab: SourceTab }) {
   if (tab.target?.passageId && !passage) return <div className="flex-1 bg-panel" />
   return (
     <PdfViewer url={file.renditionUrl} fileId={file.id} title={file.title} target={pdfTarget} />
+  )
+}
+
+/** Quiz me and Make notes on the open source (plan F27, F32). */
+function StudyMenu({ tab }: { tab: SourceTab }) {
+  const study = useStudyActions()
+  const router = useRouter()
+  return (
+    <DropdownMenu>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Study this"
+                  className="shrink-0 text-ash-gray hover:text-bone-white"
+                />
+              }
+            />
+          }
+        >
+          <GraduationCapIcon strokeWidth={1.5} />
+        </TooltipTrigger>
+        <TooltipContent>Study this</TooltipContent>
+      </Tooltip>
+      <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuItem
+          onClick={() =>
+            void study.quizMe({ fileIds: [tab.fileId], folderIds: [] }, undefined, (href) =>
+              router.push(href),
+            )
+          }
+        >
+          <GraduationCapIcon strokeWidth={1.5} />
+          Quiz me
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() =>
+            void study.makeNotes({ id: tab.fileId, title: tab.title }, (href) => router.push(href))
+          }
+        >
+          <NotebookPenIcon strokeWidth={1.5} />
+          Make notes
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }

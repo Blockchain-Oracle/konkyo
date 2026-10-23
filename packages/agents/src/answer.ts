@@ -12,7 +12,7 @@ import {
   type SourceLine,
 } from "./citations"
 import { type Recalled, recall } from "./memory"
-import { MODELS, type ModelChoice, model, type Role, reasoning } from "./models"
+import { MODELS, type ModelChoice, model, noFallback, type Role, reasoning } from "./models"
 import { type Candidate, hybridSearch, type Scope } from "./retrieve"
 import type { Tracer } from "./trace"
 
@@ -115,7 +115,7 @@ async function withFallback<T>(
   try {
     return { result: await call(primary), choice: primary }
   } catch (error) {
-    if ((error as Error).name === "AbortError") throw error
+    if (noFallback(error)) throw error
     tracer.log({
       agent:
         role === "retriever"

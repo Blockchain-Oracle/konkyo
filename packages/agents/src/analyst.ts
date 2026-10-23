@@ -6,7 +6,7 @@ import { z } from "zod"
 import type { AnswerInput, SourceRef } from "./answer"
 import { quoteKey } from "./citations"
 import { freshCache } from "./fresh"
-import { MODELS, type ModelChoice, model, reasoning } from "./models"
+import { MODELS, type ModelChoice, model, noFallback, reasoning } from "./models"
 
 /** A source's position on a claim (plan §7.4 #4): the stance glyph and its one word. */
 export type Stance = "agrees" | "disagrees" | "partly"
@@ -143,7 +143,7 @@ export async function analyse(
   try {
     result = await call(choice)
   } catch (error) {
-    if ((error as Error).name === "AbortError") throw error
+    if (noFallback(error)) throw error
     choice = MODELS.analyst.fallback
     tracer.log({
       agent: "analyst",

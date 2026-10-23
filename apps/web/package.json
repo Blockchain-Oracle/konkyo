@@ -35,6 +35,7 @@
     "@konkyo/ingest": "workspace:*",
     "@konkyo/jobs": "workspace:*",
     "@konkyo/storage": "workspace:*",
+    "@konkyo/study": "workspace:*",
     "@konkyo/ui": "workspace:*",
     "@konkyo/zetaris": "workspace:*",
     "@tanstack/react-query": "5.104.2",

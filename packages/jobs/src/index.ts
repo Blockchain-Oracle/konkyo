@@ -24,6 +24,14 @@ export const QUEUES = {
     options: { retryLimit: 0, expireInSeconds: 20 * 60 },
     send: { heartbeatSeconds: 30 },
   },
+  /** A practice set made from files or folders (F27): Tutor, Verifier, Zetaris per window. */
+  study: {
+    name: "study",
+    payload: z.object({ setId: z.uuid() }),
+    // Not retried: items already made are kept, and a second run would pay for them again.
+    options: { retryLimit: 0, expireInSeconds: 15 * 60 },
+    send: { heartbeatSeconds: 30 },
+  },
   /** A note's text read into passages for chat (F21), once typing pauses. */
   noteIndex: {
     name: "note-index",

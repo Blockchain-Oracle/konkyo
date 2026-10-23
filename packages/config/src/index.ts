@@ -169,6 +169,25 @@ export const NOTES = {
   indexAfterMs: 20_000,
 } as const
 
+/** Study (plan F27–F31): how much a set reads, how big a round is, how many sets a day. */
+export const STUDY = {
+  /** Passage windows a set reads: one file, then two more per extra file, up to the cap. */
+  windowsForOneFile: 6,
+  windowsPerExtraFile: 2,
+  windowsMax: 14,
+  /** Windows worked on at once (each is a Tutor call, a Verifier call and a Zetaris statement). */
+  concurrency: 4,
+  /** Compare-the-sources items a set tries for, when it spans two or more files. */
+  comparisons: 3,
+  /** A quiz or game round; a review round takes what's due, up to this many. */
+  roundSize: 8,
+  reviewRoundMax: 20,
+  /** A new set's round starts once this many items have passed every check. */
+  startAfter: 6,
+  guestSetsPerDay: 6,
+  setsPerDay: 40,
+} as const
+
 /** Trash keeps files, folders, chats and notes this long before deleting them for good (F04). */
 export const TRASH = { keepDays: 30 } as const
 

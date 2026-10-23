@@ -14,10 +14,10 @@ import { useFiles } from "@/lib/use-library"
 
 /**
  * Home's question box (plan F40): a question starts a new chat, which sends it as soon as it
- * opens, with whatever focus was chosen here. Below it, quick actions and questions the library
- * can answer.
+ * opens, with whatever focus was chosen here. Below it, quick actions, today's review (the
+ * children) and questions the library can answer.
  */
-export function HomeComposer() {
+export function HomeComposer({ children }: { children?: React.ReactNode }) {
   const router = useRouter()
   const { pickFiles } = useUploads()
   const { data: files } = useFiles()
@@ -73,6 +73,7 @@ export function HomeComposer() {
           Chat with a folder
         </Button>
       </nav>
+      {children}
       <div className="mt-15">
         <SuggestedQuestions focus={focus} onAsk={(text) => ask({ text })} enabled={hasReady} />
       </div>

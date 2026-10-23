@@ -8,7 +8,7 @@ import path from "node:path"
 export type TraceEvent = {
   ts: string
   runId: string
-  agent: "planner" | "retriever" | "analyst" | "writer" | "verifier" | "scout" | "system"
+  agent: "planner" | "retriever" | "analyst" | "writer" | "verifier" | "scout" | "tutor" | "system"
   step: string
   action: string
   model?: string
