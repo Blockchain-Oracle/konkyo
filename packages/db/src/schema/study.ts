@@ -72,6 +72,11 @@ export type StudyItemData = {
   /** compare: the second source, and how the two relate on the point. */
   other?: StudyGround
   relation?: "agree" | "disagree"
+  /**
+   * Find the Evidence: three similar library passages the Verifier confirmed don't state the
+   * item's claim, chosen when the item was made. Items without them aren't asked that way.
+   */
+  distractors?: string[]
 }
 
 export type StudyCheck = {

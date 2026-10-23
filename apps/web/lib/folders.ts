@@ -22,10 +22,12 @@ export async function listFolders(ownerId: string) {
       id: folders.id,
       parentId: folders.parentId,
       name: folders.name,
+      // Aliased by hand: in a one-table select Drizzle prints columns unqualified, so
+      // `${folders.id}` would bind to the inner `files.id` and every count came out 0.
       fileCount: sql<number>`(
-        select count(*)::int from ${fileFolders}
-        join ${files} on ${files.id} = ${fileFolders.fileId}
-        where ${fileFolders.folderId} = ${folders.id} and ${files.deletedAt} is null
+        select count(*)::int from ${fileFolders} ff
+        join ${files} x on x.id = ff.file_id
+        where ff.folder_id = ${folders}.id and x.deleted_at is null
       )`,
     })
     .from(folders)

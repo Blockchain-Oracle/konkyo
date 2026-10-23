@@ -2,9 +2,10 @@ import { boss, QUEUES } from "@konkyo/jobs"
 import { warmUp } from "@konkyo/zetaris"
 import { queueDueAgents, runAgent } from "./agents"
 import { deepJob } from "./deep"
+import { closeInterrupted } from "./interrupted"
 import { indexNote } from "./notes"
 import { ingestFile } from "./pipeline"
-import { purgeExpired, purgeFiles } from "./purge"
+import { purgeAbandonedGuests, purgeExpired, purgeFiles } from "./purge"
 import { sendReminders } from "./reminders"
 import { makeSet } from "./study"
 
@@ -46,13 +47,15 @@ await queues.work(QUEUES.purge.name, async ([job]) => {
   if (job) await purgeFiles(QUEUES.purge.payload.parse(job.data))
 })
 
-// Trash keeps things for 30 days; the sweep runs daily at 03:00 UTC.
+// Trash keeps things for 30 days, and abandoned guests go too; the sweep runs daily at 03:00 UTC.
 const SWEEP = "purge-expired"
 await queues.createQueue(SWEEP)
 await queues.schedule(SWEEP, "0 3 * * *", {}, { tz: "UTC" })
 await queues.work(SWEEP, async () => {
   const removed = await purgeExpired()
   if (removed) console.info(`[trash] deleted ${removed} files kept past 30 days`)
+  const guests = await purgeAbandonedGuests()
+  if (guests) console.info(`[guests] deleted ${guests} guests whose last session ran out`)
 })
 
 // Agents (F34): due ones are queued every five minutes; runs go a few at a time.
@@ -67,7 +70,16 @@ await queues.schedule(AGENTS_DUE, "*/5 * * * *", {}, { tz: "UTC" })
 await queues.work(AGENTS_DUE, async () => {
   const { queued } = await queueDueAgents()
   if (queued) console.info(`[agents] queued ${queued}`)
+  await reportInterrupted()
 })
+
+// Practice, deep searches and agent runs a restart cut off are closed (checked with agents-due).
+async function reportInterrupted() {
+  const closed = await closeInterrupted()
+  if (closed.sets + closed.deep + closed.agentRuns)
+    console.info(`[interrupted] closed ${JSON.stringify(closed)}`)
+}
+void reportInterrupted()
 
 // Review reminders (F29): hourly, each person at their own hour in their own time zone.
 const REMINDERS = "review-reminders"

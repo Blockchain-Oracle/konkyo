@@ -66,6 +66,11 @@ export const LAYOUT = {
 export const ZETARIS = {
   /** Our own deadline: Zetaris never times out by itself (a 390 s query ran to the end in S00). */
   queryTimeoutMs: 30_000,
+  /**
+   * Background work nobody waits on (practice sets, lecture notes, the worker's warm-up). After hours
+   * idle, Zetaris's first queries ran past 30 s (in testing) and threw away items the Verifier had passed.
+   */
+  backgroundTimeoutMs: 90_000,
   /** Default row limit for evidence reads. */
   rowLimit: 10_000,
   database: "konkyo",
@@ -152,6 +157,12 @@ export const LIMITS = {
   /** Deep searches download papers ($0.01 each from OpenAlex) and search the web. */
   guestDeepSearchesPerDay: 3,
   deepSearchesPerDay: 20,
+  /**
+   * Every file is read, embedded and checked in Zetaris (and recordings transcribed), so additions
+   * are capped too. A guest's 3 deep searches import about 24, which leaves room to upload.
+   */
+  guestFilesPerDay: 40,
+  filesPerDay: 300,
 } as const
 
 /** Deep search (plan F18): how long it waits for imports before answering from what's ready. */

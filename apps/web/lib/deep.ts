@@ -1,13 +1,13 @@
 import "server-only"
 import { randomUUID } from "node:crypto"
 import type { DeepEvent, KonkyoMessage } from "@konkyo/agents"
-import { LIMITS } from "@konkyo/config"
 import { db, pg, schema } from "@konkyo/db"
 import type { ChatScope } from "@konkyo/db/schema"
 import { enqueue } from "@konkyo/jobs"
-import { and, asc, count, eq, gt, gte } from "drizzle-orm"
+import { and, asc, eq, gt } from "drizzle-orm"
 import { ensureChat, saveMessage } from "./chats"
 import { LibraryError } from "./library"
+import { allowanceLeft } from "./usage"
 
 const { runs, runEvents, messages, userSettings } = schema
 
@@ -34,7 +34,6 @@ const ACTIVE = new Set(["queued", "searching", "awaiting", "importing", "answeri
  */
 export async function startDeep(
   ownerId: string,
-  guest: boolean,
   input: {
     chatId: string
     question: string
@@ -44,24 +43,8 @@ export async function startDeep(
     intoFolderId?: string
   },
 ) {
-  const [today] = await db
-    .select({ n: count() })
-    .from(runs)
-    .where(
-      and(
-        eq(runs.ownerId, ownerId),
-        eq(runs.kind, "deep"),
-        gte(runs.createdAt, new Date(Date.now() - 86_400_000)),
-      ),
-    )
-  const perDay = guest ? LIMITS.guestDeepSearchesPerDay : LIMITS.deepSearchesPerDay
-  if ((today?.n ?? 0) >= perDay)
-    throw new LibraryError(
-      guest
-        ? `Guests can run ${perDay} deep searches a day. Continue with Google for more.`
-        : "You've run today's deep searches. More tomorrow.",
-      429,
-    )
+  const limited = await allowanceLeft(ownerId, "deepSearches")
+  if (limited) throw new LibraryError(limited, 429)
 
   await ensureChat(ownerId, input.chatId, input.question, input.scope)
   if (input.userMessage) await saveMessage(ownerId, input.chatId, input.userMessage)

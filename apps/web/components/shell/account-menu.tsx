@@ -24,6 +24,7 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { toast } from "sonner"
 import { authClient } from "@/lib/auth-client"
+import { deleteMyAccount } from "@/lib/use-account"
 
 export type ShellUser = {
   name: string
@@ -54,6 +55,17 @@ export function AccountMenu({ user }: { user: ShellUser }) {
     await authClient.signOut()
     router.replace("/sign-in")
     router.refresh()
+  }
+
+  // Nobody can sign back in as a guest, so leaving deletes what the session made (as it says).
+  async function leaveAsGuest() {
+    try {
+      await deleteMyAccount()
+      router.replace("/sign-in")
+      router.refresh()
+    } catch (error) {
+      toast.error((error as Error).message)
+    }
   }
 
   return (
@@ -113,12 +125,12 @@ export function AccountMenu({ user }: { user: ShellUser }) {
             Sign out of this guest session?
           </DialogTitle>
           <DialogDescription className="text-ui text-ash-gray">
-            Guests can't sign back in, so everything you made here will be gone. Continue with
-            Google first to keep it.
+            Guests can't sign back in, so everything you made here is deleted. Continue with Google
+            first to keep it.
           </DialogDescription>
           <DialogFooter className="mt-3 gap-2">
-            <Button variant="ghost" onClick={signOut}>
-              Sign out anyway
+            <Button variant="ghost" onClick={leaveAsGuest}>
+              Sign out and delete
             </Button>
             <Button onClick={continueWithGoogle}>Continue with Google</Button>
           </DialogFooter>

@@ -5,9 +5,12 @@ import Link from "next/link"
 import { Suspense } from "react"
 import { PageShell } from "@/components/page-shell"
 import { getSession } from "@/lib/session"
+import { AccountActions } from "./account-actions"
+import { CitationStyleSetting } from "./citation-style-setting"
 import { DeepSearchSetting } from "./deep-search-setting"
 import { NotificationSettings } from "./notification-settings"
 import { StudySettings } from "./study-settings"
+import { UsageSection } from "./usage-section"
 
 export const metadata: Metadata = { title: "Settings" }
 
@@ -39,6 +42,12 @@ async function Account() {
   )
 }
 
+async function LeaveActions() {
+  const session = await getSession()
+  if (!session) return null
+  return <AccountActions guest={Boolean(session.user.isAnonymous)} />
+}
+
 export default function SettingsPage() {
   return (
     <PageShell title="Settings">
@@ -50,6 +59,14 @@ export default function SettingsPage() {
           <Suspense fallback={<Skeleton className="h-40 w-full" />}>
             <Account />
           </Suspense>
+        </div>
+      </section>
+      <section aria-labelledby="writing-heading" className="mt-15">
+        <h2 id="writing-heading" className="text-micro text-saffron-spark uppercase">
+          Citations
+        </h2>
+        <div className="mt-4.5">
+          <CitationStyleSetting />
         </div>
       </section>
       <section aria-labelledby="deep-heading" className="mt-15">
@@ -96,6 +113,24 @@ export default function SettingsPage() {
           </span>
           <ChevronRightIcon className="size-4 text-ash-gray" strokeWidth={1.5} aria-hidden />
         </Link>
+      </section>
+      <section id="usage" aria-labelledby="usage-heading" className="mt-15 scroll-mt-24">
+        <h2 id="usage-heading" className="text-micro text-saffron-spark uppercase">
+          Usage
+        </h2>
+        <div className="mt-4.5">
+          <UsageSection />
+        </div>
+      </section>
+      <section aria-labelledby="leave-heading" className="mt-15">
+        <h2 id="leave-heading" className="text-micro text-saffron-spark uppercase">
+          Sign out and delete
+        </h2>
+        <div className="mt-4.5">
+          <Suspense fallback={<Skeleton className="h-32 w-full" />}>
+            <LeaveActions />
+          </Suspense>
+        </div>
       </section>
     </PageShell>
   )

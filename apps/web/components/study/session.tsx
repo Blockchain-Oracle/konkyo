@@ -270,6 +270,13 @@ export function StudySession({
   const slot = slots?.[index]
   const item = slot?.item
 
+  // The last item's feedback scrolled itself into view; the next item starts at the top.
+  const top = useRef<HTMLDivElement>(null)
+  const itemKey = item ? `${index}:${item.id}` : ""
+  useEffect(() => {
+    if (itemKey) top.current?.scrollIntoView({ block: "start" })
+  }, [itemKey])
+
   const patch = (next: Partial<Attempt>) => setA((prev) => (prev ? { ...prev, ...next } : prev))
 
   const right = (note?: string) => {
@@ -649,7 +656,7 @@ export function StudySession({
           : null
 
   return (
-    <div className="pb-16">
+    <div ref={top} className="pb-16">
       <header className="sticky top-0 z-10 -mx-6 flex items-center gap-4 bg-background/90 px-6 pt-4 pb-3 backdrop-blur-sm md:pt-6">
         <Button
           variant="ghost"

@@ -48,10 +48,15 @@ export const MODELS = {
     primary: { id: "gpt-6-luna", reasoning: "low" },
     fallback: { id: "gpt-5-mini", reasoning: "minimal" },
   },
-  /** Makes practice items from passages (F27); every answer key then goes to the Verifier. */
+  /**
+   * Makes practice items from passages (F27); every answer key then goes to the Verifier.
+   * Measured testing, 3 runs × 12 windows: Luna (none) kept 35 items at $0.00025 each (65% pass,
+   * ~4 s median draft, but a tail of 28-39 s calls); nano (low) kept 40 at $0.00059 each (60%
+   * pass, ~11 s per draft): its reasoning tokens cost more than Luna's higher price.
+   */
   tutor: {
-    primary: { id: "gpt-5-nano", reasoning: "low" },
-    fallback: { id: "gpt-6-luna", reasoning: "none" },
+    primary: { id: "gpt-6-luna", reasoning: "none" },
+    fallback: { id: "gpt-5-nano", reasoning: "low" },
   },
   /** Judges a typed answer the code check couldn't settle, with feedback that never gives it away. */
   grader: {

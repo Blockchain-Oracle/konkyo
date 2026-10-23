@@ -11,6 +11,7 @@ import { db, schema } from "@konkyo/db"
 import { enqueue } from "@konkyo/jobs"
 import { headObject, objectKey, presignOperation, type S3Operation } from "@konkyo/storage"
 import { and, asc, desc, eq, inArray, isNull } from "drizzle-orm"
+import { allowanceLeft } from "./usage"
 
 const { files, folders, fileFolders, passages } = schema
 
@@ -132,6 +133,8 @@ export async function registerUpload(
   ownerId: string,
   input: { name: string; size: number; type?: string; relativePath?: string; folderId?: string },
 ) {
+  const limited = await allowanceLeft(ownerId, "files")
+  if (limited) throw new LibraryError(limited, 429)
   const kind = kindForName(input.name)
   if (!kind) {
     // Shown in the library as "Unsupported" with Remove (plan F03), rather than vanishing.
@@ -209,6 +212,8 @@ export async function importUrl(ownerId: string, rawUrl: string, folderId?: stri
   }
   if (!/^https?:$/.test(url.protocol))
     throw new LibraryError("Only http and https links can be imported")
+  const limited = await allowanceLeft(ownerId, "files")
+  if (limited) throw new LibraryError(limited, 429)
   const kind: FileKind = isYouTube(url.href) ? "youtube" : "web"
   const [file] = await db
     .insert(files)

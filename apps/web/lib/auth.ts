@@ -1,3 +1,4 @@
+import { moveMemory, moveWorld } from "@konkyo/agents"
 import { AUTH } from "@konkyo/config"
 import { db } from "@konkyo/db"
 import { reownUserData } from "@konkyo/db/owned"
@@ -36,8 +37,12 @@ export const auth = betterAuth({
       // the Google user and then deletes the guest itself. The plugin's own cleanup is off
       // because 1.7.8 skips it for first-time Google sign-ups.
       disableDeleteAnonymousUser: true,
-      onLinkAccount: ({ anonymousUser, newUser }) =>
-        reownUserData(db, anonymousUser.user.id, newUser.user.id),
+      onLinkAccount: async ({ anonymousUser, newUser }) => {
+        await reownUserData(db, anonymousUser.user.id, newUser.user.id)
+        // Corrections memory and the World Model live on disk under the guest's id.
+        await moveMemory(anonymousUser.user.id, newUser.user.id)
+        await moveWorld(anonymousUser.user.id, newUser.user.id)
+      },
     }),
     nextCookies(), // must stay last
   ],

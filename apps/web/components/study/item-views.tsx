@@ -72,7 +72,8 @@ export function TypedAnswer({
 
   if (item.kind === "cloze") {
     const [before, after] = item.prompt.split("____")
-    const width = Math.max(6, Math.min(28, item.answer.length + 2))
+    // Starts near the answer's length and grows with what's typed, so nothing scrolls out of view.
+    const width = Math.max(6, Math.min(32, Math.max(item.answer.length, value.length) + 2))
     return (
       <form onSubmit={submit}>
         <Label>Fill the blank</Label>

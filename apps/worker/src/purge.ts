@@ -1,15 +1,23 @@
+import { deleteMemoryOf, deleteWorldOf } from "@konkyo/agents"
 import { TRASH } from "@konkyo/config"
 import { db, schema } from "@konkyo/db"
+import { deleteUserRows } from "@konkyo/db/owned"
+import type { Payload } from "@konkyo/jobs"
 import { deleteObject } from "@konkyo/storage"
-import { unpublish } from "@konkyo/zetaris"
-import { lt } from "drizzle-orm"
+import { dropWatchTable, unpublish } from "@konkyo/zetaris"
+import { lt, sql } from "drizzle-orm"
 
 const { files, folders, chats } = schema
 
-/** Removes deleted files' stored bytes and Zetaris evidence. Safe to repeat. */
-export async function purgeFiles({ fileIds, keys }: { fileIds: string[]; keys: string[] }) {
+/**
+ * Removes deleted files' stored bytes and Zetaris evidence; for a deleted account, also its
+ * watch tables and memory files. Safe to repeat.
+ */
+export async function purgeFiles({ fileIds, keys, tables = [], ownerId }: Payload<"purge">) {
   await Promise.all(keys.map((key) => deleteObject(key)))
   await Promise.all(fileIds.map((id) => unpublish(id)))
+  await Promise.all(tables.map((table) => dropWatchTable(table)))
+  if (ownerId) await Promise.all([deleteMemoryOf(ownerId), deleteWorldOf(ownerId)])
 }
 
 /** The daily sweep: anything in Trash longer than the keep period is deleted for good. */
@@ -26,4 +34,18 @@ export async function purgeExpired() {
     keys: gone.flatMap((f) => [f.originalKey, f.renditionKey].filter((k): k is string => !!k)),
   })
   return gone.length
+}
+
+/**
+ * Guests whose last session has run out (30 days unused): nobody can sign in as them again, so
+ * what they made is deleted like an account. Linked guests are already gone (reownUserData).
+ */
+export async function purgeAbandonedGuests() {
+  const rows = await db.execute<{ id: string }>(sql`
+    select u.id from "user" u
+    where u.is_anonymous and u.created_at < now() - interval '1 day'
+      and not exists (select 1 from session s where s.user_id = u.id and s.expires_at > now())
+  `)
+  for (const { id } of rows) await purgeFiles(await deleteUserRows(db, id))
+  return rows.length
 }

@@ -4,6 +4,7 @@ import {
   makeItems,
   pickWindows,
   type StudyWindow,
+  scopeFileIds,
   Tracer,
   tutorCorrections,
 } from "@konkyo/agents"
@@ -69,7 +70,9 @@ export async function makeSet(setId: string) {
   const tracer = new Tracer(set.runId ?? `study-${setId}`)
   const started = performance.now()
   try {
-    const files = set.scope.fileIds.length + set.scope.folderIds.length * 2
+    // The whole library (null) reads the most windows; a folder by the files really in it.
+    const inScope = await scopeFileIds(set.ownerId, set.scope)
+    const files = inScope?.length ?? Number.POSITIVE_INFINITY
     const want = Math.min(
       STUDY.windowsMax,
       STUDY.windowsForOneFile + Math.max(0, files - 1) * STUDY.windowsPerExtraFile,
@@ -100,7 +103,12 @@ export async function makeSet(setId: string) {
         const next = queue.shift()
         if (!next) return
         try {
-          const result = await makeItems(next.w, { corrections, tracer, key: `w${next.i}` })
+          const result = await makeItems(next.w, {
+            corrections,
+            tracer,
+            key: `w${next.i}`,
+            ownerId: set.ownerId,
+          })
           made += result.items.length
           await save(setId, set.ownerId, result.items, result.dropped)
         } catch (error) {

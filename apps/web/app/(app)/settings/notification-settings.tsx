@@ -3,14 +3,12 @@
 import { Button } from "@konkyo/ui/components/button"
 import { Checkbox } from "@konkyo/ui/components/checkbox"
 import { Spinner } from "@konkyo/ui/components/spinner"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { api } from "@/lib/fetcher"
 import { pushState, turnOffPush, turnOnPush } from "@/lib/use-inbox"
+import { useSettings } from "@/lib/use-settings"
 
-type Settings = { reviewReminders: boolean; reminderHour: number }
-const key = ["settings"] as const
 const HOURS = Array.from({ length: 24 }, (_, h) => h)
 // 24-hour and locale-free, so the server's render and the browser's agree.
 const label = (h: number) => `${String(h).padStart(2, "0")}:00`
@@ -20,27 +18,12 @@ const label = (h: number) => `${String(h).padStart(2, "0")}:00`
  * the daily review reminder at their chosen hour, sent only when something is due.
  */
 export function NotificationSettings() {
-  const queryClient = useQueryClient()
-  const { data } = useQuery({ queryKey: key, queryFn: () => api<Settings>("/api/settings") })
+  const { settings: data, save } = useSettings()
   const [push, setPush] = useState<Awaited<ReturnType<typeof pushState>> | null>(null)
   const [busy, setBusy] = useState(false)
   useEffect(() => {
     void pushState().then(setPush)
   }, [])
-  const save = useMutation({
-    mutationFn: (patch: Partial<Settings>) =>
-      api<Settings>("/api/settings", { method: "PATCH", json: patch }),
-    onMutate: (patch) => {
-      const previous = queryClient.getQueryData<Settings>(key)
-      if (previous) queryClient.setQueryData<Settings>(key, { ...previous, ...patch })
-      return { previous }
-    },
-    onError: (error: Error, _v, context) => {
-      queryClient.setQueryData(key, context?.previous)
-      toast.error(error.message)
-    },
-    onSettled: () => void queryClient.invalidateQueries({ queryKey: key }),
-  })
   const toggle = async () => {
     setBusy(true)
     try {

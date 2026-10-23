@@ -11,6 +11,7 @@ import { db, schema } from "@konkyo/db"
 import type { ChatScope } from "@konkyo/db/schema"
 import { and, asc, count, desc, eq, gt, gte, isNull, lt } from "drizzle-orm"
 import { LibraryError } from "./library"
+import { allowanceLeft } from "./usage"
 
 const { chats, messages, runs } = schema
 
@@ -119,22 +120,14 @@ export async function dropAfter(chatId: string, messageId: string) {
  * Whether this person may ask now (plan §3 rate limits): a cap per ten minutes and per day, lower
  * for guests. Returns the reason in plain words when they can't.
  */
-export async function answerLimit(ownerId: string, guest: boolean): Promise<string | null> {
-  const since = (ms: number) =>
-    db
-      .select({ n: count() })
-      .from(runs)
-      .where(and(eq(runs.ownerId, ownerId), gte(runs.createdAt, new Date(Date.now() - ms))))
-      .then((r) => r[0]?.n ?? 0)
-  const [recent, today] = await Promise.all([since(10 * 60_000), since(86_400_000)])
-  if (recent >= LIMITS.answersPerTenMinutes)
+export async function answerLimit(ownerId: string): Promise<string | null> {
+  const [recent] = await db
+    .select({ n: count() })
+    .from(runs)
+    .where(and(eq(runs.ownerId, ownerId), gte(runs.createdAt, new Date(Date.now() - 10 * 60_000))))
+  if ((recent?.n ?? 0) >= LIMITS.answersPerTenMinutes)
     return "That's a lot of questions in a few minutes. Try again shortly."
-  const perDay = guest ? LIMITS.guestAnswersPerDay : LIMITS.answersPerDay
-  if (today >= perDay)
-    return guest
-      ? "Guests can ask 60 questions a day. Continue with Google to keep going."
-      : "You've reached today's limit of questions. It resets tomorrow."
-  return null
+  return allowanceLeft(ownerId, "questions")
 }
 
 export async function startRun(ownerId: string, chatId: string, runId: string, question: string) {

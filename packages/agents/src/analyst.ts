@@ -1,3 +1,4 @@
+import { access, rename, rm } from "node:fs/promises"
 import path from "node:path"
 import { type Provenance, WorldModel } from "@konkyo/meterless/world-model"
 import { checkQuotes, sqlHash } from "@konkyo/zetaris"
@@ -77,14 +78,36 @@ const WORLD_DIR =
 const cachedWorld = freshCache<WorldModel>("__konkyoWorld")
 
 /** One World Model per person, rebuilt when another process (web, worker) changed its file. */
+const namespaceOf = (ownerId: string) => `owner-${ownerId.replace(/[^A-Za-z0-9_-]/g, "")}`
+const worldFile = (ownerId: string) =>
+  path.join(WORLD_DIR, ".world", `${namespaceOf(ownerId)}.json`)
+
 function worldFor(ownerId: string) {
-  const namespace = `owner-${ownerId.replace(/[^A-Za-z0-9_-]/g, "")}`
+  const namespace = namespaceOf(ownerId)
   const world = cachedWorld(
     namespace,
-    path.join(WORLD_DIR, ".world", `${namespace}.json`),
+    worldFile(ownerId),
     () => new WorldModel({ namespace, storage: "local", directory: WORLD_DIR }),
   )
   return { world, namespace }
+}
+
+/** Deletes a person's World Model file (account deletion). */
+export async function deleteWorldOf(ownerId: string) {
+  await rm(worldFile(ownerId), { force: true })
+}
+
+/**
+ * A guest's World Model goes with them when they sign in with Google (F43). Its file names its
+ * owner only in the filename, so moving is a rename; an account that already has one keeps its own.
+ */
+export async function moveWorld(fromOwnerId: string, toOwnerId: string) {
+  const taken = await access(worldFile(toOwnerId)).then(
+    () => true,
+    () => false,
+  )
+  if (taken) await rm(worldFile(fromOwnerId), { force: true })
+  else await rename(worldFile(fromOwnerId), worldFile(toOwnerId)).catch(() => undefined)
 }
 
 function countsOf(claims: Matrix["claims"], sources: MatrixSource[]): Matrix["counts"] {

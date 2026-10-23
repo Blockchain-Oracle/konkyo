@@ -60,7 +60,7 @@ export async function POST(request: Request) {
       ? `About this passage from "${quote.data.title}"${quote.data.page ? ` (page ${quote.data.page})` : ""}: “${quote.data.text}”\n\n${question}`
       : question
 
-  const limited = await answerLimit(ownerId, Boolean(session.user.isAnonymous))
+  const limited = await answerLimit(ownerId)
   if (limited) return NextResponse.json({ error: limited }, { status: 429 })
 
   let chat: Awaited<ReturnType<typeof ensureChat>>

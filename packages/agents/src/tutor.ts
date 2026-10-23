@@ -1,3 +1,4 @@
+import { ZETARIS } from "@konkyo/config"
 import { db } from "@konkyo/db"
 import type { StudyCheck, StudyGround, StudyItemData, StudyKind } from "@konkyo/db/schema"
 import { checkQuotes, sqlHash } from "@konkyo/zetaris"
@@ -78,9 +79,11 @@ const WINDOW_MIN = 600
 const WINDOW_MAX = 2400
 
 /** Reference lists, front matter and tables of numbers: nothing there is worth learning. */
-function looksLikeApparatus(text: string) {
+export function looksLikeApparatus(text: string) {
   const words = text.split(/\s+/).length
   const years = text.match(/\b(19|20)\d{2}[a-z]?\b/g)?.length ?? 0
+  // "Fett, P., Gomes, M.W.": 0.10-0.23 per word in reference lists, none in prose (in testing).
+  const initials = text.match(/\b\p{Lu}[\p{Ll}'’-]+,\s(?:\p{Lu}\.\s?){1,3}/gu)?.length ?? 0
   const digits = text.replace(/[^\d]/g, "").length / Math.max(1, text.length)
   return (
     /^\s*(references|bibliography|acknowledg|funding|conflicts? of interest|author contributions)/i.test(
@@ -88,6 +91,7 @@ function looksLikeApparatus(text: string) {
     ) ||
     (/doi\.org|https?:\/\//.test(text) && years > 3) ||
     years / Math.max(1, words) > 0.05 ||
+    initials / Math.max(1, words) > 0.04 ||
     digits > 0.2
   )
 }
@@ -238,6 +242,11 @@ const Bundle = z.object({
     .object({
       question: z.string(),
       answer: z.string().describe("1-6 words"),
+      point: z
+        .string()
+        .describe(
+          "The fact the question tests, as one statement in your own words: nothing the quoted words don't say",
+        ),
       accepted: z.array(z.string()).describe("Other ways to say the same answer (0-3)"),
       hints: Hints,
       quote: Quoted,
@@ -351,17 +360,24 @@ const groundOf = (p: StudyPassage, quote: string): StudyGround => ({
 
 type Draft = Omit<MadeItem, "check"> & { id: string }
 
-/** The bundle's items that pass the code checks (quotes, sentences and blanks really in the source). */
-function draftsOf(w: StudyWindow, b: Bundled, makeFalse: boolean, key: string): Draft[] {
+/**
+ * The bundle's items that pass the code checks (quotes, sentences and blanks really in the
+ * source), and why each other one failed: the trace says where a window's items went.
+ */
+function draftsOf(w: StudyWindow, b: Bundled, makeFalse: boolean, key: string) {
   const drafts: Draft[] = []
+  const failed: Record<string, string> = {}
   const base = { topic: b.topic.trim(), claim: b.claim.trim() }
   if (b.recall) {
     const at = located(w, b.recall.quote.passage, b.recall.quote.words)
-    if (at && b.recall.answer.trim())
+    if (!at) failed.recall = "quote not in the passages"
+    else if (!b.recall.answer.trim()) failed.recall = "no answer"
+    else
       drafts.push({
         id: `${key}-recall`,
         kind: "recall",
         ...base,
+        claim: b.recall.point.trim() || base.claim,
         prompt: b.recall.question.trim(),
         answer: b.recall.answer.trim(),
         accepted: b.recall.accepted
@@ -379,7 +395,10 @@ function draftsOf(w: StudyWindow, b: Bundled, makeFalse: boolean, key: string): 
     const blank = b.cloze.blank.trim()
     const at = located(w, b.cloze.passage, sentence)
     const index = sentence.indexOf(blank)
-    if (at && blank && index !== -1 && blank.length < sentence.length / 2)
+    if (!at) failed.cloze = "sentence not in the passages"
+    else if (!blank || index === -1) failed.cloze = "blank not in the sentence"
+    else if (blank.length >= sentence.length / 2) failed.cloze = "blank too long"
+    else
       drafts.push({
         id: `${key}-cloze`,
         kind: "cloze",
@@ -399,11 +418,15 @@ function draftsOf(w: StudyWindow, b: Bundled, makeFalse: boolean, key: string): 
     const statement = b.truefalse.statement.trim()
     // A "false" statement identical to its sentence isn't false.
     const changed = quoteKey(statement) !== quoteKey(original)
-    if (at && statement && (!makeFalse || changed))
+    if (!at) failed.truefalse = "sentence not in the passages"
+    else if (!statement || (makeFalse && !changed)) failed.truefalse = "false statement unchanged"
+    else
       drafts.push({
         id: `${key}-truefalse`,
         kind: "truefalse",
         ...base,
+        // A true statement is its sentence in other words: Find the Evidence can ask it.
+        ...(makeFalse ? {} : { claim: statement }),
         prompt: statement,
         answer: makeFalse ? "false" : "true",
         accepted: [],
@@ -413,9 +436,11 @@ function draftsOf(w: StudyWindow, b: Bundled, makeFalse: boolean, key: string): 
         ground: groundOf(at, original),
       })
   }
-  if (b.order && b.order.steps.length >= 3 && b.order.steps.length <= 6) {
+  if (b.order) {
     const at = located(w, b.order.quote.passage, b.order.quote.words)
-    if (at)
+    if (b.order.steps.length < 3 || b.order.steps.length > 6) failed.order = "not 3-6 steps"
+    else if (!at) failed.order = "quote not in the passages"
+    else
       drafts.push({
         id: `${key}-order`,
         kind: "order",
@@ -429,7 +454,14 @@ function draftsOf(w: StudyWindow, b: Bundled, makeFalse: boolean, key: string): 
         ground: groundOf(at, b.order.quote.words),
       })
   }
-  return drafts.filter((d) => d.hints.length === 2 && d.prompt && d.why)
+  const complete = drafts.filter((d) => {
+    const ok = d.hints.length === 2 && d.prompt && d.why
+    if (!ok)
+      failed[d.kind] =
+        d.hints.length === 2 ? "missing a question or explanation" : `${d.hints.length} hints`
+    return ok
+  })
+  return { drafts: complete, failed }
 }
 
 function describeDraft(d: Draft) {
@@ -437,7 +469,9 @@ function describeDraft(d: Draft) {
     return `[${d.id}] true/false. Statement: ${d.prompt}\nKey: ${d.answer}\nHints: ${d.hints.join(" | ")}\nExplanation: ${d.why}`
   if (d.kind === "order")
     return `[${d.id}] order the steps of: ${d.prompt}\nKey (in order): ${d.data.steps?.join(" → ")}\nHints: ${d.hints.join(" | ")}\nExplanation: ${d.why}`
-  return `[${d.id}] ${d.kind === "cloze" ? "fill the blank" : "question"}: ${d.prompt}\nKey: ${d.answer}${d.accepted.length ? ` (also: ${d.accepted.join("; ")})` : ""}\nHints: ${d.hints.join(" | ")}\nExplanation: ${d.why}`
+  const point =
+    d.kind === "recall" ? `\nPoint (must be stated by the quoted passage): ${d.claim}` : ""
+  return `[${d.id}] ${d.kind === "cloze" ? "fill the blank" : "question"}: ${d.prompt}\nKey: ${d.answer}${d.accepted.length ? ` (also: ${d.accepted.join("; ")})` : ""}${point}\nHints: ${d.hints.join(" | ")}\nExplanation: ${d.why}`
 }
 
 /** The Verifier's call on a window's drafts: only the ones it passes go on. */
@@ -475,7 +509,7 @@ async function confirmInZetaris(drafts: Draft[], tracer: Tracer | undefined, ste
       transcript: g.page == null,
     }))
   })
-  const zetaris = await checkQuotes(checks)
+  const zetaris = await checkQuotes(checks, { timeoutMs: ZETARIS.backgroundTimeoutMs })
   tracer?.log({
     agent: "verifier",
     step,
@@ -505,9 +539,11 @@ export async function makeItems(
     key: string
     /** Make a flashcard: ask only about the words the person selected. */
     focus?: string
+    /** Whose library to draw Find the Evidence options from (none for a quick flashcard). */
+    ownerId?: string
   },
 ): Promise<WindowResult> {
-  const { tracer, key, focus } = options
+  const { tracer, key, focus, ownerId } = options
   const makeFalse = Math.random() < 0.65
   const started = performance.now()
   const corrections = options.corrections?.length
@@ -523,6 +559,15 @@ export async function makeItems(
     }),
   )
   const bundle = result.output
+  const { drafts, failed } = bundle.usable
+    ? draftsOf(w, bundle, makeFalse, key)
+    : { drafts: [], failed: {} }
+  const parts = {
+    recall: bundle.recall,
+    cloze: bundle.cloze,
+    truefalse: bundle.truefalse,
+    order: bundle.order,
+  }
   tracer?.log({
     agent: "tutor",
     step: "make-items",
@@ -530,14 +575,21 @@ export async function makeItems(
     model: choice.id,
     latencyMs: Math.round(performance.now() - started),
     tokens: { input: result.usage.inputTokens, output: result.usage.outputTokens },
-    detail: { fileId: w.fileId, passages: w.passages.map((p) => p.id), topic: bundle.topic },
+    detail: {
+      fileId: w.fileId,
+      passages: w.passages.map((p) => p.id),
+      topic: bundle.topic,
+      // Per part: drafted, not written ("none"), or why the code checks dropped it.
+      parts: Object.fromEntries(
+        Object.entries(parts).map(([kind, part]) => [
+          kind,
+          part ? (failed[kind] ?? "drafted") : "none",
+        ]),
+      ),
+    },
   })
   if (!bundle.usable) return { items: [], dropped: 0, usable: false }
-
-  const drafts = draftsOf(w, bundle, makeFalse, key)
-  const codeDropped =
-    [bundle.recall, bundle.cloze, bundle.truefalse, bundle.order].filter(Boolean).length -
-    drafts.length
+  const codeDropped = Object.keys(failed).length
   const { passed, verdicts, model: verifierModel } = await verifyDrafts(w, drafts, tracer)
   tracer?.log({
     agent: "verifier",
@@ -549,6 +601,13 @@ export async function makeItems(
   })
   const zetaris = await confirmInZetaris(passed, tracer, "verify-items")
   const kept = passed.filter(zetaris.ok)
+  if (ownerId)
+    await Promise.all(
+      kept.filter(asksEvidence).map(async (d) => {
+        const distractors = await evidenceOptions(ownerId, d, tracer).catch(() => [])
+        if (distractors.length === EVIDENCE_OPTIONS) d.data = { ...d.data, distractors }
+      }),
+    )
   return {
     items: kept.map(({ id: _, ...d }) => ({
       ...d,
@@ -559,10 +618,81 @@ export async function makeItems(
   }
 }
 
+// ------------------------------------------------------------------ find the evidence (F30)
+
+const EVIDENCE_OPTIONS = 3
+
+/**
+ * Items whose claim is their own: a recall item's point, or a true statement (its sentence in
+ * other words). A cloze sentence is the source verbatim; a false statement isn't what any passage says.
+ */
+export const asksEvidence = (item: { kind: StudyKind; data: StudyItemData }) =>
+  item.kind === "recall" || (item.kind === "truefalse" && Boolean(item.data.isTrue))
+
+const Stated = z.object({
+  states: z
+    .array(z.number())
+    .describe("The numbers of the passages that state the claim, in any words"),
+})
+
+/**
+ * Wrong options for Find the Evidence, chosen once when the item is made: real, similar passages
+ * (prose, never a reference list), at most one from the item's own file, and none that the
+ * Verifier finds also states the claim. Nearest-by-meaning alone let another paper's "outcomes are
+ * attributed to caffeine's effect on adenosine receptors" sit beside the right answer (in testing).
+ */
+export async function evidenceOptions(
+  ownerId: string,
+  item: { claim: string; ground: StudyGround },
+  tracer?: Tracer,
+): Promise<string[]> {
+  const nearest = (sameFile: boolean, limit: number) =>
+    db.execute<{ id: string; file_id: string; text: string }>(sql`
+      select o.id, o.file_id, o.text
+      from passages s, passages o join files f on f.id = o.file_id
+      where s.id = ${item.ground.passageId} and o.owner_id = ${ownerId} and f.deleted_at is null
+        and f.kind <> 'note' and o.id <> s.id and o.kind in ('text', 'transcript')
+        and length(o.text) > 160 and o.embedding is not null
+        and ${sameFile ? sql`o.file_id = s.file_id and abs(o.ordinal - s.ordinal) > 1` : sql`o.file_id <> s.file_id`}
+      order by o.embedding <=> s.embedding
+      limit ${limit}
+    `)
+  const [same, other] = await Promise.all([nearest(true, 6), nearest(false, 10)])
+  const prose = (rows: typeof same) => rows.filter((r) => !looksLikeApparatus(r.text)).slice(0, 4)
+  const candidates = [...prose(same), ...prose(other)]
+  if (candidates.length < EVIDENCE_OPTIONS) return []
+  const { result, choice } = await call("verifier", tracer, "evidence-options", (c) =>
+    generateText({
+      model: model(c),
+      providerOptions: reasoning(c),
+      output: Output.object({ schema: Stated }),
+      instructions:
+        "A student will be asked which passage states a claim. List every passage that states it: the same fact in any words, or a broader statement that includes it. A passage that is only on the same topic doesn't state it.",
+      prompt: `Claim: ${item.claim}\n\n${candidates.map((p, i) => `[${i + 1}] ${clean(p.text).slice(0, 1200)}`).join("\n\n")}`,
+    }),
+  )
+  const stating = new Set(result.output.states.map((n) => candidates[n - 1]?.id))
+  const free = candidates.filter((p) => !stating.has(p.id))
+  const own = free.filter((p) => p.file_id === item.ground.fileId)
+  const elsewhere = free.filter((p) => p.file_id !== item.ground.fileId)
+  // At most one from the item's own file, unless the library has nowhere else to look.
+  const picked = [...own.slice(0, 1), ...elsewhere, ...own.slice(1)].slice(0, EVIDENCE_OPTIONS)
+  tracer?.log({
+    agent: "verifier",
+    step: "evidence-options",
+    action: "checked_distractors",
+    model: choice.id,
+    verdict: `${stating.size} of ${candidates.length} also state it`,
+    detail: { passage: item.ground.passageId, picked: picked.map((p) => p.id) },
+  })
+  return picked.map((p) => p.id)
+}
+
 // ------------------------------------------------------------------ compare the sources (F30)
 
+// Field order is generation order: each side's position is written down before the relation,
+// so the call follows from the two claims (with `relation` first it said "agree" to a shared topic).
 const Comparison = z.object({
-  relation: z.enum(["agree", "disagree", "neither"]),
   point: z
     .string()
     .describe(
@@ -570,6 +700,13 @@ const Comparison = z.object({
     ),
   a: z.string().describe("8-40 words copied exactly from source A that show its position"),
   b: z.string().describe("8-40 words copied exactly from source B that show its position"),
+  aSays: z.string().describe("Source A's claim on the point, in one short sentence"),
+  bSays: z.string().describe("Source B's claim on the point, in one short sentence"),
+  relation: z
+    .enum(["agree", "disagree", "neither"])
+    .describe(
+      "agree: aSays and bSays make the same claim. disagree: they conflict. neither: one of them makes no claim on the point, or they talk about different things",
+    ),
   hints: Hints,
   why: z
     .string()
@@ -640,14 +777,16 @@ export async function makeComparisons(
   for (const a of seeds) {
     if (made.length >= want) break
     const b = await neighbourIn(ownerId, a, fileIds)
-    if (!b || b.similarity < 0.5) continue
+    // Below 0.6 the pair only shares a subject; above 0.9 it's the same text in two files
+    // (a scan and its digital copy, a repost), which "agrees" with itself.
+    if (!b || b.similarity < 0.6 || b.similarity > 0.9) continue
     const { result, choice } = await call("analyst", tracer, "compare", (c) =>
       generateText({
         model: model(c),
         providerOptions: reasoning(c),
         output: Output.object({ schema: Comparison }),
         instructions:
-          "Two passages from different sources. Find one specific point both speak to, and say whether they agree or disagree on it. neither when they don't address the same point. Quote each exactly. Be strict: different emphasis isn't disagreement.",
+          "Two passages from different sources. Find one specific point both make a claim about, quote each exactly, state each one's claim, then say whether they agree or disagree. neither when either makes no claim on that point, or when they only share a subject. Be strict both ways: different emphasis isn't disagreement, and a shared topic isn't agreement.",
         prompt: `[A] "${a.title}"\n${a.text}\n\n[B] "${b.title}"\n${b.text}`,
       }),
     )
@@ -916,6 +1055,7 @@ export async function makeNotes(
       quote: pt.quote,
       transcript: pt.passage.page == null,
     })),
+    { timeoutMs: ZETARIS.backgroundTimeoutMs },
   )
   tracer?.log({
     agent: "verifier",

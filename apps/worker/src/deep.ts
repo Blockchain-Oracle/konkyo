@@ -118,7 +118,7 @@ const summary = (s: FoundSource): DeepCandidate => ({
   url: s.kind === "web" ? s.url : s.doi ? `https://doi.org/${s.doi}` : undefined,
 })
 
-async function finish(
+export async function finish(
   runId: string,
   status: Extract<DeepEvent, { type: "end" }>["status"],
   message?: string,

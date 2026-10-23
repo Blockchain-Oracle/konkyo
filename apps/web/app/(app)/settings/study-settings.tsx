@@ -1,36 +1,14 @@
 "use client"
 
 import { Checkbox } from "@konkyo/ui/components/checkbox"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { toast } from "sonner"
-import { api } from "@/lib/fetcher"
+import { useSettings } from "@/lib/use-settings"
 import { studyKeys } from "@/lib/use-study"
 
-type Settings = { studySound: boolean; dailyNew: number }
-const key = ["settings"] as const
 const DAILY = [5, 10, 15, 20, 30, 50]
 
 /** Study's sound (plan §7.8) and how many new items a day's review brings in (F29). */
 export function StudySettings() {
-  const queryClient = useQueryClient()
-  const { data } = useQuery({ queryKey: key, queryFn: () => api<Settings>("/api/settings") })
-  const save = useMutation({
-    mutationFn: (patch: Partial<Settings>) =>
-      api<Settings>("/api/settings", { method: "PATCH", json: patch }),
-    onMutate: (patch) => {
-      const previous = queryClient.getQueryData<Settings>(key)
-      if (previous) queryClient.setQueryData<Settings>(key, { ...previous, ...patch })
-      return { previous }
-    },
-    onError: (error: Error, _v, context) => {
-      queryClient.setQueryData(key, context?.previous)
-      toast.error(error.message)
-    },
-    onSettled: () => {
-      void queryClient.invalidateQueries({ queryKey: key })
-      void queryClient.invalidateQueries({ queryKey: studyKeys.today })
-    },
-  })
+  const { settings: data, save } = useSettings({ alsoRefresh: [studyKeys.today] })
   return (
     <div className="divide-y divide-border border-y border-border">
       <div className="flex items-start gap-3 py-4">

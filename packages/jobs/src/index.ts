@@ -46,10 +46,18 @@ export const QUEUES = {
     options: { retryLimit: 0, expireInSeconds: 15 * 60 },
     send: { heartbeatSeconds: 30 },
   },
-  /** Removes a deleted file's stored bytes and Zetaris evidence (the rows are already gone). */
+  /**
+   * Removes a deleted file's stored bytes and Zetaris evidence (the rows are already gone). For a
+   * deleted account it also drops its watch tables and its memory and World Model files.
+   */
   purge: {
     name: "purge",
-    payload: z.object({ fileIds: z.array(z.uuid()), keys: z.array(z.string()) }),
+    payload: z.object({
+      fileIds: z.array(z.uuid()),
+      keys: z.array(z.string()),
+      tables: z.array(z.string()).optional(),
+      ownerId: z.string().optional(),
+    }),
     options: { retryLimit: 5, retryDelay: 60, retryBackoff: true, expireInSeconds: 10 * 60 },
     send: {},
   },

@@ -49,7 +49,8 @@ export const GAMES = [
     name: "Find the Evidence",
     about:
       "Which passage says this? The other options are real, similar passages from your library.",
-    kinds: ["recall", "cloze", "truefalse"],
+    // Counted by the server: recall items and true statements (lib/study.ts `asksEvidence`).
+    kinds: ["evidence"],
   },
   {
     mode: "order",

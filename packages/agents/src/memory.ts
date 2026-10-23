@@ -1,3 +1,4 @@
+import { rm } from "node:fs/promises"
 import path from "node:path"
 import { embed, HMEM, type MemoryRecord } from "@konkyo/meterless/hmem"
 import { freshCache } from "./fresh"
@@ -180,6 +181,33 @@ export function editMemory(userId: string, memoryId: string, content: string) {
 export function forgetAll(userId: string) {
   const memory = memoryFor(userId)
   for (const m of memory.store.all()) memory.store.delete(m.id, "Forget all, by the person")
+}
+
+/** Deletes a person's memory files, ledger included (account deletion; nothing is kept). */
+export async function deleteMemoryOf(userId: string) {
+  await rm(path.join(MEMORY_DIR, safeId(userId)), { recursive: true, force: true })
+}
+
+/**
+ * A guest who signs in with Google keeps their corrections (F43): reownUserData moves rows, and
+ * these live on disk under the guest's id, so each is copied to the account, then the guest's go.
+ */
+export async function moveMemory(fromUserId: string, toUserId: string) {
+  if (fromUserId === toUserId) return
+  const to = memoryFor(toUserId)
+  for (const m of memoryFor(fromUserId).store.all())
+    if (!m.supersededBy)
+      to.add({
+        content: m.content,
+        type: m.type,
+        layer: m.layer,
+        tags: m.tags,
+        confidence: m.confidence,
+        source: m.source,
+        provenance: m.provenance,
+        chatId: m.chatId,
+      })
+  await deleteMemoryOf(fromUserId)
 }
 
 /** Everything remembered, newest first (the Memory page). */

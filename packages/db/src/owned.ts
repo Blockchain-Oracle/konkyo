@@ -89,3 +89,29 @@ export async function reownUserData(db: Db, fromUserId: string, toUserId: string
     await tx.delete(user).where(and(eq(user.id, fromUserId), eq(user.isAnonymous, true)))
   })
 }
+
+/** What deleting a person leaves outside Postgres: stored bytes, Zetaris evidence, watch tables. */
+export async function ownedOutsidePostgres(db: Db, userId: string) {
+  const [owned, watches] = await Promise.all([
+    db
+      .select({ id: files.id, originalKey: files.originalKey, renditionKey: files.renditionKey })
+      .from(files)
+      .where(eq(files.ownerId, userId)),
+    db.select({ table: agents.zetarisTable }).from(agents).where(eq(agents.ownerId, userId)),
+  ])
+  return {
+    fileIds: owned.map((f) => f.id),
+    keys: owned.flatMap((f) => [f.originalKey, f.renditionKey].filter((k): k is string => !!k)),
+    tables: watches.map((w) => w.table).filter((t): t is string => !!t),
+  }
+}
+
+/**
+ * Deletes a person and every row they own (each user-owned table cascades from `user`), and
+ * returns what the worker must still remove outside Postgres, with their memory files.
+ */
+export async function deleteUserRows(db: Db, userId: string) {
+  const outside = await ownedOutsidePostgres(db, userId)
+  await db.delete(user).where(eq(user.id, userId))
+  return { ...outside, ownerId: userId }
+}

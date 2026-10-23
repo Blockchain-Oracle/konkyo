@@ -50,7 +50,10 @@ export type QuoteCheck = {
  * independent extraction); recordings against the stored transcript passage. A quote counts
  * only if its normalised words appear verbatim.
  */
-export async function checkQuotes(quotes: QuoteCheck[]) {
+export async function checkQuotes(
+  quotes: QuoteCheck[],
+  { timeoutMs = ZETARIS.queryTimeoutMs }: { timeoutMs?: number } = {},
+) {
   if (!quotes.length) return { found: new Set<string>(), sql: "", ms: 0, rows: 0 }
   const row = (q: QuoteCheck) =>
     `(${literal(q.qid)}, ${literal(q.fileId)}, ${literal(q.passageId)}, ${literal(evidenceKey(q.quote))})`
@@ -73,7 +76,7 @@ JOIN (${passageRows([...new Set(transcripts.map((q) => q.fileId))])}) e ON e.pid
 WHERE instr(e.k, q.qkey) > 0`)
   const statement = branches.join("\nUNION ALL\n")
   const started = performance.now()
-  const { rows } = await run(statement, { timeoutMs: ZETARIS.queryTimeoutMs })
+  const { rows } = await run(statement, { timeoutMs })
   return {
     found: new Set(rows.map((r) => String(r.qid))),
     sql: statement,

@@ -34,12 +34,12 @@ import {
   shuffle,
   streakOf,
 } from "@konkyo/study"
-import { and, count, desc, eq, gte, inArray, isNull, sql } from "drizzle-orm"
+import { and, count, desc, eq, inArray, isNull, sql } from "drizzle-orm"
 import { LibraryError } from "./library"
 import { createNote } from "./notes"
+import { allowanceLeft } from "./usage"
 
-const { studySets, studyItems, studyCards, studyReviews, studyRounds, studyDays, files, user } =
-  schema
+const { studySets, studyItems, studyCards, studyReviews, studyRounds, studyDays, files } = schema
 const { userSettings, passages, fileFolders, folders } = schema
 
 // ------------------------------------------------------------------ settings and days
@@ -274,25 +274,6 @@ function scopeIds(scope: StudyScope) {
   return { fileIds: [...new Set(scope.fileIds)], folderIds: [...new Set(scope.folderIds)] }
 }
 
-async function setLimit(ownerId: string) {
-  const owner = await db.query.user.findFirst({ where: eq(user.id, ownerId) })
-  const [row] = await db
-    .select({ n: count() })
-    .from(studySets)
-    .where(
-      and(
-        eq(studySets.ownerId, ownerId),
-        gte(studySets.createdAt, new Date(Date.now() - 86_400_000)),
-      ),
-    )
-  const perDay = owner?.isAnonymous ? STUDY.guestSetsPerDay : STUDY.setsPerDay
-  if ((row?.n ?? 0) >= perDay)
-    return owner?.isAnonymous
-      ? `Guests can make ${perDay} practice sets a day. Continue with Google to keep going.`
-      : "You've made a lot of practice today. It resets tomorrow."
-  return null
-}
-
 /** A set's name: the file or folder it's made from, or how many. */
 async function titleFor(ownerId: string, scope: StudyScope) {
   if (scope.fileIds.length === 1 && !scope.folderIds.length) {
@@ -317,7 +298,7 @@ async function titleFor(ownerId: string, scope: StudyScope) {
 }
 
 export async function createSet(ownerId: string, input: { scope: StudyScope; title?: string }) {
-  const limited = await setLimit(ownerId)
+  const limited = await allowanceLeft(ownerId, "practiceSets")
   if (limited) throw new LibraryError(limited, 429)
   const scope = scopeIds(input.scope)
   const title = input.title?.trim() || (await titleFor(ownerId, scope))
@@ -364,6 +345,10 @@ export async function listSets(ownerId: string, id?: string): Promise<SetSummary
       (select jsonb_object_agg(k.kind, k.n) from (
         select kind, count(*)::int as n from study_items
         where set_id = s.id and status = 'active' group by kind
+        union all
+        select 'evidence', count(*)::int from study_items
+        where set_id = s.id and status = 'active'
+          and jsonb_array_length(coalesce(data->'distractors', '[]'::jsonb)) > 0
       ) k) as kinds
     from study_sets s
     left join study_items i on i.set_id = s.id and i.status = 'active'
@@ -453,10 +438,14 @@ type Row = {
 const GAME_KINDS: Partial<Record<StudyMode, StudyKind[]>> = {
   recall: ["recall", "cloze"],
   fix: ["truefalse"],
-  evidence: ["recall", "cloze", "truefalse"],
+  evidence: ["recall", "truefalse"],
   order: ["order"],
   compare: ["compare"],
 }
+
+/** Find the Evidence asks only items whose wrong options were chosen and checked when made. */
+const asksEvidence = (item: Row["item"]) =>
+  Boolean((item.data as StudyItemData).distractors?.length)
 
 const cardOf = (c: typeof studyCards.$inferSelect): CardState => ({
   due: c.due,
@@ -545,27 +534,24 @@ async function passageTexts(ids: string[]) {
   return new Map(rows.map((r) => [r.id, r]))
 }
 
-/** Real, similar passages from the library for Find the Evidence (never the right one's neighbours). */
-async function distractors(ownerId: string, passageId: string, n = 3) {
-  return db.execute<{
-    id: string
-    file_id: string
-    title: string
-    kind: FileKind
-    page: number | null
-    t_start: number | null
-    text: string
-    meta: FileMeta | null
-  }>(sql`
-    select o.id, o.file_id, f.title, f.kind, o.page, o.t_start, o.text, f.meta
-    from passages s, passages o join files f on f.id = o.file_id
-    where s.id = ${passageId} and o.owner_id = ${ownerId} and f.deleted_at is null
-      and f.kind <> 'note' and o.id <> s.id and o.kind in ('text', 'transcript')
-      and length(o.text) > 160 and o.embedding is not null
-      and not (o.file_id = s.file_id and abs(o.ordinal - s.ordinal) <= 1)
-    order by o.embedding <=> s.embedding
-    limit ${n}
-  `)
+/** The stored Find the Evidence options, with what an option card shows. */
+async function optionPassages(ids: string[]) {
+  if (!ids.length) return []
+  const rows = await db
+    .select({
+      id: passages.id,
+      fileId: passages.fileId,
+      page: passages.page,
+      tStart: passages.tStart,
+      text: passages.text,
+      title: files.title,
+      kind: files.kind,
+      meta: files.meta,
+    })
+    .from(passages)
+    .innerJoin(files, eq(files.id, passages.fileId))
+    .where(and(inArray(passages.id, ids), isNull(files.deletedAt)))
+  return rows
 }
 
 function groundOf(r: Row): RoundGround {
@@ -581,7 +567,7 @@ function groundOf(r: Row): RoundGround {
   }
 }
 
-async function toRoundItem(ownerId: string, r: Row, asEvidence: boolean): Promise<RoundItem> {
+async function toRoundItem(r: Row, asEvidence: boolean): Promise<RoundItem> {
   const now = new Date()
   const card = cardOf(r.card)
   const next = preview(card, now)
@@ -610,16 +596,16 @@ async function toRoundItem(ownerId: string, r: Row, asEvidence: boolean): Promis
   ])
   if (asEvidence) {
     const own = texts.get(r.item.passageId)
-    const others = await distractors(ownerId, r.item.passageId)
+    const others = await optionPassages(data.distractors ?? [])
     const options: RoundOption[] = shuffle([
       { ...ground, excerpt: excerptOf(own?.text ?? r.item.quote, r.item.quote) },
       ...others.map((o) => ({
-        fileId: o.file_id,
+        fileId: o.fileId,
         title: o.title,
-        kind: o.kind,
+        kind: o.kind as FileKind,
         passageId: o.id,
         page: o.page,
-        tStart: o.t_start,
+        tStart: o.tStart,
         quote: "",
         byline: bylineOf(o.meta as never),
         excerpt: excerptOf(o.text, nearestSentence(o.text, r.item.claim)),
@@ -716,9 +702,8 @@ function pickQuiz(rows: Row[], size: number) {
     const want = order[turn++ % order.length]
     const row = pool.find((r) => r.item.kind === want) ?? pool[0]
     if (!row) continue
-    // Every fourth one from a recall-style item is asked the other way round: find its evidence.
-    const evidence =
-      picked.length % 4 === 3 && row.item.kind !== "compare" && row.item.kind !== "order"
+    // Every fourth one, when it can be, is asked the other way round: find its evidence.
+    const evidence = picked.length % 4 === 3 && asksEvidence(row.item)
     picked.push({ row, evidence })
   }
   return picked
@@ -770,16 +755,17 @@ export async function buildRound(
     picked = pickQuiz(rows, STUDY.roundSize)
   } else {
     const kinds = GAME_KINDS[mode] ?? []
-    const rows = await rowsFor(
+    let rows = await rowsFor(
       ownerId,
       and(inArray(studyItems.kind, kinds), setId ? eq(studyItems.setId, setId) : undefined),
     )
+    if (mode === "evidence") rows = rows.filter((r) => asksEvidence(r.item))
     picked = pickRound(rows, STUDY.roundSize, now).map((row) => ({
       row,
       evidence: mode === "evidence",
     }))
   }
-  const items = await Promise.all(picked.map((p) => toRoundItem(ownerId, p.row, p.evidence)))
+  const items = await Promise.all(picked.map((p) => toRoundItem(p.row, p.evidence)))
   return {
     roundId: crypto.randomUUID(),
     mode,

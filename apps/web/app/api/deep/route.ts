@@ -35,7 +35,7 @@ export async function POST(request: Request) {
   try {
     const { chatId, question, message, scope, intoFolderId } = parsed.data
     return NextResponse.json(
-      await startDeep(session.user.id, Boolean(session.user.isAnonymous), {
+      await startDeep(session.user.id, {
         chatId,
         question,
         userMessage: message as unknown as KonkyoMessage | undefined,
