@@ -23,6 +23,7 @@ import { authorsLine, personName, toBibtex, yearOf } from "@/lib/citation"
 import { api } from "@/lib/fetcher"
 import { openSource } from "@/lib/preview"
 import { qk } from "@/lib/query-keys"
+import { useHighlightActions, useHighlights } from "@/lib/use-highlights"
 import { type FileDetail, useFileDetail } from "@/lib/use-source"
 import { KIND_LABEL, KindIcon } from "./kind-icon"
 
@@ -161,6 +162,8 @@ function Details({ fileId }: { fileId: string }) {
           )}
         </section>
 
+        <HighlightsSection file={file} />
+
         <section aria-labelledby="file-label" className="mt-7">
           <h3 id="file-label" className="text-micro text-ash-gray uppercase">
             File
@@ -244,6 +247,51 @@ function Details({ fileId }: { fileId: string }) {
         </Button>
       </footer>
     </div>
+  )
+}
+
+/** What the person highlighted in this file: jump back to each, or remove it. */
+function HighlightsSection({ file }: { file: FileDetail }) {
+  const { data: marks } = useHighlights(file.id)
+  const { remove } = useHighlightActions(file.id)
+  if (!marks?.length) return null
+  return (
+    <section aria-labelledby="highlights-label" className="mt-7">
+      <h3 id="highlights-label" className="text-micro text-ash-gray uppercase">
+        Your highlights · {marks.length}
+      </h3>
+      <ul className="mt-2 space-y-1">
+        {marks.map((mark) => (
+          <li key={mark.id} className="group flex items-start gap-2 rounded-lg hover:bg-raised">
+            <button
+              type="button"
+              onClick={() => {
+                openSource({ fileId: file.id, title: file.title, kind: file.kind, page: mark.page })
+                openDetails(null)
+              }}
+              className="flex min-w-0 flex-1 gap-2.5 px-2 py-2 text-left"
+            >
+              <span
+                className="mt-1 h-3.5 w-0.5 shrink-0 rounded-full bg-particle-blue"
+                aria-hidden
+              />
+              <span className="min-w-0">
+                <span className="line-clamp-2 text-snippet text-silver-mist">{mark.text}</span>
+                <span className="mt-0.5 block text-meta text-ash-gray">Page {mark.page}</span>
+              </span>
+            </button>
+            <button
+              type="button"
+              aria-label="Remove highlight"
+              onClick={() => remove.mutate(mark.id)}
+              className="mt-1.5 mr-1 grid size-6 shrink-0 place-items-center rounded-full text-ash-gray opacity-0 transition-opacity group-hover:opacity-100 hover:bg-white/8 hover:text-bone-white focus-visible:opacity-100"
+            >
+              <XIcon className="size-3.5" strokeWidth={1.75} />
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }
 

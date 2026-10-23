@@ -16,4 +16,5 @@ export const qk = {
     path: (id: string) => [...qk.folders.all, "path", id] as const,
   },
   trash: ["trash"] as const,
+  highlights: (fileId: string) => ["highlights", fileId] as const,
 }

@@ -182,3 +182,25 @@ export const embeddingCache = pgTable("embedding_cache", {
   embedding: vector({ dimensions: EMBEDDING_DIMENSIONS }).notNull(),
   createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
 })
+
+/** Text the person marked in a source (plan F08 Highlight): rects in the page's frame, like passages. */
+export const highlights = pgTable(
+  "highlights",
+  {
+    id: uuid().defaultRandom().primaryKey(),
+    ownerId: owner(),
+    fileId: uuid()
+      .notNull()
+      .references(() => files.id, { onDelete: "cascade" }),
+    page: integer().notNull(),
+    /** One box per line segment, PDF points, origin top-left, unrotated (EmbedPDF's frame). */
+    rects: jsonb().$type<Box[]>().notNull(),
+    text: text().notNull(),
+    note: text(),
+    createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("highlights_file_idx").on(t.fileId, t.page),
+    index("highlights_owner_idx").on(t.ownerId),
+  ],
+)

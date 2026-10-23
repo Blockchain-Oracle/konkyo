@@ -32,6 +32,8 @@
   --color-not-found: #9a9a9a;
   --color-info: #bdbdbd;
   --color-highlight: rgb(255 184 41 / 0.35);
+  /* The person's own highlights: particle blue, so they never read as cited evidence (amber). */
+  --color-mark: rgb(45 108 175 / 0.3);
 
   /* Particle palette, sampled from the live Dala canvas (landing, celebrations) */
   --color-particle-magenta: #c265aa;

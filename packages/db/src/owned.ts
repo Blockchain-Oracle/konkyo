@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm"
 import type { Db } from "./index"
-import { files, folders, passages, user } from "./schema"
+import { files, folders, highlights, passages, user } from "./schema"
 
 type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0]
 
@@ -14,6 +14,7 @@ const movers: Array<(tx: Tx, fromUserId: string, toUserId: string) => Promise<un
   (tx, from, to) => tx.update(folders).set({ ownerId: to }).where(eq(folders.ownerId, from)),
   (tx, from, to) => tx.update(files).set({ ownerId: to }).where(eq(files.ownerId, from)),
   (tx, from, to) => tx.update(passages).set({ ownerId: to }).where(eq(passages.ownerId, from)),
+  (tx, from, to) => tx.update(highlights).set({ ownerId: to }).where(eq(highlights.ownerId, from)),
 ]
 
 /**

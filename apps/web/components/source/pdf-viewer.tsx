@@ -36,9 +36,10 @@ import { Spinner } from "@konkyo/ui/components/spinner"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@konkyo/ui/components/tooltip"
 import { cn } from "@konkyo/ui/lib/utils"
 import { MinusIcon, MoonIcon, PlusIcon, ScanIcon } from "lucide-react"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useHighlights } from "@/lib/use-highlights"
 import type { SourcePassage } from "@/lib/use-source"
-import { CitationLayer } from "./citation-layer"
+import { CitationLayer, MarkLayer } from "./citation-layer"
 import { SelectionToolbar } from "./selection-toolbar"
 
 /** Served from /public by scripts/vendor.mjs (no third-party CDN at runtime). */
@@ -197,6 +198,13 @@ function LoadedDocument({
   const pages = activeDocument?.document?.pages
   const [dim, setDim] = useState(false)
   const scale = zoom.currentZoomLevel
+  const { data: highlights } = useHighlights(fileId)
+  const marksByPage = useMemo(() => {
+    const byPage = new Map<number, [number, number, number, number][]>()
+    for (const h of highlights ?? [])
+      byPage.set(h.page, [...(byPage.get(h.page) ?? []), ...h.rects])
+    return byPage
+  }, [highlights])
 
   // Jump to the cited place once the layout exists: the passage's first line sits a quarter of the
   // way down the pane, so the lines above it give context.
@@ -247,6 +255,9 @@ function LoadedDocument({
                 className="pointer-events-none"
               />
             </div>
+            {marksByPage.get(page.pageNumber) && (
+              <MarkLayer rects={marksByPage.get(page.pageNumber) ?? []} scale={scale} />
+            )}
             {cited && (
               <CitationLayer
                 key={`${cited.id}:${target?.nonce}`}
@@ -273,7 +284,7 @@ function LoadedDocument({
         </Rotate>
       )
     },
-    [documentId, fileId, title, pages, scale, target, dim],
+    [documentId, fileId, title, pages, scale, target, dim, marksByPage],
   )
 
   return (

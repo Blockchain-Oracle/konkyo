@@ -3,10 +3,11 @@
 import type { SelectionSelectionMenuProps } from "@embedpdf/plugin-selection/react"
 import { useSelectionCapability } from "@embedpdf/plugin-selection/react"
 import { cn } from "@konkyo/ui/lib/utils"
-import { CopyIcon, MessageSquareQuoteIcon } from "lucide-react"
+import { CopyIcon, HighlighterIcon, MessageSquareQuoteIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { quoteInComposer } from "@/lib/composer-draft"
+import { useHighlightActions } from "@/lib/use-highlights"
 
 /**
  * The pill over a text selection in a source (plan F08, Matter's pattern): short text labels,
@@ -23,6 +24,7 @@ export function SelectionToolbar({
   const { provides: selection } = useSelectionCapability()
   const router = useRouter()
   const scope = selection?.forDocument(documentId)
+  const { add } = useHighlightActions(fileId)
   // Above the selection whenever there is room for the pill (it then never covers the next lines).
   const above = placement.suggestTop || (placement.spaceAbove ?? 0) > 56
 
@@ -39,6 +41,30 @@ export function SelectionToolbar({
   const copy = () => {
     scope?.copyToClipboard()
     toast.success("Copied")
+  }
+  // One highlight per page the selection covers, boxed like passages (page points, unrotated).
+  const highlight = async () => {
+    const pages = scope?.getFormattedSelection() ?? []
+    const texts = ((await scope?.getSelectedText().toPromise()) ?? []).map((t) =>
+      t.replace(/\s+/g, " ").trim(),
+    )
+    const marks = pages
+      .map((sel, i) => ({
+        page: sel.pageIndex + 1,
+        rects: sel.segmentRects.map(
+          (r) =>
+            [r.origin.x, r.origin.y, r.origin.x + r.size.width, r.origin.y + r.size.height] as [
+              number,
+              number,
+              number,
+              number,
+            ],
+        ),
+        text: (pages.length === texts.length ? texts[i] : texts.join(" ")) ?? "",
+      }))
+      .filter((m) => m.rects.length && m.text)
+    if (marks.length) add.mutate(marks)
+    scope?.clear()
   }
 
   return (
@@ -57,6 +83,10 @@ export function SelectionToolbar({
         <ToolbarAction onClick={ask}>
           <MessageSquareQuoteIcon />
           Ask
+        </ToolbarAction>
+        <ToolbarAction onClick={highlight}>
+          <HighlighterIcon />
+          Highlight
         </ToolbarAction>
         <ToolbarAction onClick={copy}>
           <CopyIcon />
