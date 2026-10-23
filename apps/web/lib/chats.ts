@@ -1,8 +1,9 @@
 import "server-only"
-import type { KonkyoMessage } from "@konkyo/agents"
+import { randomUUID } from "node:crypto"
+import { type KonkyoMessage, rateRecalled, recordCorrection } from "@konkyo/agents"
 import { db, schema } from "@konkyo/db"
 import type { ChatScope } from "@konkyo/db/schema"
-import { and, asc, desc, eq, isNull } from "drizzle-orm"
+import { and, asc, desc, eq, gt, isNull, lt } from "drizzle-orm"
 import { LibraryError } from "./library"
 
 const { chats, messages, runs } = schema
@@ -33,12 +34,25 @@ export async function ensureChat(
 
 type Turn = { role: "user" | "assistant"; text: string }
 
-/** Earlier turns as plain text for the Planner: questions, and verified answers without markers. */
-export async function historyFor(chatId: string): Promise<Turn[]> {
+/** When a message was saved, if it has been (a regenerated question already has). */
+async function savedAt(chatId: string, messageId: string) {
+  const row = await db.query.messages.findFirst({
+    columns: { createdAt: true },
+    where: and(eq(messages.chatId, chatId), eq(messages.id, messageId)),
+  })
+  return row?.createdAt
+}
+
+/**
+ * Earlier turns as plain text for the Planner: questions, and verified answers without markers.
+ * Only what came before `beforeMessageId`, so a regenerated answer doesn't see the one it replaces.
+ */
+export async function historyFor(chatId: string, beforeMessageId: string): Promise<Turn[]> {
+  const before = await savedAt(chatId, beforeMessageId)
   const rows = await db
     .select({ role: messages.role, parts: messages.parts })
     .from(messages)
-    .where(eq(messages.chatId, chatId))
+    .where(and(eq(messages.chatId, chatId), before ? lt(messages.createdAt, before) : undefined))
     .orderBy(asc(messages.createdAt))
   return rows.flatMap((m): Turn[] => {
     const parts = m.parts as KonkyoMessage["parts"]
@@ -73,6 +87,13 @@ export async function saveMessage(
     })
     .onConflictDoUpdate({ target: messages.id, set: { parts: message.parts } })
   await db.update(chats).set({ updatedAt: new Date() }).where(eq(chats.id, chatId))
+}
+
+/** Regenerate: the answers after this question go, and a new one is written in their place. */
+export async function dropAfter(chatId: string, messageId: string) {
+  const at = await savedAt(chatId, messageId)
+  if (at)
+    await db.delete(messages).where(and(eq(messages.chatId, chatId), gt(messages.createdAt, at)))
 }
 
 export async function startRun(ownerId: string, chatId: string, runId: string, question: string) {
@@ -126,8 +147,88 @@ export async function getChat(ownerId: string, chatId: string) {
           id: m.id,
           role: m.role,
           parts: m.parts,
-          metadata: { runId: m.runId ?? undefined, createdAt: m.createdAt.toISOString() },
+          metadata: {
+            runId: m.runId ?? undefined,
+            createdAt: m.createdAt.toISOString(),
+            feedback: m.feedback ?? undefined,
+          },
         }) as KonkyoMessage,
     ),
   }
+}
+
+async function ownChat(ownerId: string, chatId: string) {
+  const chat = await db.query.chats.findFirst({
+    where: and(eq(chats.id, chatId), eq(chats.ownerId, ownerId), isNull(chats.deletedAt)),
+  })
+  if (!chat) throw new LibraryError("No such chat", 404)
+  return chat
+}
+
+/** Rename or pin a chat (plan F17). */
+export async function editChat(
+  ownerId: string,
+  chatId: string,
+  edit: { title?: string; pinned?: boolean },
+) {
+  await ownChat(ownerId, chatId)
+  const title = edit.title?.replace(/\s+/g, " ").trim()
+  await db
+    .update(chats)
+    .set({
+      ...(title ? { title: title.slice(0, 200) } : {}),
+      ...(edit.pinned != null ? { pinnedAt: edit.pinned ? new Date() : null } : {}),
+    })
+    .where(eq(chats.id, chatId))
+}
+
+/** To Trash with its messages (restorable for 30 days, like files). */
+export async function trashChat(ownerId: string, chatId: string) {
+  await ownChat(ownerId, chatId)
+  const batch = randomUUID()
+  await db
+    .update(chats)
+    .set({ deletedAt: new Date(), trashBatch: batch })
+    .where(eq(chats.id, chatId))
+  return { batch }
+}
+
+export type Rating = { rating: "up" | "down" | null; reason?: string; note?: string }
+
+/**
+ * 👍 / 👎 on an answer (plan F17, §2 Memory). Every rating reaches the H-MEM memories that shaped
+ * the answer (their confidence goes up or down); a 👎 with a reason becomes a new correction the
+ * Planner and Writer read next time a similar question comes up.
+ */
+export async function rateMessage(ownerId: string, messageId: string, input: Rating) {
+  const message = await db.query.messages.findFirst({
+    where: and(eq(messages.id, messageId), eq(messages.ownerId, ownerId)),
+  })
+  if (!message || message.role !== "assistant") throw new LibraryError("No such answer", 404)
+  const run = message.runId
+    ? await db.query.runs.findFirst({ where: eq(runs.id, message.runId) })
+    : undefined
+  const note =
+    input.rating === "down" ? [input.reason, input.note?.trim()].filter(Boolean).join(": ") : null
+  await db
+    .update(messages)
+    .set({ feedback: input.rating, feedbackNote: note || null })
+    .where(eq(messages.id, messageId))
+  if (!input.rating) return { remembered: false }
+
+  const used = ((run?.receipt as { memories?: { id: string }[] } | null)?.memories ?? []).map(
+    (m) => m.id,
+  )
+  rateRecalled(ownerId, used, input.rating === "up")
+  if (input.rating === "down" && input.reason && run) {
+    recordCorrection(ownerId, {
+      question: run.question,
+      reason: input.reason,
+      note: input.note,
+      chatId: message.chatId,
+      messageId,
+    })
+    return { remembered: true }
+  }
+  return { remembered: false }
 }

@@ -54,8 +54,8 @@ export function ChatView({
       new DefaultChatTransport<KonkyoMessage>({
         api: "/api/chat",
         // The server keeps the history; only the new question travels.
-        prepareSendMessagesRequest: ({ id: chatId, messages }) => ({
-          body: { chatId, message: messages.at(-1), scope: scopeRef.current },
+        prepareSendMessagesRequest: ({ id: chatId, messages, trigger }) => ({
+          body: { chatId, message: messages.at(-1), trigger, scope: scopeRef.current },
         }),
       }),
     [],
@@ -106,8 +106,8 @@ export function ChatView({
   }, [messages.length, last?.parts.length])
 
   return (
-    <div className="flex min-h-[calc(100svh-3.5rem)] flex-col md:min-h-svh">
-      <div className="mx-auto w-full max-w-[46rem] flex-1 space-y-8 px-6 pt-12 pb-10">
+    <div className="flex min-h-[calc(100svh-3.5rem)] flex-col md:min-h-[calc(100svh-3rem)]">
+      <div className="mx-auto w-full max-w-[46rem] flex-1 space-y-8 px-6 pt-8 pb-10">
         {messages.map((message, i) =>
           message.role === "user" ? (
             <UserMessage key={message.id} message={message} />
@@ -116,6 +116,11 @@ export function ChatView({
               key={message.id}
               message={message}
               running={running && i === messages.length - 1}
+              onRegenerate={
+                i === messages.length - 1 && !running
+                  ? () => void regenerate({ messageId: message.id })
+                  : undefined
+              }
             />
           ),
         )}

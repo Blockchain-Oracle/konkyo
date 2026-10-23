@@ -15,7 +15,6 @@ const nextConfig: NextConfig = {
     "@konkyo/db",
     "@konkyo/env",
     "@konkyo/jobs",
-    "@konkyo/meterless",
     "@konkyo/storage",
     "@konkyo/ui",
     "@konkyo/zetaris",

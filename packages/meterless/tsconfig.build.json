@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // Built once to plain ESM with declarations, so packages that use the engines type-check
+    // against .d.ts files instead of compiling upstream source under their stricter settings.
+    "noEmit": false,
+    "outDir": "dist",
+    "rootDir": "src",
+    "declaration": true,
+    "rewriteRelativeImportExtensions": true,
+    "sourceMap": false
+  },
+  "include": ["src"]
+}

@@ -7,6 +7,7 @@ import { LinkIcon, SearchXIcon, UploadIcon } from "lucide-react"
 import { useUploads } from "@/components/library/uploads-provider"
 import { openImport } from "@/components/shell/app-dialogs"
 import { AnswerText } from "./answer-text"
+import { MessageActions } from "./message-actions"
 import { LiveSteps, RunReceipt } from "./run-receipt"
 
 /** The parts of an answer message, latest state of each (data parts update in place). */
@@ -39,9 +40,12 @@ function partsOf(message: KonkyoMessage) {
 export function AssistantMessage({
   message,
   running,
+  onRegenerate,
 }: {
   message: KonkyoMessage
   running: boolean
+  /** Only on the latest answer, once it has finished. */
+  onRegenerate?: () => void
 }) {
   const { steps, draft, sources, final, receipt, notFound } = partsOf(message)
   const { pickFiles } = useUploads()
@@ -92,6 +96,15 @@ export function AssistantMessage({
             steps={steps}
             citations={final.citations}
             sources={sources}
+          />
+        )}
+        {!running && (
+          <MessageActions
+            message={message}
+            body={final.body}
+            caveat={final.caveat}
+            citations={final.citations}
+            onRegenerate={onRegenerate}
           />
         )}
       </div>

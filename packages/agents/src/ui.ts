@@ -23,5 +23,5 @@ export type KonkyoData = {
   quote: { fileId: string; title: string; page?: number; text: string }
 }
 
-export type KonkyoMetadata = { runId?: string; createdAt?: string }
+export type KonkyoMetadata = { runId?: string; createdAt?: string; feedback?: "up" | "down" }
 export type KonkyoMessage = UIMessage<KonkyoMetadata, KonkyoData>

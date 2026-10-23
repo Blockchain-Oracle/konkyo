@@ -10,6 +10,7 @@ import {
   quoteKey,
   type SourceLine,
 } from "./citations"
+import { type Recalled, recall } from "./memory"
 import { MODELS, type ModelChoice, model, type Role, reasoning } from "./models"
 import { type Candidate, hybridSearch, type Scope } from "./retrieve"
 import type { Tracer } from "./trace"
@@ -42,6 +43,8 @@ export type Receipt = {
   sql: string
   precheckSql: string
   models: Record<string, string>
+  /** H-MEM memories that shaped this answer (their confidence follows the answer's 👍/👎). */
+  memories: { id: string; content: string }[]
 }
 
 export type AnswerEvent =
@@ -123,7 +126,15 @@ const PlanSchema = z.object({
     .describe("false only for greetings or questions about the assistant itself"),
 })
 
-async function plan(input: AnswerInput) {
+/** What the person has told Konkyo before, as guidance; never evidence, never cited. */
+const memoryBlock = (memories: Recalled[]) =>
+  memories.length
+    ? `What this person has corrected before (from their memory, not evidence; never cite it):\n${memories
+        .map((m) => `- ${m.content}`)
+        .join("\n")}\n\n`
+    : ""
+
+async function plan(input: AnswerInput, memories: Recalled[]) {
   const started = performance.now()
   const history = input.history
     .slice(-6)
@@ -136,7 +147,7 @@ async function plan(input: AnswerInput) {
       output: Output.object({ schema: PlanSchema }),
       instructions:
         "You are the Planner in a research assistant that answers from the user's own library of documents and recordings. If the latest question already stands alone, keep the user's own words as `standalone`; otherwise rewrite it minimally using the conversation. Then write search queries for the library: keywords and phrases its passages would contain, not questions.",
-      prompt: `${history ? `Conversation so far:\n${history}\n\n` : ""}Latest question: ${input.question}`,
+      prompt: `${memoryBlock(memories)}${history ? `Conversation so far:\n${history}\n\n` : ""}Latest question: ${input.question}`,
       abortSignal: input.abortSignal,
     }),
   )
@@ -189,10 +200,11 @@ async function write(
   sources: SourceRef[],
   feedback: string | null,
   onDelta?: (delta: string) => void,
+  memories: Recalled[] = [],
 ) {
   const started = performance.now()
   const prompt =
-    `Passages:\n${passagesBlock(sources)}\n\nQuestion: ${question}` +
+    `${memoryBlock(memories)}Passages:\n${passagesBlock(sources)}\n\nQuestion: ${question}` +
     (feedback
       ? `\n\nYour previous draft was REJECTED by the Verifier:\n${feedback}\n\nRewrite the answer fixing every problem. Use only facts and exact quotes from the passages.`
       : "")
@@ -624,8 +636,25 @@ export async function answer(input: AnswerInput) {
   const step = (id: string, label: string, state: "running" | "done" | "failed", detail?: string) =>
     emit({ type: "step", id, label, state, detail })
 
+  // The person's corrections memory (Meterless H-MEM), read before planning, every run.
+  const memories = recall(input.ownerId, input.question)
+  if (memories.length)
+    step(
+      "memory",
+      `Read ${memories.length} correction${memories.length === 1 ? "" : "s"} from your memory`,
+      "done",
+    )
   step("plan", "Planning", "running")
-  const planned = await plan(input)
+  tracer.log({
+    agent: "planner",
+    step: "memory",
+    action: "read_hmem",
+    rowsReturned: memories.length,
+    detail: {
+      memories: memories.map((m) => ({ id: m.id, relevance: Number(m.relevance.toFixed(3)) })),
+    },
+  })
+  const planned = await plan(input, memories)
   step("plan", "Planning", "done", planned.standalone)
 
   step("search", "Searching your library", "running")
@@ -696,7 +725,14 @@ export async function answer(input: AnswerInput) {
 
   step("write", "Writing", "running")
   const draftText = (
-    await write(input, planned.standalone, sources, null, (delta) => emit({ type: "text", delta }))
+    await write(
+      input,
+      planned.standalone,
+      sources,
+      null,
+      (delta) => emit({ type: "text", delta }),
+      memories,
+    )
   ).text
   step("write", "Writing", "done")
   const pre = await precheck
@@ -764,6 +800,7 @@ export async function answer(input: AnswerInput) {
     sql: verdict.sql,
     precheckSql: pre.sql,
     models: { planner: planned.model, writer: MODELS.writer.primary.id, verifier: verdict.model },
+    memories: memories.map((m) => ({ id: m.id, content: m.content })),
   }
   emit({ type: "receipt", receipt })
   tracer.log({

@@ -4,7 +4,7 @@ import { deleteObject } from "@konkyo/storage"
 import { unpublish } from "@konkyo/zetaris"
 import { lt } from "drizzle-orm"
 
-const { files, folders } = schema
+const { files, folders, chats } = schema
 
 /** Removes deleted files' stored bytes and Zetaris evidence. Safe to repeat. */
 export async function purgeFiles({ fileIds, keys }: { fileIds: string[]; keys: string[] }) {
@@ -20,6 +20,7 @@ export async function purgeExpired() {
     .where(lt(files.deletedAt, cutoff))
     .returning({ id: files.id, originalKey: files.originalKey, renditionKey: files.renditionKey })
   await db.delete(folders).where(lt(folders.deletedAt, cutoff))
+  await db.delete(chats).where(lt(chats.deletedAt, cutoff))
   await purgeFiles({
     fileIds: gone.map((f) => f.id),
     keys: gone.flatMap((f) => [f.originalKey, f.renditionKey].filter((k): k is string => !!k)),

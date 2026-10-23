@@ -6,7 +6,7 @@ import { enqueue } from "@konkyo/jobs"
 import { and, eq, inArray, isNotNull, sql } from "drizzle-orm"
 import { LibraryError } from "./library"
 
-const { folders, files } = schema
+const { folders, files, chats } = schema
 
 /** One file to Trash (or several); each trashing is its own batch, restored on its own. */
 export async function trashFiles(ownerId: string, fileIds: string[]) {
@@ -25,7 +25,7 @@ export async function trashFiles(ownerId: string, fileIds: string[]) {
 export async function listTrash(ownerId: string) {
   const rows = await db.execute<{
     batch: string
-    type: "folder" | "file"
+    type: "folder" | "file" | "chat"
     id: string
     name: string
     kind: string | null
@@ -44,6 +44,10 @@ export async function listTrash(ownerId: string) {
     from ${files} x
     where x.owner_id = ${ownerId} and x.deleted_at is not null
       and not exists (select 1 from ${folders} f where f.trash_batch = x.trash_batch)
+    union all
+    select c.trash_batch, 'chat', c.id, c.title, null, c.deleted_at, 0
+    from ${chats} c
+    where c.owner_id = ${ownerId} and c.deleted_at is not null and c.trash_batch is not null
     order by deleted_at desc
   `)
   return rows.map((r) => ({
@@ -73,7 +77,12 @@ export async function restoreBatch(ownerId: string, batch: string) {
       .set({ deletedAt: null, trashBatch: null })
       .where(and(eq(files.ownerId, ownerId), eq(files.trashBatch, batch)))
       .returning({ id: files.id })
-    if (!restored.length && !restoredFiles.length)
+    const restoredChats = await tx
+      .update(chats)
+      .set({ deletedAt: null, trashBatch: null })
+      .where(and(eq(chats.ownerId, ownerId), eq(chats.trashBatch, batch)))
+      .returning({ id: chats.id })
+    if (!restored.length && !restoredFiles.length && !restoredChats.length)
       throw new LibraryError("That's no longer in Trash", 404)
     await tx.execute(sql`
       update ${folders} f set parent_id = null
@@ -97,6 +106,10 @@ export async function deleteBatches(ownerId: string, batches: string[]) {
     await tx
       .delete(folders)
       .where(and(eq(folders.ownerId, ownerId), inArray(folders.trashBatch, batches)))
+    // Messages and runs go with their chat (cascade).
+    await tx
+      .delete(chats)
+      .where(and(eq(chats.ownerId, ownerId), inArray(chats.trashBatch, batches)))
     return removedFiles
   })
   if (gone.length) {
@@ -116,6 +129,10 @@ export async function emptyTrash(ownerId: string) {
     .selectDistinct({ batch: folders.trashBatch })
     .from(folders)
     .where(and(eq(folders.ownerId, ownerId), isNotNull(folders.trashBatch)))
-  const batches = [...new Set([...rows, ...folderRows].map((r) => r.batch as string))]
+  const chatRows = await db
+    .selectDistinct({ batch: chats.trashBatch })
+    .from(chats)
+    .where(and(eq(chats.ownerId, ownerId), isNotNull(chats.trashBatch)))
+  const batches = [...new Set([...rows, ...folderRows, ...chatRows].map((r) => r.batch as string))]
   await deleteBatches(ownerId, batches)
 }

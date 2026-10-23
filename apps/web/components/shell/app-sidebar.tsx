@@ -20,6 +20,7 @@ import { BrandMark } from "../brand-mark"
 import { AccountMenu, type ShellUser } from "./account-menu"
 import { CreateMenu } from "./create-menu"
 import { FolderTree } from "./folder-tree"
+import { RecentChats } from "./recent-chats"
 
 export function AppSidebar({ user }: { user: ShellUser }) {
   const pathname = usePathname()
@@ -55,6 +56,7 @@ export function AppSidebar({ user }: { user: ShellUser }) {
                   <item.icon strokeWidth={1.5} />
                   <span>{item.label}</span>
                 </SidebarMenuButton>
+                {item.href === "/chats" && <RecentChats />}
               </SidebarMenuItem>
             ))}
           </SidebarMenu>

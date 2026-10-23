@@ -16,7 +16,13 @@ import {
   DropdownMenuTrigger,
 } from "@konkyo/ui/components/dropdown-menu"
 import { Skeleton } from "@konkyo/ui/components/skeleton"
-import { EllipsisIcon, FolderIcon, RotateCcwIcon, Trash2Icon } from "lucide-react"
+import {
+  EllipsisIcon,
+  FolderIcon,
+  MessageSquareIcon,
+  RotateCcwIcon,
+  Trash2Icon,
+} from "lucide-react"
 import { useState } from "react"
 import { EmptyState } from "@/components/empty-state"
 import { KindIcon } from "@/components/library/kind-icon"
@@ -34,6 +40,7 @@ function deletedLabel(item: TrashItem) {
   ]
   if (item.type === "folder")
     parts.splice(0, 0, `Folder · ${item.files} file${item.files === 1 ? "" : "s"}`)
+  if (item.type === "chat") parts.splice(0, 0, "Chat")
   return parts.join(" · ")
 }
 
@@ -93,6 +100,8 @@ export function TrashView() {
             <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-panel">
               {item.type === "folder" ? (
                 <FolderIcon className="size-4 text-ash-gray" strokeWidth={1.5} aria-hidden />
+              ) : item.type === "chat" ? (
+                <MessageSquareIcon className="size-4 text-ash-gray" strokeWidth={1.5} aria-hidden />
               ) : (
                 <KindIcon kind={(item.kind ?? "pdf") as FileKind} />
               )}

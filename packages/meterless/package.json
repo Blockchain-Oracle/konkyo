@@ -5,12 +5,21 @@
   "type": "module",
   "license": "Apache-2.0",
   "exports": {
-    "./hmem": "./src/hmem/index.ts",
-    "./world-model": "./src/world-model/index.ts",
-    "./markovian": "./src/markovian/index.ts",
-    ".": "./src/index.ts"
+    "./hmem": {
+      "types": "./dist/hmem/index.d.ts",
+      "default": "./dist/hmem/index.js"
+    },
+    "./world-model": {
+      "types": "./dist/world-model/index.d.ts",
+      "default": "./dist/world-model/index.js"
+    },
+    "./markovian": {
+      "types": "./dist/markovian/index.d.ts",
+      "default": "./dist/markovian/index.js"
+    }
   },
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

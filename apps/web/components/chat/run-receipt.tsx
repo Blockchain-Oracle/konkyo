@@ -5,7 +5,7 @@ import { Button } from "@konkyo/ui/components/button"
 import { Spinner } from "@konkyo/ui/components/spinner"
 import { ToggleGroup, ToggleGroupItem } from "@konkyo/ui/components/toggle-group"
 import { cn } from "@konkyo/ui/lib/utils"
-import { CheckIcon, ChevronDownIcon, CopyIcon, DatabaseIcon, XIcon } from "lucide-react"
+import { BrainIcon, CheckIcon, ChevronDownIcon, CopyIcon, DatabaseIcon, XIcon } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 import { openSource } from "@/lib/preview"
@@ -63,6 +63,9 @@ export function RunReceipt({
     `Checked ${receipt.quotes} quote${receipt.quotes === 1 ? "" : "s"} against ${receipt.sources} source${receipt.sources === 1 ? "" : "s"} in Zetaris`,
     receipt.rewritten ? `${receipt.rewritten} rewritten` : null,
     receipt.dropped ? `${receipt.dropped} dropped` : null,
+    receipt.memories?.length
+      ? `${receipt.memories.length} correction${receipt.memories.length === 1 ? "" : "s"} recalled`
+      : null,
     seconds(receipt.totalMs),
   ]
     .filter(Boolean)
@@ -113,6 +116,24 @@ export function RunReceipt({
                   ? ` · ${receipt.rounds} rewrite round${receipt.rounds === 1 ? "" : "s"}`
                   : ""}
               </p>
+              {receipt.memories?.length > 0 && (
+                <div className="mt-4">
+                  <p className="flex items-center gap-1.5 text-meta text-ash-gray">
+                    <BrainIcon className="size-3.5" strokeWidth={1.5} aria-hidden />
+                    Read from your memory before answering (guidance, never cited)
+                  </p>
+                  <ul className="mt-1.5 space-y-1">
+                    {receipt.memories.map((m) => (
+                      <li
+                        key={m.id}
+                        className="border-l-2 border-white/14 pl-3 text-snippet text-silver-mist"
+                      >
+                        {m.content}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               <Button
                 variant="ghost"
                 size="sm"

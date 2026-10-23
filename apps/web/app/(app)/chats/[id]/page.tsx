@@ -1,8 +1,8 @@
 import { Skeleton } from "@konkyo/ui/components/skeleton"
 import type { Metadata } from "next"
 import { Suspense } from "react"
+import { ChatHeader } from "@/components/chat/chat-header"
 import { ChatView } from "@/components/chat/chat-view"
-import { MobileHeader } from "@/components/page-header"
 import { getChat } from "@/lib/chats"
 import { getSession } from "@/lib/session"
 
@@ -15,7 +15,18 @@ async function Chat({ params }: { params: PageProps<"/chats/[id]">["params"] }) 
   // A new chat (its first question was just asked) has no rows yet: it opens empty.
   return (
     <>
-      <MobileHeader title={found?.chat.title ?? "New chat"} />
+      <ChatHeader
+        id={id}
+        initial={
+          found
+            ? {
+                id,
+                title: found.chat.title,
+                pinnedAt: found.chat.pinnedAt?.toISOString() ?? null,
+              }
+            : undefined
+        }
+      />
       <ChatView id={id} initialMessages={found?.messages ?? []} scope={found?.chat.scope} />
     </>
   )

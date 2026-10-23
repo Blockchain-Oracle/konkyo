@@ -1,5 +1,7 @@
 import { Skeleton } from "@konkyo/ui/components/skeleton"
+import { ChevronRightIcon } from "lucide-react"
 import type { Metadata } from "next"
+import Link from "next/link"
 import { Suspense } from "react"
 import { PageShell } from "@/components/page-shell"
 import { getSession } from "@/lib/session"
@@ -46,6 +48,23 @@ export default function SettingsPage() {
             <Account />
           </Suspense>
         </div>
+      </section>
+      <section aria-labelledby="memory-heading" className="mt-15">
+        <h2 id="memory-heading" className="text-micro text-saffron-spark uppercase">
+          Memory
+        </h2>
+        <Link
+          href="/settings/memory"
+          className="mt-4.5 flex items-center gap-3 border-y border-border py-4 text-ui text-bone-white hover:text-silver-mist"
+        >
+          <span className="flex-1">
+            What Konkyo remembers
+            <span className="mt-0.5 block text-snippet text-ash-gray">
+              Corrections from your 👎, read before every answer. View, edit or forget them.
+            </span>
+          </span>
+          <ChevronRightIcon className="size-4 text-ash-gray" strokeWidth={1.5} aria-hidden />
+        </Link>
       </section>
     </PageShell>
   )

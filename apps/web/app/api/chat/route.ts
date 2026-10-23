@@ -3,7 +3,7 @@ import { answer, type KonkyoMessage, Tracer } from "@konkyo/agents"
 import { consumeStream, createUIMessageStream, createUIMessageStreamResponse } from "ai"
 import { NextResponse } from "next/server"
 import { z } from "zod"
-import { ensureChat, finishRun, historyFor, saveMessage, startRun } from "@/lib/chats"
+import { dropAfter, ensureChat, finishRun, historyFor, saveMessage, startRun } from "@/lib/chats"
 import { LibraryError } from "@/lib/library"
 import { endRun, registerRun } from "@/lib/run-registry"
 import { getSession } from "@/lib/session"
@@ -20,6 +20,8 @@ const Body = z.object({
       .array(z.object({ type: z.string(), text: z.string().optional() }).passthrough())
       .min(1),
   }),
+  /** Regenerate: the question is asked again and its earlier answer replaced. */
+  trigger: z.enum(["submit-message", "regenerate-message"]).optional(),
   /** Only read when the chat is created (Chat with file / folder, @ tags). */
   scope: z
     .object({
@@ -58,7 +60,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: error.status })
     throw error
   }
-  const history = await historyFor(chatId)
+  if (parsed.data.trigger === "regenerate-message") await dropAfter(chatId, userMessage.id)
+  const history = await historyFor(chatId, userMessage.id)
   await saveMessage(ownerId, chatId, userMessage)
 
   const runId = randomUUID()

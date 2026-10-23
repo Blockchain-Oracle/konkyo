@@ -14,7 +14,8 @@
     "db:migrate": "pnpm --filter @konkyo/db migrate",
     "services:up": "docker compose -f infra/compose.yaml --env-file .env up -d --wait",
     "services:down": "docker compose -f infra/compose.yaml --env-file .env down",
-    "services:check": "node --env-file-if-exists=.env scripts/check-services.ts"
+    "services:check": "node --env-file-if-exists=.env scripts/check-services.ts",
+    "postinstall": "pnpm --filter @konkyo/meterless build"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",

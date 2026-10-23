@@ -9,8 +9,11 @@ import { spawn } from "node:child_process"
 import { existsSync } from "node:fs"
 import { resolve } from "node:path"
 
-const envFile = resolve(import.meta.dirname, "..", ".env")
+const root = resolve(import.meta.dirname, "..")
+const envFile = resolve(root, ".env")
 if (existsSync(envFile)) process.loadEnvFile(envFile)
+// Shared paths (agent traces, per-person memory) resolve from the repo root, whichever app runs.
+process.env.KONKYO_ROOT ??= root
 
 const [command, ...args] = process.argv.slice(2)
 if (!command) {

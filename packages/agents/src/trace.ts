@@ -21,7 +21,8 @@ export type TraceEvent = {
   detail?: Record<string, unknown>
 }
 
-const LOGS_DIR = process.env.KONKYO_LOGS_DIR ?? path.resolve(process.cwd(), "logs")
+const LOGS_DIR =
+  process.env.KONKYO_LOGS_DIR ?? path.resolve(process.env.KONKYO_ROOT ?? process.cwd(), "logs")
 
 export class Tracer {
   private ready: Promise<unknown>
