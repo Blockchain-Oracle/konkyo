@@ -1,5 +1,6 @@
 import { boss, QUEUES } from "@konkyo/jobs"
 import { warmUp } from "@konkyo/zetaris"
+import { queueDueAgents, runAgent } from "./agents"
 import { deepJob } from "./deep"
 import { indexNote } from "./notes"
 import { ingestFile } from "./pipeline"
@@ -54,6 +55,20 @@ await queues.work(SWEEP, async () => {
   if (removed) console.info(`[trash] deleted ${removed} files kept past 30 days`)
 })
 
+// Agents (F34): due ones are queued every five minutes; runs go a few at a time.
+await queues.work(QUEUES.agent.name, { localConcurrency: 3 }, async ([job]) => {
+  if (!job) return
+  const { agentId, trigger } = QUEUES.agent.payload.parse(job.data)
+  await runAgent(agentId, trigger)
+})
+const AGENTS_DUE = "agents-due"
+await queues.createQueue(AGENTS_DUE)
+await queues.schedule(AGENTS_DUE, "*/5 * * * *", {}, { tz: "UTC" })
+await queues.work(AGENTS_DUE, async () => {
+  const { queued } = await queueDueAgents()
+  if (queued) console.info(`[agents] queued ${queued}`)
+})
+
 // Review reminders (F29): hourly, each person at their own hour in their own time zone.
 const REMINDERS = "review-reminders"
 await queues.createQueue(REMINDERS)
@@ -64,7 +79,7 @@ await queues.work(REMINDERS, async () => {
 })
 
 console.info(
-  `[worker] listening on "${QUEUES.ingest.name}" (×${INGEST_CONCURRENCY}), "deep" (×3), "study" (×3), "purge", daily sweep, hourly reminders`,
+  `[worker] listening on "${QUEUES.ingest.name}" (×${INGEST_CONCURRENCY}), "deep" (×3), "study" (×3), "purge", daily sweep, hourly reminders, agents every 5 min`,
 )
 
 // On shutdown stop taking jobs and exit promptly: a job cut off here stops sending heartbeats and

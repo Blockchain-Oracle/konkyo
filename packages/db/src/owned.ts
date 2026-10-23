@@ -1,6 +1,8 @@
 import { and, eq } from "drizzle-orm"
 import type { Db } from "./index"
 import {
+  agentRuns,
+  agents,
   chats,
   files,
   folders,
@@ -43,6 +45,8 @@ const movers: Array<(tx: Tx, fromUserId: string, toUserId: string) => Promise<un
   (tx, from, to) =>
     tx.update(noteVersions).set({ ownerId: to }).where(eq(noteVersions.ownerId, from)),
   (tx, from, to) => tx.update(noteEvents).set({ ownerId: to }).where(eq(noteEvents.ownerId, from)),
+  (tx, from, to) => tx.update(agents).set({ ownerId: to }).where(eq(agents.ownerId, from)),
+  (tx, from, to) => tx.update(agentRuns).set({ ownerId: to }).where(eq(agentRuns.ownerId, from)),
   (tx, from, to) => tx.update(inboxItems).set({ ownerId: to }).where(eq(inboxItems.ownerId, from)),
   (tx, from, to) =>
     tx.update(pushSubscriptions).set({ ownerId: to }).where(eq(pushSubscriptions.ownerId, from)),

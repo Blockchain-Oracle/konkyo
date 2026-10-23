@@ -31,7 +31,7 @@ export function CreateMenu() {
   // Folders, uploads and imports happen right here; agents and notes open where they're made.
   const CREATE_GROUPS: CreateItem[][] = [
     [
-      { label: "Agent", icon: BotIcon, href: "/agents" },
+      { label: "Agent", icon: BotIcon, href: "/agents?new=1" as Route },
       { label: "Note", icon: NotebookPenIcon, href: "/write" },
       { label: "Folder", icon: FolderPlusIcon, run: () => openNewFolder(null) },
     ],

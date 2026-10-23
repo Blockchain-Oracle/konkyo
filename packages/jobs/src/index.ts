@@ -39,6 +39,13 @@ export const QUEUES = {
     options: { retryLimit: 2, retryDelay: 10, retryBackoff: true, expireInSeconds: 10 * 60 },
     send: {},
   },
+  /** One agent run (F34): a watch checks for new papers, a quiz agent makes practice. */
+  agent: {
+    name: "agent",
+    payload: z.object({ agentId: z.uuid(), trigger: z.enum(["schedule", "manual"]) }),
+    options: { retryLimit: 0, expireInSeconds: 15 * 60 },
+    send: { heartbeatSeconds: 30 },
+  },
   /** Removes a deleted file's stored bytes and Zetaris evidence (the rows are already gone). */
   purge: {
     name: "purge",
