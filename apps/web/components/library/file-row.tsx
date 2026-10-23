@@ -16,10 +16,14 @@ import {
   EllipsisIcon,
   FolderInputIcon,
   InfoIcon,
+  MessageSquareIcon,
   PanelRightOpenIcon,
   Trash2Icon,
 } from "lucide-react"
+import type { Route } from "next"
+import { useRouter } from "next/navigation"
 import { openMoveFiles } from "@/components/shell/app-dialogs"
+import { chatWithHref } from "@/lib/focus"
 import { openSource } from "@/lib/preview"
 import { type LibraryFile, useFileActions } from "@/lib/use-library"
 import type { UploadState } from "@/lib/use-uploader"
@@ -152,6 +156,7 @@ export function FileRow({
   onSelect?: (event: { shiftKey: boolean }) => void
 }) {
   const { remove } = useFileActions()
+  const router = useRouter()
   const uploading = file.stage === "Uploading" && upload != null && !upload.failed
   const fixIt =
     file.status === "needs_you" || upload?.failed ? (
@@ -250,6 +255,14 @@ export function FileRow({
             >
               <PanelRightOpenIcon strokeWidth={1.5} />
               Open
+            </DropdownMenuItem>
+          )}
+          {file.status === "ready" && (
+            <DropdownMenuItem
+              onClick={() => router.push(chatWithHref({ type: "file", id: file.id }) as Route)}
+            >
+              <MessageSquareIcon strokeWidth={1.5} />
+              Chat with this file
             </DropdownMenuItem>
           )}
           <DropdownMenuItem onClick={() => openDetails(file.id)}>

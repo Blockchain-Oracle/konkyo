@@ -59,8 +59,10 @@ export function RunReceipt({
   const [open, setOpen] = useState(false)
   const [tab, setTab] = useState<"steps" | "sources">("steps")
   const [sql, setSql] = useState(false)
+  // The answer's quotes and the agree/disagree matrix's are both checked in Zetaris.
+  const checked = receipt.quotes + (receipt.analyst?.relations ?? 0)
   const line = [
-    `Checked ${receipt.quotes} quote${receipt.quotes === 1 ? "" : "s"} against ${receipt.sources} source${receipt.sources === 1 ? "" : "s"} in Zetaris`,
+    `Checked ${checked} quote${checked === 1 ? "" : "s"} against ${receipt.sources} source${receipt.sources === 1 ? "" : "s"} in Zetaris`,
     receipt.rewritten ? `${receipt.rewritten} rewritten` : null,
     receipt.dropped ? `${receipt.dropped} dropped` : null,
     receipt.memories?.length
@@ -71,6 +73,13 @@ export function RunReceipt({
     .filter(Boolean)
     .join(" · ")
   const used = new Set(citations.map((c) => c.passageId))
+  // Every Zetaris statement the run made: the answer's quotes, then the matrix's.
+  const statements = [
+    receipt.sql && `-- The answer's quotes\n${receipt.sql}`,
+    receipt.analyst?.sql && `-- The agree/disagree quotes\n${receipt.analyst.sql}`,
+  ]
+    .filter(Boolean)
+    .join("\n\n")
 
   return (
     <div className="mt-4">
@@ -112,6 +121,7 @@ export function RunReceipt({
               <p className="mt-3 text-meta text-ash-gray">
                 Planner {receipt.models.planner} · Writer {receipt.models.writer} · Verifier{" "}
                 {receipt.models.verifier}
+                {receipt.models.analyst ? ` · Analyst ${receipt.models.analyst}` : ""}
                 {receipt.rounds
                   ? ` · ${receipt.rounds} rewrite round${receipt.rounds === 1 ? "" : "s"}`
                   : ""}
@@ -147,7 +157,7 @@ export function RunReceipt({
               {sql && (
                 <div className="relative mt-2">
                   <pre className="max-h-72 overflow-auto rounded-lg bg-black p-3 font-mono text-[12px] leading-relaxed text-silver-mist">
-                    {receipt.sql || "-- No quotes needed checking."}
+                    {statements || "-- No quotes needed checking."}
                   </pre>
                   <Button
                     variant="ghost"
@@ -155,15 +165,16 @@ export function RunReceipt({
                     aria-label="Copy SQL"
                     className="absolute top-2 right-2 text-ash-gray hover:text-bone-white"
                     onClick={() => {
-                      void navigator.clipboard.writeText(receipt.sql)
+                      void navigator.clipboard.writeText(statements)
                       toast.success("SQL copied")
                     }}
                   >
                     <CopyIcon strokeWidth={1.5} />
                   </Button>
                   <p className="mt-1.5 text-meta text-ash-gray">
-                    One statement checked every quote against Zetaris's own reading of each
-                    document.
+                    {receipt.analyst
+                      ? "One statement checked the answer's quotes and one the matrix's, against Zetaris's own reading of each document."
+                      : "One statement checked every quote against Zetaris's own reading of each document."}
                   </p>
                 </div>
               )}

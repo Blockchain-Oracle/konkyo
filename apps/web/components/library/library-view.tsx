@@ -20,15 +20,18 @@ import {
   FolderPlusIcon,
   FolderUpIcon,
   LinkIcon,
+  MessageSquareIcon,
   PencilIcon,
   Trash2Icon,
   UploadIcon,
 } from "lucide-react"
+import type { Route } from "next"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { type DragEvent, useEffect, useMemo, useRef, useState } from "react"
 import { EmptyState } from "@/components/empty-state"
 import { openImport, openNewFolder, openRenameFolder } from "@/components/shell/app-dialogs"
+import { chatWithHref } from "@/lib/focus"
 import { useFolderActions, useFolderPath, useFolderTree } from "@/lib/use-folders"
 import { type LibraryFile, useFiles } from "@/lib/use-library"
 import { filesFromDrop } from "@/lib/use-uploader"
@@ -348,6 +351,12 @@ function FolderHeading({ folderId }: { folderId: string }) {
             <EllipsisIcon strokeWidth={1.5} />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-48">
+            <DropdownMenuItem
+              onClick={() => router.push(chatWithHref({ type: "folder", id: folder.id }) as Route)}
+            >
+              <MessageSquareIcon strokeWidth={1.5} />
+              Chat with this folder
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => openRenameFolder(folder.id, folder.name)}>
               <PencilIcon strokeWidth={1.5} />
               Rename

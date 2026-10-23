@@ -73,6 +73,22 @@ async function cancel(queryId: string, token: string, org: string): Promise<void
  */
 export async function run(
   sql: string,
+  options: { limit?: number; timeoutMs?: number } = {},
+): Promise<QueryResult> {
+  try {
+    return await runOnce(sql, options)
+  } catch (error) {
+    // A table being re-published by the worker, or a hiccup in the Spark session, fails one
+    // statement with a 400/5xx that succeeds a moment later: retry once. Deadlines don't retry.
+    const status = (error as ZetarisError).status
+    if (!(error instanceof ZetarisError) || status === 408 || status === 401) throw error
+    await new Promise((resolve) => setTimeout(resolve, 400))
+    return runOnce(sql, options)
+  }
+}
+
+async function runOnce(
+  sql: string,
   {
     limit = ZETARIS.rowLimit,
     timeoutMs = ZETARIS.queryTimeoutMs,

@@ -344,17 +344,20 @@ async function describe(
           return null
         })
       : null,
-    summarize(result.title ?? titleHint ?? file.title, text).catch((error: Error) => {
+    summarize(result.title ?? titleHint ?? file.title, text, {
+      wantTitle: looksLikeFileName(file.title) && !result.title,
+    }).catch((error: Error) => {
       console.warn(`[details] ${file.id} summary: ${error.message}`)
-      return undefined
+      return {} as { summary?: string; title?: string }
     }),
   ])
   const meta: FileMeta = {
     ...previous,
     ...(found ?? {}),
-    summary: summary ?? previous.summary,
+    summary: summary.summary ?? previous.summary,
   }
-  const better = found?.csl?.title
+  // A file still named by its file name takes the paper's title, else one read from its content.
+  const better = found?.csl?.title ?? summary.title
   return { meta, title: better && looksLikeFileName(file.title) ? better : undefined }
 }
 

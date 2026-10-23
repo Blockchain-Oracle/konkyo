@@ -22,7 +22,7 @@ const Body = z.object({
   }),
   /** Regenerate: the question is asked again and its earlier answer replaced. */
   trigger: z.enum(["submit-message", "regenerate-message"]).optional(),
-  /** Only read when the chat is created (Chat with file / folder, @ tags). */
+  /** The composer's focus for this question (Chat with file / folder, @ tags); kept on the chat. */
   scope: z
     .object({
       fileIds: z.array(z.uuid()).max(200).optional(),
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
 
   let chat: Awaited<ReturnType<typeof ensureChat>>
   try {
-    chat = await ensureChat(ownerId, chatId, question, scope ?? {})
+    chat = await ensureChat(ownerId, chatId, question, scope)
   } catch (error) {
     if (error instanceof LibraryError)
       return NextResponse.json({ error: error.message }, { status: error.status })
@@ -136,6 +136,9 @@ export async function POST(request: Request) {
                 id: "not-found",
                 data: { question: event.question },
               })
+              break
+            case "matrix":
+              writer.write({ type: "data-matrix", id: "matrix", data: event.matrix })
               break
             case "receipt":
               receipt = event.receipt

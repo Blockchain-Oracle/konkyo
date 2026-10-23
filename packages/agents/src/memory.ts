@@ -1,5 +1,6 @@
 import path from "node:path"
 import { embed, HMEM, type MemoryRecord } from "@konkyo/meterless/hmem"
+import { embedQueries } from "./retrieve"
 
 /**
  * Each person's corrections memory (plan §2 "Memory", F33), on Meterless H-MEM as published:
@@ -32,14 +33,44 @@ export function memoryFor(userId: string): HMEM {
 
 export type Recalled = { id: string; content: string; relevance: number }
 
-/** Memories relevant to a question (H-MEM retrieval, logged to its ledger as reads). */
-export function recall(userId: string, question: string, topN = 3): Recalled[] {
-  const { memories } = memoryFor(userId).query(question, { topN })
-  return memories.map((m) => ({
-    id: m.memory.id,
-    content: m.memory.content,
-    relevance: m.relevance,
-  }))
+/**
+ * Below this cosine (text-embedding-3-small), a memory is about something else. Measured in testing: related questions scored 0.42–0.81 against a correction, unrelated ones 0.18–0.23.
+ */
+const MIN_MEANING = 0.35
+
+const cosine = (a: number[], b: number[]) => {
+  let dot = 0
+  let na = 0
+  let nb = 0
+  for (let i = 0; i < a.length; i++) {
+    dot += (a[i] as number) * (b[i] as number)
+    na += (a[i] as number) ** 2
+    nb += (b[i] as number) ** 2
+  }
+  return dot / (Math.sqrt(na) * Math.sqrt(nb) || 1)
+}
+
+/**
+ * Memories relevant to a question. H-MEM ranks them (its hybrid score, logged to its ledger as
+ * reads) with a looser threshold, then the same embeddings the library uses keep only those
+ * about the same thing: H-MEM's built-in embedder hashes words, so "memory" in two unrelated
+ * questions looks alike to it.
+ */
+export async function recall(userId: string, question: string, topN = 3): Promise<Recalled[]> {
+  const { memories } = memoryFor(userId).query(question, { topN: 8, threshold: 0.25 })
+  if (!memories.length) return []
+  const [q, ...vectors] = await embedQueries([question, ...memories.map((m) => m.memory.content)])
+  return memories
+    .map((m, i) => ({
+      id: m.memory.id,
+      content: m.memory.content,
+      relevance: m.relevance,
+      meaning: cosine(q as number[], vectors[i] as number[]),
+    }))
+    .filter((m) => m.meaning >= MIN_MEANING)
+    .sort((a, b) => b.meaning - a.meaning)
+    .slice(0, topN)
+    .map(({ id, content, relevance }) => ({ id, content, relevance }))
 }
 
 /** A 👎 with a reason: what the person said was wrong, kept with where it came from. */

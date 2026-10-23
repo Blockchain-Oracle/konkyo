@@ -6,10 +6,13 @@ import { Button } from "@konkyo/ui/components/button"
 import { useQueryClient } from "@tanstack/react-query"
 import { DefaultChatTransport } from "ai"
 import { RotateCcwIcon } from "lucide-react"
-import { useEffect, useMemo, useRef } from "react"
+import { useSearchParams } from "next/navigation"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Composer, type ComposerSubmit } from "@/components/composer"
+import { type Focus, focusFromSearch, focusOf } from "@/lib/focus"
 import { peekQuestion, releaseQuestion } from "@/lib/pending-question"
 import { AssistantMessage } from "./assistant-message"
+import { ChatStart } from "./chat-start"
 
 type ChatScope = { fileIds?: string[]; folderIds?: string[] }
 
@@ -48,7 +51,16 @@ export function ChatView({
   scope?: ChatScope
 }) {
   const queryClient = useQueryClient()
-  const scopeRef = useRef(scope)
+  const params = useSearchParams()
+  // A saved chat keeps its focus; a new one takes it from Home or a "Chat with" link.
+  const [focus, setFocus] = useState<Focus>(() =>
+    scope ? focusOf(scope) : (peekQuestion(id)?.focus ?? focusFromSearch(params)),
+  )
+  // The transport reads the focus at send time.
+  const scopeRef = useRef(focus)
+  useEffect(() => {
+    scopeRef.current = focus
+  }, [focus])
   const transport = useMemo(
     () =>
       new DefaultChatTransport<KonkyoMessage>({
@@ -108,6 +120,9 @@ export function ChatView({
   return (
     <div className="flex min-h-[calc(100svh-3.5rem)] flex-col md:min-h-[calc(100svh-3rem)]">
       <div className="mx-auto w-full max-w-[46rem] flex-1 space-y-8 px-6 pt-8 pb-10">
+        {!messages.length && !peekQuestion(id) && (
+          <ChatStart focus={focus} onAsk={(text) => void ask({ text })} />
+        )}
         {messages.map((message, i) =>
           message.role === "user" ? (
             <UserMessage key={message.id} message={message} />
@@ -127,7 +142,8 @@ export function ChatView({
         {status === "submitted" && last?.role === "user" && (
           <p className="animate-checking text-snippet text-ash-gray">Starting…</p>
         )}
-        {error && (
+        {/* An answer that started says so itself; this is for one that never started. */}
+        {error && last?.role === "user" && (
           <div className="flex items-center gap-3 rounded-xl border border-contradicts/30 bg-contradicts/5 px-4 py-3">
             <p className="flex-1 text-snippet text-silver-mist">
               That answer didn't finish. {error.message}
@@ -143,7 +159,9 @@ export function ChatView({
       <div className="sticky bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-10 bg-gradient-to-t from-black from-60% to-transparent px-6 pt-6 pb-4 md:bottom-0 md:pb-6">
         <Composer
           className="mx-auto max-w-[46rem]"
-          placeholder="Ask a follow-up…"
+          placeholder={messages.length ? "Ask a follow-up…" : "Ask your library…"}
+          focus={focus}
+          onFocusChange={setFocus}
           running={running}
           onStop={stopRun}
           onSubmit={ask}

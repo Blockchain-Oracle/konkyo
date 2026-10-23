@@ -1,6 +1,7 @@
 import { checkQuotes, evidenceKey, presentDocuments, sqlHash } from "@konkyo/zetaris"
 import { generateText, Output, streamText } from "ai"
 import { z } from "zod"
+import { type Analysis, analyse, type Matrix } from "./analyst"
 import {
   citesOf,
   NOT_IN_LIBRARY,
@@ -45,6 +46,8 @@ export type Receipt = {
   models: Record<string, string>
   /** H-MEM memories that shaped this answer (their confidence follows the answer's 👍/👎). */
   memories: { id: string; content: string }[]
+  /** The Analyst's comparison, when the question weighed several sources (F13). */
+  analyst?: { claims: number; sources: number; relations: number; sql: string }
 }
 
 export type AnswerEvent =
@@ -67,6 +70,8 @@ export type AnswerEvent =
       rewritten: string[]
     }
   | { type: "not-found"; question: string; reason: "no-passages" | "writer" }
+  /** The agree/disagree matrix: first with cells "checking", then only the verified cells. */
+  | { type: "matrix"; matrix: Matrix }
   | { type: "receipt"; receipt: Receipt }
 
 export type AnswerInput = {
@@ -124,6 +129,11 @@ const PlanSchema = z.object({
   needsLibrary: z
     .boolean()
     .describe("false only for greetings or questions about the assistant itself"),
+  compare: z
+    .boolean()
+    .describe(
+      "true when answering means weighing several sources against each other: comparisons, agreement or disagreement, what different papers or speakers say about one thing",
+    ),
 })
 
 /** What the person has told Konkyo before, as guidance; never evidence, never cited. */
@@ -637,7 +647,7 @@ export async function answer(input: AnswerInput) {
     emit({ type: "step", id, label, state, detail })
 
   // The person's corrections memory (Meterless H-MEM), read before planning, every run.
-  const memories = recall(input.ownerId, input.question)
+  const memories = await recall(input.ownerId, input.question)
   if (memories.length)
     step(
       "memory",
@@ -701,27 +711,80 @@ export async function answer(input: AnswerInput) {
   // The Zetaris pre-check runs while the Writer writes: every retrieved file was confirmed in
   // Zetaris at ingest, so a miss is rare, and when it happens the Verifier fails those quotes.
   step("precheck", "Checking sources in Zetaris", "running")
-  const precheck = presentDocuments([...files]).then((pre) => {
-    tracer.log({
-      agent: "verifier",
-      step: "precheck",
-      action: "queried_zetaris",
-      sqlHash: sqlHash(pre.sql),
-      rowsReturned: pre.present.size,
-      latencyMs: pre.ms,
-      detail: { missing: [...files].filter((f) => !pre.present.has(f)) },
-    })
-    step(
-      "precheck",
-      "Checking sources in Zetaris",
-      pre.present.size === files.size ? "done" : "failed",
-      `${pre.present.size} of ${files.size} files confirmed`,
-    )
-    return pre
-  })
+  // The pre-check is advisory (each file was confirmed in Zetaris at ingest): if Zetaris can't
+  // answer it, the run goes on and the Verifier's own Zetaris check still guards every quote.
+  const precheck = presentDocuments([...files]).then(
+    (pre) => {
+      tracer.log({
+        agent: "verifier",
+        step: "precheck",
+        action: "queried_zetaris",
+        sqlHash: sqlHash(pre.sql),
+        rowsReturned: pre.present.size,
+        latencyMs: pre.ms,
+        detail: { missing: [...files].filter((f) => !pre.present.has(f)) },
+      })
+      step(
+        "precheck",
+        "Checking sources in Zetaris",
+        pre.present.size === files.size ? "done" : "failed",
+        `${pre.present.size} of ${files.size} files confirmed`,
+      )
+      return pre
+    },
+    (error: Error) => {
+      tracer.log({
+        agent: "verifier",
+        step: "precheck",
+        action: "failed",
+        detail: { message: error.message.slice(0, 300) },
+      })
+      step(
+        "precheck",
+        "Checking sources in Zetaris",
+        "failed",
+        "Zetaris didn't answer; quotes are still checked",
+      )
+      return { present: new Set(files), sql: "", ms: 0 }
+    },
+  )
 
   const sources = toSources(candidates)
   emit({ type: "sources", sources })
+
+  // The Analyst compares sources alongside the Writer (F13), so the matrix costs no extra wait.
+  // Once the run has answered "not found", nothing it finds later is sent.
+  let closed = false
+  const comparing = planned.compare && files.size >= 2
+  if (comparing) step("analyse", "Comparing sources", "running")
+  const analysis: Promise<Analysis | null> = comparing
+    ? analyse(input, planned.standalone, sources, (matrix) => {
+        if (!closed) emit({ type: "matrix", matrix })
+      }).then(
+        (done) => {
+          if (!closed)
+            step(
+              "analyse",
+              "Comparing sources",
+              "done",
+              done?.matrix.claims.length
+                ? `${done.matrix.counts.claims} claim${done.matrix.counts.claims === 1 ? "" : "s"} across ${done.matrix.counts.sources} sources`
+                : "No claims the sources share",
+            )
+          return done
+        },
+        (error: Error) => {
+          tracer.log({
+            agent: "analyst",
+            step: "claims",
+            action: "failed",
+            detail: { message: error.message.slice(0, 300) },
+          })
+          if (!closed) step("analyse", "Comparing sources", "failed")
+          return null
+        },
+      )
+    : Promise.resolve(null)
 
   step("write", "Writing", "running")
   const draftText = (
@@ -739,6 +802,7 @@ export async function answer(input: AnswerInput) {
   const missingDocs = new Set([...files].filter((f) => !pre.present.has(f)))
   let draft = parseAnswer(draftText)
   if (draft.notInLibrary || !draft.sentences.length) {
+    closed = true
     emit({ type: "not-found", question: planned.standalone, reason: "writer" })
     tracer.log({ agent: "writer", step: "draft", action: "not_in_library", verdict: "not_found" })
     await tracer.flush()
@@ -789,9 +853,14 @@ export async function answer(input: AnswerInput) {
     citations: final.citations,
     rewritten: final.rewritten,
   })
+  const analysed = await analysis
   const receipt: Receipt = {
     quotes: final.citations.length,
-    sources: new Set(final.citations.map((c) => c.fileId)).size,
+    // Every source a checked quote came from: the answer's and the matrix's.
+    sources: new Set([
+      ...final.citations.map((c) => c.fileId),
+      ...(analysed?.matrix.sources.map((s) => s.fileId) ?? []),
+    ]).size,
     rewritten: final.rewritten.length,
     dropped: final.dropped,
     rounds,
@@ -799,15 +868,35 @@ export async function answer(input: AnswerInput) {
     totalMs: Math.round(performance.now() - runStarted),
     sql: verdict.sql,
     precheckSql: pre.sql,
-    models: { planner: planned.model, writer: MODELS.writer.primary.id, verifier: verdict.model },
+    models: {
+      planner: planned.model,
+      writer: MODELS.writer.primary.id,
+      verifier: verdict.model,
+      ...(analysed ? { analyst: analysed.model } : {}),
+    },
     memories: memories.map((m) => ({ id: m.id, content: m.content })),
+    ...(analysed
+      ? {
+          analyst: {
+            claims: analysed.matrix.counts.claims,
+            sources: analysed.matrix.counts.sources,
+            relations: analysed.worldModel.relations,
+            sql: analysed.sql,
+          },
+        }
+      : {}),
   }
   emit({ type: "receipt", receipt })
   tracer.log({
     agent: "system",
     step: "done",
     action: "answered",
-    detail: { ...receipt, sql: undefined, precheckSql: undefined },
+    detail: {
+      ...receipt,
+      sql: undefined,
+      precheckSql: undefined,
+      analyst: receipt.analyst && { ...receipt.analyst, sql: undefined },
+    },
   })
   await tracer.flush()
   return {

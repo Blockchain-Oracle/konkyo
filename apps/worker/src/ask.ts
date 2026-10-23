@@ -41,6 +41,18 @@ const result = await answer({
       console.log(`\n${e.body}\n${e.caveat ? `Caveat: ${e.caveat}\n` : ""}`)
       for (const c of e.citations)
         console.log(`[${c.n}] ${c.state} · ${c.title}${c.page ? ` p.${c.page}` : ""}: "${c.quote}"`)
+    } else if (e.type === "matrix") {
+      if (e.matrix.state === "checking") return
+      console.log(`\nAgree/disagree: ${JSON.stringify(e.matrix.counts)}`)
+      for (const c of e.matrix.claims)
+        console.log(
+          `  ${c.text}\n${c.cells
+            .map((cell) => {
+              const s = e.matrix.sources.find((x) => x.fileId === cell.fileId)
+              return `    ${cell.stance.padEnd(9)} ${s?.title.slice(0, 40)}: "${cell.quote}"`
+            })
+            .join("\n")}`,
+        )
     } else if (e.type === "receipt")
       console.log(
         `\nReceipt: ${e.receipt.quotes} quotes checked in Zetaris · ${e.receipt.rewritten} rewritten · ${e.receipt.dropped} dropped · verify ${e.receipt.verifyMs} ms · total ${e.receipt.totalMs} ms`,

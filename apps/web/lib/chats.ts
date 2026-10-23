@@ -15,20 +15,33 @@ function titleFrom(question: string) {
   return `${clean.slice(0, 64).replace(/\s+\S*$/, "")}…`
 }
 
-/** The chat for this id, created on its first message; another person's chat is refused. */
+const sameScope = (a: ChatScope, b: ChatScope) => {
+  const key = (s: ChatScope) =>
+    JSON.stringify([[...(s.fileIds ?? [])].sort(), [...(s.folderIds ?? [])].sort()])
+  return key(a) === key(b)
+}
+
+/**
+ * The chat for this id, created on its first message; another person's chat is refused. Each
+ * question carries the composer's focus, so a focus changed mid-chat is kept for the next visit.
+ */
 export async function ensureChat(
   ownerId: string,
   chatId: string,
   question: string,
-  scope: ChatScope,
+  scope?: ChatScope,
 ) {
   await db
     .insert(chats)
-    .values({ id: chatId, ownerId, title: titleFrom(question), scope })
+    .values({ id: chatId, ownerId, title: titleFrom(question), scope: scope ?? {} })
     .onConflictDoNothing()
   const chat = await db.query.chats.findFirst({ where: eq(chats.id, chatId) })
   if (!chat || chat.ownerId !== ownerId || chat.deletedAt)
     throw new LibraryError("No such chat", 404)
+  if (scope && !sameScope(scope, chat.scope)) {
+    await db.update(chats).set({ scope }).where(eq(chats.id, chatId))
+    chat.scope = scope
+  }
   return chat
 }
 
@@ -204,7 +217,7 @@ export async function rateMessage(ownerId: string, messageId: string, input: Rat
   const message = await db.query.messages.findFirst({
     where: and(eq(messages.id, messageId), eq(messages.ownerId, ownerId)),
   })
-  if (!message || message.role !== "assistant") throw new LibraryError("No such answer", 404)
+  if (message?.role !== "assistant") throw new LibraryError("No such answer", 404)
   const run = message.runId
     ? await db.query.runs.findFirst({ where: eq(runs.id, message.runId) })
     : undefined

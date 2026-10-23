@@ -3,9 +3,10 @@
 import type { KonkyoMessage, StepData } from "@konkyo/agents"
 import { parseAnswer } from "@konkyo/agents/citations"
 import { Button } from "@konkyo/ui/components/button"
-import { LinkIcon, SearchXIcon, UploadIcon } from "lucide-react"
+import { LinkIcon, RotateCcwIcon, SearchXIcon, UploadIcon } from "lucide-react"
 import { useUploads } from "@/components/library/uploads-provider"
 import { openImport } from "@/components/shell/app-dialogs"
+import { AgreeMatrix } from "./agree-matrix"
 import { AnswerText } from "./answer-text"
 import { MessageActions } from "./message-actions"
 import { LiveSteps, RunReceipt } from "./run-receipt"
@@ -21,6 +22,7 @@ function partsOf(message: KonkyoMessage) {
   let final: Extract<KonkyoMessage["parts"][number], { type: "data-final" }>["data"] | undefined
   let receipt: Extract<KonkyoMessage["parts"][number], { type: "data-receipt" }>["data"] | undefined
   let notFound: { question: string } | undefined
+  let matrix: Extract<KonkyoMessage["parts"][number], { type: "data-matrix" }>["data"] | undefined
   for (const part of message.parts) {
     if (part.type === "data-step") steps.set(part.data.id, part.data)
     else if (part.type === "text") draft = part.text
@@ -28,8 +30,9 @@ function partsOf(message: KonkyoMessage) {
     else if (part.type === "data-final") final = part.data
     else if (part.type === "data-receipt") receipt = part.data
     else if (part.type === "data-notFound") notFound = part.data
+    else if (part.type === "data-matrix") matrix = part.data
   }
-  return { steps: [...steps.values()], draft, sources, final, receipt, notFound }
+  return { steps: [...steps.values()], draft, sources, final, receipt, notFound, matrix }
 }
 
 /**
@@ -47,7 +50,7 @@ export function AssistantMessage({
   /** Only on the latest answer, once it has finished. */
   onRegenerate?: () => void
 }) {
-  const { steps, draft, sources, final, receipt, notFound } = partsOf(message)
+  const { steps, draft, sources, final, receipt, notFound, matrix } = partsOf(message)
   const { pickFiles } = useUploads()
 
   if (notFound) {
@@ -90,6 +93,7 @@ export function AssistantMessage({
             {final.caveat}
           </p>
         )}
+        {matrix && <AgreeMatrix matrix={matrix} />}
         {receipt && (
           <RunReceipt
             receipt={receipt}
@@ -112,14 +116,38 @@ export function AssistantMessage({
   }
 
   const body = draft ? parseAnswer(draft).body : ""
+  // Saved before it finished (stopped, or the run failed): its steps stop where it ended, and
+  // the unverified draft is never shown as an answer.
+  if (!running) {
+    const ended = steps.map((step) =>
+      step.state === "running" ? { ...step, state: "failed" as const } : step,
+    )
+    return (
+      <div>
+        {ended.length > 0 && <LiveSteps steps={ended} />}
+        <div className="mt-4 flex items-center gap-3 rounded-xl border border-border bg-panel px-4 py-3">
+          <p className="flex-1 text-snippet text-silver-mist">
+            This answer didn't finish, so nothing in it was verified.
+          </p>
+          {onRegenerate && (
+            <Button variant="secondary" size="sm" onClick={onRegenerate}>
+              <RotateCcwIcon strokeWidth={1.75} />
+              Try again
+            </Button>
+          )}
+        </div>
+      </div>
+    )
+  }
   return (
     <div>
       {steps.length > 0 && <LiveSteps steps={steps} />}
       {body && (
         <div className="mt-5">
-          <AnswerText body={body} streaming={running && !steps.some((s) => s.id === "verify")} />
+          <AnswerText body={body} streaming={!steps.some((s) => s.id === "verify")} />
         </div>
       )}
+      {matrix && <AgreeMatrix matrix={matrix} />}
     </div>
   )
 }

@@ -94,7 +94,11 @@ export function parseAnswer(raw: string): ParsedAnswer {
   }
   return {
     body,
-    caveat: caveatMatch?.[1]?.replace(/\s+/g, " ").trim(),
+    // The caveat is never cited: a marker the Writer left there would point nowhere.
+    caveat: caveatMatch?.[1]
+      ?.replace(/\s*\[\d+(?:\s*,\s*\d+)*\]/g, "")
+      .replace(/\s+/g, " ")
+      .trim(),
     sources,
     sentences: splitSentences(body).filter((s) => !isPastedQuote(s.text)),
     notInLibrary: false,

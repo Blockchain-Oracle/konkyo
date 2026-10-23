@@ -1,4 +1,5 @@
 import type { UIMessage } from "ai"
+import type { Matrix } from "./analyst"
 import type { Citation, Receipt, SourceRef } from "./answer"
 
 /** An agent step as the chat shows it live (plan F15); one part per step, updated in place. */
@@ -18,6 +19,8 @@ export type KonkyoData = {
   final: { body: string; caveat?: string; citations: Citation[]; rewritten: string[] }
   receipt: Receipt
   notFound: { question: string }
+  /** Claims × sources with stance (F13), streamed "checking" then verified. */
+  matrix: Matrix
   revising: { round: number; reasons: string[] }
   /** On a question: the passage it is about (selection toolbar "Ask"). */
   quote: { fileId: string; title: string; page?: number; text: string }

@@ -52,7 +52,7 @@ const cacheKey = (text: string) =>
   createHash("sha256").update(`${EMBEDDING_MODEL}\n${text}`).digest("hex")
 
 /** Query vectors from the cache, the missing ones in a single embedding request. */
-async function embedQueries(texts: string[]): Promise<number[][]> {
+export async function embedQueries(texts: string[]): Promise<number[][]> {
   const hashes = texts.map(cacheKey)
   const hits = await db
     .select({ hash: embeddingCache.hash, embedding: embeddingCache.embedding })
@@ -76,7 +76,7 @@ async function embedQueries(texts: string[]): Promise<number[][]> {
 }
 
 /** The files a scope covers: chosen files plus everything filed in the chosen folders' subtrees. */
-async function scopeFileIds(ownerId: string, scope: Scope): Promise<string[] | null> {
+export async function scopeFileIds(ownerId: string, scope: Scope): Promise<string[] | null> {
   const fileIds = scope.fileIds ?? []
   const folderIds = scope.folderIds ?? []
   if (!fileIds.length && !folderIds.length) return null

@@ -9,20 +9,41 @@ import {
 import { cn } from "@konkyo/ui/lib/utils"
 import {
   ArrowUpIcon,
+  AtSignIcon,
   LibraryBigIcon,
   PlusIcon,
   SquareIcon,
   TelescopeIcon,
   XIcon,
 } from "lucide-react"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { FocusIcon, FocusPicker, MentionList, mentionMatches } from "@/components/chat/focus-picker"
 import { type QuotedPassage, quoteInComposer, useComposerQuote } from "@/lib/composer-draft"
+import {
+  type Focus,
+  type FocusItem,
+  isWholeLibrary,
+  toggleFocus,
+  useFocusItems,
+  WHOLE_LIBRARY,
+} from "@/lib/focus"
 
 export type ComposerSubmit = { text: string; deep: boolean; quote?: QuotedPassage }
 
+/** An `@` being typed: where it starts and what follows it, up to the caret. */
+type Mention = { start: number; end: number; query: string }
+
+function mentionAt(text: string, caret: number): Mention | null {
+  const match = text.slice(0, caret).match(/(^|\s)@([^\s@]{0,40})$/)
+  if (!match) return null
+  const query = match[2] ?? ""
+  return { start: caret - query.length - 1, end: caret, query }
+}
+
 /**
- * The chat box (AI Elements' Prompt Input pattern: input group + attachments + menus).
- * A plain chat sees the whole library; `@` focus arrives with chat in S04.
+ * The chat box (AI Elements' Prompt Input pattern: input group + attachments + menus). It sees
+ * the whole library unless it has a focus (plan F10): files and folders chosen from the focus
+ * pill or with `@`, shown as chips above the text.
  */
 export function Composer({
   onSubmit,
@@ -30,6 +51,10 @@ export function Composer({
   className,
   running = false,
   onStop,
+  focus = WHOLE_LIBRARY,
+  onFocusChange,
+  picking: pickingProp,
+  onPickingChange,
 }: {
   onSubmit: (value: ComposerSubmit) => void
   placeholder?: string
@@ -37,13 +62,60 @@ export function Composer({
   /** An answer is being written: the send button becomes Stop (plan F15). */
   running?: boolean
   onStop?: () => void
+  focus?: Focus
+  /** Without it the composer always asks the whole library. */
+  onFocusChange?: (focus: Focus) => void
+  /** The focus picker, opened from outside (Home's "Chat with a file"). */
+  picking?: boolean
+  onPickingChange?: (open: boolean) => void
 }) {
   const formRef = useRef<HTMLFormElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const [text, setText] = useState("")
   const [deep, setDeep] = useState(false)
+  const [mention, setMention] = useState<Mention | null>(null)
+  const [active, setActive] = useState(0)
+  const [pickingState, setPickingState] = useState(false)
+  const picking = pickingProp ?? pickingState
+  const setPicking = onPickingChange ?? setPickingState
   const quote = useComposerQuote()
   const canSend = text.trim().length > 0
+  // Names resolve after mount: the server renders before the library list exists, so both
+  // render the same placeholder chips first.
+  const loaded = useFocusItems()
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+  const items = mounted ? loaded : []
+  const matches = useMemo(
+    () => (mention ? mentionMatches(items, mention.query) : []),
+    [items, mention],
+  )
+  const chosen = useMemo(
+    () => [
+      ...focus.folderIds.map(
+        (id) =>
+          items.find((i) => i.type === "folder" && i.id === id) ??
+          ({ type: "folder", id, name: "" } as FocusItem),
+      ),
+      ...focus.fileIds.map(
+        (id) =>
+          items.find((i) => i.type === "file" && i.id === id) ??
+          ({ type: "folder", id, name: "" } as FocusItem),
+      ),
+    ],
+    [focus, items],
+  )
+
+  // `@name` becomes a chip: the typed mention leaves the text and joins the focus.
+  const pick = (item: FocusItem) => {
+    if (!mention || !onFocusChange) return
+    const next = `${text.slice(0, mention.start)}${text.slice(mention.end)}`
+    setText(next)
+    setMention(null)
+    const inFocus = (item.type === "file" ? focus.fileIds : focus.folderIds).includes(item.id)
+    if (!inFocus) onFocusChange(toggleFocus(focus, item))
+    requestAnimationFrame(() => inputRef.current?.setSelectionRange(mention.start, mention.start))
+  }
 
   // A passage sent here with "Ask" waits above the input, and the cursor is ready for the question.
   useEffect(() => {
@@ -62,7 +134,37 @@ export function Composer({
         quoteInComposer(null)
       }}
     >
-      <InputGroup className="rounded-card border-input bg-panel has-[[data-slot=input-group-control]:focus-visible]:border-line-strong has-[[data-slot=input-group-control]:focus-visible]:ring-0 dark:bg-panel">
+      <InputGroup className="relative rounded-card border-input bg-panel has-[[data-slot=input-group-control]:focus-visible]:border-line-strong has-[[data-slot=input-group-control]:focus-visible]:ring-0 dark:bg-panel">
+        {mention && onFocusChange && (
+          <MentionList matches={matches} active={active} onPick={pick} />
+        )}
+        {chosen.length > 0 && (
+          <InputGroupAddon align="block-start" className="flex-wrap gap-1.5 px-3 pt-3">
+            {chosen.map((item) => (
+              <span
+                key={`${item.type}:${item.id}`}
+                className="inline-flex h-7 max-w-64 items-center gap-1.5 rounded-full bg-raised pr-1 pl-2.5 text-snippet text-silver-mist"
+              >
+                <FocusIcon item={item} />
+                {item.name ? (
+                  <span className="truncate">{item.name}</span>
+                ) : (
+                  <span className="h-3 w-20 animate-pulse rounded bg-white/10" aria-hidden />
+                )}
+                {onFocusChange && (
+                  <button
+                    type="button"
+                    aria-label={`Stop focusing on ${item.name}`}
+                    onClick={() => onFocusChange(toggleFocus(focus, item))}
+                    className="grid size-5 shrink-0 place-items-center rounded-full text-ash-gray hover:bg-white/8 hover:text-bone-white"
+                  >
+                    <XIcon className="size-3" strokeWidth={1.75} />
+                  </button>
+                )}
+              </span>
+            ))}
+          </InputGroupAddon>
+        )}
         {quote && (
           <InputGroupAddon align="block-start" className="px-3 pt-3">
             <figure className="flex w-full items-start gap-2 rounded-xl bg-raised py-2.5 pr-1.5 pl-3">
@@ -89,15 +191,47 @@ export function Composer({
         <InputGroupTextarea
           ref={inputRef}
           value={text}
-          onChange={(event) => setText(event.target.value)}
+          onChange={(event) => {
+            setText(event.target.value)
+            const next = mentionAt(event.target.value, event.target.selectionStart)
+            setMention(next)
+            if (!next || next.query !== mention?.query) setActive(0)
+          }}
+          onBlur={() => setMention(null)}
           onKeyDown={(event) => {
+            if (mention && onFocusChange) {
+              if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+                event.preventDefault()
+                const step = event.key === "ArrowDown" ? 1 : -1
+                setActive((i) =>
+                  matches.length ? (i + step + matches.length) % matches.length : 0,
+                )
+                return
+              }
+              if ((event.key === "Enter" || event.key === "Tab") && matches[active]) {
+                event.preventDefault()
+                pick(matches[active])
+                return
+              }
+              if (event.key === "Escape") {
+                event.preventDefault()
+                setMention(null)
+                return
+              }
+            }
             // Enter sends, Shift+Enter is a new line; never send mid-IME composition.
             if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
               event.preventDefault()
               formRef.current?.requestSubmit()
             }
           }}
-          placeholder={quote ? "Ask about this passage…" : placeholder}
+          placeholder={
+            quote
+              ? "Ask about this passage…"
+              : chosen.length
+                ? `Ask about ${chosen.length === 1 ? chosen[0]?.name || "this" : `these ${chosen.length}`}…`
+                : placeholder
+          }
           aria-label="Message"
           rows={2}
           className="max-h-[40vh] min-h-16 px-4.5 pt-4 text-reading placeholder:text-ash-gray"
@@ -112,10 +246,39 @@ export function Composer({
             <PlusIcon strokeWidth={1.5} />
           </InputGroupButton>
           {/* Phones show the icon only, so the send button never leaves the row. */}
-          <span className="inline-flex h-8 items-center gap-1.5 rounded-full px-2 text-snippet whitespace-nowrap text-ash-gray sm:px-2.5">
-            <LibraryBigIcon className="size-3.5" strokeWidth={1.5} aria-hidden />
-            <span className="sr-only sm:not-sr-only">Whole library</span>
-          </span>
+          {onFocusChange ? (
+            <FocusPicker
+              items={items}
+              focus={focus}
+              onChange={onFocusChange}
+              open={picking}
+              onOpenChange={setPicking}
+              trigger={
+                <InputGroupButton
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 rounded-full px-2 text-snippet whitespace-nowrap text-ash-gray sm:px-2.5"
+                  aria-label={
+                    isWholeLibrary(focus) ? "Whole library (choose a focus)" : "Change the focus"
+                  }
+                >
+                  {isWholeLibrary(focus) ? (
+                    <LibraryBigIcon className="size-3.5" strokeWidth={1.5} aria-hidden />
+                  ) : (
+                    <AtSignIcon className="size-3.5" strokeWidth={1.5} aria-hidden />
+                  )}
+                  <span className="sr-only sm:not-sr-only">
+                    {isWholeLibrary(focus) ? "Whole library" : "Focus"}
+                  </span>
+                </InputGroupButton>
+              }
+            />
+          ) : (
+            <span className="inline-flex h-8 items-center gap-1.5 rounded-full px-2 text-snippet whitespace-nowrap text-ash-gray sm:px-2.5">
+              <LibraryBigIcon className="size-3.5" strokeWidth={1.5} aria-hidden />
+              <span className="sr-only sm:not-sr-only">Whole library</span>
+            </span>
+          )}
           <InputGroupButton
             size="sm"
             variant="ghost"
