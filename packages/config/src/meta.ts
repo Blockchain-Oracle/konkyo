@@ -23,4 +23,9 @@ export type FileMeta = {
   openalex?: { id: string; citedBy: number }
   /** How the record was found; "you" once the person edits it. */
   foundBy?: "doi" | "arxiv" | "title" | "you"
+  /**
+   * Openly licensed material Konkyo brought in (the starter packs, F39): the licence and the
+   * attribution its publisher asks for, shown on the file and printed on each page of its copy.
+   */
+  licence?: { name: string; url: string; attribution: string }
 }

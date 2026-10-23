@@ -202,8 +202,16 @@ export async function markUploaded(ownerId: string, fileId: string) {
   await enqueue("ingest", { fileId }, fileId)
 }
 
-/** A web page, paper link or YouTube video by URL. */
-export async function importUrl(ownerId: string, rawUrl: string, folderId?: string) {
+/**
+ * A web page, paper link or YouTube video by URL. A starter pack (F39) also gives the file its
+ * title and licence up front.
+ */
+export async function importUrl(
+  ownerId: string,
+  rawUrl: string,
+  folderId?: string,
+  known: { title?: string; meta?: FileMeta } = {},
+) {
   let url: URL
   try {
     url = new URL(rawUrl.trim())
@@ -219,9 +227,10 @@ export async function importUrl(ownerId: string, rawUrl: string, folderId?: stri
     .insert(files)
     .values({
       ownerId,
-      title: url.hostname + url.pathname,
+      title: known.title ?? url.hostname + url.pathname,
       kind,
       sourceUrl: url.href,
+      ...(known.meta ? { meta: known.meta } : {}),
       status: "queued",
       stage: "Waiting to be read",
     })

@@ -137,7 +137,8 @@ export function withoutPageFurniture(text: string): string {
   const counts = new Map<string, number>()
   for (const l of lines) {
     const s = shape(l)
-    if (s.length >= 4 && s.length <= 120) counts.set(s, (counts.get(s) ?? 0) + 1)
+    // Up to 240 characters: a licence's attribution footer runs to about 150 (F39).
+    if (s.length >= 4 && s.length <= 240) counts.set(s, (counts.get(s) ?? 0) + 1)
   }
   return lines
     .map((l, i) => {

@@ -9,6 +9,7 @@ import { useSyncExternalStore } from "react"
 import { EmptyState } from "@/components/empty-state"
 import { FileStatus } from "@/components/library/file-status"
 import { KIND_LABEL, KindIcon } from "@/components/library/kind-icon"
+import { StarterTasks } from "@/components/onboarding/starter-tasks"
 import { openFile } from "@/lib/preview"
 import { useFiles } from "@/lib/use-library"
 
@@ -44,6 +45,8 @@ export function HomeLibrary() {
             Import by URL or DOI
           </Button>
         </div>
+        <p className="mt-9 text-snippet text-ash-gray">Or try one, on open material:</p>
+        <StarterTasks className="mt-3" />
       </EmptyState>
     )
   }

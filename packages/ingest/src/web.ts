@@ -48,7 +48,11 @@ export type Article = {
 }
 
 /** Web page → readable article (Mozilla Readability) → our clean HTML → PDF that keeps the URL. */
-export async function articleToPdf(html: string, url: string): Promise<Article> {
+export async function articleToPdf(
+  html: string,
+  url: string,
+  options: { footer?: string } = {},
+): Promise<Article> {
   const dom = new JSDOM(html, { url })
   const article = new Readability(dom.window.document).parse()
   if (!article?.content || (article.textContent ?? "").trim().length < 200) {
@@ -59,6 +63,7 @@ export async function articleToPdf(html: string, url: string): Promise<Article> 
   const body = `<h1>${escapeHtml(title)}</h1>${meta ? `<p class="source">${escapeHtml(meta)}</p>` : ""}${article.content}`
   const pdf = await htmlToPdf(
     documentHtml(title, body, { url, site: article.siteName ?? undefined }),
+    options,
   )
   return {
     title,

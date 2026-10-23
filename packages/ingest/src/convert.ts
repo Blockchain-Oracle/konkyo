@@ -25,12 +25,26 @@ export function officeToPdf(bytes: Uint8Array, filename: string): Promise<Uint8A
   return gotenberg("/forms/libreoffice/convert", form)
 }
 
-/** A self-contained HTML page → PDF with Chromium (web articles, Markdown, plain text). */
-export function htmlToPdf(html: string): Promise<Uint8Array> {
+/**
+ * A self-contained HTML page → PDF with Chromium (web articles, Markdown, plain text). A footer
+ * line, when given, prints on every page (a licence's attribution: OpenStax asks for one on each).
+ */
+export function htmlToPdf(html: string, options: { footer?: string } = {}): Promise<Uint8Array> {
   const form = new FormData()
   form.append("files", blob(html, "text/html"), "index.html")
   form.append("printBackground", "true")
   form.append("preferCssPageSize", "false")
+  if (options.footer) {
+    form.append(
+      "files",
+      blob(
+        `<!doctype html><html><head><style>body{margin:0 10mm;font:7.5pt/1.3 Inter,Helvetica,Arial,sans-serif;color:#555}</style></head><body>${escapeHtml(options.footer)}</body></html>`,
+        "text/html",
+      ),
+      "footer.html",
+    )
+    form.append("marginBottom", "0.6")
+  }
   return gotenberg("/forms/chromium/convert/html", form)
 }
 

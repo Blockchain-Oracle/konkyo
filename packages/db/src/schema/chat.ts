@@ -124,6 +124,8 @@ export const userSettings = pgTable("user_settings", {
   /** Review reminders (F29): on by default, at this hour of the person's day. */
   reviewReminders: boolean().default(true).notNull(),
   reminderHour: integer().default(18).notNull(),
+  /** When the person chose a starter or skipped it (F39); first-run Home shows it until then. */
+  onboardedAt: timestamp({ withTimezone: true }),
   updatedAt: timestamp({ withTimezone: true })
     .defaultNow()
     .notNull()

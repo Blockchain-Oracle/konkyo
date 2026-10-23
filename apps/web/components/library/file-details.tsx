@@ -198,6 +198,23 @@ function Details({ fileId }: { fileId: string }) {
                 </a>
               </Row>
             )}
+            {file.meta.licence && (
+              <Row label="Licence">
+                <span className="block text-silver-mist">
+                  <a
+                    href={file.meta.licence.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="underline decoration-line-strong underline-offset-2 hover:text-bone-white"
+                  >
+                    {file.meta.licence.name}
+                  </a>
+                  <span className="mt-1 block text-meta text-ash-gray">
+                    {file.meta.licence.attribution}
+                  </span>
+                </span>
+              </Row>
+            )}
             {file.fromScan && (
               <Row label="Text">
                 <span className="inline-flex items-center gap-1">

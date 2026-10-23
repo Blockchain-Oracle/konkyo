@@ -26,6 +26,8 @@ type DeepRunState = {
   folderId?: string
   /** "Find sources on this topic": import into this folder instead of a new one. */
   intoFolderId?: string
+  /** Import what's found without asking, for this run only (the Research starter, F39). */
+  autoImport?: boolean
   steer?: string[]
 }
 
@@ -215,7 +217,7 @@ async function search(runId: string) {
   const settings = await db.query.userSettings.findFirst({
     where: eq(userSettings.userId, run.ownerId),
   })
-  const auto = settings?.autoImportSources ?? false
+  const auto = state.autoImport || (settings?.autoImportSources ?? false)
   const next: DeepRunState = {
     ...state,
     topic: plan.topic,

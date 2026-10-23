@@ -31,16 +31,22 @@ const clock = (ms: number) => {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`
 }
 
-/** How long the run has taken: ticking while it runs, fixed at its last event once it ends. */
+/**
+ * How long the run has taken: ticking while it runs, fixed at its last event once it ends.
+ * Nothing is read from the clock until the browser has mounted: a time rendered on the server
+ * never matches the client's, and the mismatch made React rebuild the whole chat (in testing).
+ */
 function useElapsed(since: string | undefined, endedAt: string | undefined) {
-  const [now, setNow] = useState(() => Date.now())
+  const [now, setNow] = useState<number | null>(null)
   useEffect(() => {
+    setNow(Date.now())
     if (endedAt) return
     const timer = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(timer)
   }, [endedAt])
   if (!since) return 0
-  return (endedAt ? new Date(endedAt).getTime() : now) - new Date(since).getTime()
+  if (endedAt) return new Date(endedAt).getTime() - new Date(since).getTime()
+  return now == null ? null : now - new Date(since).getTime()
 }
 
 /**
@@ -371,7 +377,7 @@ export function DeepRun({
         <TelescopeIcon className="size-4 shrink-0 text-ash-gray" strokeWidth={1.5} aria-hidden />
         <span className="text-micro text-saffron-spark uppercase">Deep search</span>
         <span className="text-meta text-ash-gray tabular-nums">
-          {clock(elapsed)}
+          {elapsed == null ? "" : clock(elapsed)}
           {state.found.length > 0 &&
             ` · ${papers} paper${papers === 1 ? "" : "s"}, ${state.found.length - papers} page${state.found.length - papers === 1 ? "" : "s"}`}
         </span>

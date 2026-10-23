@@ -41,6 +41,8 @@ export async function startDeep(
     scope?: ChatScope
     /** "Find sources on this topic" in a folder: what's found goes into that folder. */
     intoFolderId?: string
+    /** Import what's found without asking, this run only (the Research starter). */
+    autoImport?: boolean
   },
 ) {
   const limited = await allowanceLeft(ownerId, "deepSearches")
@@ -64,7 +66,10 @@ export async function startDeep(
     kind: "deep",
     status: "queued",
     messageId: message.id,
-    state: input.intoFolderId ? { intoFolderId: input.intoFolderId } : {},
+    state: {
+      ...(input.intoFolderId ? { intoFolderId: input.intoFolderId } : {}),
+      ...(input.autoImport ? { autoImport: true } : {}),
+    },
   })
   await saveMessage(ownerId, input.chatId, message, runId)
   await enqueue("deep", { runId, phase: "search" }, `${runId}:search`)

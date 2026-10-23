@@ -35,6 +35,7 @@ import { useRouter } from "next/navigation"
 import { type DragEvent, useEffect, useMemo, useRef, useState } from "react"
 import { FolderBriefs } from "@/components/briefs/folder-briefs"
 import { EmptyState } from "@/components/empty-state"
+import { StudyStarter } from "@/components/onboarding/study-starter"
 import {
   openImport,
   openNewFolder,
@@ -259,6 +260,12 @@ export function LibraryView({ folderId }: { folderId?: string }) {
       ) : (
         <>
           {folderId && <FolderBriefs folderId={folderId} />}
+          {folderId && (
+            <StudyStarter
+              folderId={folderId}
+              title={folders?.find((f) => f.id === folderId)?.name ?? "Sample course"}
+            />
+          )}
           {(files?.length ?? 0) > 0 && (
             <ToggleGroup
               value={[filter]}

@@ -282,7 +282,11 @@ async function readSource(file: FileRow): Promise<DocResult> {
         )
       }
       await stage(file.id, "Saving the article as a PDF", 0.2)
-      const article = await articleToPdf(new TextDecoder().decode(source.bytes), source.finalUrl)
+      // Licensed starter material carries its attribution on every page of the copy (F39).
+      const licence = (file.meta as FileMeta | null)?.licence
+      const article = await articleToPdf(new TextDecoder().decode(source.bytes), source.finalUrl, {
+        footer: licence ? `${licence.attribution} · ${licence.name}` : undefined,
+      })
       const result = await fromPdf(file, article.pdf, PDF_HYPHENS.converted)
       return { ...result, title: article.title }
     }

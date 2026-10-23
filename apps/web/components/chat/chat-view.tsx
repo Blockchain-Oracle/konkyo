@@ -11,6 +11,7 @@ import { useSearchParams } from "next/navigation"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "sonner"
 import { Composer, type ComposerSubmit } from "@/components/composer"
+import { CitationTour } from "@/components/onboarding/citation-tour"
 import { api } from "@/lib/fetcher"
 import { type Focus, focusFromSearch, focusOf } from "@/lib/focus"
 import { peekQuestion, releaseQuestion } from "@/lib/pending-question"
@@ -238,6 +239,7 @@ export function ChatView({
 
   return (
     <div className="flex min-h-[calc(100svh-3.5rem)] flex-col md:min-h-[calc(100svh-3rem)]">
+      <CitationTour />
       <div className="mx-auto w-full max-w-[46rem] flex-1 space-y-8 px-6 pt-8 pb-10">
         {!messages.length && !peekQuestion(id) && (
           <ChatStart focus={focus} onAsk={(text) => void ask({ text })} />
