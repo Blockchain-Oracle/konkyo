@@ -1,4 +1,14 @@
-import { index, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core"
+import {
+  bigserial,
+  boolean,
+  index,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core"
+import { user } from "./auth"
 import { owner, timestamps } from "./library"
 
 /** What a chat looks at (plan F10): empty means the whole library. */
@@ -37,6 +47,18 @@ export const messages = pgTable(
   (t) => [index("messages_chat_idx").on(t.chatId, t.createdAt)],
 )
 
+export type RunStatus =
+  | "running"
+  | "queued"
+  | "searching"
+  | "awaiting"
+  | "importing"
+  | "answering"
+  | "answered"
+  | "not-found"
+  | "failed"
+  | "stopped"
+
 /** One agent run: its outcome, receipt and every trace event (also in logs/<runId>.jsonl). */
 export const runs = pgTable(
   "runs",
@@ -47,7 +69,13 @@ export const runs = pgTable(
       .references(() => chats.id, { onDelete: "cascade" }),
     ownerId: owner(),
     question: text().notNull(),
-    status: text().$type<"running" | "answered" | "not-found" | "failed" | "stopped">().notNull(),
+    /** "answer" runs in the chat request; "deep" (deep search, F18) runs in the worker. */
+    kind: text().$type<"answer" | "deep">().default("answer").notNull(),
+    status: text().$type<RunStatus>().notNull(),
+    /** The assistant message the run fills (deep search writes its answer there when done). */
+    messageId: text(),
+    /** A deep run's working state: candidates, the person's choice, the folder it imports into. */
+    state: jsonb(),
     receipt: jsonb(),
     events: jsonb().$type<unknown[]>(),
     createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
@@ -55,3 +83,35 @@ export const runs = pgTable(
   },
   (t) => [index("runs_chat_idx").on(t.chatId, t.createdAt)],
 )
+
+/**
+ * A deep run's progress, one row per event (plan F19). The run view replays them from any point
+ * (SSE Last-Event-ID), so a reload or a second tab picks up where it is.
+ */
+export const runEvents = pgTable(
+  "run_events",
+  {
+    id: bigserial({ mode: "number" }).primaryKey(),
+    runId: uuid()
+      .notNull()
+      .references(() => runs.id, { onDelete: "cascade" }),
+    type: text().notNull(),
+    data: jsonb().notNull(),
+    createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+  },
+  // The id orders every event (the worker and the web app both write them) and is the SSE id.
+  (t) => [index("run_events_run_idx").on(t.runId, t.id)],
+)
+
+/** Choices a person makes once (Settings). */
+export const userSettings = pgTable("user_settings", {
+  userId: text()
+    .primaryKey()
+    .references(() => user.id, { onDelete: "cascade" }),
+  /** Deep search imports what it finds without asking first (F18). */
+  autoImportSources: boolean().default(false).notNull(),
+  updatedAt: timestamp({ withTimezone: true })
+    .defaultNow()
+    .notNull()
+    .$onUpdate(() => new Date()),
+})

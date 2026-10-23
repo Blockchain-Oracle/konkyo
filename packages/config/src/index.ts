@@ -149,6 +149,15 @@ export const LIMITS = {
   answersPerTenMinutes: 20,
   guestAnswersPerDay: 60,
   answersPerDay: 300,
+  /** Deep searches download papers ($0.01 each from OpenAlex) and search the web. */
+  guestDeepSearchesPerDay: 3,
+  deepSearchesPerDay: 20,
+} as const
+
+/** Deep search (plan F18): how long it waits for imports before answering from what's ready. */
+export const DEEP = {
+  importWaitMs: 8 * 60_000,
+  pollMs: 2_500,
 } as const
 
 /** Trash keeps files, folders, chats and notes this long before deleting them for good (F04). */

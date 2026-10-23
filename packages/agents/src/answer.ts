@@ -83,11 +83,26 @@ export type AnswerInput = {
   tracer: Tracer
   emit: (event: AnswerEvent) => void
   abortSignal?: AbortSignal
+  /** Weigh the sources against each other whatever the Planner says (deep search's answers). */
+  compare?: boolean
 }
 
 const MAX_ROUNDS = 2
 /** Below this best cosine similarity, and with no full-text hit, the library doesn't cover it. */
 const MIN_SIMILARITY = 0.22
+
+/** Best-ranked first, at most `perFile` from any one file, `limit` in all. */
+function spread(candidates: Candidate[], perFile: number, limit: number) {
+  const taken = new Map<string, number>()
+  return candidates
+    .filter((c) => {
+      const n = taken.get(c.fileId) ?? 0
+      if (n >= perFile) return false
+      taken.set(c.fileId, n + 1)
+      return true
+    })
+    .slice(0, limit)
+}
 
 /** Runs one model call, escalating to the role's fallback model on failure (plan §2 Escalation). */
 async function withFallback<T>(
@@ -178,8 +193,9 @@ async function plan(input: AnswerInput, memories: Recalled[]) {
 
 const WRITER_INSTRUCTIONS = `You are the Writer in a research assistant. Answer ONLY from the given passages from the user's library.
 Every sentence must carry at least one numbered citation [n], placed before the sentence's final punctuation, and for each citation number a quote that is an EXACT verbatim substring of its passage (copy the characters exactly, at least five words, no ellipses).
-Choose each quote so that it, on its own, states what its sentence claims: the reader is shown the quote as proof.
-If the question contains a claim the passages do not support, answer it directly in a cited sentence ("No: the paper reports … [1].") and say what the passages actually report. Be direct and plain. Use 2-6 sentences; start a new paragraph for a new idea.
+Choose each quote so that it, on its own, states what its sentence claims: the reader is shown the quote as proof. So write one finding per sentence; never pack several findings behind one citation.
+When passages come from several sources, say what each relevant source found (with its own citation), and where they differ.
+If the question contains a claim the passages do not support, answer it directly in a cited sentence ("No: the paper reports … [1].") and say what the passages actually report. Be direct and plain. Use 2-7 sentences; start a new paragraph for a new idea.
 If the passages do not answer the question at all, reply with exactly: ${NOT_IN_LIBRARY}
 
 Output format (plain text, exactly this layout, nothing else):
@@ -199,7 +215,9 @@ function passagesBlock(sources: SourceRef[]) {
           : s.tStart != null
             ? `at ${Math.floor(s.tStart / 60)}:${String(Math.floor(s.tStart % 60)).padStart(2, "0")}`
             : ""
-      return `[${s.label}] (${s.title}${where ? `, ${where}` : ""})\n${s.text}`
+      // Older passages may hold control characters (symbol-font glyphs); the model would
+      // "copy" them as some other letter and the quote would never match.
+      return `[${s.label}] (${s.title}${where ? `, ${where}` : ""})\n${s.text.replace(/\p{Cc}/gu, " ")}`
     })
     .join("\n\n")
 }
@@ -669,12 +687,16 @@ export async function answer(input: AnswerInput) {
 
   step("search", "Searching your library", "running")
   const searchStarted = performance.now()
-  const { candidates } = await hybridSearch(
+  // A comparison needs every source heard: fetch wider, then keep at most 3 passages per file
+  // (best first), so two long papers can't crowd out the rest.
+  const comparison = input.compare || planned.compare
+  const found = await hybridSearch(
     input.ownerId,
     [...new Set([planned.standalone, ...planned.queries])],
     input.scope,
-    12,
+    comparison ? 40 : 12,
   )
+  const candidates = comparison ? spread(found.candidates, 3, 14) : found.candidates
   const best = Math.max(0, ...candidates.map((c) => c.similarity))
   tracer.log({
     agent: "retriever",
@@ -755,7 +777,7 @@ export async function answer(input: AnswerInput) {
   // The Analyst compares sources alongside the Writer (F13), so the matrix costs no extra wait.
   // Once the run has answered "not found", nothing it finds later is sent.
   let closed = false
-  const comparing = planned.compare && files.size >= 2
+  const comparing = comparison && files.size >= 2
   if (comparing) step("analyse", "Comparing sources", "running")
   const analysis: Promise<Analysis | null> = comparing
     ? analyse(input, planned.standalone, sources, (matrix) => {

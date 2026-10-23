@@ -13,6 +13,17 @@ export const QUEUES = {
     // job is retried within about a minute instead of waiting out its 30-minute expiry.
     send: { heartbeatSeconds: 30 },
   },
+  /**
+   * A deep search (plan F18), in two phases: "search" finds and screens sources and waits for
+   * the person's choice; "import" brings the chosen ones in, waits until they're read, answers.
+   */
+  deep: {
+    name: "deep",
+    payload: z.object({ runId: z.uuid(), phase: z.enum(["search", "import"]) }),
+    // Not retried: a half-done search would repeat its paid calls; the run says it failed.
+    options: { retryLimit: 0, expireInSeconds: 20 * 60 },
+    send: { heartbeatSeconds: 30 },
+  },
   /** Removes a deleted file's stored bytes and Zetaris evidence (the rows are already gone). */
   purge: {
     name: "purge",

@@ -33,6 +33,16 @@ export const MODELS = {
     primary: { id: "gpt-6-luna", reasoning: "low" },
     fallback: { id: "gpt-5-mini", reasoning: "minimal" },
   },
+  /** Deep search: plans queries and runs OpenAI's web_search (needs reasoning above minimal). */
+  scout: {
+    primary: { id: "gpt-5-nano", reasoning: "low" },
+    fallback: { id: "gpt-5-mini", reasoning: "low" },
+  },
+  /** Screens found sources against the question, batch by batch (Markovian steps). */
+  screener: {
+    primary: { id: "gpt-6-luna", reasoning: "none" },
+    fallback: { id: "gpt-5-mini", reasoning: "minimal" },
+  },
   /** Claims and agreement across sources: the same strict-support judgement as the Verifier. */
   analyst: {
     primary: { id: "gpt-6-luna", reasoning: "low" },

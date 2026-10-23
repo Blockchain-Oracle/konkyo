@@ -1,5 +1,6 @@
 import path from "node:path"
 import { embed, HMEM, type MemoryRecord } from "@konkyo/meterless/hmem"
+import { freshCache } from "./fresh"
 import { embedQueries } from "./retrieve"
 
 /**
@@ -12,23 +13,19 @@ const MEMORY_DIR =
   process.env.KONKYO_MEMORY_DIR ??
   path.resolve(process.env.KONKYO_ROOT ?? process.cwd(), ".data", "memory")
 
-// One instance per person for the whole server process: Next can load this module in more than
-// one bundle (route handlers, pages), and two caches would each hold their own copy of the file.
-const store = globalThis as typeof globalThis & { __konkyoMemory?: Map<string, HMEM> }
-store.__konkyoMemory ??= new Map()
-const instances = store.__konkyoMemory
-
 /** User ids are Better Auth ids; anything else never becomes a path. */
 const safeId = (userId: string) => userId.replace(/[^A-Za-z0-9_-]/g, "")
 
+const cached = freshCache<HMEM>("__konkyoMemory")
+
+/** One instance per person, rebuilt when another process (web, worker) changed its file. */
 export function memoryFor(userId: string): HMEM {
-  const id = safeId(userId)
-  let memory = instances.get(id)
-  if (!memory) {
-    memory = new HMEM({ persistDir: path.join(MEMORY_DIR, id), actor: "konkyo" })
-    instances.set(id, memory)
-  }
-  return memory
+  const dir = path.join(MEMORY_DIR, safeId(userId))
+  return cached(
+    dir,
+    path.join(dir, "state.json"),
+    () => new HMEM({ persistDir: dir, actor: "konkyo" }),
+  )
 }
 
 export type Recalled = { id: string; content: string; relevance: number }

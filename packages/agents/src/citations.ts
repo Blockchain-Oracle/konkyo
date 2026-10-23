@@ -43,6 +43,13 @@ export const citesOf = (text: string) => [
 
 const segmenter = new Intl.Segmenter("en", { granularity: "sentence" })
 
+/**
+ * A quotation pasted after a sentence's end ("… worse recall [2]. “caffeine did not …” [2]"):
+ * a rewrite sometimes appends its evidence like this, and the segmenter keeps it in the same
+ * sentence. The chip already shows the quote, so the tail goes.
+ */
+const PASTED_TAIL = /([.!?])\s+["“‘][^"”’]{12,}["”’]\s*(?:\[\d[^\]]*\]\s*)*\.?$/
+
 /** Sentences with their citation markers; markers stranded at a sentence's start join the one before. */
 export function splitSentences(body: string): Sentence[] {
   const out: Sentence[] = []
@@ -61,6 +68,7 @@ export function splitSentences(body: string): Sentence[] {
         text = text.slice(lead.length).trim()
         if (!text) continue
       }
+      text = text.replace(PASTED_TAIL, "$1")
       out.push({ text, cites: citesOf(text) })
     }
   }

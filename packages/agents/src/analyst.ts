@@ -5,6 +5,7 @@ import { generateText, Output } from "ai"
 import { z } from "zod"
 import type { AnswerInput, SourceRef } from "./answer"
 import { quoteKey } from "./citations"
+import { freshCache } from "./fresh"
 import { MODELS, type ModelChoice, model, reasoning } from "./models"
 
 /** A source's position on a claim (plan §7.4 #4): the stance glyph and its one word. */
@@ -73,16 +74,16 @@ Use only what the passages say. Each quote is 3-12 consecutive words copied exac
 const WORLD_DIR =
   process.env.KONKYO_WORLD_DIR ??
   path.resolve(process.env.KONKYO_ROOT ?? process.cwd(), ".data", "world")
-const store = globalThis as typeof globalThis & { __konkyoWorld?: Map<string, WorldModel> }
-store.__konkyoWorld ??= new Map()
+const cachedWorld = freshCache<WorldModel>("__konkyoWorld")
 
+/** One World Model per person, rebuilt when another process (web, worker) changed its file. */
 function worldFor(ownerId: string) {
   const namespace = `owner-${ownerId.replace(/[^A-Za-z0-9_-]/g, "")}`
-  let world = store.__konkyoWorld?.get(namespace)
-  if (!world) {
-    world = new WorldModel({ namespace, storage: "local", directory: WORLD_DIR })
-    store.__konkyoWorld?.set(namespace, world)
-  }
+  const world = cachedWorld(
+    namespace,
+    path.join(WORLD_DIR, ".world", `${namespace}.json`),
+    () => new WorldModel({ namespace, storage: "local", directory: WORLD_DIR }),
+  )
   return { world, namespace }
 }
 

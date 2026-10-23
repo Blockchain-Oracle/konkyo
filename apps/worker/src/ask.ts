@@ -12,7 +12,10 @@ import { eq, or } from "drizzle-orm"
 const args = process.argv.slice(2)
 const ownerFlag = args.indexOf("--owner")
 const owner = ownerFlag >= 0 ? args[ownerFlag + 1] : undefined
-const question = args.filter((_, i) => i !== ownerFlag && i !== ownerFlag + 1).join(" ")
+const compare = args.includes("--compare")
+const question = args
+  .filter((a, i) => i !== ownerFlag && i !== ownerFlag + 1 && a !== "--compare")
+  .join(" ")
 if (!question || !owner) {
   console.error('Usage: ask "<question>" --owner <email or user id>')
   process.exit(1)
@@ -31,6 +34,7 @@ const result = await answer({
   question,
   history: [],
   scope: {},
+  compare,
   tracer,
   emit: (e) => {
     if (e.type === "step") console.log(`· ${e.label} [${e.state}]${e.detail ? ` ${e.detail}` : ""}`)

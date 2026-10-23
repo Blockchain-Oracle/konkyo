@@ -264,3 +264,78 @@ export async function openAccessPdfs(doi: string): Promise<string[]> {
 /** Upload names like "arxiv-1711.05391.pdf" or "scan_003.pdf" read better as the real title. */
 export const looksLikeFileName = (title: string) =>
   /\.[a-z0-9]{2,5}$/i.test(title) || /^(arxiv|doi|scan|document|untitled)[\s_.-]/i.test(title)
+
+// ------------------------------------------------------------------ deep search (plan F18)
+
+/** A paper OpenAlex found for a deep search, with what's needed to screen and cite it. */
+export type FoundWork = {
+  id: string
+  doi: string | null
+  title: string
+  year: number | null
+  authors: string[]
+  venue: string | null
+  cited: number
+  abstract: string
+  csl: CslItem
+}
+
+type SearchWork = Work & { has_content?: { pdf?: boolean } }
+
+/**
+ * Open-access papers for a query, only those OpenAlex holds a PDF copy of (its content API
+ * fetched 10/10 of them in S00, where publisher links managed 2/20).
+ */
+export async function searchWorks(query: string, perPage = 15): Promise<FoundWork[]> {
+  const filter = "open_access.is_oa:true,has_content.pdf:true,type:article|preprint|review"
+  const page = await openAlex<{ results: SearchWork[] }>(
+    `/works?search=${encodeURIComponent(query)}&filter=${filter}&per_page=${perPage}&select=${SELECT},has_content`,
+  )
+  return (page?.results ?? [])
+    .filter((w) => w.display_name && w.has_content?.pdf)
+    .map((w) => {
+      const csl = toCsl(w)
+      return {
+        id: w.id.replace("https://openalex.org/", ""),
+        doi: w.doi?.replace(/^https?:\/\/doi\.org\//i, "") ?? null,
+        title: w.display_name as string,
+        year: w.publication_year,
+        authors: (w.authorships ?? [])
+          .map((a) => a.author?.display_name)
+          .filter((n): n is string => Boolean(n))
+          .slice(0, 6),
+        venue: w.primary_location?.source?.display_name ?? null,
+        cited: w.cited_by_count ?? 0,
+        abstract: (csl.abstract ?? "").slice(0, 1200),
+        csl,
+      }
+    })
+}
+
+/**
+ * The PDF OpenAlex keeps of a work (content API, $0.01 each on the key's daily budget). The key
+ * goes in a header, never the URL. Null when there's no key or no copy.
+ */
+export async function openAlexPdf(workId: string): Promise<Uint8Array | null> {
+  const key = env.OPENALEX_API_KEY
+  if (!key || !/^W\d+$/.test(workId)) return null
+  const res = await fetch(`https://content.openalex.org/works/${workId}.pdf`, {
+    headers: { authorization: `Bearer ${key}`, "user-agent": INGEST.userAgent },
+    redirect: "follow",
+    signal: AbortSignal.timeout(INGEST.fetchTimeoutMs),
+  }).catch(() => null)
+  if (!res?.ok) return null
+  const bytes = new Uint8Array(await res.arrayBuffer())
+  // %PDF- magic: a login or error page is not the paper.
+  return bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46
+    ? bytes
+    : null
+}
+
+/** OpenAlex's id for a DOI, when it holds a PDF copy of the work. */
+export async function openAlexIdWithPdf(doi: string): Promise<string | null> {
+  const work = await openAlex<{ id: string; has_content?: { pdf?: boolean } }>(
+    `/works/doi:${encodeURIComponent(doi.toLowerCase())}?select=id,has_content`,
+  ).catch(() => null)
+  return work?.has_content?.pdf ? work.id.replace("https://openalex.org/", "") : null
+}

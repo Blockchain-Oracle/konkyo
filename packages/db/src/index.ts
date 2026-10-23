@@ -11,5 +11,7 @@ const sql = globalForDb.konkyoSql ?? postgres(env.DATABASE_URL, { max: DB.poolMa
 if (env.NODE_ENV !== "production") globalForDb.konkyoSql = sql
 
 export const db = drizzle(sql, { schema, casing: "snake_case" })
+/** The raw client, for LISTEN / NOTIFY (deep-search progress). */
+export const pg = sql
 export type Db = typeof db
 export { schema }

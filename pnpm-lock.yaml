@@ -238,6 +238,9 @@ importers:
       '@konkyo/env':
         specifier: workspace:*
         version: link:../env
+      '@konkyo/ingest':
+        specifier: workspace:*
+        version: link:../ingest
       '@konkyo/meterless':
         specifier: workspace:*
         version: link:../meterless

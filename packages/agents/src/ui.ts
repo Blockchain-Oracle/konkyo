@@ -22,6 +22,8 @@ export type KonkyoData = {
   /** Claims × sources with stance (F13), streamed "checking" then verified. */
   matrix: Matrix
   revising: { round: number; reasons: string[] }
+  /** A deep search answering this (F18): its progress streams from the run's events. */
+  deep: { runId: string; question: string }
   /** On a question: the passage it is about (selection toolbar "Ask"). */
   quote: { fileId: string; title: string; page?: number; text: string }
 }

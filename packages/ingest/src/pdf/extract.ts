@@ -277,7 +277,11 @@ function lineText(items: Item[]): string {
     out += it.str
     prev = it
   }
-  return fixLigatures(out).replace(/\s+/g, " ").trim()
+  // Symbol-font glyphs (±, ×) can arrive as control characters: a space reads and quotes cleanly.
+  return fixLigatures(out)
+    .replace(/\p{Cc}/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim()
 }
 
 function mkLine(items: Item[]): Line {

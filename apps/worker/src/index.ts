@@ -1,5 +1,6 @@
 import { boss, QUEUES } from "@konkyo/jobs"
 import { warmUp } from "@konkyo/zetaris"
+import { deepJob } from "./deep"
 import { ingestFile } from "./pipeline"
 import { purgeExpired, purgeFiles } from "./purge"
 
@@ -21,6 +22,13 @@ await queues.work(
   },
 )
 
+// Deep searches wait on ingest jobs, so they run beside them, a few at a time.
+await queues.work(QUEUES.deep.name, { localConcurrency: 3 }, async ([job]) => {
+  if (!job) return
+  const { runId, phase } = QUEUES.deep.payload.parse(job.data)
+  await deepJob(runId, phase)
+})
+
 await queues.work(QUEUES.purge.name, async ([job]) => {
   if (job) await purgeFiles(QUEUES.purge.payload.parse(job.data))
 })
@@ -35,7 +43,7 @@ await queues.work(SWEEP, async () => {
 })
 
 console.info(
-  `[worker] listening on "${QUEUES.ingest.name}" (×${INGEST_CONCURRENCY}), "purge", daily sweep`,
+  `[worker] listening on "${QUEUES.ingest.name}" (×${INGEST_CONCURRENCY}), "deep" (×3), "purge", daily sweep`,
 )
 
 // On shutdown stop taking jobs and exit promptly: a job cut off here stops sending heartbeats and

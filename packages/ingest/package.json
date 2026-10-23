@@ -5,7 +5,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./convert": "./src/convert.ts"
+    "./convert": "./src/convert.ts",
+    "./metadata": "./src/metadata.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

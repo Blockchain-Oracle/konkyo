@@ -3,12 +3,13 @@
 import type { KonkyoMessage, StepData } from "@konkyo/agents"
 import { parseAnswer } from "@konkyo/agents/citations"
 import { Button } from "@konkyo/ui/components/button"
-import { LinkIcon, RotateCcwIcon, SearchXIcon, UploadIcon } from "lucide-react"
+import { LinkIcon, RotateCcwIcon, SearchXIcon, TelescopeIcon, UploadIcon } from "lucide-react"
 import { useUploads } from "@/components/library/uploads-provider"
 import { openImport } from "@/components/shell/app-dialogs"
 import { AgreeMatrix } from "./agree-matrix"
 import { AnswerText } from "./answer-text"
 import { CitedIn } from "./citation-chip"
+import { DeepRun } from "./deep-run"
 import { MessageActions } from "./message-actions"
 import { LiveSteps, RunReceipt } from "./run-receipt"
 
@@ -45,14 +46,37 @@ export function AssistantMessage({
   message,
   running,
   onRegenerate,
+  onFindSources,
+  onDeepSettled,
+  onDeepRetry,
 }: {
   message: KonkyoMessage
   running: boolean
   /** Only on the latest answer, once it has finished. */
   onRegenerate?: () => void
+  /** "Not in your library" → deep search (F14); only on the latest answer. */
+  onFindSources?: () => void
+  onDeepSettled?: (runId: string) => void
+  onDeepRetry?: (question: string) => void
 }) {
   const { steps, draft, sources, final, receipt, notFound, matrix } = partsOf(message)
   const { pickFiles } = useUploads()
+
+  if (message.parts.some((p) => p.type === "data-deep")) {
+    return (
+      <DeepRun
+        message={message}
+        onSettled={onDeepSettled}
+        onRetry={onDeepRetry}
+        answerView={(answer, live) => (
+          <AssistantMessage
+            message={{ ...answer, parts: answer.parts.filter((p) => p.type !== "data-deep") }}
+            running={live}
+          />
+        )}
+      />
+    )
+  }
 
   if (notFound) {
     return (
@@ -67,9 +91,18 @@ export function AssistantMessage({
             <p className="text-ui text-bone-white">This isn't in your library yet.</p>
             <p className="mt-1 text-snippet text-ash-gray">
               Nothing you've added answers “{notFound.question}”. Konkyo answers only from your
-              files, so it won't guess. Add a source and ask again.
+              files, so it won't guess.{" "}
+              {onFindSources
+                ? "Find sources searches open papers and the web, imports what you choose, and answers from it."
+                : "Add a source and ask again."}
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
+              {onFindSources && (
+                <Button size="sm" onClick={onFindSources}>
+                  <TelescopeIcon strokeWidth={1.5} />
+                  Find sources
+                </Button>
+              )}
               <Button variant="secondary" size="sm" onClick={() => pickFiles()}>
                 <UploadIcon strokeWidth={1.5} />
                 Upload files

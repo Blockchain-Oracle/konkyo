@@ -9,7 +9,9 @@ import { DefaultChatTransport } from "ai"
 import { PencilIcon, RotateCcwIcon } from "lucide-react"
 import { useSearchParams } from "next/navigation"
 import { useEffect, useMemo, useRef, useState } from "react"
+import { toast } from "sonner"
 import { Composer, type ComposerSubmit } from "@/components/composer"
+import { api } from "@/lib/fetcher"
 import { type Focus, focusFromSearch, focusOf } from "@/lib/focus"
 import { peekQuestion, releaseQuestion } from "@/lib/pending-question"
 import { AssistantMessage } from "./assistant-message"
@@ -147,12 +149,13 @@ export function ChatView({
       }),
     [],
   )
-  const { messages, sendMessage, status, stop, error, regenerate } = useChat<KonkyoMessage>({
-    id,
-    messages: initialMessages,
-    transport,
-    onFinish: () => void queryClient.invalidateQueries({ queryKey: ["chats"] }),
-  })
+  const { messages, sendMessage, setMessages, status, stop, error, regenerate } =
+    useChat<KonkyoMessage>({
+      id,
+      messages: initialMessages,
+      transport,
+      onFinish: () => void queryClient.invalidateQueries({ queryKey: ["chats"] }),
+    })
   const running = status === "submitted" || status === "streaming"
   // Stop ends the run on the server (plan F15), not just this page's connection to it.
   const stopRun = () => {
@@ -161,14 +164,44 @@ export function ChatView({
     void stop()
   }
 
-  const ask = ({ text, quote }: Pick<ComposerSubmit, "text" | "quote">) =>
-    sendMessage({
-      role: "user",
-      parts: [
-        ...(quote ? [{ type: "data-quote" as const, data: quote }] : []),
-        { type: "text" as const, text },
-      ],
-    })
+  /**
+   * A deep search (plan F18): the worker runs it; the chat shows its message, which follows the
+   * run's events. With a question (Deep search on), the question is saved first.
+   */
+  const startDeep = async (question: string, userMessage?: KonkyoMessage) => {
+    if (userMessage) setMessages((prev) => [...prev, userMessage])
+    try {
+      const { message } = await api<{ message: KonkyoMessage }>("/api/deep", {
+        method: "POST",
+        json: { chatId: id, question, message: userMessage, scope: scopeRef.current },
+      })
+      setMessages((prev) => [...prev, message])
+      void queryClient.invalidateQueries({ queryKey: ["chats"] })
+    } catch (error) {
+      if (userMessage) setMessages((prev) => prev.filter((m) => m.id !== userMessage.id))
+      toast.error((error as Error).message)
+    }
+  }
+
+  // A finished deep run's message now holds its verified answer: swap the saved copy in.
+  const deepSettled = async (runId: string) => {
+    const { message } = await api<{ message: KonkyoMessage | null }>(`/api/runs/${runId}/message`)
+    if (message) setMessages((prev) => prev.map((m) => (m.id === message.id ? message : m)))
+    void queryClient.invalidateQueries({ queryKey: ["chats"] })
+  }
+
+  const ask = ({
+    text,
+    quote,
+    deep,
+  }: Pick<ComposerSubmit, "text" | "quote"> & { deep?: boolean }) => {
+    const parts: KonkyoMessage["parts"] = [
+      ...(quote ? [{ type: "data-quote" as const, data: quote }] : []),
+      { type: "text" as const, text },
+    ]
+    if (deep) return startDeep(text, { id: crypto.randomUUID(), role: "user", parts })
+    return sendMessage({ role: "user", parts })
+  }
 
   // A question asked on Home arrives with the new chat and is sent once the view has settled:
   // a mount that is torn down at once (React's dev double-mount, a remount) cancels its timer
@@ -227,6 +260,23 @@ export function ChatView({
                   ? () => void regenerate({ messageId: message.id })
                   : undefined
               }
+              onFindSources={
+                i === messages.length - 1 && !running
+                  ? () => {
+                      const notFound = message.parts.find((p) => p.type === "data-notFound")
+                      const asked = messages[i - 1]?.parts.flatMap((p) =>
+                        p.type === "text" ? [p.text] : [],
+                      )
+                      void startDeep(
+                        notFound?.type === "data-notFound"
+                          ? notFound.data.question
+                          : (asked?.join(" ") ?? ""),
+                      )
+                    }
+                  : undefined
+              }
+              onDeepSettled={deepSettled}
+              onDeepRetry={(question) => void startDeep(question)}
             />
           ),
         )}

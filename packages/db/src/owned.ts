@@ -1,6 +1,16 @@
 import { and, eq } from "drizzle-orm"
 import type { Db } from "./index"
-import { chats, files, folders, highlights, messages, passages, runs, user } from "./schema"
+import {
+  chats,
+  files,
+  folders,
+  highlights,
+  messages,
+  passages,
+  runs,
+  user,
+  userSettings,
+} from "./schema"
 
 type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0]
 
@@ -18,6 +28,12 @@ const movers: Array<(tx: Tx, fromUserId: string, toUserId: string) => Promise<un
   (tx, from, to) => tx.update(chats).set({ ownerId: to }).where(eq(chats.ownerId, from)),
   (tx, from, to) => tx.update(messages).set({ ownerId: to }).where(eq(messages.ownerId, from)),
   (tx, from, to) => tx.update(runs).set({ ownerId: to }).where(eq(runs.ownerId, from)),
+  // The account signed into keeps its own settings if it has them.
+  async (tx, from, to) => {
+    const existing = await tx.query.userSettings.findFirst({ where: eq(userSettings.userId, to) })
+    if (!existing)
+      await tx.update(userSettings).set({ userId: to }).where(eq(userSettings.userId, from))
+  },
 ]
 
 /**

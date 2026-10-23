@@ -20,6 +20,8 @@ import {
   ocrPdf,
   officeToPdf,
   openAccessPdfs,
+  openAlexIdWithPdf,
+  openAlexPdf,
   openPdf,
   renderRGBA,
   summarize,
@@ -43,6 +45,36 @@ const { files, passages, embeddingCache } = schema
 
 type FileRow = typeof files.$inferSelect
 type NewPassage = typeof passages.$inferInsert
+
+/**
+ * A PDF's own title field, when it is a title: publishers often leave a file id there
+ * ("pone.0108100 1..5"), and word processors their own name.
+ */
+function usableMetaTitle(title: string | undefined) {
+  const t = title?.trim()
+  if (!t || t.length <= 3 || !/\s/.test(t)) return undefined
+  if (/^untitled|microsoft word|^document\d*$/i.test(t)) return undefined
+  if (/\d+\.\.\d+|^[a-z]+\.\d{4,}/i.test(t) || looksLikeFileName(t)) return undefined
+  return t
+}
+
+/**
+ * A title the file was only given to have one (its file name, or an imported link's address):
+ * what the file itself says replaces it. A real title (yours, or a paper's from OpenAlex) stays.
+ */
+function placeholderTitle(file: FileRow) {
+  if (looksLikeFileName(file.title)) return true
+  if (!file.sourceUrl) return false
+  try {
+    const url = new URL(file.sourceUrl)
+    return (
+      file.title === url.hostname + url.pathname ||
+      file.title === url.hostname.replace(/^www\./, "")
+    )
+  } catch {
+    return false
+  }
+}
 
 /** Problems the person has to act on: no point retrying them. */
 class ProblemError extends Error {
@@ -150,10 +182,7 @@ async function fromPdf(
   return {
     rendition: bytes,
     fromScan,
-    title:
-      metaTitle && metaTitle.length > 3 && !/^untitled|microsoft word/i.test(metaTitle)
-        ? metaTitle
-        : undefined,
+    title: usableMetaTitle(metaTitle),
     pages: extracted.pages.map((p) => ({
       page: p.page,
       width: p.width,
@@ -216,11 +245,20 @@ async function readSource(file: FileRow): Promise<DocResult> {
     }
     case "web": {
       if (!file.sourceUrl) throw new Error("Web import has no URL")
-      // A pasted DOI: read the paper's open-access PDF, never the publisher's abstract page.
-      const doi = doiFromUrl(file.sourceUrl)
-      if (doi) {
+      // A paper from deep search (an OpenAlex work) or a pasted DOI: read the open-access PDF,
+      // never the publisher's abstract page. OpenAlex's own copy first (10/10 in S00), then
+      // every open location it knows.
+      const workId = file.sourceUrl.match(/^https:\/\/openalex\.org\/(W\d+)$/)?.[1]
+      // A web page whose details later found a DOI stays a web page: only the URL decides.
+      const doi =
+        doiFromUrl(file.sourceUrl) ??
+        (workId ? ((file.meta as FileMeta | null)?.csl?.DOI ?? null) : null)
+      if (workId || doi) {
         await stage(file.id, "Finding an open copy", 0.1)
-        for (const url of await openAccessPdfs(doi)) {
+        const id = workId ?? (doi ? await openAlexIdWithPdf(doi) : null)
+        const own = id ? await openAlexPdf(id) : null
+        if (own) return { ...(await fromPdf(file, own, PDF_HYPHENS.pdf)), kind: "pdf" }
+        for (const url of doi ? await openAccessPdfs(doi) : []) {
           const copy = await fetchSource(url).catch(() => null)
           if (copy?.contentType.includes("pdf"))
             return { ...(await fromPdf(file, copy.bytes, PDF_HYPHENS.pdf)), kind: "pdf" }
@@ -423,7 +461,7 @@ export async function ingestFile(fileId: string, { lastAttempt = true } = {}): P
     const doc: EvidenceDoc = {
       doc_id: fileId,
       kind: file.kind,
-      title: details.title ?? result.title ?? file.title,
+      title: details.title ?? (placeholderTitle(file) ? result.title : undefined) ?? file.title,
       pages: groupByPage(result.passages),
     }
     await publishPassages(doc)
@@ -439,7 +477,7 @@ export async function ingestFile(fileId: string, { lastAttempt = true } = {}): P
       status: "ready",
       stage: null,
       progress: 1,
-      title: details.title ?? result.title ?? file.title,
+      title: details.title ?? (placeholderTitle(file) ? result.title : undefined) ?? file.title,
       kind: result.kind ?? file.kind,
       meta: details.meta,
       renditionKey: result.rendition ? objectKey("renditions", `${fileId}.pdf`) : null,
