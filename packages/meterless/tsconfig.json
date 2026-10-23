@@ -1,0 +1,14 @@
+{
+  "extends": "@konkyo/typescript-config/base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "types": ["node"],
+    // The vendored engines import siblings as "./types.ts" (they run under tsx upstream).
+    "allowImportingTsExtensions": true,
+    // Upstream code is kept byte-for-byte; it was written for a looser config than ours.
+    "noUncheckedIndexedAccess": false
+  },
+  "include": ["src"]
+}

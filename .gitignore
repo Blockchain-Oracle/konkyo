@@ -23,3 +23,6 @@ next-env.d.ts
 
 # local tooling
 .claude/
+
+# Agent traces (one JSONL per run); curated samples for judges live in docs/traces
+logs/*.jsonl

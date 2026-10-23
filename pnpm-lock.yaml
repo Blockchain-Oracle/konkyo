@@ -168,6 +168,9 @@ importers:
 
   apps/worker:
     dependencies:
+      '@konkyo/agents':
+        specifier: workspace:*
+        version: link:../../packages/agents
       '@konkyo/config':
         specifier: workspace:*
         version: link:../../packages/config
@@ -205,6 +208,43 @@ importers:
       typescript:
         specifier: 7.0.2
         version: 7.0.2
+
+  packages/agents:
+    dependencies:
+      '@ai-sdk/openai':
+        specifier: 4.0.94
+        version: 4.0.94(zod@4.6.7)
+      '@konkyo/config':
+        specifier: workspace:*
+        version: link:../config
+      '@konkyo/db':
+        specifier: workspace:*
+        version: link:../db
+      '@konkyo/env':
+        specifier: workspace:*
+        version: link:../env
+      '@konkyo/meterless':
+        specifier: workspace:*
+        version: link:../meterless
+      '@konkyo/zetaris':
+        specifier: workspace:*
+        version: link:../zetaris
+      ai:
+        specifier: 7.0.141
+        version: 7.0.141(zod@4.6.7)
+      drizzle-orm:
+        specifier: 0.45.4
+        version: 0.45.4(@opentelemetry/api@1.9.1)(kysely@0.29.6)(pg@8.23.1)(postgres@3.4.9)
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
+    devDependencies:
+      '@konkyo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/node':
+        specifier: 24.19.2
+        version: 24.19.2
 
   packages/config:
     devDependencies:
@@ -329,6 +369,22 @@ importers:
       typescript:
         specifier: 7.0.2
         version: 7.0.2
+
+  packages/meterless:
+    dependencies:
+      '@konkyo/config':
+        specifier: workspace:*
+        version: link:../config
+      '@konkyo/db':
+        specifier: workspace:*
+        version: link:../db
+    devDependencies:
+      '@konkyo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/node':
+        specifier: 24.19.2
+        version: 24.19.2
 
   packages/storage:
     dependencies:

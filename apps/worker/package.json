@@ -7,7 +7,8 @@
     "dev": "node ../../scripts/with-env.mjs tsx watch --clear-screen=false src/index.ts",
     "start": "node ../../scripts/with-env.mjs tsx src/index.ts",
     "ingest": "node ../../scripts/with-env.mjs tsx src/cli.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "ask": "node ../../scripts/with-env.mjs tsx src/ask.ts"
   },
   "dependencies": {
     "@konkyo/config": "workspace:*",
@@ -17,7 +18,8 @@
     "@konkyo/jobs": "workspace:*",
     "@konkyo/storage": "workspace:*",
     "@konkyo/zetaris": "workspace:*",
-    "drizzle-orm": "0.45.4"
+    "drizzle-orm": "0.45.4",
+    "@konkyo/agents": "workspace:*"
   },
   "devDependencies": {
     "@konkyo/typescript-config": "workspace:*",

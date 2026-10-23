@@ -14,7 +14,10 @@
       "!**/dist",
       "!**/.turbo",
       "!**/drizzle/meta",
-      "!**/public/**/*.svg"
+      "!**/public/**/*.svg",
+      "!packages/meterless/src/hmem",
+      "!packages/meterless/src/world-model",
+      "!packages/meterless/src/markovian"
     ]
   },
   "formatter": {

@@ -1,0 +1,10 @@
+Meterless engines (H-MEM, World Model, Markovian)
+Copyright Meterless contributors. Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+Vendored unchanged from https://github.com/meterless/meterless
+  commit 0aa7417
+  engines/hmem/reference/src        -> src/hmem
+  engines/world-model/reference/src -> src/world-model
+  engines/markovian/reference/src   -> src/markovian
+
+Konkyo's own code (adapters for Postgres persistence and OpenAI) lives in src/adapters.

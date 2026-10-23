@@ -1,0 +1,24 @@
+{
+  "name": "@konkyo/meterless",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "exports": {
+    "./hmem": "./src/hmem/index.ts",
+    "./world-model": "./src/world-model/index.ts",
+    "./markovian": "./src/markovian/index.ts",
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@konkyo/config": "workspace:*",
+    "@konkyo/db": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "@konkyo/typescript-config": "workspace:*"
+  }
+}
