@@ -26,7 +26,22 @@ export const env = createEnv({
     S3_SECRET_ACCESS_KEY: z.string().min(1),
 
     GOTENBERG_URL: z.url(),
+
+    OPENAI_API_KEY: z.string().min(1),
+    ELEVENLABS_API_KEY: z.string().min(1),
+    OPENALEX_API_KEY: z.string().min(1).optional(),
+
+    /** Zetaris REST base, e.g. http://localhost:8888/api/v1.0 */
     ZETARIS_REST_URL: z.url(),
+    /** Production (event instance): an API key. Local bundle: the UI login below. */
+    ZETARIS_API_KEY: z.string().min(1).optional(),
+    ZETARIS_LOGIN_URL: z.url().optional(),
+    ZETARIS_USERNAME: z.string().min(1).optional(),
+    ZETARIS_PASSWORD: z.string().min(1).optional(),
+    ZETARIS_ORG_ID: z.string().min(1).optional(),
+    /** Where the worker writes evidence files, and where Zetaris reads the same folder. */
+    EVIDENCE_DIR: z.string().min(1),
+    ZETARIS_EVIDENCE_URI: z.string().min(1),
   },
   runtimeEnv: process.env,
   emptyStringAsUndefined: true,

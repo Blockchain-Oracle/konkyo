@@ -62,6 +62,72 @@ export const LAYOUT = {
   editorMeasureCh: 68,
 } as const
 
+export const ZETARIS = {
+  /** Our own deadline: Zetaris never times out by itself (a 390 s query ran to the end in S00). */
+  queryTimeoutMs: 30_000,
+  /** Default row limit for evidence reads. */
+  rowLimit: 10_000,
+  database: "konkyo",
+  tables: {
+    passages: "konkyo_passages",
+    pdfText: "konkyo_pdf_text",
+  },
+} as const
+
+/** Supported uploads (plan F02): extension → file kind. Anything else is "Unsupported". */
+export const FILE_TYPES = {
+  ".pdf": "pdf",
+  ".docx": "docx",
+  ".pptx": "pptx",
+  ".md": "markdown",
+  ".markdown": "markdown",
+  ".txt": "text",
+  ".mp3": "audio",
+  ".m4a": "audio",
+  ".wav": "audio",
+  ".mp4": "video",
+  ".mov": "video",
+  ".webm": "video",
+} as const
+
+export type FileKind = (typeof FILE_TYPES)[keyof typeof FILE_TYPES] | "web" | "youtube"
+
+export const kindForName = (name: string): FileKind | undefined => {
+  const ext = name.slice(name.lastIndexOf(".")).toLowerCase()
+  return FILE_TYPES[ext as keyof typeof FILE_TYPES]
+}
+
+export const isYouTube = (url: string) =>
+  /^(https?:\/\/)?(www\.|m\.)?(youtube\.com|youtu\.be)\//i.test(url)
+
+/** For the file picker's `accept` attribute. */
+export const ACCEPT = Object.keys(FILE_TYPES).join(",")
+
+export const LIBRARY = {
+  /** While anything is processing, the library refreshes this often. */
+  pollMs: 1500,
+  pageSize: 100,
+} as const
+
+export const INGEST = {
+  /** A page with fewer characters than this (and an image) is a scan and gets OCR (S00 rule). */
+  scanCharsPerPage: 20,
+  ocrImage: "jbarlow83/ocrmypdf-alpine:v17.13.0",
+  ocrLanguages: "eng",
+  ocrTimeoutMs: 10 * 60 * 1000,
+  convertTimeoutMs: 2 * 60 * 1000,
+  fetchTimeoutMs: 30_000,
+  /** Sent with web and paper downloads; never a personal address. */
+  userAgent: "KonkyoBot/1.0 (+https://konkyo.xyz)",
+  /** Transcript passages close at a speaker change, a pause, or this length. */
+  transcriptPassageSeconds: 45,
+  transcriptPauseSeconds: 2.5,
+  embeddingModel: "text-embedding-3-small",
+  embeddingBatch: 96,
+  embeddingParallel: 2,
+  transcriptionModel: "scribe_v2",
+} as const
+
 export const QUERY = {
   /** Server data is fresh for a minute before TanStack Query refetches in the background. */
   staleTimeMs: 60_000,

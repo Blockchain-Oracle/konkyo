@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm"
 import type { Db } from "./index"
-import { user } from "./schema"
+import { files, folders, passages, user } from "./schema"
 
 type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0]
 
@@ -10,7 +10,11 @@ type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0]
  * guest (cascading its rows), so everything the guest made must move first.
  * Each stage that adds a user-owned table adds its mover in the same commit.
  */
-const movers: Array<(tx: Tx, fromUserId: string, toUserId: string) => Promise<unknown>> = []
+const movers: Array<(tx: Tx, fromUserId: string, toUserId: string) => Promise<unknown>> = [
+  (tx, from, to) => tx.update(folders).set({ ownerId: to }).where(eq(folders.ownerId, from)),
+  (tx, from, to) => tx.update(files).set({ ownerId: to }).where(eq(files.ownerId, from)),
+  (tx, from, to) => tx.update(passages).set({ ownerId: to }).where(eq(passages.ownerId, from)),
+]
 
 /**
  * Moves everything a guest made to the account they signed in with, then removes the guest.

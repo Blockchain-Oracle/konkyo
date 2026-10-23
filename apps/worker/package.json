@@ -1,0 +1,28 @@
+{
+  "name": "@konkyo/worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node ../../scripts/with-env.mjs tsx watch --clear-screen=false src/index.ts",
+    "start": "node ../../scripts/with-env.mjs tsx src/index.ts",
+    "ingest": "node ../../scripts/with-env.mjs tsx src/cli.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@konkyo/config": "workspace:*",
+    "@konkyo/db": "workspace:*",
+    "@konkyo/env": "workspace:*",
+    "@konkyo/ingest": "workspace:*",
+    "@konkyo/jobs": "workspace:*",
+    "@konkyo/storage": "workspace:*",
+    "@konkyo/zetaris": "workspace:*",
+    "drizzle-orm": "0.45.4"
+  },
+  "devDependencies": {
+    "@konkyo/typescript-config": "workspace:*",
+    "@types/node": "24.19.2",
+    "tsx": "4.23.15",
+    "typescript": "7.0.2"
+  }
+}
