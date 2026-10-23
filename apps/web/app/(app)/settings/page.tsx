@@ -7,6 +7,7 @@ import { PageShell } from "@/components/page-shell"
 import { getSession } from "@/lib/session"
 import { AccountActions } from "./account-actions"
 import { CitationStyleSetting } from "./citation-style-setting"
+import { ConnectorsSection } from "./connectors-section"
 import { DeepSearchSetting } from "./deep-search-setting"
 import { NotificationSettings } from "./notification-settings"
 import { StudySettings } from "./study-settings"
@@ -59,6 +60,14 @@ export default function SettingsPage() {
           <Suspense fallback={<Skeleton className="h-40 w-full" />}>
             <Account />
           </Suspense>
+        </div>
+      </section>
+      <section id="connectors" aria-labelledby="connectors-heading" className="mt-15 scroll-mt-24">
+        <h2 id="connectors-heading" className="text-micro text-saffron-spark uppercase">
+          Connectors
+        </h2>
+        <div className="mt-4.5">
+          <ConnectorsSection />
         </div>
       </section>
       <section aria-labelledby="writing-heading" className="mt-15">

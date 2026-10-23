@@ -63,6 +63,7 @@ export const fileKind = pgEnum("file_kind", [
   "audio",
   "video",
   "note",
+  "email",
 ])
 
 /** Where a file is in its life (plan F03): one word the UI can show, plus a stage while working. */
@@ -77,6 +78,35 @@ export const fileProblem = pgEnum("file_problem", [
   "no_text",
   "failed",
 ])
+
+/**
+ * A connected account (plan F35): Gmail, Google Drive or Notion through Composio. What's
+ * imported from it keeps its link (files.connectionId) for resync and for Disconnect.
+ */
+export const connections = pgTable(
+  "connections",
+  {
+    id: uuid().defaultRandom().primaryKey(),
+    ownerId: owner(),
+    toolkit: text().$type<"gmail" | "googledrive" | "notion">().notNull(),
+    /** The Composio connected account. */
+    accountId: text().notNull(),
+    status: text().$type<"initiated" | "active" | "expired">().default("initiated").notNull(),
+    /** The account's address or workspace, once known. */
+    label: text(),
+    /** Gmail: a search whose new matches come in by themselves; null imports only what's picked. */
+    watchQuery: text(),
+    /** Where new items from it go. */
+    folderId: uuid().references(() => folders.id, { onDelete: "set null" }),
+    syncedAt: timestamp({ withTimezone: true }),
+    createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp({ withTimezone: true })
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (t) => [index("connections_owner_idx").on(t.ownerId)],
+)
 
 export const files = pgTable(
   "files",
@@ -113,11 +143,16 @@ export const files = pgTable(
     meta: jsonb().$type<FileMeta>(),
     /** When Zetaris confirmed this file's passages (the evidence store has it). */
     publishedAt: timestamp({ withTimezone: true }),
+    /** Imported through a connector (F35): which one, the item's id there, and its version. */
+    connectionId: uuid().references(() => connections.id, { onDelete: "set null" }),
+    externalId: text(),
+    externalVersion: text(),
     ...timestamps,
   },
   (t) => [
     index("files_owner_created_idx").on(t.ownerId, t.createdAt),
     index("files_owner_sha_idx").on(t.ownerId, t.sha256),
+    index("files_connection_idx").on(t.connectionId, t.externalId),
   ],
 )
 

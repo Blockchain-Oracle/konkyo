@@ -97,7 +97,12 @@ export const FILE_TYPES = {
   ".webm": "video",
 } as const
 
-export type FileKind = (typeof FILE_TYPES)[keyof typeof FILE_TYPES] | "web" | "youtube" | "note"
+export type FileKind =
+  | (typeof FILE_TYPES)[keyof typeof FILE_TYPES]
+  | "web"
+  | "youtube"
+  | "note"
+  | "email"
 
 export const kindForName = (name: string): FileKind | undefined => {
   const ext = name.slice(name.lastIndexOf(".")).toLowerCase()
@@ -176,6 +181,22 @@ export const PUBLIC = {
   answersPerDayPerFolder: 300,
   historyTurns: 6,
   moderationModel: "omni-moderation-latest",
+} as const
+
+/**
+ * Connectors (plan F35) through Composio. Tool calls need pinned toolkit versions (S00); our own
+ * poll resyncs every 15 minutes, which is Composio-managed auth's fastest trigger anyway, and
+ * covers Notion, whose triggers would need a Notion integration of our own.
+ */
+export const CONNECTORS = {
+  versions: { gmail: "20261010_00", googledrive: "20261001_00", notion: "20261008_00" },
+  /** Connect links expire after 10 minutes, so each is minted on the click. */
+  linkMinutes: 10,
+  syncEveryMinutes: 15,
+  /** Items per page when browsing a connected account. */
+  pageSize: 25,
+  /** Google Workspace exports are capped at 10 MB by Google. */
+  exportMaxBytes: 10 * 1024 * 1024,
 } as const
 
 /**

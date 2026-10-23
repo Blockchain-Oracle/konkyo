@@ -2,6 +2,7 @@ import { boss, QUEUES } from "@konkyo/jobs"
 import { warmUp } from "@konkyo/zetaris"
 import { queueDueAgents, runAgent } from "./agents"
 import { makeBrief } from "./brief"
+import { syncConnections } from "./connectors"
 import { deepJob } from "./deep"
 import { closeInterrupted } from "./interrupted"
 import { indexNote } from "./notes"
@@ -87,6 +88,16 @@ async function reportInterrupted() {
 }
 void reportInterrupted()
 
+// Connectors (F35): changed Drive files and Notion pages are read again, and a Gmail watch
+// brings in new matches, every 15 minutes (Composio-managed auth's fastest anyway).
+const CONNECTORS_SYNC = "connectors-sync"
+await queues.createQueue(CONNECTORS_SYNC)
+await queues.schedule(CONNECTORS_SYNC, "*/15 * * * *", {}, { tz: "UTC" })
+await queues.work(CONNECTORS_SYNC, async () => {
+  const synced = await syncConnections()
+  if (synced.refreshed + synced.imported) console.info(`[connectors] ${JSON.stringify(synced)}`)
+})
+
 // Review reminders (F29): hourly, each person at their own hour in their own time zone.
 const REMINDERS = "review-reminders"
 await queues.createQueue(REMINDERS)
@@ -97,7 +108,7 @@ await queues.work(REMINDERS, async () => {
 })
 
 console.info(
-  `[worker] listening on "${QUEUES.ingest.name}" (×${INGEST_CONCURRENCY}), "deep" (×3), "study" (×3), "purge", daily sweep, hourly reminders, agents every 5 min`,
+  `[worker] listening on "${QUEUES.ingest.name}" (×${INGEST_CONCURRENCY}), "deep" (×3), "study" (×3), "purge", daily sweep, hourly reminders, agents every 5 min, connectors every 15 min`,
 )
 
 // On shutdown stop taking jobs and exit promptly: a job cut off here stops sending heartbeats and

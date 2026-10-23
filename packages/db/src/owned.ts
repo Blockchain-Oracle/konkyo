@@ -5,6 +5,7 @@ import {
   agents,
   briefs,
   chats,
+  connections,
   files,
   folderShares,
   folders,
@@ -38,6 +39,8 @@ type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0]
 const movers: Array<(tx: Tx, fromUserId: string, toUserId: string) => Promise<unknown>> = [
   (tx, from, to) => tx.update(folders).set({ ownerId: to }).where(eq(folders.ownerId, from)),
   (tx, from, to) => tx.update(files).set({ ownerId: to }).where(eq(files.ownerId, from)),
+  (tx, from, to) =>
+    tx.update(connections).set({ ownerId: to }).where(eq(connections.ownerId, from)),
   (tx, from, to) =>
     tx.update(folderShares).set({ ownerId: to }).where(eq(folderShares.ownerId, from)),
   (tx, from, to) => tx.update(passages).set({ ownerId: to }).where(eq(passages.ownerId, from)),
@@ -97,13 +100,17 @@ export async function reownUserData(db: Db, fromUserId: string, toUserId: string
 
 /** What deleting a person leaves outside Postgres: stored bytes, Zetaris evidence, watch tables. */
 export async function ownedOutsidePostgres(db: Db, userId: string) {
-  const [owned, watches, spoken] = await Promise.all([
+  const [owned, watches, spoken, connected] = await Promise.all([
     db
       .select({ id: files.id, originalKey: files.originalKey, renditionKey: files.renditionKey })
       .from(files)
       .where(eq(files.ownerId, userId)),
     db.select({ table: agents.zetarisTable }).from(agents).where(eq(agents.ownerId, userId)),
     db.select({ key: briefs.audioKey }).from(briefs).where(eq(briefs.ownerId, userId)),
+    db
+      .select({ accountId: connections.accountId })
+      .from(connections)
+      .where(eq(connections.ownerId, userId)),
   ])
   return {
     fileIds: owned.map((f) => f.id),
@@ -112,6 +119,8 @@ export async function ownedOutsidePostgres(db: Db, userId: string) {
       ...spoken.map((b) => b.key),
     ].filter((k): k is string => !!k),
     tables: watches.map((w) => w.table).filter((t): t is string => !!t),
+    /** Composio connected accounts, revoked so nothing keeps access to the person's mail. */
+    accounts: connected.map((c) => c.accountId),
   }
 }
 

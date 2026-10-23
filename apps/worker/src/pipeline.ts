@@ -40,7 +40,9 @@ import {
   publishPdfText,
 } from "@konkyo/zetaris"
 import { and, eq, inArray, isNull, ne } from "drizzle-orm"
+import { materialize } from "./connectors"
 import { indexNote } from "./notes"
+import { ProblemError } from "./problem"
 
 const { files, passages, embeddingCache } = schema
 
@@ -78,14 +80,6 @@ function placeholderTitle(file: FileRow) {
 }
 
 /** Problems the person has to act on: no point retrying them. */
-class ProblemError extends Error {
-  constructor(
-    readonly problem: NonNullable<FileRow["problem"]>,
-    message: string,
-  ) {
-    super(message)
-  }
-}
 
 type DocResult = {
   passages: NewPassage[]
@@ -245,6 +239,12 @@ async function readSource(file: FileRow): Promise<DocResult> {
           ? await markdownToPdf(text, file.title)
           : await htmlToPdf(documentHtml(file.title, textToHtml(text)))
       return fromPdf(file, pdf, PDF_HYPHENS.converted)
+    }
+    case "email": {
+      if (!file.originalKey) throw new Error("Email has no stored copy")
+      await stage(file.id, "Converting to PDF", 0.15)
+      const html = new TextDecoder().decode(await getBytes(file.originalKey))
+      return fromPdf(file, await htmlToPdf(html), PDF_HYPHENS.converted)
     }
     case "web": {
       if (!file.sourceUrl) throw new Error("Web import has no URL")
@@ -413,7 +413,7 @@ async function describe(
  * Zetaris evidence → Ready. Each stage is written to the file row, so the library shows it live.
  */
 export async function ingestFile(fileId: string, { lastAttempt = true } = {}): Promise<void> {
-  const file = await db.query.files.findFirst({ where: eq(files.id, fileId) })
+  let file = await db.query.files.findFirst({ where: eq(files.id, fileId) })
   if (!file || file.deletedAt) return
   // A note is always ready to edit: it is only re-read for chat, never "processing".
   if (file.kind === "note") return indexNote(fileId)
@@ -426,6 +426,11 @@ export async function ingestFile(fileId: string, { lastAttempt = true } = {}): P
   })
   lap(fileId, "Starting")
   try {
+    // From a connector (F35): its content comes into storage first, then it's read like an upload.
+    if (file.connectionId && !file.originalKey) {
+      await stage(fileId, "Fetching from the connected account", 0.03)
+      file = await materialize(file)
+    }
     // Duplicate check: the same bytes already in this person's library.
     if (file.originalKey) {
       await stage(fileId, "Checking for duplicates", 0.05)

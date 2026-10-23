@@ -14,8 +14,9 @@ import { CheckIcon, FolderIcon, LibraryBigIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useMemo, useState, useSyncExternalStore } from "react"
 import { toast } from "sonner"
+import { ConnectorImportDialog } from "@/components/library/connector-import-dialog"
 import { ShareDialog } from "@/components/library/share-dialog"
-import { type FolderNode, useFolderActions, useFolderTree } from "@/lib/use-folders"
+import { flattenTree, useFolderActions, useFolderTree } from "@/lib/use-folders"
 import { useFileActions } from "@/lib/use-library"
 
 /** The app's small dialogs, opened from anywhere (Create menu, sidebar, rows, ⌘K). */
@@ -25,6 +26,7 @@ type DialogState =
   | { type: "import"; folderId?: string }
   | { type: "move-files"; ids: string[] }
   | { type: "share-folder"; id: string; name: string }
+  | { type: "connector-import"; connectionId?: string; folderId?: string }
   | null
 
 let current: DialogState = null
@@ -40,6 +42,8 @@ export const openRenameFolder = (id: string, name: string) =>
 export const openImport = (folderId?: string) => set({ type: "import", folderId })
 export const openMoveFiles = (ids: string[]) => set({ type: "move-files", ids })
 export const openShareFolder = (id: string, name: string) => set({ type: "share-folder", id, name })
+export const openConnectorImport = (at: { connectionId?: string; folderId?: string } = {}) =>
+  set({ type: "connector-import", ...at })
 
 function useDialog() {
   return useSyncExternalStore(
@@ -75,6 +79,12 @@ export function AppDialogs() {
       />
       <ShareDialog
         folder={dialog?.type === "share-folder" ? { id: dialog.id, name: dialog.name } : null}
+        onClose={close}
+      />
+      <ConnectorImportDialog
+        open={dialog?.type === "connector-import"}
+        connectionId={dialog?.type === "connector-import" ? dialog.connectionId : undefined}
+        folderId={dialog?.type === "connector-import" ? dialog.folderId : undefined}
         onClose={close}
       />
     </>
@@ -215,7 +225,7 @@ function MoveDialog({ open, ids, onClose }: { open: boolean; ids: string[]; onCl
   const { move } = useFileActions()
   const [query, setQuery] = useState("")
   const [target, setTarget] = useState<{ id: string | null; name: string } | null>(null)
-  const rows = useMemo(() => flatten(tree), [tree])
+  const rows = useMemo(() => flattenTree(tree), [tree])
   const q = query.trim().toLowerCase()
   const visible = q ? rows.filter((r) => r.name.toLowerCase().includes(q)) : rows
 
@@ -315,8 +325,4 @@ function MoveOption({
       {selected && <CheckIcon className="size-4 text-bone-white" strokeWidth={2} />}
     </button>
   )
-}
-
-function flatten(nodes: FolderNode[], depth = 0): (FolderNode & { depth: number })[] {
-  return nodes.flatMap((n) => [{ ...n, depth }, ...flatten(n.children, depth + 1)])
 }

@@ -25,6 +25,7 @@ import {
   LinkIcon,
   MessageSquareIcon,
   PencilIcon,
+  PlugIcon,
   TelescopeIcon,
   Trash2Icon,
   UploadIcon,
@@ -37,6 +38,7 @@ import { FolderBriefs } from "@/components/briefs/folder-briefs"
 import { EmptyState } from "@/components/empty-state"
 import { StudyStarter } from "@/components/onboarding/study-starter"
 import {
+  openConnectorImport,
   openImport,
   openNewFolder,
   openRenameFolder,
@@ -197,7 +199,7 @@ export function LibraryView({ folderId }: { folderId?: string }) {
               >
                 <ChevronDownIcon strokeWidth={1.75} />
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuContent align="end" className="w-52">
                 <DropdownMenuItem onClick={() => pickFiles(folderId)}>
                   <UploadIcon strokeWidth={1.5} />
                   Upload files
@@ -205,6 +207,14 @@ export function LibraryView({ folderId }: { folderId?: string }) {
                 <DropdownMenuItem onClick={() => pickFolder(folderId)}>
                   <FolderUpIcon strokeWidth={1.5} />
                   Upload a folder
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => openImport(folderId)}>
+                  <LinkIcon strokeWidth={1.5} />
+                  Import by URL
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => openConnectorImport({ folderId })}>
+                  <PlugIcon strokeWidth={1.5} />
+                  Gmail, Drive, Notion
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => openNewFolder(folderId)}>

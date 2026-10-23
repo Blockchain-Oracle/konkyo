@@ -10,6 +10,11 @@ import { qk } from "./query-keys"
 export type { FolderRow }
 export type FolderNode = FolderRow & { children: FolderNode[] }
 
+/** The tree as one list in reading order, each folder with its depth (for pickers). */
+export function flattenTree(nodes: FolderNode[], depth = 0): (FolderNode & { depth: number })[] {
+  return nodes.flatMap((n) => [{ ...n, depth }, ...flattenTree(n.children, depth + 1)])
+}
+
 export function useFolders() {
   return useQuery({
     queryKey: qk.folders.tree(),

@@ -1,0 +1,22 @@
+{
+  "name": "@konkyo/connectors",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@composio/core": "0.24.0",
+    "@konkyo/config": "workspace:*",
+    "@konkyo/env": "workspace:*"
+  },
+  "devDependencies": {
+    "@konkyo/typescript-config": "workspace:*",
+    "@types/node": "24.19.2",
+    "typescript": "7.0.2"
+  }
+}

@@ -1,5 +1,6 @@
 import { deleteMemoryOf, deleteWorldOf } from "@konkyo/agents"
 import { TRASH } from "@konkyo/config"
+import { removeAccount } from "@konkyo/connectors"
 import { db, schema } from "@konkyo/db"
 import { deleteUserRows } from "@konkyo/db/owned"
 import type { Payload } from "@konkyo/jobs"
@@ -13,10 +14,17 @@ const { files, folders, chats } = schema
  * Removes deleted files' stored bytes and Zetaris evidence; for a deleted account, also its
  * watch tables and memory files. Safe to repeat.
  */
-export async function purgeFiles({ fileIds, keys, tables = [], ownerId }: Payload<"purge">) {
+export async function purgeFiles({
+  fileIds,
+  keys,
+  tables = [],
+  accounts = [],
+  ownerId,
+}: Payload<"purge">) {
   await Promise.all(keys.map((key) => deleteObject(key)))
   await Promise.all(fileIds.map((id) => unpublish(id)))
   await Promise.all(tables.map((table) => dropWatchTable(table)))
+  await Promise.all(accounts.map((account) => removeAccount(account)))
   if (ownerId) await Promise.all([deleteMemoryOf(ownerId), deleteWorldOf(ownerId)])
 }
 

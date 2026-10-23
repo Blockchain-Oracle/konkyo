@@ -2,7 +2,7 @@ import "server-only"
 import { randomUUID } from "node:crypto"
 import { db, schema } from "@konkyo/db"
 import { and, eq, inArray, isNull, notInArray, sql } from "drizzle-orm"
-import { LibraryError } from "./library"
+import { LibraryError, ownFolder } from "./library"
 
 const { folders, files, fileFolders } = schema
 
@@ -36,14 +36,6 @@ export async function listFolders(ownerId: string) {
 }
 
 export type FolderRow = Awaited<ReturnType<typeof listFolders>>[number]
-
-async function ownFolder(ownerId: string, folderId: string) {
-  const folder = await db.query.folders.findFirst({
-    where: and(eq(folders.id, folderId), eq(folders.ownerId, ownerId), isNull(folders.deletedAt)),
-  })
-  if (!folder) throw new LibraryError("No such folder", 404)
-  return folder
-}
 
 /** The folder and every folder inside it (ids), for moves and Trash. */
 export async function subtree(ownerId: string, folderId: string): Promise<string[]> {

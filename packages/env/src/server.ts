@@ -44,6 +44,11 @@ export const env = createEnv({
     ZETARIS_EVIDENCE_URI: z.string().min(1),
 
     /** Web Push (F41): without the keys, the Inbox still works and push is simply off. */
+    // Connectors (F35) through Composio: the API key and one auth config per toolkit.
+    COMPOSIO_API_KEY: z.string().min(1).optional(),
+    COMPOSIO_AUTH_CONFIG_GMAIL: z.string().min(1).optional(),
+    COMPOSIO_AUTH_CONFIG_GOOGLEDRIVE: z.string().min(1).optional(),
+    COMPOSIO_AUTH_CONFIG_NOTION: z.string().min(1).optional(),
     VAPID_PUBLIC_KEY: z.string().min(1).optional(),
     VAPID_PRIVATE_KEY: z.string().min(1).optional(),
     VAPID_SUBJECT: z.string().min(1).default("https://konkyo.xyz"),

@@ -257,7 +257,7 @@ export async function appendToNote(
   const doc = note.content as NoteDoc
   // An empty first paragraph (a new note) is replaced rather than kept above the answer.
   const existing = (doc.content ?? []).filter(
-    (n, i, all) => !(all.length === 1 && (n as { content?: unknown[] }).content == null),
+    (n, _i, all) => !(all.length === 1 && (n as { content?: unknown[] }).content == null),
   )
   const text = [note.text.trim(), input.text.trim()].filter(Boolean).join("\n\n")
   await saveNote(ownerId, fileId, {

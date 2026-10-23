@@ -135,6 +135,7 @@ export async function registerUpload(
 ) {
   const limited = await allowanceLeft(ownerId, "files")
   if (limited) throw new LibraryError(limited, 429)
+  if (input.folderId) await ownFolder(ownerId, input.folderId)
   const kind = kindForName(input.name)
   if (!kind) {
     // Shown in the library as "Unsupported" with Remove (plan F03), rather than vanishing.
@@ -222,6 +223,7 @@ export async function importUrl(
     throw new LibraryError("Only http and https links can be imported")
   const limited = await allowanceLeft(ownerId, "files")
   if (limited) throw new LibraryError(limited, 429)
+  if (folderId) await ownFolder(ownerId, folderId)
   const kind: FileKind = isYouTube(url.href) ? "youtube" : "web"
   const [file] = await db
     .insert(files)
@@ -240,6 +242,15 @@ export async function importUrl(
     await db.insert(fileFolders).values({ fileId: file.id, folderId }).onConflictDoNothing()
   await enqueue("ingest", { fileId: file.id }, file.id)
   return { fileId: file.id }
+}
+
+/** The person's own folder, or a 404: every way a file is put in a folder checks this first. */
+export async function ownFolder(ownerId: string, folderId: string) {
+  const folder = await db.query.folders.findFirst({
+    where: and(eq(folders.id, folderId), eq(folders.ownerId, ownerId), isNull(folders.deletedAt)),
+  })
+  if (!folder) throw new LibraryError("No such folder", 404)
+  return folder
 }
 
 async function ownFile(ownerId: string, fileId: string) {

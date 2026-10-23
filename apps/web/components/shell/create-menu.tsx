@@ -15,13 +15,14 @@ import {
   FolderUpIcon,
   LinkIcon,
   NotebookPenIcon,
+  PlugIcon,
   PlusIcon,
   UploadIcon,
 } from "lucide-react"
 import type { Route } from "next"
 import { useRouter } from "next/navigation"
 import { useUploads } from "@/components/library/uploads-provider"
-import { openImport, openNewFolder } from "./app-dialogs"
+import { openConnectorImport, openImport, openNewFolder } from "./app-dialogs"
 
 type CreateItem = { label: string; icon: typeof PlusIcon; href?: Route; run?: () => void }
 
@@ -39,6 +40,7 @@ export function CreateMenu() {
       { label: "Upload files", icon: UploadIcon, run: () => pickFiles() },
       { label: "Upload a folder", icon: FolderUpIcon, run: () => pickFolder() },
       { label: "Import by URL", icon: LinkIcon, run: () => openImport() },
+      { label: "Gmail, Drive, Notion", icon: PlugIcon, run: () => openConnectorImport() },
     ],
   ]
   return (

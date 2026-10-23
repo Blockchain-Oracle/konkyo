@@ -6,7 +6,14 @@ import { db, schema } from "@konkyo/db"
 import { env } from "@konkyo/env/server"
 import { and, count, eq, gte, inArray, isNull, ne } from "drizzle-orm"
 import { subtree } from "./folders"
-import { fileContentKey, getFileDetail, getPassage, LibraryError, listPassages } from "./library"
+import {
+  fileContentKey,
+  getFileDetail,
+  getPassage,
+  LibraryError,
+  listPassages,
+  ownFolder,
+} from "./library"
 
 const { folderShares, shareAnswers, folders, files, fileFolders } = schema
 
@@ -14,14 +21,6 @@ const { folderShares, shareAnswers, folders, files, fileFolders } = schema
 export const sharePath = (slug: string) => `/s/${slug}`
 
 // ------------------------------------------------------------------ the owner's side
-
-async function ownFolder(ownerId: string, folderId: string) {
-  const folder = await db.query.folders.findFirst({
-    where: and(eq(folders.id, folderId), eq(folders.ownerId, ownerId), isNull(folders.deletedAt)),
-  })
-  if (!folder) throw new LibraryError("No such folder", 404)
-  return folder
-}
 
 /** A folder's public link, if it has one. */
 export async function getShare(ownerId: string, folderId: string) {

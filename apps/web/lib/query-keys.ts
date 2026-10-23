@@ -18,4 +18,8 @@ export const qk = {
   trash: ["trash"] as const,
   memories: ["memories"] as const,
   highlights: (fileId: string) => ["highlights", fileId] as const,
+  connections: {
+    all: ["connections"] as const,
+    items: (id: string, query: string) => ["connections", "items", id, query] as const,
+  },
 }

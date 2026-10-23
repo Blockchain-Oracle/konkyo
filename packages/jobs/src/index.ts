@@ -63,6 +63,7 @@ export const QUEUES = {
       fileIds: z.array(z.uuid()),
       keys: z.array(z.string()),
       tables: z.array(z.string()).optional(),
+      accounts: z.array(z.string()).optional(),
       ownerId: z.string().optional(),
     }),
     options: { retryLimit: 5, retryDelay: 60, retryBackoff: true, expireInSeconds: 10 * 60 },

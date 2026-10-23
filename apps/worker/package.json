@@ -13,6 +13,7 @@
   "dependencies": {
     "@konkyo/agents": "workspace:*",
     "@konkyo/config": "workspace:*",
+    "@konkyo/connectors": "workspace:*",
     "@konkyo/db": "workspace:*",
     "@konkyo/env": "workspace:*",
     "@konkyo/ingest": "workspace:*",
