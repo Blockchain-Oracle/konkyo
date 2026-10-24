@@ -9,6 +9,13 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { VoiceOrb, type VoiceState } from "@/components/voice/voice-orb"
+import {
+  composerMounted,
+  type QuotedPassage,
+  quoteInComposer,
+  useComposerQuote,
+  useDockPresence,
+} from "@/lib/composer-draft"
 import { setLitSources } from "@/lib/lit-sources"
 import { interfaceSoundsOn, setInterfaceSounds, sound } from "@/lib/sounds"
 import { CatchupPanel, useCatchup } from "./catchup-panel"
@@ -64,7 +71,18 @@ function usePanelChat(spaceId: string | null) {
       void queryClient.invalidateQueries({ queryKey: ["catchup"] })
     },
   })
-  const send = useCallback((text: string) => void sendMessage({ text }), [sendMessage])
+  // A question about a selected passage carries it, as the chat's composer does.
+  const send = useCallback(
+    (text: string, quote?: QuotedPassage) =>
+      void sendMessage({
+        role: "user",
+        parts: [
+          ...(quote ? [{ type: "data-quote" as const, data: quote }] : []),
+          { type: "text" as const, text },
+        ],
+      }),
+    [sendMessage],
+  )
   return {
     chatId,
     messages,
@@ -119,15 +137,22 @@ export function Dock() {
     setMood(mood === "idle" ? "listening" : "idle")
     if (mood !== "idle") setText("")
   }
-  const showPanel = () => {
+  const showPanel = useCallback(() => {
     const button = ai.current
     if (button) setTail(button.offsetLeft + button.offsetWidth / 2)
     setPanel(true)
-  }
+  }, [])
+  // "Ask" on a selection where no composer is on the page: the panel takes the quote (gap #2).
+  const quote = useComposerQuote()
+  useDockPresence()
+  useEffect(() => {
+    if (quote && !composerMounted()) showPanel()
+  }, [quote, showPanel])
   const closePanel = useCallback(
     (seen: boolean) => {
       setPanel(false)
       setLitSources([])
+      if (!composerMounted()) quoteInComposer(null)
       sound("tap")
       // What was shown is caught up: the next catch me up starts from now.
       if (seen)

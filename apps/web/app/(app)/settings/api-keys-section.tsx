@@ -10,11 +10,12 @@ import {
 } from "@konkyo/ui/components/dialog"
 import { Input } from "@konkyo/ui/components/input"
 import { Skeleton } from "@konkyo/ui/components/skeleton"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { CheckIcon, CopyIcon } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 import { api } from "@/lib/fetcher"
+import { useQuery } from "@/lib/use-query"
 
 type Key = {
   id: string

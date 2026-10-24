@@ -53,78 +53,83 @@ export function SpaceWall({
   const { data: files } = useSpaceFiles(spaceId)
   const { data: pins } = usePins(spaceId)
   return (
-    <div className="space-board">
-      <section aria-label="Sources">
-        {pins?.length ? <PinnedAnswers spaceId={spaceId} pins={pins} /> : null}
-        <div className="board-label">
-          <span className="room-pill">sources · newest first</span>
-        </div>
-        {files?.length ? (
-          <ul className="space-masonry">
-            {files.map((file) => (
-              <li key={file.id}>
-                <WallObject file={file} />
-              </li>
-            ))}
-          </ul>
-        ) : files ? (
-          <div
-            className="board-note board-object tone-violet max-w-md cursor-default"
-            style={{ rotate: "-1.2deg" } as CSSProperties}
-          >
-            <span className="note-paper-backing" aria-hidden />
-            <span className="note-paper-sheet min-h-0!">
-              <span className="note-kicker">an empty wall</span>
-              <span className="note-text">
-                Drop files anywhere on this page, or press add: papers, links, videos, notes.
-              </span>
-            </span>
-            <span className="note-paper-tape" aria-hidden />
+    <div className="space-wall-frame">
+      <div className="space-board">
+        <section aria-label="Sources">
+          {pins?.length ? <PinnedAnswers spaceId={spaceId} pins={pins} /> : null}
+          <div className="board-label">
+            <span className="room-pill">sources · newest first</span>
           </div>
-        ) : null}
-      </section>
-      <aside aria-label="Inside this space" className="grid content-start gap-9">
-        {subfolders.length > 0 && (
-          <section aria-label="Folders">
-            <div className="board-label">
-              <span className="room-pill">folders inside</span>
-            </div>
-            <ul className="grid gap-5">
-              {subfolders.map((folder) => (
-                <li key={folder.id}>
-                  <Link
-                    href={`/library/folders/${folder.id}` as Route}
-                    onClick={() => sound("tap")}
-                    className="board-manila board-object"
-                    style={{ rotate: tiltFor(folder.id, 300) } as CSSProperties}
-                  >
-                    <span className="board-manila-tab" aria-hidden />
-                    <strong>{folder.name.toLowerCase()}</strong>
-                    <span>
-                      {folder.fileCount} file{folder.fileCount === 1 ? "" : "s"}
-                    </span>
-                  </Link>
+          {files?.length ? (
+            <ul className="space-masonry">
+              {files.map((file) => (
+                <li key={file.id}>
+                  <WallObject file={file} />
                 </li>
               ))}
             </ul>
-          </section>
-        )}
-        {files?.length ? (
-          <section aria-label="Listen" className="surface-sticker board-sticker-card relative p-5">
-            <span className="board-pin" aria-hidden />
-            <p className="font-display text-[19px] font-extrabold tracking-[-0.02em] text-white">
-              listen to this space
-            </p>
-            <p className="mt-1.5 text-[13px] text-room-muted">
-              A two-voice audio brief, every claim from these sources.
-            </p>
-            <ListenCard
-              spaceId={spaceId}
-              ready={Boolean(files?.some((f) => f.status === "ready"))}
-            />
-          </section>
-        ) : null}
-      </aside>
+          ) : files ? (
+            <div
+              className="board-note board-object tone-violet max-w-md cursor-default"
+              style={{ rotate: "-1.2deg" } as CSSProperties}
+            >
+              <span className="note-paper-backing" aria-hidden />
+              <span className="note-paper-sheet min-h-0!">
+                <span className="note-kicker">an empty wall</span>
+                <span className="note-text">
+                  Drop files anywhere on this page, or press add: papers, links, videos, notes.
+                </span>
+              </span>
+              <span className="note-paper-tape" aria-hidden />
+            </div>
+          ) : null}
+        </section>
+        <aside aria-label="Inside this space" className="grid content-start gap-9">
+          {subfolders.length > 0 && (
+            <section aria-label="Folders">
+              <div className="board-label">
+                <span className="room-pill">folders inside</span>
+              </div>
+              <ul className="grid gap-5">
+                {subfolders.map((folder) => (
+                  <li key={folder.id}>
+                    <Link
+                      href={`/library/folders/${folder.id}` as Route}
+                      onClick={() => sound("tap")}
+                      className="board-manila board-object"
+                      style={{ rotate: tiltFor(folder.id, 300) } as CSSProperties}
+                    >
+                      <span className="board-manila-tab" aria-hidden />
+                      <strong>{folder.name.toLowerCase()}</strong>
+                      <span>
+                        {folder.fileCount} file{folder.fileCount === 1 ? "" : "s"}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+          {files?.length ? (
+            <section
+              aria-label="Listen"
+              className="surface-sticker board-sticker-card relative p-5"
+            >
+              <span className="board-pin" aria-hidden />
+              <p className="font-display text-[19px] font-extrabold tracking-[-0.02em] text-white">
+                listen to this space
+              </p>
+              <p className="mt-1.5 text-[13px] text-room-muted">
+                A two-voice audio brief, every claim from these sources.
+              </p>
+              <ListenCard
+                spaceId={spaceId}
+                ready={Boolean(files?.some((f) => f.status === "ready"))}
+              />
+            </section>
+          ) : null}
+        </aside>
+      </div>
     </div>
   )
 }

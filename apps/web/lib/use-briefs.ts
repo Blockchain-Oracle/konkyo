@@ -1,9 +1,10 @@
 "use client"
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import type { Route } from "next"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import { useQuery } from "@/lib/use-query"
 import { api } from "./fetcher"
 
 export type BriefSummary = {

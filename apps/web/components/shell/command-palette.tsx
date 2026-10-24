@@ -9,7 +9,6 @@ import {
   CommandItem,
   CommandList,
 } from "@konkyo/ui/components/command"
-import { useQuery } from "@tanstack/react-query"
 import {
   BotIcon,
   DownloadCloudIcon,
@@ -36,6 +35,7 @@ import { openFile } from "@/lib/preview"
 import { sortChats, useChats } from "@/lib/use-chats"
 import { useFolders } from "@/lib/use-folders"
 import { useFileActions, useFiles } from "@/lib/use-library"
+import { useQuery } from "@/lib/use-query"
 import { openConnectorImport, openImport, openNewFolder } from "./app-dialogs"
 
 const GO_TO = [...MAIN_NAV, ...FOOTER_NAV]

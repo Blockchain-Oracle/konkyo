@@ -896,3 +896,54 @@
   font-size: 15px;
   line-height: 1.6;
 }
+
+/* Konkyo: a passage chosen with "Ask" on a selection, waiting above the panel's composer. */
+.recap-quote {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  border-left: 3px solid var(--color-lime);
+  border-radius: 4px 10px 10px 4px;
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 12.5px;
+  line-height: 1.45;
+  padding: 8px 8px 8px 11px;
+}
+.recap-quote > span {
+  flex: 1;
+}
+.recap-quote em {
+  display: block;
+  margin-top: 3px;
+  color: rgba(255, 255, 255, 0.66);
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 700;
+}
+.action-dock .recap-quote button {
+  display: grid;
+  width: 22px;
+  min-height: 22px;
+  height: 22px;
+  place-items: center;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 13px;
+}
+.recap-quote.is-sent {
+  max-width: 100%;
+  border-left-color: rgba(0, 0, 0, 0.35);
+  background: rgba(201, 255, 61, 0.14);
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 11.5px;
+}
+
+/* Konkyo: a starter is a whole question from your sources; it wraps rather than running off. */
+.action-dock .recap-starter {
+  max-width: 100%;
+  white-space: normal;
+  text-align: left;
+  line-height: 1.35;
+}

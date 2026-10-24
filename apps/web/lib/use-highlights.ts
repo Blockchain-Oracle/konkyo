@@ -1,7 +1,8 @@
 "use client"
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
+import { useQuery } from "@/lib/use-query"
 import { api } from "./fetcher"
 import type { Highlight } from "./highlights"
 import { qk } from "./query-keys"

@@ -1,8 +1,9 @@
 "use client"
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useMemo } from "react"
 import { toast } from "sonner"
+import { useQuery } from "@/lib/use-query"
 import { api } from "./fetcher"
 import type { FolderRow } from "./folders"
 import { qk } from "./query-keys"

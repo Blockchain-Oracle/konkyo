@@ -2,7 +2,7 @@
 
 import { Button } from "@konkyo/ui/components/button"
 import { Skeleton } from "@konkyo/ui/components/skeleton"
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { useMutation } from "@tanstack/react-query"
 import { NotebookPenIcon, PlusIcon } from "lucide-react"
 import type { Route } from "next"
 import Link from "next/link"
@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { EmptyState } from "@/components/empty-state"
 import { api } from "@/lib/fetcher"
+import { useQuery } from "@/lib/use-query"
 
 type NoteRow = { id: string; title: string; words: number; updatedAt: string; excerpt: string }
 

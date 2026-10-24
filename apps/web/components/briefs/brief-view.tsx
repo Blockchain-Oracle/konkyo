@@ -4,7 +4,7 @@ import type { Citation } from "@konkyo/agents"
 import { BRIEF } from "@konkyo/config"
 import { Button } from "@konkyo/ui/components/button"
 import { cn } from "@konkyo/ui/lib/utils"
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { useMutation } from "@tanstack/react-query"
 import {
   DownloadIcon,
   PauseIcon,
@@ -22,6 +22,7 @@ import { CitationChip } from "@/components/chat/citation-chip"
 import { MobileHeader } from "@/components/page-header"
 import type { Brief } from "@/lib/briefs"
 import { api } from "@/lib/fetcher"
+import { useQuery } from "@/lib/use-query"
 
 const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`
 const RATES = [1, 1.25, 1.5, 2, 0.75] as const

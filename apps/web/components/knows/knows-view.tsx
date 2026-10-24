@@ -3,7 +3,7 @@
 import type { FileKind } from "@konkyo/config"
 import { deepen } from "@konkyo/ui/lib/space"
 import { cn } from "@konkyo/ui/lib/utils"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import type { Route } from "next"
 import Link from "next/link"
 import { type CSSProperties, useState } from "react"
@@ -15,6 +15,7 @@ import { openSource } from "@/lib/preview"
 import { qk } from "@/lib/query-keys"
 import { sound } from "@/lib/sounds"
 import { type MemoryItem, useMemoryActions } from "@/lib/use-memories"
+import { useQuery } from "@/lib/use-query"
 
 const TOLD_CHARS = 240
 const STANCE_WORD = { agrees: "agrees", partly: "partly", disagrees: "disagrees" } as const

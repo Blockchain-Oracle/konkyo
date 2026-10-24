@@ -567,7 +567,11 @@ button.board-object:hover,
   align-items: start;
   gap: 44px;
 }
-@media (max-width: 1100px) {
+/* The wall folds by the room it has (a source pane open beside it narrows it), not the window. */
+.space-wall-frame {
+  container: wall / inline-size;
+}
+@container wall (max-width: 860px) {
   .space-board {
     grid-template-columns: minmax(0, 1fr);
   }

@@ -1,8 +1,9 @@
 "use client"
 
 import { LIBRARY } from "@konkyo/config"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
+import { useQuery } from "@/lib/use-query"
 import { api } from "./fetcher"
 import type { LibraryFile } from "./library"
 import { qk } from "./query-keys"

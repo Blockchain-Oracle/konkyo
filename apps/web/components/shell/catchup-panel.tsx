@@ -3,7 +3,7 @@
 import type { KonkyoMessage } from "@konkyo/agents"
 import type { FileKind } from "@konkyo/config"
 import { cn } from "@konkyo/ui/lib/utils"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useQueryClient } from "@tanstack/react-query"
 import type { Route } from "next"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -12,12 +12,19 @@ import { flushSync } from "react-dom"
 import { AnswerText } from "@/components/chat/answer-text"
 import { LitSource } from "@/components/chat/citation-chip"
 import type { Catchup, CatchupChip, CatchupLine } from "@/lib/catchup"
+import {
+  composerMounted,
+  type QuotedPassage,
+  quoteInComposer,
+  useComposerQuote,
+} from "@/lib/composer-draft"
 import { api } from "@/lib/fetcher"
 import { setLitSources } from "@/lib/lit-sources"
 import { partsOf } from "@/lib/message-parts"
 import { openFile } from "@/lib/preview"
 import { qk } from "@/lib/query-keys"
 import { sound } from "@/lib/sounds"
+import { useQuery } from "@/lib/use-query"
 
 /** OurSpaces' pacing (src/data/recap.ts): a line lands every 300 ms. */
 const LINE_MS = 300
@@ -49,7 +56,7 @@ type Chat = {
   messages: KonkyoMessage[]
   running: boolean
   error: Error | undefined
-  send: (text: string) => void
+  send: (text: string, quote?: QuotedPassage) => void
   chatId: string
 }
 
@@ -145,12 +152,16 @@ export function CatchupPanel({
     }
   }
 
+  // A passage chosen with "Ask" on a selection, when no composer is on the page.
+  const shared = useComposerQuote()
+  const quote = shared && !composerMounted() ? shared : null
   const ask = (text: string) => {
     const question = text.trim()
     if (!question || chat.running) return
     setDraft("")
     sound("place")
-    chat.send(question)
+    chat.send(question, quote ?? undefined)
+    if (quote) quoteInComposer(null)
   }
   const onSubmit = (event: FormEvent) => {
     event.preventDefault()
@@ -248,6 +259,14 @@ export function CatchupPanel({
               m.role === "user" ? (
                 <li key={m.id} className="is-you">
                   <b>you</b>
+                  {m.parts.map((p) =>
+                    p.type === "data-quote" ? (
+                      <span key="quote" className="recap-quote is-sent">
+                        about “{p.data.text.slice(0, 120)}
+                        {p.data.text.length > 120 ? "…" : ""}”
+                      </span>
+                    ) : null,
+                  )}
                   <p>{m.parts.flatMap((p) => (p.type === "text" ? [p.text] : [])).join(" ")}</p>
                 </li>
               ) : (
@@ -293,11 +312,28 @@ export function CatchupPanel({
         )}
       </div>
 
+      {quote && (
+        <div className="recap-quote">
+          <span>
+            about “{quote.text.slice(0, 160)}
+            {quote.text.length > 160 ? "…" : ""}”
+            <em>
+              {quote.title}
+              {quote.page ? ` · p. ${quote.page}` : ""}
+            </em>
+          </span>
+          <button type="button" onClick={() => quoteInComposer(null)} aria-label="Remove the quote">
+            ×
+          </button>
+        </div>
+      )}
       <form className="recap-composer" onSubmit={onSubmit}>
         <input
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
-          placeholder={here ? "ask this space" : "ask your library"}
+          placeholder={
+            quote ? "ask about this passage" : here ? "ask this space" : "ask your library"
+          }
           aria-label={here ? "Ask this space" : "Ask your library"}
           disabled={chat.running}
           maxLength={500}

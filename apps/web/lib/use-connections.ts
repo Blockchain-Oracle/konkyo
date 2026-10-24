@@ -1,8 +1,9 @@
 "use client"
 
 import type { Toolkit } from "@konkyo/connectors"
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
+import { useQuery } from "@/lib/use-query"
 import { api } from "./fetcher"
 import { qk } from "./query-keys"
 

@@ -11,13 +11,14 @@ import {
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { quoteInComposer } from "@/lib/composer-draft"
+import { quoteInComposer, quoteTaker } from "@/lib/composer-draft"
 import { api } from "@/lib/fetcher"
 import { useHighlightActions } from "@/lib/use-highlights"
 
 /**
  * The pill over a text selection in a source (plan F08, Matter's pattern): short text labels,
- * placed above the selection unless there is no room. Ask hands the quote to the composer.
+ * placed above the selection unless there is no room. Ask hands the quote to the composer, or to
+ * the dock's panel where the page has none.
  */
 export function SelectionToolbar({
   menuWrapperProps,
@@ -42,7 +43,8 @@ export function SelectionToolbar({
     if (!text) return
     quoteInComposer({ fileId, title, page: context.pageIndex + 1, text })
     scope?.clear()
-    router.push("/home")
+    // Asked in place: the page's composer or the dock's panel takes it; else Home's composer.
+    if (!quoteTaker()) router.push("/home")
   }
   // Make flashcard (F08): the Tutor asks about the selection; the Verifier and Zetaris check it.
   const flashcard = async () => {
@@ -107,7 +109,8 @@ export function SelectionToolbar({
         role="toolbar"
         aria-label="Selected text"
         className={cn(
-          "absolute left-1/2 flex -translate-x-1/2 items-center gap-0.5 rounded-full border border-line-strong bg-raised p-1 shadow-[0_8px_24px_rgb(0_0_0/0.45)]",
+          // The viewer's menu wrapper sets pointer-events: none; the pill takes its clicks back.
+          "pointer-events-auto absolute left-1/2 flex -translate-x-1/2 items-center gap-0.5 rounded-full border border-line-strong bg-raised p-1 shadow-[0_8px_24px_rgb(0_0_0/0.45)]",
           "animate-in fade-in-0 zoom-in-95 duration-(--duration-tooltip)",
           above ? "bottom-[calc(100%+8px)] origin-bottom" : "top-[calc(100%+8px)] origin-top",
         )}

@@ -18,7 +18,12 @@ import {
 } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { FocusIcon, FocusPicker, MentionList, mentionMatches } from "@/components/chat/focus-picker"
-import { type QuotedPassage, quoteInComposer, useComposerQuote } from "@/lib/composer-draft"
+import {
+  type QuotedPassage,
+  quoteInComposer,
+  useComposerPresence,
+  useComposerQuote,
+} from "@/lib/composer-draft"
 import {
   type Focus,
   type FocusItem,
@@ -81,6 +86,7 @@ export function Composer({
   const picking = pickingProp ?? pickingState
   const setPicking = onPickingChange ?? setPickingState
   const quote = useComposerQuote()
+  useComposerPresence()
   const { pickFiles } = useUploads()
   const { data: libraryFiles } = useFiles()
   // Files attached with + (or picked) that are still being read: the question waits for them.

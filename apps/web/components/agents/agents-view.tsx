@@ -11,7 +11,7 @@ import {
 import { Skeleton } from "@konkyo/ui/components/skeleton"
 import { Spinner } from "@konkyo/ui/components/spinner"
 import { cn } from "@konkyo/ui/lib/utils"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useQueryClient } from "@tanstack/react-query"
 import {
   ChevronDownIcon,
   EllipsisIcon,
@@ -30,6 +30,7 @@ import { EmptyState } from "@/components/empty-state"
 import type { AgentView } from "@/lib/agents"
 import { api } from "@/lib/fetcher"
 import { focusOf } from "@/lib/focus"
+import { useQuery } from "@/lib/use-query"
 import { AgentDialog, type AgentDraft, BLANK } from "./agent-dialog"
 
 const when = (iso: string) =>

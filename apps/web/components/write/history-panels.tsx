@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@konkyo/ui/com
 import { Input } from "@konkyo/ui/components/input"
 import { Skeleton } from "@konkyo/ui/components/skeleton"
 import { cn } from "@konkyo/ui/lib/utils"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { EditorContent, useEditor } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 import {
@@ -19,6 +19,7 @@ import {
 import { useState } from "react"
 import { toast } from "sonner"
 import { api } from "@/lib/fetcher"
+import { useQuery } from "@/lib/use-query"
 import { Citation } from "./citation-node"
 
 type Version = { id: string; name: string | null; auto: boolean; words: number; createdAt: string }

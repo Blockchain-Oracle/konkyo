@@ -3,9 +3,9 @@
 import { Button } from "@konkyo/ui/components/button"
 import { Skeleton } from "@konkyo/ui/components/skeleton"
 import { cn } from "@konkyo/ui/lib/utils"
-import { useQuery } from "@tanstack/react-query"
 import { api } from "@/lib/fetcher"
 import type { UsageLine } from "@/lib/usage"
+import { useQuery } from "@/lib/use-query"
 
 /** The meter's state, carried by the fill colour and always said in words beside it. */
 function stateOf(line: UsageLine) {

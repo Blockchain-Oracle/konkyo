@@ -1,7 +1,7 @@
 "use client"
 
-import { useQuery } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
+import { useQuery } from "@/lib/use-query"
 import { api } from "./fetcher"
 import type { FileDetail, SourcePassage } from "./library"
 import { qk } from "./query-keys"

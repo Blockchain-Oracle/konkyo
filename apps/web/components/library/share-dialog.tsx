@@ -11,11 +11,12 @@ import {
 } from "@konkyo/ui/components/dialog"
 import { Input } from "@konkyo/ui/components/input"
 import { Textarea } from "@konkyo/ui/components/textarea"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { CopyIcon, ExternalLinkIcon, GlobeIcon } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 import { api } from "@/lib/fetcher"
+import { useQuery } from "@/lib/use-query"
 
 type Share = { slug: string; path: string; description: string | null; allowDownloads: boolean }
 

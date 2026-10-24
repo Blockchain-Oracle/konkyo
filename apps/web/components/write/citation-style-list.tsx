@@ -2,10 +2,10 @@
 
 import { Input } from "@konkyo/ui/components/input"
 import { cn } from "@konkyo/ui/lib/utils"
-import { useQuery } from "@tanstack/react-query"
 import { CheckIcon, SearchIcon } from "lucide-react"
 import { useEffect, useState } from "react"
 import { api } from "@/lib/fetcher"
+import { useQuery } from "@/lib/use-query"
 
 export type CitationStyle = { id: string; name: string }
 

@@ -2,10 +2,10 @@
 
 import { Button } from "@konkyo/ui/components/button"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@konkyo/ui/components/dialog"
-import { useQuery } from "@tanstack/react-query"
 import { useState } from "react"
 import { type CitationStyle, CitationStyleList } from "@/components/write/citation-style-list"
 import { api } from "@/lib/fetcher"
+import { useQuery } from "@/lib/use-query"
 import { useSettings } from "@/lib/use-settings"
 
 /** The default citation style for Word and Google Docs exports (F26, F42); Export can still change it. */

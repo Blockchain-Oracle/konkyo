@@ -4,9 +4,11 @@ import type { KonkyoMessage } from "@konkyo/agents"
 import { parseAnswer } from "@konkyo/agents/citations"
 import { Button } from "@konkyo/ui/components/button"
 import { LinkIcon, RotateCcwIcon, SearchXIcon, TelescopeIcon, UploadIcon } from "lucide-react"
+import { useEffect, useRef } from "react"
 import { useUploads } from "@/components/library/uploads-provider"
 import { openImport } from "@/components/shell/app-dialogs"
 import { partsOf } from "@/lib/message-parts"
+import { sound } from "@/lib/sounds"
 import { AgreeMatrix } from "./agree-matrix"
 import { AnswerText } from "./answer-text"
 import { CitedIn } from "./citation-chip"
@@ -41,6 +43,14 @@ export function AssistantMessage({
 }) {
   const { steps, draft, sources, final, receipt, notFound, matrix } = partsOf(message)
   const { pickFiles } = useUploads()
+  // The receipt lands with its sound (plan §16.5), once, while you watch it arrive.
+  const announced = useRef(false)
+  useEffect(() => {
+    if (receipt && running && !announced.current) {
+      announced.current = true
+      sound("check")
+    }
+  }, [receipt, running])
 
   if (message.parts.some((p) => p.type === "data-deep")) {
     return (

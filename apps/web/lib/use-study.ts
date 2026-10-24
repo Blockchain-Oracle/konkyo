@@ -1,9 +1,10 @@
 "use client"
 
 import type { StudyScope } from "@konkyo/db/schema"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useQueryClient } from "@tanstack/react-query"
 import type { Route } from "next"
 import { toast } from "sonner"
+import { useQuery } from "@/lib/use-query"
 import { api } from "./fetcher"
 import type { SetSummary, TodaySummary } from "./study"
 
