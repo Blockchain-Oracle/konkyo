@@ -23,7 +23,17 @@ export type SpaceRow = {
   cover: string | null
   /** The newest few polaroids, for the folder card's fanned pages. */
   thumbs: string[]
+  /** The newest sources (up to five), for the folder card's fan of files. */
+  recent: SpaceSource[]
   createdAt: string
+}
+
+export type SpaceSource = {
+  id: string
+  title: string
+  kind: string
+  pageCount: number | null
+  hasThumb: boolean
 }
 
 const thumbUrl = (fileId: string) => `/api/files/${fileId}/thumb`
@@ -44,28 +54,50 @@ export async function listSpaces(ownerId: string): Promise<SpaceRow[]> {
     cover_file_id: string | null
     created_at: string
     sources: number
-    thumbs: string[] | null
+    newest_thumb: string | null
+    recent: {
+      id: string
+      title: string
+      kind: string
+      page_count: number | null
+      has_thumb: boolean
+    }[]
   }>(sql`
+    with filed as (
+      select distinct sub.space_id, ff.file_id from file_folders ff
+        join folders sub on sub.id = ff.folder_id and sub.deleted_at is null
+       where sub.owner_id = ${ownerId}
+    )
     select f.id, f.name, f.color, f.wall, f.symbol, f.description, f.cover_kind, f.cover_file_id,
       f.created_at::text,
-      (select count(distinct ff.file_id)::int from file_folders ff
-         join folders sub on sub.id = ff.folder_id and sub.deleted_at is null
-         join files x on x.id = ff.file_id and x.deleted_at is null
-        where sub.space_id = f.id and x.kind <> 'note') as sources,
-      (select array_agg(t.id) from (
-         select distinct on (x.id) x.id, x.created_at from file_folders ff
-           join folders sub on sub.id = ff.folder_id and sub.deleted_at is null
-           join files x on x.id = ff.file_id and x.deleted_at is null and x.thumb_key is not null
-          where sub.space_id = f.id
-          order by x.id, x.created_at desc
-       ) t limit 5) as thumbs
+      (select count(*)::int from filed
+         join files x on x.id = filed.file_id and x.deleted_at is null
+        where filed.space_id = f.id and x.kind <> 'note') as sources,
+      (select x.id from filed
+         join files x on x.id = filed.file_id and x.deleted_at is null and x.thumb_key is not null
+        where filed.space_id = f.id
+        order by x.created_at desc limit 1) as newest_thumb,
+      (select coalesce(json_agg(t order by t.created_at desc), '[]'::json) from (
+         select x.id, x.title, x.kind, x.page_count, (x.thumb_key is not null) as has_thumb,
+           x.created_at
+         from filed join files x on x.id = filed.file_id and x.deleted_at is null
+         where filed.space_id = f.id
+         order by x.created_at desc limit 5
+       ) t) as recent
     from folders f
     where f.owner_id = ${ownerId} and f.parent_id is null and f.deleted_at is null
     order by f.created_at
   `)
   return rows.map((r) => {
     const color = r.color ?? hashedColor(r.id)
-    const thumbs = (r.thumbs ?? []).map(thumbUrl)
+    const recent: SpaceSource[] = (r.recent ?? []).map((x) => ({
+      id: x.id,
+      title: x.title,
+      kind: x.kind,
+      pageCount: x.page_count,
+      hasThumb: x.has_thumb,
+    }))
+    const thumbs = recent.filter((x) => x.hasThumb).map((x) => thumbUrl(x.id))
     return {
       id: r.id,
       name: r.name,
@@ -78,8 +110,11 @@ export async function listSpaces(ownerId: string): Promise<SpaceRow[]> {
       cover:
         r.cover_kind === "file" && r.cover_file_id
           ? thumbUrl(r.cover_file_id)
-          : (thumbs[0] ?? null),
+          : r.newest_thumb
+            ? thumbUrl(r.newest_thumb)
+            : null,
       thumbs,
+      recent,
       createdAt: r.created_at,
     }
   })

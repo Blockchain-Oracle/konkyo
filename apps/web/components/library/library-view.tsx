@@ -53,6 +53,7 @@ import { useStudyActions } from "@/lib/use-study"
 import { filesFromDrop } from "@/lib/use-uploader"
 import { BulkBar } from "./bulk-bar"
 import { FileRow } from "./file-row"
+import { SpaceShelf } from "./space-shelf"
 import { SpaceWall } from "./space-wall"
 import { useUploads } from "./uploads-provider"
 
@@ -276,6 +277,7 @@ export function LibraryView({ folderId, space = false }: { folderId?: string; sp
         }
       />
 
+      {!folderId && <SpaceShelf />}
       {view === "wall" && folderId ? (
         <SpaceWall spaceId={folderId} subfolders={subfolders} />
       ) : (

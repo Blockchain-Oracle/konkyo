@@ -1,8 +1,7 @@
 "use client"
 
-import { SPACES } from "@konkyo/config"
 import { Button } from "@konkyo/ui/components/button"
-import { readableInk, tiltFor } from "@konkyo/ui/lib/space"
+import { tiltFor } from "@konkyo/ui/lib/space"
 import type { Route } from "next"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -10,10 +9,10 @@ import type { CSSProperties } from "react"
 import { FileStatus } from "@/components/library/file-status"
 import { KIND_LABEL } from "@/components/library/kind-icon"
 import { SourceFace } from "@/components/library/source-face"
+import { SpaceShelf } from "@/components/library/space-shelf"
 import { useUploads } from "@/components/library/uploads-provider"
 import { RoomHeader } from "@/components/page-shell"
 import { openNewFolder } from "@/components/shell/app-dialogs"
-import { spaceHref } from "@/components/shell/rail"
 import { TodayCard } from "@/components/study/today-card"
 import { authClient } from "@/lib/auth-client"
 import { WHOLE_LIBRARY } from "@/lib/focus"
@@ -23,7 +22,7 @@ import { sound } from "@/lib/sounds"
 import { sortChats, useChats } from "@/lib/use-chats"
 import type { LibraryFile } from "@/lib/use-library"
 import { useFiles } from "@/lib/use-library"
-import { type SpaceRow, useSpaceList } from "@/lib/use-spaces"
+import { useSpaceList } from "@/lib/use-spaces"
 import { useSuggestions } from "@/lib/use-suggestions"
 import { HomeComposer } from "./home-composer"
 
@@ -33,7 +32,7 @@ const DOODLES = ["✦", "?", "☾", "✿"]
 /**
  * Home is a room (OurSpaces' space, on the blush wall): your name huge, black sticker counts, and
  * a board of paper objects that arranges itself — the ask sheet, today's review pinned beside it,
- * your spaces as polaroids of their real first pages, questions your sources can answer as torn
+ * your spaces as folders holding their real first pages, questions your sources can answer as torn
  * notes, what landed last, and the chats to pick up again.
  */
 export function HomeRoom() {
@@ -86,82 +85,13 @@ export function HomeRoom() {
           <Chats />
         </div>
 
-        <Spaces spaces={spaces} />
+        <div className="board-area-spaces">
+          <SpaceShelf width={260} />
+        </div>
         <Notes ready={files?.some((f) => f.status === "ready") ?? false} />
         <Recent files={files} />
       </div>
     </div>
-  )
-}
-
-/** Your spaces as polaroids: each one's real first page (or its colour and glyph), taped up. */
-function Spaces({ spaces }: { spaces: SpaceRow[] | undefined }) {
-  return (
-    <section aria-label="Your spaces" className="board-area-spaces">
-      <div className="board-label">
-        <span className="room-pill">your spaces</span>
-        {spaces?.length ? (
-          <Link href="/library" className="room-pill hover:bg-ink">
-            all of the library ↗
-          </Link>
-        ) : null}
-      </div>
-      <div className="board-polaroids">
-        {spaces?.map((space) => {
-          const hex = SPACES.colors[space.color].hex
-          return (
-            <Link
-              key={space.id}
-              href={spaceHref(space.id)}
-              onClick={() => sound("tap")}
-              className="board-polaroid board-object"
-              style={{ rotate: tiltFor(space.id, 200) } as CSSProperties}
-            >
-              <span className="photo-tape photo-tape-left" aria-hidden />
-              <span className="photo-tape photo-tape-right" aria-hidden />
-              {space.cover ? (
-                // biome-ignore lint/performance/noImgElement: same-origin webp thumbs, already sized
-                <img src={space.cover} alt="" loading="lazy" />
-              ) : (
-                <span
-                  className="polaroid-blank"
-                  style={{ background: hex, color: readableInk(hex) }}
-                  aria-hidden
-                >
-                  {`${space.symbol}︎`}
-                </span>
-              )}
-              <figcaption>
-                <strong>{space.name.toLowerCase()}</strong>
-                <span>
-                  {space.sources} source{space.sources === 1 ? "" : "s"}
-                </span>
-              </figcaption>
-              <span
-                className="polaroid-dot"
-                style={{ background: hex, color: readableInk(hex) }}
-                aria-hidden
-              >
-                {`${space.symbol}︎`}
-              </span>
-            </Link>
-          )
-        })}
-        <button
-          type="button"
-          className="board-polaroid board-object is-new"
-          onClick={() => {
-            sound("tap")
-            openNewFolder(null)
-          }}
-        >
-          <span>
-            <b aria-hidden>+</b>
-            make a space
-          </span>
-        </button>
-      </div>
-    </section>
   )
 }
 

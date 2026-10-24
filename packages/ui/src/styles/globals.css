@@ -4,6 +4,7 @@
 @import "./tokens.css";
 @import "./house.css";
 @import "./board.css";
+@import "./space-folder.css";
 
 /* The app is dark only: <html class="dark"> is permanent, so copied components' dark: variants apply. */
 @custom-variant dark (&:is(.dark *));
