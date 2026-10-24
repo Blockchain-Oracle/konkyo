@@ -10,12 +10,10 @@ import { FileStatus } from "@/components/library/file-status"
 import { KIND_LABEL } from "@/components/library/kind-icon"
 import { SourceFace } from "@/components/library/source-face"
 import { SpaceShelf } from "@/components/library/space-shelf"
-import { useUploads } from "@/components/library/uploads-provider"
 import { RoomHeader } from "@/components/page-shell"
 import { AddPicker } from "@/components/shell/add-picker"
 import { openNewFolder } from "@/components/shell/app-dialogs"
 import { TodayCard } from "@/components/study/today-card"
-import { authClient } from "@/lib/auth-client"
 import { WHOLE_LIBRARY } from "@/lib/focus"
 import { holdQuestion } from "@/lib/pending-question"
 import { openFile } from "@/lib/preview"
@@ -23,6 +21,7 @@ import { sound } from "@/lib/sounds"
 import { sortChats, useChats } from "@/lib/use-chats"
 import type { LibraryFile } from "@/lib/use-library"
 import { useFiles } from "@/lib/use-library"
+import { useMe } from "@/lib/use-me"
 import { useSpaceList } from "@/lib/use-spaces"
 import { useSuggestions } from "@/lib/use-suggestions"
 import { HomeComposer } from "./home-composer"
@@ -37,12 +36,12 @@ const DOODLES = ["✦", "?", "☾", "✿"]
  * notes, what landed last, and the chats to pick up again.
  */
 export function HomeRoom() {
-  const { data: session } = authClient.useSession()
+  const { me } = useMe()
   const { data: files } = useFiles()
   const { data: spaces } = useSpaceList()
-  const { pickFiles } = useUploads()
-  const user = session?.user as { name?: string; isAnonymous?: boolean } | undefined
-  const first = user && !user.isAnonymous ? user.name?.trim().split(/\s+/)[0] : undefined
+  // Guests have a name too now (the enter card); Better Auth's own "Anonymous" isn't one.
+  const named = me && me.name.trim() !== "Anonymous" ? me.name : undefined
+  const first = named?.trim().split(/\s+/)[0]
   const needYou = files?.filter((f) => f.status === "needs_you").length ?? 0
 
   return (

@@ -101,8 +101,10 @@ export async function speak(
   ownerId: string,
   text: string,
   who: "speaker" | "asker",
+  /** Konkyo's lines are said in the voice the person chose (the sounds popover). */
+  voiceId?: string,
 ): Promise<Clip> {
-  const voice = VOICE[who]
+  const voice = who === "speaker" && voiceId ? { id: voiceId } : VOICE[who]
   const said = text.replace(/\s+/g, " ").trim().slice(0, VOICE.maxSpeakChars)
   if (!said) throw new LibraryError("Nothing to read", 400)
   const hash = createHash("sha256")

@@ -23,7 +23,7 @@ import { api } from "@/lib/fetcher"
 import { setLitSources } from "@/lib/lit-sources"
 import { speakingLevel, useReading } from "@/lib/read-aloud"
 import { keytermsFrom } from "@/lib/scribe"
-import { interfaceSoundsOn, setInterfaceSounds, sound } from "@/lib/sounds"
+import { sound } from "@/lib/sounds"
 import { useQuery } from "@/lib/use-query"
 import {
   primeVoice,
@@ -34,6 +34,7 @@ import {
 } from "@/lib/voice"
 import { CatchupPanel, useCatchup } from "./catchup-panel"
 import { useCurrentSpaceId, useSpaces } from "./rail"
+import { SoundsMenu } from "./sounds-menu"
 
 /** Pages with their own composer or nothing to ask about don't show the dock (R2). */
 const NO_DOCK = [
@@ -158,7 +159,7 @@ function useStageExamples(spaceId: string | null, spaceName: string | null, want
  * and it lifts out of the dock into the voice stage (S16), where you talk and Konkyo builds what
  * you said (components/voice). The quiet "ask this space" beside it opens the say strip for typing
  * instead. ✦ opens catch me up, which is also where answers land (plan F48); the bubble is your
- * chats; ♪ turns interface sounds on or off.
+ * chats; ♪ opens the sounds menu (interface sounds, reading answers aloud, the voice).
  */
 export function Dock() {
   const spaceId = useCurrentSpaceId()
@@ -175,11 +176,9 @@ export function Dock() {
   const ai = useRef<HTMLButtonElement>(null)
   const [typing, setTyping] = useState(false)
   const [text, setText] = useState("")
-  const [soundOn, setSoundOn] = useState(true)
   const input = useRef<HTMLInputElement>(null)
   const seat = useRef<HTMLButtonElement>(null)
 
-  useEffect(() => setSoundOn(interfaceSoundsOn()), [])
   useEffect(() => {
     if (typing) input.current?.focus()
   }, [typing])
@@ -268,6 +267,12 @@ export function Dock() {
     setHint(wanted)
     if (wanted) setExamplesWanted(true)
   }, [])
+
+  // The coach slip folds when catch me up opens (orb-hint.tsx watches for this).
+  useEffect(() => {
+    document.body.classList.toggle("dock-menu-open", panel)
+    return () => document.body.classList.remove("dock-menu-open")
+  }, [panel])
 
   // "Ask" on a selection where no composer is on the page: the panel takes the quote (gap #2).
   const quote = useComposerQuote()
@@ -433,20 +438,7 @@ export function Dock() {
         </svg>
         <b className="action-dock-label">chats</b>
       </Link>
-      <button
-        type="button"
-        className={`action-dock-sound${soundOn ? "" : " is-muted"}`}
-        onClick={() => {
-          const next = !soundOn
-          setSoundOn(next)
-          setInterfaceSounds(next)
-        }}
-        aria-pressed={soundOn}
-        aria-label={soundOn ? "Mute interface sounds" : "Turn on interface sounds"}
-        title={soundOn ? "Mute sounds" : "Turn on sounds"}
-      >
-        <span aria-hidden="true">♪</span>
-      </button>
+      <SoundsMenu />
     </nav>
   )
 }

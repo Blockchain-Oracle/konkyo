@@ -72,6 +72,17 @@ export function interfaceSoundsOn() {
   return enabled
 }
 
+/** Takes the saved choice from the account (a new browser starts where the person left it). */
+export function adoptInterfaceSounds(on: boolean) {
+  if (enabled === on) return
+  enabled = on
+  try {
+    window.localStorage.setItem(SOUNDS.storageKey, on ? "on" : "off")
+  } catch {
+    // Private mode: the choice lasts for this page only.
+  }
+}
+
 export function setInterfaceSounds(on: boolean) {
   enabled = on
   try {

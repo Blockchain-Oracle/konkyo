@@ -1,8 +1,13 @@
 import "server-only"
+import { VOICE } from "@konkyo/config"
 import { db, schema } from "@konkyo/db"
 import { eq } from "drizzle-orm"
 
 const { userSettings } = schema
+
+/** A stored voice that's still on offer, else Konkyo's own. */
+export const voiceOf = (id: string | null | undefined) =>
+  VOICE.voices.find((voice) => voice.id === id)?.id ?? VOICE.speaker.id
 
 export type Settings = {
   autoImportSources: boolean
@@ -11,6 +16,12 @@ export type Settings = {
   dailyNew: number
   reviewReminders: boolean
   reminderHour: number
+  /** Taps, places and checks (§16.5). */
+  interfaceSounds: boolean
+  /** Konkyo says the short answer out loud after a spoken ask (S16). */
+  readAloud: boolean
+  /** The voice it answers in: one of VOICE.voices. */
+  voiceId: string
   /** First run is over (a starter chosen or skipped). */
   onboarded: boolean
 }
@@ -25,6 +36,9 @@ export async function getSettings(userId: string): Promise<Settings> {
     dailyNew: row?.dailyNew ?? 15,
     reviewReminders: row?.reviewReminders ?? true,
     reminderHour: row?.reminderHour ?? 18,
+    interfaceSounds: row?.interfaceSounds ?? true,
+    readAloud: row?.readAloud ?? true,
+    voiceId: voiceOf(row?.voiceId),
     onboarded: Boolean(row?.onboardedAt),
   }
 }

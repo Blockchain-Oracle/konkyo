@@ -1,0 +1,1 @@
+ALTER TABLE "folder_shares" ADD COLUMN "listed" boolean DEFAULT false NOT NULL;

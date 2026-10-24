@@ -15,6 +15,8 @@ export const folderShares = pgTable("folder_shares", {
   description: text(),
   /** Off by default: visitors read files in the viewer, without a download button. */
   allowDownloads: boolean().default(false).notNull(),
+  /** Shown under "public spaces" on the owner's page (/u/<handle>); a link stays unlisted until then. */
+  listed: boolean().default(false).notNull(),
   createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp({ withTimezone: true })
     .defaultNow()

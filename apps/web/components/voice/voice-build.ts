@@ -25,6 +25,7 @@ import { partsOf } from "@/lib/message-parts"
 import { openSource } from "@/lib/preview"
 import { qk } from "@/lib/query-keys"
 import { readAloud, shortAnswer, stopReading } from "@/lib/read-aloud"
+import type { Settings } from "@/lib/settings"
 import { sound } from "@/lib/sounds"
 import type { SpaceRow } from "@/lib/use-spaces"
 import type { useVoice, VoiceHooks } from "@/lib/voice"
@@ -659,43 +660,52 @@ export function useVoiceBuild(room: VoiceRoom): {
 
   /** After an answer lands in the panel: say the short answer, tape it to its source on the wall,
    *  open the passage, and keep listening for a follow-up. */
-  const afterAnswer = useCallback((run: Run) => {
-    const r = roomRef.current
-    const message = run.messageId ? r.chat.messages.find((m) => m.id === run.messageId) : null
-    if (!message) return
-    const { final } = partsOf(message)
-    if (!final) return
-    const said = shortAnswer(final.body, VOICE.shortAnswerChars)
-    const strongest = final.citations[0]
-    const voice = r.voice()
-    const onWall = Boolean(run.target && !run.target.panel)
-    // its own voice is not your next ask; yours over it is (barge-in)
-    voice?.listenOn(120_000, said.join(" "))
-    // on the wall: the short answer taped to its source, held while it reads (about 15
-    // characters a second) and a moment more; the full answer waits in the panel's thread
-    if (onWall && strongest)
-      tapeAnswer(
-        strongest.fileId,
-        said.join(" "),
-        beat("tapeHold") + said.join(" ").length * 65,
-        run.messageId,
-      )
-    void readAloud(run.messageId as string, said).then(() => {
-      // you talked over it: the new ask has the floor, nothing more happens for this one
-      if (current.current !== run) return
-      voice?.listenOn(beat("followUpListen"), null)
-      // then the passage it stands on opens on paper, with the highlighter
+  const afterAnswer = useCallback(
+    (run: Run) => {
+      const r = roomRef.current
+      const message = run.messageId ? r.chat.messages.find((m) => m.id === run.messageId) : null
+      if (!message) return
+      const { final } = partsOf(message)
+      if (!final) return
+      const said = shortAnswer(final.body, VOICE.shortAnswerChars)
+      const strongest = final.citations[0]
+      const voice = r.voice()
+      const onWall = Boolean(run.target && !run.target.panel)
+      // "read answers aloud" off (the sounds popover): it shows the short answer for as long as
+      // reading it would take, and the rest of the beat is the same
+      const spoken = queryClient.getQueryData<Settings>(["settings"])?.readAloud !== false
+      // its own voice is not your next ask; yours over it is (barge-in)
+      voice?.listenOn(120_000, spoken ? said.join(" ") : null)
+      // on the wall: the short answer taped to its source, held while it reads (about 15
+      // characters a second) and a moment more; the full answer waits in the panel's thread
       if (onWall && strongest)
-        openSource({
-          fileId: strongest.fileId,
-          title: strongest.title,
-          kind: strongest.kind as never,
-          passageId: strongest.passageId,
-          quote: strongest.quote,
-          cited: { messageId: run.messageId as string, n: strongest.n },
-        })
-    })
-  }, [])
+        tapeAnswer(
+          strongest.fileId,
+          said.join(" "),
+          beat("tapeHold") + said.join(" ").length * 65,
+          run.messageId,
+        )
+      const reading = spoken
+        ? readAloud(run.messageId as string, said)
+        : new Promise<void>((done) => setTimeout(done, said.join(" ").length * 65))
+      void reading.then(() => {
+        // you talked over it: the new ask has the floor, nothing more happens for this one
+        if (current.current !== run) return
+        voice?.listenOn(beat("followUpListen"), null)
+        // then the passage it stands on opens on paper, with the highlighter
+        if (onWall && strongest)
+          openSource({
+            fileId: strongest.fileId,
+            title: strongest.title,
+            kind: strongest.kind as never,
+            passageId: strongest.passageId,
+            quote: strongest.quote,
+            cited: { messageId: run.messageId as string, n: strongest.n },
+          })
+      })
+    },
+    [queryClient],
+  )
 
   /** A run's pipeline, by kind. Resolves when its card is complete (or it failed). */
   const runPipeline = useCallback(

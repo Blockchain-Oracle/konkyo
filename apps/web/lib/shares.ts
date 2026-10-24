@@ -34,6 +34,7 @@ export async function getShare(ownerId: string, folderId: string) {
         path: sharePath(share.slug),
         description: share.description,
         allowDownloads: share.allowDownloads,
+        listed: share.listed,
       }
     : null
 }
@@ -42,7 +43,7 @@ export async function getShare(ownerId: string, folderId: string) {
 export async function publishFolder(
   ownerId: string,
   folderId: string,
-  input: { description?: string | null; allowDownloads?: boolean },
+  input: { description?: string | null; allowDownloads?: boolean; listed?: boolean },
 ) {
   await ownFolder(ownerId, folderId)
   const description = input.description?.trim().slice(0, 500) || null
@@ -55,12 +56,14 @@ export async function publishFolder(
       slug: randomBytes(9).toString("base64url"),
       description,
       allowDownloads: input.allowDownloads ?? false,
+      listed: input.listed ?? false,
     })
     .onConflictDoUpdate({
       target: folderShares.folderId,
       set: {
         ...(input.description !== undefined ? { description } : {}),
         ...(input.allowDownloads !== undefined ? { allowDownloads: input.allowDownloads } : {}),
+        ...(input.listed !== undefined ? { listed: input.listed } : {}),
       },
     })
   return getShare(ownerId, folderId)
@@ -95,6 +98,7 @@ async function resolve(slug: string) {
       pageCount: files.pageCount,
       durationSeconds: files.durationSeconds,
       meta: files.meta,
+      thumbKey: files.thumbKey,
       createdAt: files.createdAt,
     })
     .from(files)
@@ -127,7 +131,11 @@ export async function openShare(slug: string) {
         pageCount: f.pageCount,
         durationSeconds: f.durationSeconds,
         byline: bylineOf(f.meta as FileMeta) ?? null,
+        thumbUrl: f.thumbKey ? `/api/public/${slug}/files/${f.id}/thumb` : null,
       })),
+    color: folder.color,
+    wall: folder.wall,
+    symbol: folder.symbol,
   }
 }
 
@@ -167,6 +175,13 @@ export async function publicFile(slug: string, fileId: string) {
           ? `${content}?download=1`
           : null,
   }
+}
+
+/** A shared file's polaroid key (page one, og:image or video thumbnail), if it has one. */
+export async function publicThumbKey(slug: string, fileId: string): Promise<string | null> {
+  await visibleFile(slug, fileId)
+  const [file] = await db.select({ key: files.thumbKey }).from(files).where(eq(files.id, fileId))
+  return file?.key ?? null
 }
 
 export async function publicPassages(slug: string, fileId: string, page?: number) {

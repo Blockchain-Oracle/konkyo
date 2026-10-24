@@ -10,7 +10,7 @@ import { sound } from "@/lib/sounds"
 import { useFolders } from "@/lib/use-folders"
 import { type SpaceRow, useSpaceList } from "@/lib/use-spaces"
 import { BrandMark } from "../brand-mark"
-import { AccountMenu, type ShellUser } from "./account-menu"
+import { type ShellUser, YouTile } from "../people/settings-card"
 import { openNewFolder } from "./app-dialogs"
 
 /** The space a page belongs to: `/spaces/:id`, or the top of the folder it shows. */
@@ -107,7 +107,7 @@ export function Rail({ user }: { user: ShellUser }) {
       </div>
 
       <div className="rail-you-wrap">
-        <AccountMenu user={user} />
+        <YouTile user={user} />
       </div>
     </aside>
   )

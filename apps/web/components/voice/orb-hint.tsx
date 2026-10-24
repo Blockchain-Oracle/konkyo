@@ -88,12 +88,14 @@ export function OrbHint({
     window.setTimeout(onGone, LEAVE_MS)
   }, [onGone])
 
-  /* The first ask, however it starts: the dock strip leaves idle, or the stage comes up. */
+  /* The first ask, however it starts: the dock strip leaves idle, or the stage comes up. Opening
+     anything else on the dock (the sounds menu, catch me up) folds it too: you've found the dock. */
   useEffect(() => {
     const dock = document.querySelector<HTMLElement>(".dock-voice")
     const check = () => {
       if (
         document.body.classList.contains("voice-stage-up") ||
+        document.body.classList.contains("dock-menu-open") ||
         (dock && !dock.classList.contains("is-idle"))
       )
         leave()

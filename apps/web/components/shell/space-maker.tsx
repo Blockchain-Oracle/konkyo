@@ -54,7 +54,7 @@ const PIECES: Record<Piece, { label: string; mini: React.ReactNode }> = {
   },
 }
 
-type Template = {
+export type Template = {
   id: string
   name: string
   color: SpaceColor
@@ -63,7 +63,7 @@ type Template = {
   line: string
 }
 
-const TEMPLATES: Template[] = [
+export const TEMPLATES: Template[] = [
   {
     id: "exam",
     name: "exam prep",
@@ -113,11 +113,22 @@ const SLOTS = [
   { left: 65, top: 28, width: 31, tilt: -1.3 },
 ]
 
-export function SpaceMaker({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function SpaceMaker({
+  open,
+  template,
+  onClose,
+}: {
+  open: boolean
+  /** Opens on this template (first-run Home's chooser); otherwise on the first. */
+  template?: string
+  onClose: () => void
+}) {
   const router = useRouter()
   const queryClient = useQueryClient()
   const dialogRef = useRef<HTMLDialogElement>(null)
-  const [picked, setPicked] = useState<Template>(TEMPLATES[0] ?? EMPTY)
+  const [picked, setPicked] = useState<Template>(
+    [...TEMPLATES, EMPTY].find((t) => t.id === template) ?? TEMPLATES[0] ?? EMPTY,
+  )
   const [color, setColor] = useState<SpaceColor>(picked.color)
   const [wall, setWall] = useState<SpaceWall | null>(null)
   const [symbol, setSymbol] = useState(picked.symbol)
@@ -210,6 +221,7 @@ export function SpaceMaker({ open, onClose }: { open: boolean; onClose: () => vo
         })
       }
       await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["settings"] }),
         queryClient.invalidateQueries({ queryKey: qk.spaces.list() }),
         queryClient.invalidateQueries({ queryKey: ["folders"] }),
         queryClient.invalidateQueries({ queryKey: ["agents"] }),

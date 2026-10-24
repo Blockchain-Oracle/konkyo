@@ -22,7 +22,7 @@ import { SpaceMaker } from "./space-maker"
 
 /** The app's small dialogs, opened from anywhere (Create menu, sidebar, rows, ⌘K). */
 type DialogState =
-  | { type: "new-folder"; parentId?: string | null }
+  | { type: "new-folder"; parentId?: string | null; template?: string }
   | { type: "rename-folder"; id: string; name: string }
   | { type: "import"; folderId?: string }
   | { type: "move-files"; ids: string[] }
@@ -38,6 +38,9 @@ const set = (next: DialogState) => {
 }
 
 export const openNewFolder = (parentId?: string | null) => set({ type: "new-folder", parentId })
+/** The space maker, opened on one of its templates (first-run Home's chooser). */
+export const openSpaceMaker = (template?: string) =>
+  set({ type: "new-folder", parentId: null, template })
 export const openRenameFolder = (id: string, name: string) =>
   set({ type: "rename-folder", id, name })
 export const openImport = (folderId?: string) => set({ type: "import", folderId })
@@ -64,8 +67,13 @@ export function AppDialogs() {
     <>
       {/* A new top-level folder is a space: it gets the space maker (F45). */}
       <SpaceMaker
-        key={dialog?.type === "new-folder" && !dialog.parentId ? "open" : "closed"}
+        key={
+          dialog?.type === "new-folder" && !dialog.parentId
+            ? `open-${dialog.template ?? ""}`
+            : "closed"
+        }
         open={dialog?.type === "new-folder" && !dialog.parentId}
+        template={dialog?.type === "new-folder" ? dialog.template : undefined}
         onClose={close}
       />
       <NameDialog

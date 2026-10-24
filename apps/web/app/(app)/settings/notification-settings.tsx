@@ -1,17 +1,19 @@
 "use client"
 
 import { Button } from "@konkyo/ui/components/button"
-import { Checkbox } from "@konkyo/ui/components/checkbox"
 import { Spinner } from "@konkyo/ui/components/spinner"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { api } from "@/lib/fetcher"
 import { pushState, turnOffPush, turnOnPush } from "@/lib/use-inbox"
 import { useSettings } from "@/lib/use-settings"
+import { SelectRow, SwitchRow } from "./setting-rows"
 
-const HOURS = Array.from({ length: 24 }, (_, h) => h)
 // 24-hour and locale-free, so the server's render and the browser's agree.
-const label = (h: number) => `${String(h).padStart(2, "0")}:00`
+const HOURS = Array.from({ length: 24 }, (_, h) => ({
+  value: String(h),
+  label: `${String(h).padStart(2, "0")}:00`,
+}))
 
 /**
  * Notifications (plan F41, F42): Web Push on this device (asked only on the person's click), and
@@ -41,11 +43,11 @@ export function NotificationSettings() {
     }
   }
   return (
-    <div className="divide-y divide-border border-y border-border">
-      <div className="flex flex-wrap items-center justify-between gap-3 py-4">
-        <p className="text-ui text-bone-white">
-          Notifications on this device
-          <span className="mt-0.5 block text-snippet text-ash-gray">
+    <div className="setting-rows">
+      <div className="setting-row">
+        <p className="setting-text">
+          <strong>Notifications on this device</strong>
+          <span>
             {push === "unsupported"
               ? "This browser can't receive them. On iPhone, add Konkyo to your Home Screen first."
               : push === "denied"
@@ -63,36 +65,22 @@ export function NotificationSettings() {
           {push === "on" ? "Turn off" : "Turn on"}
         </Button>
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-3 py-4">
-        <div className="flex items-start gap-3">
-          <Checkbox
-            id="review-reminders"
-            checked={data?.reviewReminders ?? true}
-            disabled={!data}
-            onCheckedChange={(on) => save.mutate({ reviewReminders: Boolean(on) })}
-            className="mt-0.5"
-          />
-          <label htmlFor="review-reminders" className="text-ui text-bone-white">
-            Daily review reminder
-            <span className="mt-0.5 block text-snippet text-ash-gray">
-              Only when cards are due and you haven't studied yet that day.
-            </span>
-          </label>
-        </div>
-        <select
-          aria-label="Reminder time"
-          value={data?.reminderHour ?? 18}
-          disabled={!data || data.reviewReminders === false}
-          onChange={(e) => save.mutate({ reminderHour: Number(e.target.value) })}
-          className="h-9 rounded-lg border border-border bg-raised px-2.5 text-ui text-bone-white disabled:opacity-50"
-        >
-          {HOURS.map((h) => (
-            <option key={h} value={h}>
-              {label(h)}
-            </option>
-          ))}
-        </select>
-      </div>
+      <SwitchRow
+        id="review-reminders"
+        title="Daily review reminder"
+        about="Only when cards are due and you haven't studied yet that day."
+        checked={data?.reviewReminders ?? true}
+        disabled={!data}
+        onChange={(on) => save.mutate({ reviewReminders: on })}
+      />
+      <SelectRow
+        title="Remind me at"
+        about="Your time of day."
+        value={String(data?.reminderHour ?? 18)}
+        options={HOURS}
+        disabled={!data || data.reviewReminders === false}
+        onChange={(h) => save.mutate({ reminderHour: Number(h) })}
+      />
     </div>
   )
 }

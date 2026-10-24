@@ -1,0 +1,1605 @@
+/*
+ * People: the enter card, looks, the settings card and your page (plan F53, F54).
+ * Ported from OurSpaces (https://github.com/thomasnguyen/ourspaces-app, src/index.css: the claim
+ * card, the entry gate, the look row, the settings sheet and #/me), MIT licence, Copyright (c)
+ * 2026 Thomas Nguyen. Rules already ported into house.css (.claim-done, .join-stamp, .rail-you,
+ * the faces inside looks) are not repeated here. Konkyo's own additions are marked.
+ */
+
+/* ---- The card ---- */
+.claim-card {
+  position: fixed;
+  z-index: 72;
+  display: flex;
+  width: 264px;
+  flex-direction: column;
+  gap: 14px;
+  border-radius: 20px;
+  background: var(--color-sticker);
+  box-shadow: 0 8px 0 rgba(45, 22, 31, 0.26);
+  color: white;
+  padding: 16px;
+}
+
+.claim-card.is-gate {
+  inset: 0;
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  height: fit-content;
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  margin: auto;
+  gap: 18px;
+  border-radius: 24px;
+  padding: 22px 20px 20px;
+  box-shadow: 0 10px 0 rgba(45, 22, 31, 0.28);
+  animation: claim-gate-in var(--dur-stage) var(--ease-pop) both;
+}
+
+.claim-card.is-leaving {
+  pointer-events: none;
+}
+
+@keyframes claim-gate-in {
+  from {
+    opacity: 0;
+    scale: 0.92;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+.entry-gate-scrim {
+  position: fixed;
+  z-index: 71;
+  inset: 0;
+  background: rgba(11, 11, 13, 0.45);
+  backdrop-filter: blur(3px);
+}
+
+.entry-gate-scrim.is-lifting {
+  pointer-events: none;
+  animation: gate-scrim-out var(--dur-stage) var(--ease-glide) 120ms both;
+}
+
+@keyframes gate-scrim-out {
+  to {
+    opacity: 0;
+  }
+}
+
+.claim-card-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.claim-card-heading > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.claim-card-kicker,
+.claim-picker-label,
+.claim-name-label {
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: normal;
+}
+
+.claim-card-heading strong {
+  color: white;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+
+.claim-card-heading > div > span:last-child {
+  color: var(--color-lime);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.claim-card-close {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  transition:
+    background 150ms ease-out,
+    scale 150ms ease-out;
+}
+
+.claim-card-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.claim-card-close:active {
+  scale: 0.94;
+}
+
+/* ---- Where you are, who's in ---- */
+.claim-room {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.claim-room-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.claim-room-name strong {
+  color: white;
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.claim-room-color {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  border-radius: 6px;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.18);
+  rotate: -8deg;
+}
+
+.claim-gate-note {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-wrap: balance;
+}
+
+.claim-room-here {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.claim-room-here > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.claim-room-here i {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--color-lime);
+  animation: gate-live-dot 1.8s ease-in-out infinite;
+}
+
+@keyframes gate-live-dot {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.claim-room-faces {
+  display: flex;
+  align-items: center;
+}
+
+.claim-room-faces > * + * {
+  margin-left: -8px;
+}
+
+/* ---- Your name ---- */
+.claim-name-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.claim-name-input {
+  width: 100%;
+  min-height: 38px;
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  outline: 0;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  padding: 8px 10px;
+  font-size: 14px;
+  font-weight: 700;
+  transition:
+    border-color 150ms ease-out,
+    background 150ms ease-out;
+}
+
+.claim-name-input:focus {
+  border-color: var(--color-lime);
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.claim-name-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.claim-card.is-gate .claim-name-label {
+  gap: 8px;
+}
+
+.claim-card.is-gate .claim-name-input {
+  min-height: 54px;
+  border-radius: 16px;
+  padding: 10px 16px;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.claim-card.is-gate .claim-name-input::selection {
+  background: var(--color-lime);
+  color: var(--color-sticker);
+}
+
+/* ---- Looks ---- */
+.claim-picker-section {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.claim-look-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  justify-items: center;
+  gap: 22px 12px;
+  padding: 5px 0 17px;
+}
+
+.claim-look {
+  position: relative;
+  display: grid;
+  width: 100%;
+  max-width: 58px;
+  min-width: 0;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  padding: 4px;
+  cursor: pointer;
+  transition:
+    scale var(--dur-quick) var(--ease-glide),
+    opacity var(--dur-quick) var(--ease-glide);
+}
+
+.claim-look:hover {
+  scale: 1.1;
+}
+
+.claim-look.is-selected {
+  z-index: 1;
+  scale: 1.14;
+}
+
+.claim-look:focus-visible {
+  outline: 2px solid var(--color-lime);
+  outline-offset: 2px;
+}
+
+.claim-card:has(.claim-look.is-selected) .claim-look:not(.is-selected):not(:hover),
+.settings-sheet:has(.claim-look.is-selected) .claim-look:not(.is-selected):not(:hover) {
+  opacity: 0.64;
+}
+
+.claim-look-selected {
+  position: absolute;
+  bottom: -11px;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  transform: translateX(-50%);
+  border: 2px solid var(--color-sticker);
+  border-radius: var(--radius-pill);
+  background: var(--color-lime);
+  color: var(--color-sticker);
+  padding: 2px 5px;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+@keyframes claim-look-pop {
+  from {
+    scale: 0.84;
+  }
+  to {
+    scale: 1;
+  }
+}
+
+.claim-look-photo:not(.has-photo) .claim-look-photo-slot {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  border: 1.5px dashed rgba(255, 255, 255, 0.42);
+  border-radius: 50%;
+  color: var(--color-lime);
+  transition:
+    border-color var(--dur-quick) var(--ease-glide),
+    background var(--dur-quick) var(--ease-glide),
+    color var(--dur-quick) var(--ease-glide);
+}
+
+.claim-look-photo-slot svg {
+  width: 22px;
+  height: 22px;
+}
+
+.claim-look-photo-slot small {
+  position: absolute;
+  bottom: -11px;
+  left: 50%;
+  border: 2px solid var(--color-sticker);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.16);
+  color: white;
+  padding: 2px 6px;
+  font-family: var(--font-sans);
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  transition:
+    background var(--dur-quick) var(--ease-glide),
+    color var(--dur-quick) var(--ease-glide);
+}
+
+.claim-look-photo:hover .claim-look-photo-slot {
+  border-color: transparent;
+  background: var(--color-lime);
+  color: var(--color-sticker);
+}
+
+.claim-look-photo:hover .claim-look-photo-slot small {
+  background: var(--color-lime);
+  color: var(--color-sticker);
+}
+
+/* A face with no picture wears its initial on a colour (OurSpaces' identity chip). */
+.identity-chip {
+  display: inline-grid;
+  place-items: center;
+  background-image: none !important;
+  background-size: auto;
+  color: #111114;
+  font-size: 0.95em;
+  line-height: 1;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.32);
+}
+
+/* ---- The quiet second way in ---- */
+.claim-card.is-gate .claim-done {
+  min-height: 50px;
+  font-size: 15px;
+}
+
+.claim-card .claim-done:disabled {
+  cursor: default;
+  opacity: 0.6;
+  translate: none;
+}
+
+.claim-join-link {
+  border: 0;
+  background: none;
+  padding: 2px 0 0;
+  color: rgba(255, 255, 255, 0.62);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color var(--dur-quick) var(--ease-glide);
+}
+
+.claim-join-link:hover {
+  color: var(--color-lime);
+}
+
+.claim-join-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 14px;
+}
+
+.claim-joined-note {
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Konkyo: Google's own mark on the dark card, the one kept-account door until email codes. */
+.join-google {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  border-radius: var(--radius-pill);
+  background: white;
+  color: #1f1f1f;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 700;
+  transition: translate var(--dur-quick) var(--ease-glide);
+}
+
+.join-google:hover {
+  translate: 0 -2px;
+}
+
+.join-google:disabled {
+  cursor: default;
+  opacity: 0.6;
+  translate: none;
+}
+
+.join-form-error {
+  color: #ffb4a9;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* ---- The settings card, off the rail ---- */
+/* Konkyo: above the dock and the coach slip (70), which the phone sheet would otherwise sit under. */
+.settings-scrim {
+  position: fixed;
+  z-index: 79;
+  inset: 0;
+}
+
+.settings-sheet {
+  position: fixed;
+  z-index: 80;
+  top: 20px;
+  left: 112px;
+  display: flex;
+  width: 296px;
+  max-height: calc(100dvh - 40px);
+  flex-direction: column;
+  gap: 16px;
+  overflow: auto;
+  border-radius: 24px;
+  background: var(--color-sticker);
+  box-shadow:
+    0 8px 0 rgba(45, 22, 31, 0.26),
+    0 30px 60px -24px rgba(0, 0, 0, 0.6);
+  color: white;
+  padding: 18px;
+  rotate: 0.6deg;
+  transform-origin: bottom left;
+  animation: settings-sheet-in var(--dur-arrive) var(--ease-pop) both;
+}
+
+@keyframes settings-sheet-in {
+  from {
+    opacity: 0;
+    translate: -18px 10px;
+    scale: 0.96;
+  }
+}
+
+.settings-heading strong {
+  color: white;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.settings-you {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.settings-face {
+  position: relative;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  transition: scale var(--dur-quick) var(--ease-glide);
+}
+
+.settings-face:hover {
+  scale: 1.06;
+}
+
+.settings-face.is-busy {
+  opacity: 0.6;
+}
+
+.settings-face-hint {
+  position: absolute;
+  right: -4px;
+  bottom: -2px;
+  border: 2px solid var(--color-sticker);
+  border-radius: var(--radius-pill);
+  background: var(--color-lime);
+  color: var(--color-sticker);
+  padding: 2px 6px;
+  font-family: var(--font-sans);
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.settings-name {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.settings-name .claim-name-input {
+  min-height: 44px;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.settings-sheet .claim-look-row {
+  padding-bottom: 4px;
+}
+
+.settings-account {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 14px;
+}
+
+.settings-account-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.settings-account-email {
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.settings-account-email strong {
+  color: white;
+}
+
+.settings-keep {
+  align-self: flex-start;
+}
+
+.settings-signout {
+  align-self: flex-start;
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.72);
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  transition:
+    border-color var(--dur-quick) var(--ease-glide),
+    color var(--dur-quick) var(--ease-glide);
+}
+
+.settings-signout:hover {
+  border-color: white;
+  color: white;
+}
+
+.settings-me-link {
+  align-self: flex-end;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color var(--dur-quick) var(--ease-glide);
+}
+
+.settings-me-link:hover {
+  color: var(--color-lime);
+}
+
+/* Konkyo: your page's handle and bio inside the card, and the card's ways out. */
+.settings-page-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.settings-handle {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.settings-handle > span {
+  position: absolute;
+  left: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.settings-handle .claim-name-input {
+  padding-left: 25px;
+}
+
+.settings-handle-note {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.settings-handle-note.is-ok {
+  color: var(--color-lime);
+}
+
+.settings-handle-note.is-bad {
+  color: #ffb4a9;
+}
+
+textarea.claim-name-input {
+  min-height: 64px;
+  resize: none;
+  line-height: 1.35;
+  font-weight: 600;
+}
+
+.settings-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 14px;
+}
+
+.settings-links a,
+.settings-links button {
+  border: 1.5px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.78);
+  padding: 6px 11px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  transition:
+    border-color var(--dur-quick) var(--ease-glide),
+    color var(--dur-quick) var(--ease-glide);
+}
+
+.settings-links a:hover,
+.settings-links button:hover {
+  border-color: white;
+  color: white;
+}
+
+.settings-links .settings-me-link {
+  margin-left: auto;
+  border: 0;
+  padding: 6px 0;
+}
+
+@media (max-width: 800px) {
+  .settings-sheet {
+    top: auto;
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    width: auto;
+    max-height: calc(100dvh - 24px);
+    rotate: 0deg;
+    transform-origin: bottom center;
+  }
+}
+
+/* ---- Your page: /u/<handle> (OurSpaces' #/me card, laid out as Literal's profile) ---- */
+.me-page {
+  min-height: 100dvh;
+  overflow: auto;
+  padding: 28px 24px 60px;
+}
+
+.me-back {
+  position: fixed;
+  top: 22px;
+  left: 24px;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--color-sticker);
+  color: white;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: translate var(--dur-quick) var(--ease-glide);
+}
+
+.me-back:hover {
+  translate: -2px 0;
+}
+
+.me-wrap {
+  display: flex;
+  width: min(100%, 560px);
+  flex-direction: column;
+  gap: 22px;
+  margin: 48px auto 0;
+  animation: settings-sheet-in var(--dur-stage) var(--ease-pop) both;
+}
+
+.me-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  border-radius: 28px;
+  background: var(--color-sticker);
+  box-shadow:
+    0 10px 0 rgba(45, 22, 31, 0.26),
+    0 40px 80px -30px rgba(0, 0, 0, 0.55);
+  color: white;
+  padding: 26px 24px 24px;
+  text-align: center;
+  rotate: -0.6deg;
+}
+
+.me-handle {
+  align-self: flex-start;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.1);
+  padding: 4px 10px;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.me-face .member-face {
+  width: 104px;
+  height: 104px;
+  box-shadow:
+    0 0 0 3px var(--color-sticker),
+    0 0 0 7px var(--look);
+}
+
+.me-face .identity-chip {
+  font-size: 44px;
+}
+
+.me-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.me-bio {
+  max-width: 36ch;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+.me-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 12px;
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.me-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.me-actions .claim-done {
+  font-size: 13px;
+}
+
+.me-ghost {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: white;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+  transition: border-color var(--dur-quick) var(--ease-glide);
+}
+
+.me-ghost:hover {
+  border-color: white;
+}
+
+.me-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 0 6px;
+}
+
+.me-tabs > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border-radius: var(--radius-pill);
+  background: var(--color-sticker);
+  color: white;
+  padding: 7px 13px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.me-tabs > span small {
+  display: grid;
+  min-width: 20px;
+  height: 20px;
+  place-items: center;
+  border-radius: var(--radius-pill);
+  background: var(--color-lime);
+  color: var(--color-sticker);
+  padding: 0 6px;
+  font-size: 11px;
+}
+
+.me-spaces-empty {
+  margin: 0;
+  border-radius: 18px;
+  background: var(--color-paper-card, #fffdf6);
+  color: #111114;
+  padding: 18px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.me-space-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.me-space {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 8px;
+  border: 2.5px solid var(--color-sticker);
+  border-radius: 18px;
+  background: var(--color-paper-card, #fffdf6);
+  color: #111114;
+  padding: 14px;
+  text-decoration: none;
+  box-shadow: 0 6px 0 var(--space);
+  transition:
+    translate var(--dur-quick) var(--ease-glide),
+    box-shadow var(--dur-quick) var(--ease-glide);
+}
+
+.me-space:hover {
+  translate: 0 -3px;
+  box-shadow: 0 9px 0 var(--space);
+}
+
+.me-space-icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--space);
+  color: var(--space-ink);
+  font-size: 18px;
+  line-height: 1;
+  rotate: -6deg;
+}
+
+.me-space strong {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.me-space p {
+  margin: 0;
+  color: #4a4a50;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.me-space small {
+  align-self: flex-start;
+  border-radius: var(--radius-pill);
+  background: var(--color-sticker);
+  color: white;
+  padding: 2px 8px;
+  font-size: 10.5px;
+  font-weight: 800;
+}
+
+@media (max-width: 540px) {
+  .claim-card.is-gate {
+    gap: 16px;
+    padding: 20px 18px 18px;
+  }
+  .claim-room-name strong {
+    font-size: 26px;
+  }
+  .claim-card.is-gate .claim-name-input {
+    min-height: 48px;
+    font-size: 22px;
+  }
+  .claim-look-row {
+    gap: 22px 10px;
+  }
+  .me-space-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .me-name {
+    font-size: 28px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .claim-card.is-gate,
+  .settings-sheet,
+  .me-wrap {
+    animation: none;
+  }
+}
+
+/* ---- Konkyo: the sample space behind the door ---- */
+.gate-page {
+  position: relative;
+  min-height: 100dvh;
+  overflow: hidden;
+}
+
+.gate-room {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--wall, #b7a7ff);
+  color: var(--wall-ink, #1b1532);
+}
+
+.gate-room-title {
+  position: absolute;
+  top: 34px;
+  left: 40px;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(40px, 7vw, 96px);
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  line-height: 0.9;
+}
+
+.gate-room-photo {
+  position: absolute;
+  width: clamp(130px, 15vw, 200px);
+}
+
+@media (max-width: 540px) {
+  .gate-room-title {
+    top: 22px;
+    left: 20px;
+  }
+  .gate-room-photo:nth-of-type(n + 4) {
+    display: none;
+  }
+}
+
+/* ---- Konkyo: first run, the chooser for your first space (F39 → F53) ---- */
+.first-run {
+  display: flex;
+  flex-direction: column;
+  gap: 34px;
+}
+
+.first-run-templates {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.first-run-templates > li {
+  animation: var(--animate-tile-in);
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+
+.first-run-template {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: 232px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  border: 3px solid var(--color-sticker);
+  border-radius: 22px;
+  background: var(--space);
+  box-shadow: 0 8px 0 var(--color-sticker);
+  color: var(--space-ink);
+  padding: 18px;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    translate var(--dur-quick) var(--ease-glide),
+    box-shadow var(--dur-quick) var(--ease-glide),
+    rotate var(--dur-quick) var(--ease-glide);
+}
+
+.first-run-templates > li:nth-child(odd) .first-run-template {
+  rotate: -0.8deg;
+}
+
+.first-run-templates > li:nth-child(even) .first-run-template {
+  rotate: 0.7deg;
+}
+
+.first-run-template:hover {
+  translate: 0 -4px;
+  rotate: 0deg !important;
+  box-shadow: 0 12px 0 var(--color-sticker);
+}
+
+.first-run-template:active {
+  translate: 0 2px;
+  box-shadow: 0 4px 0 var(--color-sticker);
+}
+
+.first-run-template:focus-visible {
+  outline: 3px solid var(--color-lime);
+  outline-offset: 3px;
+}
+
+.first-run-symbol {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  border-radius: 14px;
+  background: var(--color-sticker);
+  color: var(--color-lime);
+  font-size: 24px;
+  line-height: 1;
+  rotate: -6deg;
+}
+
+.first-run-template strong {
+  margin-top: 6px;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.first-run-line {
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.first-run-pieces {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+  opacity: 0.82;
+}
+
+.first-run-go {
+  margin-top: auto;
+  border-radius: var(--radius-pill);
+  background: var(--color-sticker);
+  color: var(--color-lime);
+  padding: 6px 12px;
+  font-size: 12.5px;
+  font-weight: 800;
+}
+
+.first-run-samples {
+  border-radius: 24px;
+  background: var(--color-paper-card);
+  box-shadow: 0 8px 0 rgb(17 17 20 / 0.12);
+  color: var(--color-ink);
+  padding: 26px 28px 22px;
+}
+
+.first-run-samples h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.first-run-samples > p {
+  max-width: 60ch;
+  margin: 6px 0 0;
+  color: var(--color-ink-muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.starter-slips {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.starter-slip {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: flex-start;
+  gap: 12px;
+  border: 2px solid var(--color-sticker);
+  border-radius: 16px;
+  background: white;
+  color: var(--color-ink);
+  padding: 14px;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    translate var(--dur-quick) var(--ease-glide),
+    box-shadow var(--dur-quick) var(--ease-glide);
+}
+
+.starter-slip:hover:not(:disabled) {
+  translate: 0 -2px;
+  box-shadow: 0 5px 0 var(--color-sticker);
+}
+
+.starter-slip:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.starter-slip-glyph {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--color-lime);
+  color: var(--color-sticker);
+  font-size: 16px;
+}
+
+.starter-slip-body {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.starter-slip-body strong {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.starter-slip-body > span {
+  color: var(--color-ink-muted);
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+
+.starter-slip-body small {
+  color: var(--color-ink);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.starter-slip-go {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.first-run-skip {
+  margin-top: 16px;
+  border: 0;
+  background: none;
+  color: var(--color-ink-muted);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.first-run-skip:hover {
+  color: var(--color-ink);
+}
+
+@media (max-width: 1100px) {
+  .first-run-templates {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .starter-slips {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 540px) {
+  .first-run-templates {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .first-run-template {
+    min-height: 0;
+  }
+  .first-run-samples {
+    padding: 20px 18px 18px;
+  }
+}
+
+/* ---- Konkyo: the Settings page (plan §16.8): a section nav beside you and the paper ---- */
+.settings-layout {
+  display: grid;
+  grid-template-columns: 196px minmax(0, 1fr);
+  align-items: start;
+  gap: 28px;
+}
+
+.settings-nav {
+  position: sticky;
+  top: 92px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.settings-nav a {
+  border-radius: var(--radius-pill);
+  background: var(--color-sticker);
+  color: white;
+  padding: 7px 13px;
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+  transition:
+    translate var(--dur-quick) var(--ease-glide),
+    background var(--dur-quick) var(--ease-glide),
+    color var(--dur-quick) var(--ease-glide);
+}
+
+.settings-nav a:hover {
+  translate: 3px 0;
+}
+
+.settings-nav a.is-here {
+  background: var(--color-lime);
+  color: var(--color-sticker);
+}
+
+.settings-sections {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 26px;
+}
+
+.settings-you-wrap,
+.settings-section {
+  scroll-margin-top: 92px;
+}
+
+.settings-you-card {
+  align-items: stretch;
+  gap: 16px;
+  max-width: 560px;
+  text-align: left;
+  rotate: -0.4deg;
+}
+
+.settings-you-card.is-loading {
+  min-height: 420px;
+}
+
+.settings-you-card .settings-heading {
+  align-items: center;
+}
+
+.settings-you-card .settings-me-link {
+  align-self: center;
+  white-space: nowrap;
+}
+
+.settings-paper {
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-section {
+  border-top: 1px solid rgb(17 17 20 / 0.1);
+  padding: 26px 0 8px;
+}
+
+.settings-section:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.settings-section > h2 {
+  margin: 0 0 6px;
+  color: var(--color-ink);
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.settings-section-about {
+  margin: 0 0 8px;
+  color: var(--color-ink-muted);
+  font-size: 13.5px;
+}
+
+.setting-rows > * + * {
+  border-top: 1px solid rgb(17 17 20 / 0.08);
+}
+
+.setting-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 18px;
+  padding: 14px 0;
+  color: var(--color-ink);
+}
+
+.setting-text {
+  display: flex;
+  min-width: 0;
+  max-width: 62ch;
+  flex: 1 1 260px;
+  flex-direction: column;
+  gap: 3px;
+  margin: 0;
+  cursor: default;
+}
+
+label.setting-text {
+  cursor: pointer;
+}
+
+.setting-text strong {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.setting-text > span {
+  color: var(--color-ink-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.setting-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* The house switch: a black track with a lime thumb when on (OurSpaces' on/off sticker). */
+.settings-paper .setting-switch[data-slot="switch"] {
+  width: 46px;
+  height: 28px;
+  border: 2px solid var(--color-sticker);
+  background: #e7ddd8;
+}
+
+.settings-paper .setting-switch[data-slot="switch"][data-checked] {
+  background: var(--color-sticker);
+}
+
+.settings-paper .setting-switch[data-slot="switch"] [data-slot="switch-thumb"] {
+  width: 20px;
+  height: 20px;
+  margin-left: 2px;
+  background: white;
+  box-shadow: 0 1px 0 rgb(17 17 20 / 0.25);
+}
+
+.settings-paper .setting-switch[data-slot="switch"][data-checked] [data-slot="switch-thumb"] {
+  translate: 18px 0;
+  background: var(--color-lime);
+}
+
+.settings-paper .setting-select[data-slot="select-trigger"] {
+  height: 38px;
+  min-width: 180px;
+  border: 2px solid var(--color-sticker);
+  background: white;
+  color: var(--color-ink);
+  font-weight: 700;
+}
+
+.setting-hear {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-sticker);
+  color: white;
+  cursor: pointer;
+  font-size: 11px;
+  transition:
+    background var(--dur-quick) var(--ease-glide),
+    color var(--dur-quick) var(--ease-glide);
+}
+
+.setting-hear:hover,
+.setting-hear.is-playing {
+  background: var(--color-lime);
+  color: var(--color-sticker);
+}
+
+.setting-link {
+  text-decoration: none;
+}
+
+.setting-link:hover .setting-text strong {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.setting-go {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+@media (max-width: 900px) {
+  .settings-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+  .settings-nav {
+    top: 8px;
+    z-index: 20;
+    flex-direction: row;
+    margin: 0 -16px;
+    overflow-x: auto;
+    padding: 4px 16px 10px;
+    scrollbar-width: none;
+  }
+  .settings-nav a {
+    flex: 0 0 auto;
+  }
+  .settings-nav a:hover {
+    translate: none;
+  }
+  .settings-you-card {
+    max-width: none;
+    rotate: 0deg;
+  }
+}
+
+.settings-you-card .claim-look-row {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+@media (max-width: 640px) {
+  .settings-you-card .claim-look-row {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* A switch stays beside its words, even on a phone. */
+.setting-row.is-switch {
+  flex-wrap: nowrap;
+}
+
+.setting-row.is-switch .setting-text {
+  flex-basis: auto;
+}
+
+@media (max-width: 800px) {
+  /* under the places bar, which is fixed at the top on phones */
+  .settings-nav {
+    top: 64px;
+  }
+}
+
+@media (max-width: 800px) {
+  .settings-you-wrap,
+  .settings-section {
+    scroll-margin-top: 124px;
+  }
+}

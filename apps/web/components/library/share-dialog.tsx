@@ -10,15 +10,23 @@ import {
   DialogTitle,
 } from "@konkyo/ui/components/dialog"
 import { Input } from "@konkyo/ui/components/input"
+import { Switch } from "@konkyo/ui/components/switch"
 import { Textarea } from "@konkyo/ui/components/textarea"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { CopyIcon, ExternalLinkIcon, GlobeIcon } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 import { api } from "@/lib/fetcher"
+import { useMe } from "@/lib/use-me"
 import { useQuery } from "@/lib/use-query"
 
-type Share = { slug: string; path: string; description: string | null; allowDownloads: boolean }
+type Share = {
+  slug: string
+  path: string
+  description: string | null
+  allowDownloads: boolean
+  listed: boolean
+}
 
 /**
  * Share a folder (plan F36): a read-only link where anyone can read its sources and ask about
@@ -56,12 +64,20 @@ function ShareForm({
   const share = data?.share ?? null
   const [description, setDescription] = useState<string | null>(null)
   const [downloads, setDownloads] = useState<boolean | null>(null)
+  const [listedDraft, setListed] = useState<boolean | null>(null)
+  const { me } = useMe()
   const text = description ?? share?.description ?? ""
   const allow = downloads ?? share?.allowDownloads ?? false
+  const listed = listedDraft ?? share?.listed ?? false
+  // A space shows on your page only once there is a page: a kept account with a handle (F54).
+  const page = me?.handle ? `/u/${me.handle}` : null
 
   const save = useMutation({
-    mutationFn: (body: { description?: string | null; allowDownloads?: boolean }) =>
-      api<{ share: Share }>(`/api/folders/${folder.id}/share`, { method: "PUT", json: body }),
+    mutationFn: (body: {
+      description?: string | null
+      allowDownloads?: boolean
+      listed?: boolean
+    }) => api<{ share: Share }>(`/api/folders/${folder.id}/share`, { method: "PUT", json: body }),
     onSuccess: (result) => queryClient.setQueryData(key, result),
     onError: (error: Error) => toast.error(error.message),
   })
@@ -152,6 +168,29 @@ function ShareForm({
         </label>
       </div>
 
+      <div className="flex items-start gap-3">
+        <Switch
+          id="share-listed"
+          checked={listed && Boolean(page)}
+          disabled={isPending || !page}
+          onCheckedChange={(on) => {
+            setListed(Boolean(on))
+            if (share) save.mutate({ listed: Boolean(on) })
+          }}
+          className="mt-0.5"
+        />
+        <label htmlFor="share-listed" className="text-ui text-bone-white">
+          Show it on my page
+          <span className="mt-0.5 block text-snippet text-ash-gray">
+            {page
+              ? `Lists it under public spaces at konkyo.xyz${page}. Off: only people with the link find it.`
+              : me?.isGuest
+                ? "Your page needs a kept account: keep this with Google from your face on the rail."
+                : "Claim a handle first: tap your face on the rail, then “your page”."}
+          </span>
+        </label>
+      </div>
+
       <DialogFooter className="mt-2 gap-2">
         {share ? (
           <>
@@ -171,7 +210,13 @@ function ShareForm({
               Cancel
             </Button>
             <Button
-              onClick={() => save.mutate({ description: text || null, allowDownloads: allow })}
+              onClick={() =>
+                save.mutate({
+                  description: text || null,
+                  allowDownloads: allow,
+                  listed: listed && Boolean(page),
+                })
+              }
               disabled={isPending || save.isPending}
             >
               <GlobeIcon strokeWidth={1.5} />

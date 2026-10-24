@@ -35,6 +35,7 @@ export const STORAGE = {
     audio: "audio",
     briefs: "briefs",
     exports: "exports",
+    avatars: "avatars",
   },
   /** Presigned upload URLs expire quickly; uploads start right after signing. */
   presignExpirySeconds: 15 * 60,
@@ -234,6 +235,20 @@ export const VOICE = {
   /** Konkyo's own voice, and the one that says the example asks (you, asking). */
   speaker: { name: "Bella", id: "hpp4J3VqNfWAUOO0d1Us" },
   asker: { name: "George", id: "JBFqnCBsd6RMkjVDRZzb" },
+  /**
+   * The voices Konkyo can answer in (the sounds popover): ElevenLabs' default voices made for
+   * explaining things clearly (labels from GET /v2/voices, testing). The first is the default.
+   */
+  voices: [
+    { id: "hpp4J3VqNfWAUOO0d1Us", name: "Bella", about: "bright and warm" },
+    { id: "Xb7hH8MSUJpSbSDYk0k2", name: "Alice", about: "a clear British teacher" },
+    { id: "SAz9YHcvj6GT2YYXdXww", name: "River", about: "relaxed and even" },
+    { id: "onwK4e9ZLuTAKqWW03F9", name: "Daniel", about: "a steady British broadcaster" },
+    { id: "XrExE9yKIg1WjnnlVkGX", name: "Matilda", about: "knowledgeable and upbeat" },
+    { id: "cjVigY5qzO86Huf0OWal", name: "Eric", about: "smooth and calm" },
+  ],
+  /** What a voice says when you try it in the sounds popover (made once, then cached). */
+  sampleLine: "Here's what your sources say, and every quote is checked against its page.",
   ttsModel: "eleven_flash_v2_5",
   outputFormat: "mp3_44100_64",
   /** After a spoken ask it says the short answer: the first sentences up to about this long. */
@@ -288,6 +303,7 @@ export const TRASH = { keepDays: 30 } as const
 export const ROUTES = {
   home: "/home",
   signIn: "/sign-in",
+  settings: "/settings",
   library: "/library",
   trash: "/trash",
 } as const
@@ -339,6 +355,64 @@ export const SPACES = {
    * a space without a cover shows its glyph.
    */
   symbols: ["✦", "✎", "◎", "☾", "∑", "♪", "✿", "❖", "☀", "⚑", "◐", "✺"],
+} as const
+
+/**
+ * Looks (plan §16.4, F53): the twelve faces from scripts/make-images.mjs, in its order, each on its
+ * space colour. A look carries a placeholder name (OurSpaces' personas) that the next look may
+ * replace; a name someone typed is theirs and stays.
+ */
+export const LOOKS = [
+  { id: "look-01", name: "juno", color: "violet" },
+  { id: "look-02", name: "momo", color: "pink" },
+  { id: "look-03", name: "pico", color: "cobalt" },
+  { id: "look-04", name: "wren", color: "orange" },
+  { id: "look-05", name: "ziggy", color: "teal" },
+  { id: "look-06", name: "clover", color: "butter" },
+  { id: "look-07", name: "pepper", color: "violet" },
+  { id: "look-08", name: "kiwi", color: "pink" },
+  { id: "look-09", name: "miso", color: "cobalt" },
+  { id: "look-10", name: "mochi", color: "orange" },
+  { id: "look-11", name: "hoot", color: "teal" },
+  { id: "look-12", name: "fig", color: "butter" },
+] as const
+
+export type LookId = (typeof LOOKS)[number]["id"]
+
+/** People (F53, F54): names, handles, bios and photos. */
+export const PEOPLE = {
+  nameMax: 32,
+  /** Handles are lowercase letters, digits and underscores, for kept accounts only. */
+  handlePattern: "^[a-z0-9_]{3,24}$",
+  handleMax: 24,
+  bioMax: 160,
+  /** A photo is cropped to a square in the browser; the server takes at most this much. */
+  photoPx: 256,
+  photoMaxBytes: 512 * 1024,
+  /** "N here right now" on the enter card counts people active this recently. */
+  hereWindowMinutes: 15,
+  /** Handles nobody can take: they would read as Konkyo itself or shadow a route. */
+  reservedHandles: [
+    "admin",
+    "api",
+    "app",
+    "about",
+    "help",
+    "home",
+    "konkyo",
+    "library",
+    "login",
+    "me",
+    "people",
+    "settings",
+    "sign_in",
+    "signin",
+    "spaces",
+    "staff",
+    "support",
+    "system",
+    "team",
+  ],
 } as const
 
 export type SpaceColor = keyof typeof SPACES.colors

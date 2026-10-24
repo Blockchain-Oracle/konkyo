@@ -162,6 +162,20 @@
       "when": 1792873200000,
       "tag": "0022_voice_usage",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1792878900000,
+      "tag": "0023_people",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1792884600000,
+      "tag": "0024_share_listed",
+      "breakpoints": true
     }
   ]
 }

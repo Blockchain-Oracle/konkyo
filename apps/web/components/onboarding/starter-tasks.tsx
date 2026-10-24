@@ -2,7 +2,6 @@
 
 import { cn } from "@konkyo/ui/lib/utils"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { ArrowRightIcon, GraduationCapIcon, NotebookPenIcon, TelescopeIcon } from "lucide-react"
 import type { Route } from "next"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
@@ -17,14 +16,14 @@ type Started =
 
 const TASKS: {
   path: Path
-  icon: typeof GraduationCapIcon
+  glyph: string
   title: string
   about: string
   meta: string
 }[] = [
   {
     path: "study",
-    icon: GraduationCapIcon,
+    glyph: "✎",
     title: "Study a sample course",
     about:
       "A psychology chapter on memory from OpenStax and an MIT lecture, then a quiz on them. Every answer key is checked against its passage.",
@@ -32,7 +31,7 @@ const TASKS: {
   },
   {
     path: "research",
-    icon: TelescopeIcon,
+    glyph: "◎",
     title: "Research a question",
     about:
       "“Does sleep help consolidate memories?” Konkyo searches open papers, imports them into a folder and answers with checked citations.",
@@ -40,7 +39,7 @@ const TASKS: {
   },
   {
     path: "write",
-    icon: NotebookPenIcon,
+    glyph: "✦",
     title: "Start an essay",
     about:
       "Three open-access papers on sleep and learning beside an essay outline. Cite as you write; Check my draft marks what your sources don't support.",
@@ -71,9 +70,8 @@ export function StarterTasks({ className }: { className?: string }) {
     onError: (error: Error) => toast.error(error.message),
   })
   return (
-    <ul className={cn("space-y-2.5", className)}>
+    <ul className={cn("starter-slips", className)}>
       {TASKS.map((task) => {
-        const Icon = task.icon
         const starting = start.isPending && start.variables === task.path
         return (
           <li key={task.path}>
@@ -82,25 +80,19 @@ export function StarterTasks({ className }: { className?: string }) {
               onClick={() => start.mutate(task.path)}
               disabled={start.isPending}
               aria-busy={starting}
-              className="group flex w-full items-start gap-4 rounded-card border border-border bg-panel p-4.5 text-left transition-colors duration-(--duration-press) hover:border-line-strong hover:bg-raised disabled:opacity-60 disabled:hover:bg-accent"
+              className="starter-slip"
             >
-              <span className="grid size-9 shrink-0 place-items-center rounded-full border border-border bg-raised">
-                <Icon className="size-4 text-silver-mist" strokeWidth={1.5} aria-hidden />
+              <span className="starter-slip-glyph" aria-hidden="true">
+                {`${task.glyph}︎`}
               </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-ui text-bone-white">{task.title}</span>
-                <span className="mt-1 block text-snippet text-pretty text-silver-mist">
-                  {task.about}
-                </span>
-                <span className="mt-2 block text-meta text-ash-gray">
-                  {starting ? "Starting…" : task.meta}
-                </span>
+              <span className="starter-slip-body">
+                <strong>{task.title}</strong>
+                <span>{task.about}</span>
+                <small>{starting ? "starting…" : task.meta}</small>
               </span>
-              <ArrowRightIcon
-                className="mt-2 size-4 shrink-0 text-ash-gray transition-transform duration-(--duration-press) group-hover:translate-x-0.5 group-hover:text-bone-white"
-                strokeWidth={1.5}
-                aria-hidden
-              />
+              <span className="starter-slip-go" aria-hidden="true">
+                →
+              </span>
             </button>
           </li>
         )

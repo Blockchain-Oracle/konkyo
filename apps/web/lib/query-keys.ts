@@ -21,6 +21,11 @@ export const qk = {
     list: () => ["spaces", "list"] as const,
     pins: (id: string) => ["spaces", "pins", id] as const,
   },
+  /** You (F53, F54): name, look, photo, handle, bio. */
+  people: {
+    me: ["people", "me"] as const,
+    handle: (handle: string) => ["people", "handle", handle] as const,
+  },
   /** What Konkyo knows (F51), for one space or the whole library. */
   knows: (spaceId: string | null) => ["knows", spaceId ?? "library"] as const,
   /** Catch me up (F50): what moved, sorted for the space you're in. */

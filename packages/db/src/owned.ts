@@ -1,3 +1,4 @@
+import { LOOKS } from "@konkyo/config"
 import { and, eq } from "drizzle-orm"
 import type { Db } from "./index"
 import {
@@ -17,6 +18,7 @@ import {
   notes,
   noteVersions,
   passages,
+  profiles,
   pushSubscriptions,
   runs,
   spaceEvents,
@@ -84,6 +86,34 @@ const movers: Array<(tx: Tx, fromUserId: string, toUserId: string) => Promise<un
       if (!taken.has(d.day)) await tx.insert(studyDays).values({ ...d, ownerId: to })
     await tx.delete(studyDays).where(eq(studyDays.ownerId, from))
   },
+  // Who you are (F53): a new account takes the guest's look, photo and the name they typed (a
+  // look's placeholder name or Better Auth's "Anonymous" gives way to Google's). An account that
+  // already has a profile keeps it and only fills what it lacks.
+  async (tx, from, to) => {
+    const mine = await tx.query.profiles.findFirst({ where: eq(profiles.userId, from) })
+    if (!mine) return
+    const theirs = await tx.query.profiles.findFirst({ where: eq(profiles.userId, to) })
+    if (!theirs) {
+      await tx.update(profiles).set({ userId: to }).where(eq(profiles.userId, from))
+      const guest = await tx.query.user.findFirst({ where: eq(user.id, from) })
+      const typed = guest?.name.trim() ?? ""
+      const placeholder =
+        typed === "" || typed === "Anonymous" || LOOKS.some((look) => look.name === typed)
+      if (!placeholder) await tx.update(user).set({ name: typed }).where(eq(user.id, to))
+      return
+    }
+    const adoptPhoto = !theirs.photoKey && Boolean(mine.photoKey)
+    await tx
+      .update(profiles)
+      .set({
+        lookId: theirs.lookId ?? mine.lookId,
+        bio: theirs.bio ?? mine.bio,
+        ...(adoptPhoto ? { photoKey: mine.photoKey } : {}),
+        ...(!theirs.lookId && !theirs.photoKey ? { avatar: mine.avatar } : {}),
+      })
+      .where(eq(profiles.userId, to))
+    await tx.delete(profiles).where(eq(profiles.userId, from))
+  },
   // The account signed into keeps its own settings if it has them.
   async (tx, from, to) => {
     const existing = await tx.query.userSettings.findFirst({ where: eq(userSettings.userId, to) })
@@ -107,7 +137,7 @@ export async function reownUserData(db: Db, fromUserId: string, toUserId: string
 
 /** What deleting a person leaves outside Postgres: stored bytes, Zetaris evidence, watch tables. */
 export async function ownedOutsidePostgres(db: Db, userId: string) {
-  const [owned, watches, spoken, connected] = await Promise.all([
+  const [owned, watches, spoken, connected, profile] = await Promise.all([
     db
       .select({ id: files.id, originalKey: files.originalKey, renditionKey: files.renditionKey })
       .from(files)
@@ -118,12 +148,14 @@ export async function ownedOutsidePostgres(db: Db, userId: string) {
       .select({ accountId: connections.accountId })
       .from(connections)
       .where(eq(connections.ownerId, userId)),
+    db.query.profiles.findFirst({ where: eq(profiles.userId, userId) }),
   ])
   return {
     fileIds: owned.map((f) => f.id),
     keys: [
       ...owned.flatMap((f) => [f.originalKey, f.renditionKey]),
       ...spoken.map((b) => b.key),
+      profile?.photoKey,
     ].filter((k): k is string => !!k),
     tables: watches.map((w) => w.table).filter((t): t is string => !!t),
     /** Composio connected accounts, revoked so nothing keeps access to the person's mail. */

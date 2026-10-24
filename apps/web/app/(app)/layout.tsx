@@ -11,18 +11,14 @@ import { Rail } from "@/components/shell/rail"
 import { StatusPill } from "@/components/shell/status-pill"
 import { WallBackground } from "@/components/shell/wall"
 import { Workspace } from "@/components/source/workspace"
+import { getMe } from "@/lib/profiles"
 import { getSession } from "@/lib/session"
 
 async function Shell({ children }: { children: React.ReactNode }) {
   const session = await getSession()
   if (!session) redirect(ROUTES.signIn)
-  const { user } = session
-  const shellUser = {
-    name: user.name,
-    email: user.email,
-    image: user.image ?? null,
-    isGuest: Boolean(user.isAnonymous),
-  }
+  const me = await getMe(session.user.id)
+  const shellUser = { name: me.name, isGuest: me.isGuest, face: me.face }
 
   // OurSpaces' floating chrome (plan §16.6): the rail of spaces (a bottom bar on phones), the
   // places as words top right, the dock with the orb, the live pill bottom left.
