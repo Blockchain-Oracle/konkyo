@@ -2,7 +2,8 @@ import "server-only"
 import { SPACES, type SpaceColor, type SpaceWall } from "@konkyo/config"
 import { db, schema } from "@konkyo/db"
 import { eq, sql } from "drizzle-orm"
-import { createFolder } from "./folders"
+import { createFolder, renameFolder } from "./folders"
+import { LibraryError, ownFolder } from "./library"
 
 /** A space's colour when none was chosen yet: hashed from its id (same as the UI's colorFor). */
 function hashedColor(id: string): SpaceColor {
@@ -144,4 +145,23 @@ export async function createSpace(ownerId: string, input: NewSpace) {
     })
     .where(eq(schema.folders.id, folder.id))
   return { id: folder.id }
+}
+
+export type SpaceEdit = Partial<
+  Pick<NewSpace, "name" | "color" | "wall" | "symbol" | "description">
+>
+
+/** Changes a space's name or identity (its owner only; a space is a top-level folder). */
+export async function editSpace(ownerId: string, spaceId: string, edit: SpaceEdit) {
+  const folder = await ownFolder(ownerId, spaceId)
+  if (folder.parentId) throw new LibraryError("Only a space has a colour and a wall", 400)
+  if (edit.name != null) await renameFolder(ownerId, spaceId, edit.name)
+  const identity = {
+    ...(edit.color ? { color: edit.color } : {}),
+    ...(edit.wall ? { wall: edit.wall } : {}),
+    ...(edit.symbol ? { symbol: edit.symbol } : {}),
+    ...(edit.description !== undefined ? { description: edit.description || null } : {}),
+  }
+  if (Object.keys(identity).length)
+    await db.update(schema.folders).set(identity).where(eq(schema.folders.id, spaceId))
 }

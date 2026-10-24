@@ -9,10 +9,13 @@ export function RoomHeader({
   title,
   kicker,
   actions,
+  handles,
 }: {
   title: string
   kicker?: React.ReactNode
   actions?: React.ReactNode
+  /** Small chips under the name, in the wall's ink (OurSpaces' space-title-handles: ✎ edit). */
+  handles?: React.ReactNode
 }) {
   return (
     <header className="room-header">
@@ -23,6 +26,7 @@ export function RoomHeader({
             <span className="space-title-text">{title}</span>
           </h1>
         </div>
+        {handles ? <div className="flex flex-wrap items-center gap-2">{handles}</div> : null}
       </div>
       {actions ? (
         <div className="space-header-side">

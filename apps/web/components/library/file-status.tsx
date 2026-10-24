@@ -1,6 +1,9 @@
+"use client"
+
 import { Spinner } from "@konkyo/ui/components/spinner"
 import { cn } from "@konkyo/ui/lib/utils"
 import { CheckIcon, CircleAlertIcon, ScanTextIcon } from "lucide-react"
+import { useEffect, useState } from "react"
 import type { LibraryFile } from "@/lib/use-library"
 import type { UploadState } from "@/lib/use-uploader"
 
@@ -67,7 +70,7 @@ export function FileStatus({ file, upload }: { file: LibraryFile; upload?: Uploa
       : undefined
   return (
     <span
-      className="inline-flex items-center gap-2 text-snippet text-silver-mist"
+      className="inline-flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 text-snippet text-silver-mist"
       aria-live="polite"
     >
       <Spinner className="size-3.5 text-ash-gray" />
@@ -75,6 +78,36 @@ export function FileStatus({ file, upload }: { file: LibraryFile; upload?: Uploa
       {percent != null && percent > 0 && (
         <span className="text-ash-gray tabular-nums">{percent}%</span>
       )}
+      <Ticking since={file.createdAt} />
     </span>
+  )
+}
+
+/** SLOW_MS: when a source has been reading this long, say so (plan F46, OurSpaces' 11 s). */
+const SLOW_MS = 11_000
+
+/**
+ * The time a source has been in the works, ticking (OurSpaces' reading-room timers): real elapsed
+ * time since it arrived, then a plain note when it's a slow one.
+ */
+function Ticking({ since }: { since: string | Date }) {
+  const start = new Date(since).getTime()
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 100)
+    return () => clearInterval(id)
+  }, [])
+  const ms = Math.max(0, now - start)
+  const shown =
+    ms < 60_000
+      ? `${(ms / 1000).toFixed(1)}s`
+      : `${Math.floor(ms / 60_000)}m ${String(Math.floor((ms % 60_000) / 1000)).padStart(2, "0")}s`
+  return (
+    <>
+      <span className="text-ash-gray tabular-nums">{shown}</span>
+      {ms > SLOW_MS && ms < 30 * 60_000 && (
+        <span className="text-ash-gray">· slow source, still reading</span>
+      )}
+    </>
   )
 }

@@ -74,12 +74,18 @@ export function ensureEvidenceTables(): Promise<void> {
 }
 
 async function createEvidenceTables(): Promise<void> {
+  let tables: Set<string>
   try {
     await run(`CREATE LIGHTNING DATABASE ${DB} DESCRIBE BY "Konkyo evidence store"`)
+    tables = await existingTables()
   } catch (error) {
-    if (!(error instanceof ZetarisError && /already exists/i.test(error.message))) throw error
+    if (!(error instanceof ZetarisError)) throw error
+    // The database may already be there: hosted Zetaris says "already exists", a local
+    // install only "Bad Request". Ask for its tables; only if that fails is it really missing.
+    tables = await existingTables().catch(() => {
+      throw error
+    })
   }
-  const tables = await existingTables()
   if (!tables.has(ZETARIS.tables.passages)) {
     const seed: EvidenceDoc = {
       doc_id: "__seed__",

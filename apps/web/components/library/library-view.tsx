@@ -52,6 +52,7 @@ import { filesFromDrop } from "@/lib/use-uploader"
 import { AddPicker } from "../shell/add-picker"
 import { BulkBar } from "./bulk-bar"
 import { FileRow } from "./file-row"
+import { SpaceEdit } from "./space-edit"
 import { SpaceShelf } from "./space-shelf"
 import { SpaceWall } from "./space-wall"
 import { useUploads } from "./uploads-provider"
@@ -176,7 +177,8 @@ export function LibraryView({ folderId, space = false }: { folderId?: string; sp
       onDrop={onDrop}
     >
       <RoomHeader
-        title={folderId ? (here?.name ?? spaceRow?.name ?? "…").toLowerCase() : "library"}
+        title={folderId ? (spaceRow?.name ?? here?.name ?? "…").toLowerCase() : "library"}
+        handles={space && spaceRow ? <SpaceEdit space={spaceRow} /> : undefined}
         kicker={
           space ? (
             <>
