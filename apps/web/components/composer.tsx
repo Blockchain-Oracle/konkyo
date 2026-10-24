@@ -27,6 +27,8 @@ import {
   useFocusItems,
   WHOLE_LIBRARY,
 } from "@/lib/focus"
+import { useFiles } from "@/lib/use-library"
+import { useUploads } from "./library/uploads-provider"
 
 export type ComposerSubmit = { text: string; deep: boolean; quote?: QuotedPassage }
 
@@ -79,7 +81,21 @@ export function Composer({
   const picking = pickingProp ?? pickingState
   const setPicking = onPickingChange ?? setPickingState
   const quote = useComposerQuote()
-  const canSend = text.trim().length > 0
+  const { pickFiles } = useUploads()
+  const { data: libraryFiles } = useFiles()
+  // Files attached with + (or picked) that are still being read: the question waits for them.
+  const reading = (libraryFiles ?? []).filter(
+    (f) => focus.fileIds.includes(f.id) && (f.status === "queued" || f.status === "processing"),
+  ).length
+  const focusRef = useRef(focus)
+  focusRef.current = focus
+  const attach = () =>
+    pickFiles(undefined, (ids) => {
+      if (!ids.length || !onFocusChange) return
+      const now = focusRef.current
+      onFocusChange({ ...now, fileIds: [...new Set([...now.fileIds, ...ids])] })
+    })
+  const canSend = text.trim().length > 0 && reading === 0
   // Names resolve after mount: the server renders before the library list exists, so both
   // render the same placeholder chips first.
   const loaded = useFocusItems()
@@ -97,13 +113,17 @@ export function Composer({
           items.find((i) => i.type === "folder" && i.id === id) ??
           ({ type: "folder", id, name: "" } as FocusItem),
       ),
-      ...focus.fileIds.map(
-        (id) =>
-          items.find((i) => i.type === "file" && i.id === id) ??
-          ({ type: "folder", id, name: "" } as FocusItem),
-      ),
+      ...focus.fileIds.map((id) => {
+        const pickable = items.find((i) => i.type === "file" && i.id === id)
+        if (pickable) return pickable
+        // Attached and still being read: not pickable yet, but named.
+        const attached = mounted ? libraryFiles?.find((f) => f.id === id) : undefined
+        return attached
+          ? ({ type: "file", id, name: attached.title, kind: attached.kind } as FocusItem)
+          : ({ type: "folder", id, name: "" } as FocusItem)
+      }),
     ],
-    [focus, items],
+    [focus, items, libraryFiles, mounted],
   )
 
   // `@name` becomes a chip: the typed mention leaves the text and joins the focus.
@@ -242,6 +262,7 @@ export function Composer({
             variant="outline"
             className="rounded-full"
             aria-label="Attach files"
+            onClick={attach}
           >
             <PlusIcon strokeWidth={1.5} />
           </InputGroupButton>
@@ -292,6 +313,11 @@ export function Composer({
             <TelescopeIcon className="size-3.5" strokeWidth={1.5} />
             Deep search
           </InputGroupButton>
+          {reading > 0 && (
+            <span className="ml-auto text-[12px] font-semibold text-ash-gray" aria-live="polite">
+              reading {reading} file{reading === 1 ? "" : "s"}…
+            </span>
+          )}
           {/* Violet only while there's text, so a view never shows two violet actions (§7.4 #9). */}
           {running ? (
             <InputGroupButton

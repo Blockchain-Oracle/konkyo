@@ -5,10 +5,13 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef } fr
 import { filesFromInput, type PickedFile, type UploadState, useUploader } from "@/lib/use-uploader"
 
 type Uploads = {
-  /** Opens the file picker; the files go into `folderId`, or the library's top level. */
-  pickFiles: (folderId?: string) => void
+  /**
+   * Opens the file picker; the files go into `folderId`, or the library's top level. `onAdded`
+   * hears the new files' ids once they're registered (the composer attaches them).
+   */
+  pickFiles: (folderId?: string, onAdded?: (fileIds: string[]) => void) => void
   pickFolder: (folderId?: string) => void
-  upload: (picked: PickedFile[], folderId?: string) => Promise<void>
+  upload: (picked: PickedFile[], folderId?: string) => Promise<string[]>
   uploads: Record<string, UploadState>
   retryUpload: (fileId: string) => void
 }
@@ -25,22 +28,27 @@ export function UploadsProvider({ children }: { children: React.ReactNode }) {
   const filesInput = useRef<HTMLInputElement>(null)
   const folderInput = useRef<HTMLInputElement>(null)
   const target = useRef<string | undefined>(undefined)
+  const added = useRef<((fileIds: string[]) => void) | undefined>(undefined)
 
   // Folder picking needs the non-standard attribute, which React doesn't type.
   useEffect(() => {
     folderInput.current?.setAttribute("webkitdirectory", "")
   }, [])
 
-  const pickFiles = useCallback((folderId?: string) => {
+  const pickFiles = useCallback((folderId?: string, onAdded?: (fileIds: string[]) => void) => {
     target.current = folderId
+    added.current = onAdded
     filesInput.current?.click()
   }, [])
   const pickFolder = useCallback((folderId?: string) => {
     target.current = folderId
+    added.current = undefined
     folderInput.current?.click()
   }, [])
   const onPicked = (input: HTMLInputElement) => {
-    void upload(filesFromInput(input.files), target.current)
+    const onAdded = added.current
+    added.current = undefined
+    void upload(filesFromInput(input.files), target.current).then((ids) => onAdded?.(ids))
     input.value = ""
   }
 

@@ -96,8 +96,8 @@ export function useUploader() {
   )
 
   const upload = useCallback(
-    async (picked: PickedFile[], folderId?: string) => {
-      if (!picked.length) return
+    async (picked: PickedFile[], folderId?: string): Promise<string[]> => {
+      if (!picked.length) return []
       const registered = await Promise.allSettled(
         picked.map(async ({ file, relativePath }) => {
           const { fileId, key } = await api<{ fileId: string | null; key: string | null }>(
@@ -133,6 +133,7 @@ export function useUploader() {
           meta: { fileId: fileId as string, key: key as string, relativePath },
         })),
       )
+      return ready.map((r) => r.fileId as string)
     },
     [uppy, refresh],
   )
