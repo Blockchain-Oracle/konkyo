@@ -22,7 +22,6 @@ import {
   LinkIcon,
   MessageSquareIcon,
   PencilIcon,
-  PlugIcon,
   TelescopeIcon,
   Trash2Icon,
   UploadIcon,
@@ -36,7 +35,6 @@ import { EmptyState } from "@/components/empty-state"
 import { StudyStarter } from "@/components/onboarding/study-starter"
 import { RoomHeader } from "@/components/page-shell"
 import {
-  openConnectorImport,
   openImport,
   openNewFolder,
   openRenameFolder,
@@ -51,6 +49,7 @@ import { type LibraryFile, useFiles } from "@/lib/use-library"
 import { useSpaceList } from "@/lib/use-spaces"
 import { useStudyActions } from "@/lib/use-study"
 import { filesFromDrop } from "@/lib/use-uploader"
+import { AddPicker } from "../shell/add-picker"
 import { BulkBar } from "./bulk-bar"
 import { FileRow } from "./file-row"
 import { SpaceShelf } from "./space-shelf"
@@ -229,49 +228,7 @@ export function LibraryView({ folderId, space = false }: { folderId?: string; sp
                 {selectMode ? "done" : "select"}
               </Button>
             )}
-            <Button variant="sticker" onClick={() => openImport(folderId)}>
-              import by URL
-            </Button>
-            <div className="flex">
-              <Button className="rounded-r-none pr-3" onClick={() => pickFiles(folderId)}>
-                upload
-              </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  render={
-                    <Button
-                      className="rounded-l-none border-l border-black/20 px-2.5"
-                      aria-label="More upload options"
-                    />
-                  }
-                >
-                  <span aria-hidden>▾</span>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-52">
-                  <DropdownMenuItem onClick={() => pickFiles(folderId)}>
-                    <UploadIcon strokeWidth={1.5} />
-                    Upload files
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => pickFolder(folderId)}>
-                    <FolderUpIcon strokeWidth={1.5} />
-                    Upload a folder
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => openImport(folderId)}>
-                    <LinkIcon strokeWidth={1.5} />
-                    Import by URL
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => openConnectorImport({ folderId })}>
-                    <PlugIcon strokeWidth={1.5} />
-                    Gmail, Drive, Notion
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => openNewFolder(folderId)}>
-                    <FolderPlusIcon strokeWidth={1.5} />
-                    New folder
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            <AddPicker folderId={folderId} name={here?.name ?? spaceRow?.name} />
             {here && <FolderMenu folder={here} path={path ?? []} />}
           </>
         }

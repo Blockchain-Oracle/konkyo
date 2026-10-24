@@ -60,7 +60,19 @@ export function SpaceWall({
             ))}
           </ul>
         ) : files ? (
-          <p className="room-pill">nothing filed here yet — drop files anywhere on this page</p>
+          <div
+            className="board-note board-object tone-violet max-w-md cursor-default"
+            style={{ rotate: "-1.2deg" } as CSSProperties}
+          >
+            <span className="note-paper-backing" aria-hidden />
+            <span className="note-paper-sheet min-h-0!">
+              <span className="note-kicker">an empty wall</span>
+              <span className="note-text">
+                Drop files anywhere on this page, or press add: papers, links, videos, notes.
+              </span>
+            </span>
+            <span className="note-paper-tape" aria-hidden />
+          </div>
         ) : null}
       </section>
       <aside aria-label="Inside this space" className="grid content-start gap-9">
@@ -89,16 +101,21 @@ export function SpaceWall({
             </ul>
           </section>
         )}
-        <section aria-label="Listen" className="surface-sticker board-sticker-card relative p-5">
-          <span className="board-pin" aria-hidden />
-          <p className="font-display text-[19px] font-extrabold tracking-[-0.02em] text-white">
-            listen to this space
-          </p>
-          <p className="mt-1.5 text-[13px] text-room-muted">
-            A two-voice audio brief, every claim from these sources.
-          </p>
-          <ListenCard spaceId={spaceId} ready={Boolean(files?.some((f) => f.status === "ready"))} />
-        </section>
+        {files?.length ? (
+          <section aria-label="Listen" className="surface-sticker board-sticker-card relative p-5">
+            <span className="board-pin" aria-hidden />
+            <p className="font-display text-[19px] font-extrabold tracking-[-0.02em] text-white">
+              listen to this space
+            </p>
+            <p className="mt-1.5 text-[13px] text-room-muted">
+              A two-voice audio brief, every claim from these sources.
+            </p>
+            <ListenCard
+              spaceId={spaceId}
+              ready={Boolean(files?.some((f) => f.status === "ready"))}
+            />
+          </section>
+        ) : null}
       </aside>
     </div>
   )

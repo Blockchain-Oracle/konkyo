@@ -1,7 +1,8 @@
 import "server-only"
 import { SPACES, type SpaceColor, type SpaceWall } from "@konkyo/config"
-import { db } from "@konkyo/db"
-import { sql } from "drizzle-orm"
+import { db, schema } from "@konkyo/db"
+import { eq, sql } from "drizzle-orm"
+import { createFolder } from "./folders"
 
 /** A space's colour when none was chosen yet: hashed from its id (same as the UI's colorFor). */
 function hashedColor(id: string): SpaceColor {
@@ -118,4 +119,29 @@ export async function listSpaces(ownerId: string): Promise<SpaceRow[]> {
       createdAt: r.created_at,
     }
   })
+}
+
+export type NewSpace = {
+  name: string
+  color: SpaceColor
+  wall: SpaceWall
+  symbol: string
+  templateId: string
+  description?: string
+}
+
+/** Makes a space: a top-level folder carrying its identity (the trigger sets its space_id). */
+export async function createSpace(ownerId: string, input: NewSpace) {
+  const folder = await createFolder(ownerId, input.name, null)
+  await db
+    .update(schema.folders)
+    .set({
+      color: input.color,
+      wall: input.wall,
+      symbol: input.symbol,
+      templateId: input.templateId,
+      description: input.description ?? null,
+    })
+    .where(eq(schema.folders.id, folder.id))
+  return { id: folder.id }
 }

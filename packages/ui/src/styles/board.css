@@ -785,3 +785,121 @@ button.board-object:hover,
   font-size: 12px;
   font-weight: 700;
 }
+
+/* ------------------------------------------------------------------ add-to tiles: their pictures */
+/* Each way to add something is drawn as the thing it makes, or the service's own logo. No icons. */
+.add-art {
+  position: relative;
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+}
+.add-art img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+}
+/* a small stack of pages */
+.add-art-pages i {
+  position: absolute;
+  width: 30px;
+  height: 38px;
+  border-radius: 3px;
+  background: #fffaf7;
+  box-shadow: 0 0 0 1px rgb(17 17 20 / 0.2);
+}
+.add-art-pages i:nth-child(1) {
+  rotate: -9deg;
+  translate: -7px 2px;
+}
+.add-art-pages i:nth-child(2) {
+  rotate: 6deg;
+  translate: 6px 0;
+}
+.add-art-pages i:nth-child(3) {
+  display: grid;
+  place-items: center;
+  color: #111114;
+  font-size: 9px;
+  font-weight: 800;
+}
+/* a manila folder */
+.add-art-folder i {
+  position: relative;
+  width: 44px;
+  height: 32px;
+  border-radius: 3px 7px 7px 7px;
+  background: #f0c987;
+}
+.add-art-folder i::before {
+  position: absolute;
+  top: -6px;
+  left: 0;
+  width: 18px;
+  height: 8px;
+  border-radius: 4px 4px 0 0;
+  background: #f0c987;
+  content: "";
+}
+/* a paper slip with a DOI on it */
+.add-art-doi span {
+  border-radius: 3px;
+  background: #fffaf7;
+  color: #111114;
+  padding: 5px 6px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  line-height: 1.15;
+  rotate: -4deg;
+}
+/* a sticky note */
+.add-art-note i {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  align-content: center;
+  gap: 4px;
+  background: #ffe9a8;
+  padding: 0 6px;
+  rotate: 3deg;
+}
+.add-art-note i::before,
+.add-art-note i::after {
+  height: 3px;
+  border-radius: 2px;
+  background: rgb(17 17 20 / 0.25);
+  content: "";
+}
+/* a waveform (an audio brief), in the voice colours */
+.add-art-wave {
+  display: flex;
+  height: 30px;
+  align-items: center;
+  gap: 3px;
+}
+.add-art-wave i {
+  width: 4px;
+  border-radius: 2px;
+  background: var(--color-teal);
+}
+.add-art-wave i:nth-child(even) {
+  background: var(--color-orange);
+}
+/* a count (something new found) */
+.add-art-count {
+  display: grid;
+  justify-items: center;
+  color: var(--color-lime);
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+}
+.add-art-count small {
+  color: rgb(255 255 255 / 0.7);
+  font-family: var(--font-sans);
+  font-size: 9.5px;
+  font-weight: 700;
+}

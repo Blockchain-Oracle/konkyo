@@ -18,6 +18,7 @@ import { ConnectorImportDialog } from "@/components/library/connector-import-dia
 import { ShareDialog } from "@/components/library/share-dialog"
 import { flattenTree, useFolderActions, useFolderTree } from "@/lib/use-folders"
 import { useFileActions } from "@/lib/use-library"
+import { SpaceMaker } from "./space-maker"
 
 /** The app's small dialogs, opened from anywhere (Create menu, sidebar, rows, ⌘K). */
 type DialogState =
@@ -61,9 +62,18 @@ export function AppDialogs() {
   const close = () => set(null)
   return (
     <>
+      {/* A new top-level folder is a space: it gets the space maker (F45). */}
+      <SpaceMaker
+        key={dialog?.type === "new-folder" && !dialog.parentId ? "open" : "closed"}
+        open={dialog?.type === "new-folder" && !dialog.parentId}
+        onClose={close}
+      />
       <NameDialog
         key={dialog?.type === "rename-folder" ? dialog.id : "new"}
-        open={dialog?.type === "new-folder" || dialog?.type === "rename-folder"}
+        open={
+          (dialog?.type === "new-folder" && Boolean(dialog.parentId)) ||
+          dialog?.type === "rename-folder"
+        }
         dialog={dialog}
         onClose={close}
       />

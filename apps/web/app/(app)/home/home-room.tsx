@@ -12,6 +12,7 @@ import { SourceFace } from "@/components/library/source-face"
 import { SpaceShelf } from "@/components/library/space-shelf"
 import { useUploads } from "@/components/library/uploads-provider"
 import { RoomHeader } from "@/components/page-shell"
+import { AddPicker } from "@/components/shell/add-picker"
 import { openNewFolder } from "@/components/shell/app-dialogs"
 import { TodayCard } from "@/components/study/today-card"
 import { authClient } from "@/lib/auth-client"
@@ -63,7 +64,7 @@ export function HomeRoom() {
             <Button variant="sticker" onClick={() => openNewFolder(null)}>
               new space
             </Button>
-            <Button onClick={() => pickFiles()}>upload</Button>
+            <AddPicker />
           </>
         }
       />
