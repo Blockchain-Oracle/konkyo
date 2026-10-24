@@ -7,7 +7,8 @@
     "dev": "node ../../scripts/with-env.mjs tsx watch --clear-screen=false src/index.ts",
     "start": "node ../../scripts/with-env.mjs tsx src/index.ts",
     "ingest": "node ../../scripts/with-env.mjs tsx src/cli.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build": "node scripts/build.mjs"
   },
   "dependencies": {
     "@konkyo/agents": "workspace:*",
@@ -26,6 +27,7 @@
   "devDependencies": {
     "@konkyo/typescript-config": "workspace:*",
     "@types/node": "24.19.2",
+    "esbuild": "0.28.2",
     "tsx": "4.23.15",
     "typescript": "7.0.2"
   }

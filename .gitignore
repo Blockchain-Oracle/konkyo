@@ -29,3 +29,4 @@ logs/*.jsonl
 
 # Fumadocs generated sources (rebuilt on dev/build)
 .source/
+

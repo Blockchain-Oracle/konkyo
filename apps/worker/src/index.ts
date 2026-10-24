@@ -1,3 +1,4 @@
+import { migrateDatabase } from "@konkyo/db/migrate"
 import { boss, QUEUES } from "@konkyo/jobs"
 import { ensureBucket } from "@konkyo/storage"
 import { warmUp } from "@konkyo/zetaris"
@@ -15,7 +16,9 @@ import { makeSet } from "./study"
 /** Files processed at once in this worker (OCR, conversion and transcription are heavy). */
 const INGEST_CONCURRENCY = 2
 
-// A fresh install has no bucket yet; making it here means no manual step on a new server.
+// The schema first (the worker is the one writer that applies migrations), then the bucket a fresh
+// install doesn't have yet: no manual step on a new server.
+await migrateDatabase()
 await ensureBucket()
 const queues = await boss({ worker: true })
 void warmUp().then((ms) => console.info(`[zetaris] session ready in ${ms} ms`))

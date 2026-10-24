@@ -31,4 +31,5 @@ USER node
 EXPOSE 3210
 HEALTHCHECK --interval=15s --timeout=5s --start-period=30s --retries=5 \
   CMD curl -fsS http://127.0.0.1:3210/api/health || exit 1
-CMD ["node", "apps/web/server.js"]
+# The heap stays under the container limit (set in Coolify), with room for native memory.
+CMD ["node", "--max-old-space-size=768", "apps/web/server.js"]
