@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto"
 import { db, schema } from "@konkyo/db"
 import { folderRole } from "@konkyo/db/access"
 import { and, eq, inArray, isNull, notInArray, or, sql } from "drizzle-orm"
-import { LibraryError, ownFolder } from "./library"
+import { fileableFolder, LibraryError, ownFolder } from "./library"
 
 const { folders, files, fileFolders } = schema
 
@@ -111,7 +111,8 @@ export async function moveFolder(ownerId: string, folderId: string, parentId: st
 
 /** Files go to one folder (or out of every folder, back to the library's top level). */
 export async function moveFiles(ownerId: string, fileIds: string[], folderId: string | null) {
-  if (folderId) await ownFolder(ownerId, folderId)
+  // into your own folder, or a shared space where you can add (only your own files move)
+  if (folderId) await fileableFolder(ownerId, folderId)
   const owned = await db
     .select({ id: files.id })
     .from(files)

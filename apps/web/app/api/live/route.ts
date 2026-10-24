@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto"
 import { db } from "@konkyo/db"
 import { uuidArray } from "@konkyo/db/access"
+import type { SpaceEventKind } from "@konkyo/db/schema"
 import { sql } from "drizzle-orm"
 import { NextResponse } from "next/server"
 import { z } from "zod"
@@ -56,19 +57,30 @@ export async function GET(request: Request) {
       // Listen first, then replay: nothing that happens in between is missed.
       const spaces = await join({ id, userId: me.id, face: me.face, here, send })
       if (last && spaces.size) {
+        // only what happened since they joined (a member doesn't replay the space's past)
         const missed = await db.execute<{
           id: number
           space_id: string
-          kind: string
+          kind: SpaceEventKind
           subject_id: string | null
+          actor_id: string | null
         }>(sql`
-          select id, space_id, kind, subject_id from space_events
-          where space_id = any(${uuidArray([...spaces])}::uuid[]) and id > ${last}
-          order by id limit ${REPLAY}`)
+          select e.id, e.space_id, e.kind, e.subject_id, e.actor_id from space_events e
+          left join space_members m on m.space_id = e.space_id and m.user_id = ${me.id}
+          where e.space_id = any(${uuidArray([...spaces])}::uuid[]) and e.id > ${last}
+            and (m.user_id is null or e.created_at >= m.joined_at)
+          order by e.id limit ${REPLAY}`)
         for (const e of missed)
           send(
             "space",
-            { type: "event", spaceId: e.space_id, id: e.id, kind: e.kind, subjectId: e.subject_id },
+            {
+              type: "event",
+              spaceId: e.space_id,
+              id: e.id,
+              kind: e.kind,
+              subjectId: e.subject_id,
+              actorId: e.actor_id,
+            },
             e.id,
           )
       }

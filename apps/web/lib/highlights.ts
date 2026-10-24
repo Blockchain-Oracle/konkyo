@@ -1,5 +1,6 @@
 import "server-only"
 import { db, schema } from "@konkyo/db"
+import { fileAccess } from "@konkyo/db/access"
 import { and, asc, eq } from "drizzle-orm"
 import { LibraryError } from "./library"
 
@@ -28,10 +29,8 @@ export async function addHighlights(
   fileId: string,
   marks: { page: number; rects: Box[]; text: string }[],
 ) {
-  const file = await db.query.files.findFirst({
-    where: and(eq(files.id, fileId), eq(files.ownerId, ownerId)),
-  })
-  if (!file) throw new LibraryError("No such file", 404)
+  // any source you can read (yours, or one in a space you're in): your highlights are yours
+  if (!(await fileAccess(ownerId, fileId))) throw new LibraryError("No such file", 404)
   return (
     db
       .insert(highlights)

@@ -111,9 +111,16 @@ export async function postMessage(
     const limited = await allowanceLeft(viewerId, "questions")
     if (limited) throw new LibraryError(limited, 429)
   }
+  // a reply is to a message in this same space
+  if (input.replyToId) {
+    const to = await db.query.spaceMessages.findFirst({
+      where: and(eq(spaceMessages.id, input.replyToId), eq(spaceMessages.spaceId, spaceId)),
+    })
+    if (!to) throw new LibraryError("That message isn't in this space", 404)
+  }
   const answerId = question ? randomUUID() : null
   await db.transaction(async (tx) => {
-    await tx
+    const [made] = await tx
       .insert(spaceMessages)
       .values({
         id: input.id,
@@ -124,6 +131,9 @@ export async function postMessage(
         replyToId: input.replyToId ?? null,
       })
       .onConflictDoNothing()
+      .returning({ id: spaceMessages.id })
+    // the id is the client's (so a retry can't post twice): one that's taken is refused
+    if (!made) throw new LibraryError("That message was already sent", 409)
     if (answerId)
       await tx.insert(spaceMessages).values({
         id: answerId,
@@ -278,7 +288,9 @@ export async function pinFromThread(viewerId: string, spaceId: string, messageId
   if (message?.kind !== "answer" || message.status !== "answered" || !final)
     throw new LibraryError("Only a finished, checked answer can be pinned", 409)
   const ask = message.replyToId
-    ? await db.query.spaceMessages.findFirst({ where: eq(spaceMessages.id, message.replyToId) })
+    ? await db.query.spaceMessages.findFirst({
+        where: and(eq(spaceMessages.id, message.replyToId), eq(spaceMessages.spaceId, spaceId)),
+      })
     : undefined
   await db.transaction(async (tx) => {
     const [made] = await tx

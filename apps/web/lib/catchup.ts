@@ -2,6 +2,7 @@ import "server-only"
 import { db, schema } from "@konkyo/db"
 import { readableFileSql } from "@konkyo/db/access"
 import { and, desc, eq, gt, inArray, isNull, ne, sql } from "drizzle-orm"
+import { readableFolderSql } from "./library"
 import { todaySummary } from "./study"
 
 const { files, folders, fileFolders, inboxItems, runs, userSettings } = schema
@@ -60,7 +61,8 @@ export async function catchup(ownerId: string, here?: string | null): Promise<Ca
       })
       .from(files)
       .leftJoin(fileFolders, eq(fileFolders.fileId, files.id))
-      .leftJoin(folders, eq(folders.id, fileFolders.folderId))
+      // only folders this person can see name a space here
+      .leftJoin(folders, and(eq(folders.id, fileFolders.folderId), readableFolderSql(ownerId)))
       .where(
         and(
           eq(files.ownerId, ownerId),

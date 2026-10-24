@@ -2,6 +2,7 @@ import "server-only"
 import { Cite } from "@citation-js/core"
 import type { CslItem, FileMeta } from "@konkyo/config"
 import { db, schema } from "@konkyo/db"
+import { readableFileSql } from "@konkyo/db/access"
 import {
   AlignmentType,
   Document,
@@ -13,13 +14,13 @@ import {
   type ParagraphChild,
   TextRun,
 } from "docx"
-import { inArray } from "drizzle-orm"
+import { and, inArray } from "drizzle-orm"
 import { loadStyle, type StyleInfo } from "./csl"
 import { getNote, type NoteDoc } from "./notes"
 
 const { files } = schema
 
-type PMNode = {
+export type PMNode = {
   type: string
   text?: string
   attrs?: Record<string, unknown>
@@ -28,7 +29,7 @@ type PMNode = {
 }
 
 /** Every citation in the note, in the order they appear. */
-function citationsIn(doc: PMNode): Record<string, unknown>[] {
+export function citationsIn(doc: PMNode): Record<string, unknown>[] {
   const out: Record<string, unknown>[] = []
   const walk = (n: PMNode) => {
     if (n.type === "citation" && n.attrs) out.push(n.attrs)
@@ -41,7 +42,7 @@ function citationsIn(doc: PMNode): Record<string, unknown>[] {
 /** A cited file as CSL-JSON: its stored record (OpenAlex/arXiv/you), else what's known of it. */
 type CslEntry = Record<string, unknown> & { id: string }
 
-async function cslItems(fileIds: string[]): Promise<Map<string, CslEntry>> {
+async function cslItems(ownerId: string, fileIds: string[]): Promise<Map<string, CslEntry>> {
   if (!fileIds.length) return new Map()
   const rows = await db
     .select({
@@ -53,7 +54,8 @@ async function cslItems(fileIds: string[]): Promise<Map<string, CslEntry>> {
       createdAt: files.createdAt,
     })
     .from(files)
-    .where(inArray(files.id, fileIds))
+    // a citation names only a source this person can read (theirs, or in a space they're in)
+    .where(and(inArray(files.id, fileIds), readableFileSql(ownerId, "files")))
   return new Map(
     rows.map((r) => {
       const csl = (r.meta as FileMeta | null)?.csl
@@ -122,7 +124,7 @@ export async function noteDocx(ownerId: string, noteId: string, styleId: string)
   const style = await loadStyle(styleId)
   const cited = citationsIn(doc)
   const order = [...new Set(cited.map((c) => String(c.fileId)))]
-  const items = await cslItems(order)
+  const items = await cslItems(ownerId, order)
   const cite = new Cite(order.map((id) => items.get(id)).filter(Boolean))
   const number = new Map(order.map((id, i) => [id, i + 1]))
 

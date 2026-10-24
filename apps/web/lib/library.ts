@@ -47,7 +47,15 @@ export async function listFiles(ownerId: string, folderId?: string, spaceId?: st
       folderName: folders.name,
     })
     .from(fileFolders)
-    .innerJoin(folders, and(eq(folders.id, fileFolders.folderId), isNull(folders.deletedAt)))
+    .innerJoin(
+      folders,
+      and(
+        eq(folders.id, fileFolders.folderId),
+        isNull(folders.deletedAt),
+        // only a folder this person can see: someone's private folder never names itself here
+        readableFolderSql(ownerId),
+      ),
+    )
     .orderBy(fileFolders.fileId, asc(fileFolders.addedAt))
     .as("first_folder")
   const rows = await db
@@ -280,6 +288,11 @@ export async function importUrl(
   return { fileId: file.id }
 }
 
+/** "This folder row is one I can see": mine, or in a space I'm a member of. */
+export const readableFolderSql = (userId: string) =>
+  sql`(${folders.ownerId} = ${userId} or ${folders.spaceId} in (
+    select space_id from space_members where user_id = ${userId}))`
+
 /**
  * A folder you may file your own sources into: yours, or one in a space where you can add. A
  * stranger gets a 404, a reader a 403. Uploads, links, connectors and deep search check this.
@@ -294,7 +307,9 @@ export async function fileableFolder(userId: string, folderId: string) {
 /** A file you may read: yours, or filed in a space you're in. `own` says whether you may change it. */
 export async function readableFile(userId: string, fileId: string) {
   const access = await fileAccess(userId, fileId)
-  const file = access ? await db.query.files.findFirst({ where: eq(files.id, fileId) }) : undefined
+  const file = await db.query.files.findFirst({ where: eq(files.id, fileId) })
+  // its owner opens it even from Trash; anyone else only while it's live and shared with them
+  if (file && file.ownerId === userId) return { file, own: true }
   if (!access || !file) throw new LibraryError("No such file", 404)
   return { file, own: access.own }
 }
@@ -355,12 +370,13 @@ export async function keepExisting(ownerId: string, fileId: string) {
   if (dup.problem !== "duplicate" || !dup.duplicateOfId)
     throw new LibraryError("This file isn't a duplicate")
   const memberships = await db.select().from(fileFolders).where(eq(fileFolders.fileId, fileId))
-  if (memberships.length) {
+  // only into folders this person may still file into (a space they left or read only is out)
+  const allowed: string[] = []
+  for (const m of memberships) if (await canFileInto(ownerId, m.folderId)) allowed.push(m.folderId)
+  if (allowed.length) {
     await db
       .insert(fileFolders)
-      .values(
-        memberships.map((m) => ({ fileId: dup.duplicateOfId as string, folderId: m.folderId })),
-      )
+      .values(allowed.map((folderId) => ({ fileId: dup.duplicateOfId as string, folderId })))
       .onConflictDoNothing()
   }
   await db.delete(files).where(eq(files.id, fileId))

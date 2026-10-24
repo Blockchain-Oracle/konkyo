@@ -15,7 +15,14 @@ export const LIVE_CHANNEL = "live"
 type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0]
 
 export type LiveMessage =
-  | { type: "event"; spaceId: string; id: number; kind: SpaceEventKind; subjectId: string | null }
+  | {
+      type: "event"
+      spaceId: string
+      id: number
+      kind: SpaceEventKind
+      subjectId: string | null
+      actorId: string | null
+    }
   | { type: "signal"; topic: string; kind: string; data: Record<string, unknown> }
 
 /** Records something that happened in a space and announces it, in the caller's transaction. */
@@ -46,6 +53,7 @@ export async function spaceEvent(
     id,
     kind: event.kind,
     subjectId: event.subjectId ?? null,
+    actorId: event.actorId,
   }
   await tx.execute(sql`select pg_notify(${LIVE_CHANNEL}, ${JSON.stringify(message)})`)
   return id

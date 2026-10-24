@@ -17,7 +17,7 @@ import { db, schema } from "@konkyo/db"
 import { env } from "@konkyo/env/server"
 import { enqueue } from "@konkyo/jobs"
 import { and, count, eq, inArray, isNull } from "drizzle-orm"
-import { LibraryError, ownFolder } from "./library"
+import { fileableFolder, LibraryError } from "./library"
 import { trashFiles } from "./trash"
 import { allowanceLeft } from "./usage"
 
@@ -170,7 +170,7 @@ export async function setWatch(
 ) {
   const row = await ownConnection(ownerId, id)
   if (row.toolkit !== "gmail") throw new LibraryError("Only Gmail watches a search", 400)
-  if (input.folderId) await ownFolder(ownerId, input.folderId)
+  if (input.folderId) await fileableFolder(ownerId, input.folderId)
   await db
     .update(connections)
     .set({
@@ -232,7 +232,7 @@ export async function importItems(
   const row = await ownConnection(ownerId, id)
   const limited = await allowanceLeft(ownerId, "files", input.items.length)
   if (limited) throw new LibraryError(limited, 429)
-  if (input.folderId) await ownFolder(ownerId, input.folderId)
+  if (input.folderId) await fileableFolder(ownerId, input.folderId)
   const ids = input.items.map((i) => i.id)
   const have = ids.length
     ? await db

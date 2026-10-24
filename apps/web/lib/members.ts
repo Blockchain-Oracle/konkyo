@@ -155,24 +155,17 @@ export async function joinSpace(userId: string, token: string): Promise<{ spaceI
     const already = await tx.query.spaceMembers.findFirst({
       where: and(eq(spaceMembers.spaceId, space.id), eq(spaceMembers.userId, userId)),
     })
+    // someone already in keeps the role the owner gave them: a link never raises it
+    if (already) return
     await tx
       .insert(spaceMembers)
       .values({ spaceId: space.id, userId, role: invite.role, invitedVia: invite.token })
-      .onConflictDoUpdate({
-        target: [spaceMembers.spaceId, spaceMembers.userId],
-        set: {
-          role: sql`case when ${spaceMembers.role} = 'add' or excluded.role = 'add'
-            then 'add' else 'read' end`,
-        },
-      })
-    // only a first arrival counts as joining (and as a use of the link)
-    if (!already) {
-      await tx
-        .update(spaceInvites)
-        .set({ uses: sql`${spaceInvites.uses} + 1` })
-        .where(eq(spaceInvites.token, token))
-      await spaceEvent(tx, { spaceId: space.id, actorId: userId, kind: "member_joined" })
-    }
+      .onConflictDoNothing()
+    await tx
+      .update(spaceInvites)
+      .set({ uses: sql`${spaceInvites.uses} + 1` })
+      .where(eq(spaceInvites.token, token))
+    await spaceEvent(tx, { spaceId: space.id, actorId: userId, kind: "member_joined" })
   })
   return { spaceId: space.id }
 }
@@ -272,6 +265,12 @@ export async function removeMember(ownerId: string, spaceId: string, memberId: s
       .returning()
     if (!gone.length) throw new LibraryError("They're not in this space", 404)
     await unfileTheirs(tx, spaceId, memberId)
+    // the link they came in by would bring them straight back: it stops working, a new one is
+    // made the next time the owner opens the invite popover
+    await tx
+      .update(spaceInvites)
+      .set({ revokedAt: new Date() })
+      .where(and(eq(spaceInvites.spaceId, spaceId), isNull(spaceInvites.revokedAt)))
     await spaceEvent(tx, {
       spaceId,
       actorId: ownerId,

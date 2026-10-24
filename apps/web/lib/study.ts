@@ -14,7 +14,7 @@ import {
 } from "@konkyo/agents"
 import { type FileKind, type FileMeta, STUDY } from "@konkyo/config"
 import { db, schema } from "@konkyo/db"
-import { folderRole } from "@konkyo/db/access"
+import { folderRole, readableFileSql } from "@konkyo/db/access"
 import type { StudyCheck, StudyItemData, StudyKind, StudyMode, StudyScope } from "@konkyo/db/schema"
 import { enqueue } from "@konkyo/jobs"
 import {
@@ -524,7 +524,9 @@ function sidesOf(text: string, quote: string) {
   return { sentences, answers }
 }
 
-async function passageTexts(ids: string[]) {
+/** Passages behind practice items: only from sources this person can still read (a space they
+ *  left keeps its text to itself). */
+async function passageTexts(viewerId: string, ids: string[]) {
   if (!ids.length) return new Map<string, { text: string; ordinal: number; fileId: string }>()
   const rows = await db
     .select({
@@ -534,12 +536,13 @@ async function passageTexts(ids: string[]) {
       fileId: passages.fileId,
     })
     .from(passages)
-    .where(inArray(passages.id, [...new Set(ids)]))
+    .innerJoin(files, eq(files.id, passages.fileId))
+    .where(and(inArray(passages.id, [...new Set(ids)]), readableFileSql(viewerId, "files")))
   return new Map(rows.map((r) => [r.id, r]))
 }
 
 /** The stored Find the Evidence options, with what an option card shows. */
-async function optionPassages(ids: string[]) {
+async function optionPassages(viewerId: string, ids: string[]) {
   if (!ids.length) return []
   const rows = await db
     .select({
@@ -554,7 +557,9 @@ async function optionPassages(ids: string[]) {
     })
     .from(passages)
     .innerJoin(files, eq(files.id, passages.fileId))
-    .where(and(inArray(passages.id, ids), isNull(files.deletedAt)))
+    .where(
+      and(inArray(passages.id, ids), isNull(files.deletedAt), readableFileSql(viewerId, "files")),
+    )
   return rows
 }
 
@@ -594,13 +599,13 @@ async function toRoundItem(r: Row, asEvidence: boolean): Promise<RoundItem> {
     intervals,
     isNew: card.state === 0,
   }
-  const texts = await passageTexts([
+  const texts = await passageTexts(r.item.ownerId, [
     r.item.passageId,
     ...(data.other ? [data.other.passageId] : []),
   ])
   if (asEvidence) {
     const own = texts.get(r.item.passageId)
-    const others = await optionPassages(data.distractors ?? [])
+    const others = await optionPassages(r.item.ownerId, data.distractors ?? [])
     const options: RoundOption[] = shuffle([
       { ...ground, excerpt: excerptOf(own?.text ?? r.item.quote, r.item.quote) },
       ...others.map((o) => ({
@@ -922,7 +927,10 @@ async function ownItem(ownerId: string, itemId: string) {
 
 async function forCheck(item: typeof studyItems.$inferSelect): Promise<ItemForCheck> {
   const data = item.data as StudyItemData
-  const texts = await passageTexts([item.passageId, ...(data.other ? [data.other.passageId] : [])])
+  const texts = await passageTexts(item.ownerId, [
+    item.passageId,
+    ...(data.other ? [data.other.passageId] : []),
+  ])
   return {
     kind: item.kind,
     prompt: item.prompt,

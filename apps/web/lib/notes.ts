@@ -4,7 +4,7 @@ import { db, schema } from "@konkyo/db"
 import { fileAccess } from "@konkyo/db/access"
 import { enqueueDebounced } from "@konkyo/jobs"
 import { and, desc, eq, isNull } from "drizzle-orm"
-import { LibraryError } from "./library"
+import { fileableFolder, LibraryError } from "./library"
 
 const { files, fileFolders, folders, notes, noteVersions, noteEvents } = schema
 
@@ -18,16 +18,8 @@ export async function createNote(
   ownerId: string,
   input: { title?: string; folderId?: string; content?: NoteDoc; text?: string },
 ) {
-  if (input.folderId) {
-    const folder = await db.query.folders.findFirst({
-      where: and(
-        eq(folders.id, input.folderId),
-        eq(folders.ownerId, ownerId),
-        isNull(folders.deletedAt),
-      ),
-    })
-    if (!folder) throw new LibraryError("No such folder", 404)
-  }
+  // yours, or a shared space where you can add (the note stays yours)
+  if (input.folderId) await fileableFolder(ownerId, input.folderId)
   return db.transaction(async (tx) => {
     const [file] = await tx
       .insert(files)

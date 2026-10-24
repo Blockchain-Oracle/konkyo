@@ -40,8 +40,20 @@ function listen() {
       if (message.type === "event") {
         for (const sub of hub.subs.values())
           if (sub.spaces.has(message.spaceId)) sub.send("space", message, message.id)
-        // someone joined: their own tabs learn the space at once (others already have it)
-        if (message.kind === "member_joined") void refreshSpaces()
+        // who's in changed: only the people it touched re-read their spaces (a removed member's
+        // open tab stops hearing this space at once, and leaves its "here now")
+        const touched =
+          message.kind === "member_joined" || message.kind === "member_left"
+            ? [message.actorId]
+            : message.kind === "member_removed"
+              ? [message.subjectId]
+              : message.kind === "space_trashed"
+                ? [...hub.subs.values()]
+                    .filter((s) => s.spaces.has(message.spaceId))
+                    .map((s) => s.userId)
+                : []
+        const users = touched.filter((u): u is string => Boolean(u))
+        if (users.length) void refreshSpaces(new Set(users))
         return
       }
       const space = message.topic.startsWith("space:") ? message.topic.slice(6) : null
@@ -55,14 +67,21 @@ function listen() {
   return hub.listening
 }
 
-/** Spaces can change under an open tab (a join, a removal): re-read them for everyone. */
-async function refreshSpaces() {
-  const users = new Map<string, Sub[]>()
-  for (const sub of hub.subs.values())
-    users.set(sub.userId, [...(users.get(sub.userId) ?? []), sub])
-  for (const [userId, subs] of users) {
+/** Spaces can change under an open tab (a join, a removal): re-read them for these people. */
+async function refreshSpaces(userIds: Set<string>) {
+  for (const userId of userIds) {
+    const subs = [...hub.subs.values()].filter((s) => s.userId === userId)
+    if (!subs.length) continue
     const spaces = new Set((await mySpaces(userId)).map((s) => s.spaceId))
-    for (const sub of subs) sub.spaces = spaces
+    const gone = new Set<string>()
+    for (const sub of subs) {
+      sub.spaces = spaces
+      if (sub.here && !spaces.has(sub.here)) {
+        gone.add(sub.here)
+        sub.here = null
+      }
+    }
+    for (const spaceId of gone) announcePresence(spaceId)
   }
 }
 
