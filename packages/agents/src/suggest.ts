@@ -1,10 +1,11 @@
 import { createHash } from "node:crypto"
 import { db, schema } from "@konkyo/db"
+import { reachSql, resolveReach } from "@konkyo/db/access"
 import { generateText, Output } from "ai"
-import { and, desc, eq, inArray, isNull } from "drizzle-orm"
+import { and, desc, eq, isNull, sql } from "drizzle-orm"
 import { z } from "zod"
 import { MODELS, model, reasoning } from "./models"
-import { type Scope, scopeFileIds } from "./retrieve"
+import type { Scope } from "./retrieve"
 
 const { files } = schema
 
@@ -23,18 +24,16 @@ const TTL_MS = 6 * 60 * 60 * 1000
  * Cached per set of files until one of them changes.
  */
 export async function suggestQuestions(ownerId: string, scope: Scope): Promise<string[]> {
-  const ids = await scopeFileIds(ownerId, scope)
+  // In a space, everyone's sources there (access.ts); elsewhere, only mine.
+  const reach = await resolveReach(ownerId, scope)
   const rows = await db
     .select({ id: files.id, title: files.title, meta: files.meta, updatedAt: files.updatedAt })
     .from(files)
     .where(
       and(
-        eq(files.ownerId, ownerId),
+        sql`${reachSql(reach, "files", "id")}`,
         eq(files.status, "ready"),
         isNull(files.deletedAt),
-        ids
-          ? inArray(files.id, ids.length ? ids : ["00000000-0000-0000-0000-000000000000"])
-          : undefined,
       ),
     )
     .orderBy(desc(files.createdAt))

@@ -143,7 +143,8 @@ function Details({ fileId }: { fileId: string }) {
             <h3 id="citation-label" className="text-micro text-ash-gray uppercase">
               Citation
             </h3>
-            {!editing && (
+            {/* someone else's source in a shared space: its details are theirs to edit */}
+            {!editing && file.own && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -252,16 +253,18 @@ function Details({ fileId }: { fileId: string }) {
             Download
           </Button>
         )}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="ml-auto"
-          disabled={reprocess.isPending || file.status === "processing"}
-          onClick={() => reprocess.mutate()}
-        >
-          <RefreshCwIcon strokeWidth={1.5} />
-          Re-process
-        </Button>
+        {file.own && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="ml-auto"
+            disabled={reprocess.isPending || file.status === "processing"}
+            onClick={() => reprocess.mutate()}
+          >
+            <RefreshCwIcon strokeWidth={1.5} />
+            Re-process
+          </Button>
+        )}
       </footer>
     </div>
   )

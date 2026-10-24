@@ -8,12 +8,14 @@ import {
   STORAGE,
 } from "@konkyo/config"
 import { db, schema } from "@konkyo/db"
+import { canFileInto, fileAccess, folderRole, spaceRole } from "@konkyo/db/access"
+import { fileSpaceEvents } from "@konkyo/db/live"
 import { enqueue } from "@konkyo/jobs"
 import { headObject, objectKey, presignOperation, type S3Operation } from "@konkyo/storage"
 import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm"
 import { allowanceLeft } from "./usage"
 
-const { files, folders, fileFolders, passages } = schema
+const { files, folders, fileFolders, passages, user } = schema
 
 export class LibraryError extends Error {
   constructor(
@@ -29,6 +31,15 @@ export class LibraryError extends Error {
  * filed in one folder. Each file carries its folder (the first one, if it is filed in several).
  */
 export async function listFiles(ownerId: string, folderId?: string, spaceId?: string) {
+  // A folder or a space lists everyone's files in it for anyone with a role there (the owner's
+  // own folders hold only their files until someone joins); the whole library is only mine.
+  const role = folderId
+    ? await folderRole(ownerId, folderId)
+    : spaceId
+      ? await spaceRole(ownerId, spaceId)
+      : "owner"
+  if (!role) throw new LibraryError("No such folder", 404)
+  const scoped = Boolean(folderId || spaceId)
   const firstFolder = db
     .selectDistinctOn([fileFolders.fileId], {
       fileId: fileFolders.fileId,
@@ -60,12 +71,16 @@ export async function listFiles(ownerId: string, folderId?: string, spaceId?: st
       updatedAt: files.updatedAt,
       folderId: firstFolder.folderId,
       folderName: firstFolder.folderName,
+      // in a shared space: whose source it is (only they can change or delete it)
+      mine: sql<boolean>`${files.ownerId} = ${ownerId}`,
+      addedBy: user.name,
     })
     .from(files)
     .leftJoin(firstFolder, eq(firstFolder.fileId, files.id))
+    .innerJoin(user, eq(user.id, files.ownerId))
     .where(
       and(
-        eq(files.ownerId, ownerId),
+        scoped ? undefined : eq(files.ownerId, ownerId),
         isNull(files.deletedAt),
         folderId
           ? inArray(
@@ -148,7 +163,7 @@ export async function registerUpload(
 ) {
   const limited = await allowanceLeft(ownerId, "files")
   if (limited) throw new LibraryError(limited, 429)
-  if (input.folderId) await ownFolder(ownerId, input.folderId)
+  if (input.folderId) await fileableFolder(ownerId, input.folderId)
   const kind = kindForName(input.name)
   if (!kind) {
     // Shown in the library as "Unsupported" with Remove (plan F03), rather than vanishing.
@@ -182,8 +197,10 @@ export async function registerUpload(
   if (!file) throw new LibraryError("Couldn't add the file", 500)
   const key = objectKey("originals", ownerId, file.id, safeName(input.name))
   await db.update(files).set({ originalKey: key }).where(eq(files.id, file.id))
-  if (folderId)
+  if (folderId) {
     await db.insert(fileFolders).values({ fileId: file.id, folderId }).onConflictDoNothing()
+    await fileSpaceEvents(db, file.id, "source_added", ownerId)
+  }
   return { fileId: file.id, key }
 }
 
@@ -236,7 +253,7 @@ export async function importUrl(
     throw new LibraryError("Only http and https links can be imported")
   const limited = await allowanceLeft(ownerId, "files")
   if (limited) throw new LibraryError(limited, 429)
-  if (folderId) await ownFolder(ownerId, folderId)
+  if (folderId) await fileableFolder(ownerId, folderId)
   const kind: FileKind = isYouTube(url.href) ? "youtube" : "web"
   const [file] = await db
     .insert(files)
@@ -251,10 +268,31 @@ export async function importUrl(
     })
     .returning({ id: files.id })
   if (!file) throw new LibraryError("Couldn't add the link", 500)
-  if (folderId)
+  if (folderId) {
     await db.insert(fileFolders).values({ fileId: file.id, folderId }).onConflictDoNothing()
+    await fileSpaceEvents(db, file.id, "source_added", ownerId)
+  }
   await enqueue("ingest", { fileId: file.id }, file.id)
   return { fileId: file.id }
+}
+
+/**
+ * A folder you may file your own sources into: yours, or one in a space where you can add. A
+ * stranger gets a 404, a reader a 403. Uploads, links, connectors and deep search check this.
+ */
+export async function fileableFolder(userId: string, folderId: string) {
+  if (await canFileInto(userId, folderId)) return
+  const role = await folderRole(userId, folderId)
+  if (!role) throw new LibraryError("No such folder", 404)
+  throw new LibraryError("You can read this space, not add to it", 403)
+}
+
+/** A file you may read: yours, or filed in a space you're in. `own` says whether you may change it. */
+export async function readableFile(userId: string, fileId: string) {
+  const access = await fileAccess(userId, fileId)
+  const file = access ? await db.query.files.findFirst({ where: eq(files.id, fileId) }) : undefined
+  if (!access || !file) throw new LibraryError("No such file", 404)
+  return { file, own: access.own }
 }
 
 /** The person's own folder, or a 404: every way a file is put in a folder checks this first. */
@@ -329,7 +367,7 @@ export async function keepExisting(ownerId: string, fileId: string) {
 
 /** One file for the preview pane: where to read it (a PDF for every document kind) or play it. */
 export async function getFileDetail(ownerId: string, fileId: string) {
-  const file = await ownFile(ownerId, fileId)
+  const { file, own } = await readableFile(ownerId, fileId)
   if (file.deletedAt) throw new LibraryError("This file is in Trash", 404)
   const playable = file.kind === "audio" || file.kind === "video"
   const content = `/api/files/${file.id}/content`
@@ -350,6 +388,8 @@ export async function getFileDetail(ownerId: string, fileId: string) {
     renditionUrl: file.renditionKey ? content : null,
     mediaUrl: playable && file.originalKey ? `${content}?as=original` : null,
     downloadUrl: file.originalKey ? `${content}?as=original&download=1` : null,
+    /** Yours to change; false for a member reading someone else's source in a shared space. */
+    own,
   }
 }
 
@@ -364,13 +404,13 @@ export function downloadName(title: string, key: string) {
   return ext && !title.toLowerCase().endsWith(ext.toLowerCase()) ? `${title}${ext}` : title
 }
 
-/** The storage key behind a file's content route, only for its owner. */
+/** The storage key behind a file's content route: its owner, or a member of a space it's in. */
 export async function fileContentKey(
   ownerId: string,
   fileId: string,
   as: "rendition" | "original",
 ) {
-  const file = await ownFile(ownerId, fileId)
+  const { file } = await readableFile(ownerId, fileId)
   const key = as === "original" ? file.originalKey : file.renditionKey
   if (!key) throw new LibraryError("This file has no stored copy", 404)
   const name =
@@ -396,16 +436,12 @@ const passageColumns = {
 
 /** A file's passages in reading order (a transcript, or the passages on one page). */
 export async function listPassages(ownerId: string, fileId: string, page?: number) {
+  // passages carry the uploader as owner: a member reads them through the file's access
+  if (!(await fileAccess(ownerId, fileId))) throw new LibraryError("No such file", 404)
   return db
     .select(passageColumns)
     .from(passages)
-    .where(
-      and(
-        eq(passages.ownerId, ownerId),
-        eq(passages.fileId, fileId),
-        page != null ? eq(passages.page, page) : undefined,
-      ),
-    )
+    .where(and(eq(passages.fileId, fileId), page != null ? eq(passages.page, page) : undefined))
     .orderBy(asc(passages.ordinal))
 }
 
@@ -413,10 +449,8 @@ export type SourcePassage = Awaited<ReturnType<typeof listPassages>>[number]
 
 /** One passage by its id: what a citation points at. */
 export async function getPassage(ownerId: string, passageId: string) {
-  const [row] = await db
-    .select(passageColumns)
-    .from(passages)
-    .where(and(eq(passages.ownerId, ownerId), eq(passages.id, passageId)))
-  if (!row) throw new LibraryError("That passage isn't in your library", 404)
+  const [row] = await db.select(passageColumns).from(passages).where(eq(passages.id, passageId))
+  if (!row || !(await fileAccess(ownerId, row.fileId)))
+    throw new LibraryError("That passage isn't in your library", 404)
   return row
 }

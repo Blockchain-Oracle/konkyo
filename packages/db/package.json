@@ -7,13 +7,16 @@
     ".": "./src/index.ts",
     "./schema": "./src/schema/index.ts",
     "./owned": "./src/owned.ts",
-    "./migrate": "./src/migrate.ts"
+    "./migrate": "./src/migrate.ts",
+    "./access": "./src/access.ts",
+    "./live": "./src/live.ts"
   },
   "scripts": {
     "generate": "drizzle-kit generate",
     "migrate": "drizzle-kit migrate",
     "studio": "drizzle-kit studio",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --env-file-if-exists=../../.env --test src/*.test.ts"
   },
   "dependencies": {
     "@konkyo/config": "workspace:*",

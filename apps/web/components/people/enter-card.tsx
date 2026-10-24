@@ -13,6 +13,8 @@ import type { Route } from "next"
 import { useRouter } from "next/navigation"
 import { type CSSProperties, type FormEvent, useEffect, useRef, useState } from "react"
 import { authClient } from "@/lib/auth-client"
+import { api } from "@/lib/fetcher"
+import type { Face } from "@/lib/profiles"
 import { sound } from "@/lib/sounds"
 import { saveProfile, uploadPhoto } from "@/lib/use-me"
 import { LookRow } from "./look-row"
@@ -24,16 +26,28 @@ const COLLAPSE_MS = 440
 
 type Pending = "enter" | "keep" | "signin" | null
 
+/** A space you were invited into: the door names it, and walking in joins it (F56). */
+export type EnterRoom = {
+  token: string
+  name: string
+  color: string
+  ownerName: string
+  faces: Face[]
+  count: number
+}
+
 export function EnterCard({
   next,
   firstLook,
   here,
+  room,
 }: {
   /** Where you were going (`?next=`), already checked to be one of ours. */
   next: string
   /** The look (and its name) you arrive with, picked at random on the server. */
   firstLook: LookId
   here: { count: number; looks: LookId[] }
+  room?: EnterRoom
 }) {
   const router = useRouter()
   const start = LOOKS.find((look) => look.id === firstLook) ?? LOOKS[0]
@@ -84,6 +98,12 @@ export function EnterCard({
     }
     await saveProfile({ name: name.trim() || start.name, lookId })
     if (photo && usePhoto) await uploadPhoto(photo.blob)
+    if (!room) return next
+    // an invite: in through the door is into the space
+    const { spaceId } = await api<{ spaceId: string }>(`/api/join/${room.token}`, {
+      method: "POST",
+    })
+    return `/spaces/${spaceId}`
   }
 
   /* The card travels to the orb's seat and shrinks into it, so the next thing you see is the
@@ -110,12 +130,12 @@ export function EnterCard({
     setPending("enter")
     setError(null)
     try {
-      await becomeGuest()
+      const to = await becomeGuest()
       sound("place")
       setLeaving(true)
       collapse()
       window.setTimeout(() => {
-        router.replace(next as Route)
+        router.replace(to as Route)
         router.refresh()
       }, COLLAPSE_MS - 80)
     } catch (failed) {
@@ -131,12 +151,12 @@ export function EnterCard({
     setPending("keep")
     setError(null)
     try {
-      await becomeGuest()
+      const to = await becomeGuest()
       const { error: failed } = await authClient.signIn.social({
         provider: "google",
-        callbackURL: next,
+        callbackURL: to,
         // backing out at Google returns you inside as the guest you already are
-        errorCallbackURL: next,
+        errorCallbackURL: to,
       })
       if (failed)
         throw new Error("Google didn't open. You're in as a guest; keep it from settings.")
@@ -152,10 +172,12 @@ export function EnterCard({
     if (pending) return
     setPending("signin")
     setError(null)
+    // back from Google, an invite asks once more (one tap, as the person you are)
+    const back = room ? `/join/${room.token}` : next
     const { error: failed } = await authClient.signIn.social({
       provider: "google",
-      callbackURL: next,
-      errorCallbackURL: "/sign-in",
+      callbackURL: back,
+      errorCallbackURL: room ? back : "/sign-in",
     })
     if (failed) {
       setPending(null)
@@ -176,7 +198,7 @@ export function EnterCard({
     <form
       ref={cardRef}
       className={`claim-card is-gate${leaving ? " is-leaving" : ""}`}
-      aria-label="Enter Konkyo"
+      aria-label={room ? `Join ${room.name}` : "Enter Konkyo"}
       onSubmit={(event) => void enter(event)}
       style={{ "--look": lookColor } as CSSProperties}
     >
@@ -185,42 +207,61 @@ export function EnterCard({
         <div className="claim-room-name">
           <span
             className="claim-room-color"
-            style={{ backgroundColor: "var(--color-lime)" }}
+            style={{ backgroundColor: room?.color ?? "var(--color-lime)" }}
             aria-hidden="true"
           />
-          <strong>konkyo</strong>
+          <strong>{room ? room.name.toLowerCase() : "konkyo"}</strong>
         </div>
-        <div className="claim-room-here">
-          {here.looks.length > 0 && (
+        {room ? (
+          <div className="claim-room-here">
             <div className="claim-room-faces" aria-hidden="true">
-              {here.looks.map((id, i) => {
-                const face = LOOKS.find((l) => l.id === id)
-                return face ? (
-                  <MemberFace
-                    // biome-ignore lint/suspicious/noArrayIndexKey: two people can share a look
-                    key={`${id}-${i}`}
-                    face={{
-                      name: face.name,
-                      src: `/looks/${face.id}.webp`,
-                      color: SPACES.colors[face.color].hex,
-                    }}
-                    size="sm"
-                  />
-                ) : null
-              })}
+              {room.faces.slice(0, 5).map((face, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: faces can repeat a look
+                <MemberFace key={`${face.name}-${i}`} face={face} size="sm" />
+              ))}
             </div>
-          )}
-          <span>
-            <i aria-hidden="true" />
-            {here.count > 0
-              ? `${here.count} ${here.count === 1 ? "person" : "people"} reading right now`
-              : "nobody in yet · you're first"}
-          </span>
-        </div>
+            <span>
+              <i aria-hidden="true" />
+              {room.count === 1
+                ? `${room.ownerName.toLowerCase()}'s space · you'd be the second`
+                : `${room.count} people in ${room.ownerName.toLowerCase()}'s space`}
+            </span>
+          </div>
+        ) : (
+          <div className="claim-room-here">
+            {here.looks.length > 0 && (
+              <div className="claim-room-faces" aria-hidden="true">
+                {here.looks.map((id, i) => {
+                  const face = LOOKS.find((l) => l.id === id)
+                  return face ? (
+                    <MemberFace
+                      // biome-ignore lint/suspicious/noArrayIndexKey: two people can share a look
+                      key={`${id}-${i}`}
+                      face={{
+                        name: face.name,
+                        src: `/looks/${face.id}.webp`,
+                        color: SPACES.colors[face.color].hex,
+                      }}
+                      size="sm"
+                    />
+                  ) : null
+                })}
+              </div>
+            )}
+            <span>
+              <i aria-hidden="true" />
+              {here.count > 0
+                ? `${here.count} ${here.count === 1 ? "person" : "people"} reading right now`
+                : "nobody in yet · you're first"}
+            </span>
+          </div>
+        )}
       </div>
 
       <p className="claim-gate-note">
-        no account needed. your name is just what your library sees.
+        {room
+          ? "no account needed. your name is just what the space sees."
+          : "no account needed. your name is just what your library sees."}
       </p>
 
       <label className="claim-name-label">

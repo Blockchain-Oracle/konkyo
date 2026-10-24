@@ -1,9 +1,11 @@
 import "server-only"
 import { SPACES, type SpaceColor, type SpaceWall } from "@konkyo/config"
 import { db, schema } from "@konkyo/db"
-import { eq, sql } from "drizzle-orm"
+import type { Role } from "@konkyo/db/access"
+import { eq, inArray, sql } from "drizzle-orm"
 import { createFolder, renameFolder } from "./folders"
 import { LibraryError, ownFolder } from "./library"
+import { type Face, faceOf } from "./profiles"
 
 /** A space's colour when none was chosen yet: hashed from its id (same as the UI's colorFor). */
 function hashedColor(id: string): SpaceColor {
@@ -28,6 +30,12 @@ export type SpaceRow = {
   /** The newest sources (up to five), for the folder card's fan of files. */
   recent: SpaceSource[]
   createdAt: string
+  /** Yours, or a space you joined with this role (F56). */
+  role: Role
+  /** People in it, you and the owner included. */
+  people: number
+  /** Whose space it is, when it isn't yours. */
+  owner: { name: string; face: Face } | null
 }
 
 export type SpaceSource = {
@@ -55,6 +63,9 @@ export async function listSpaces(ownerId: string): Promise<SpaceRow[]> {
     cover_kind: string
     cover_file_id: string | null
     created_at: string
+    role: Role
+    owner_id: string
+    people: number
     sources: number
     newest_thumb: string | null
     recent: {
@@ -65,13 +76,19 @@ export async function listSpaces(ownerId: string): Promise<SpaceRow[]> {
       has_thumb: boolean
     }[]
   }>(sql`
-    with filed as (
+    with mine as (
+      select f.id, 'owner'::text as role from folders f
+       where f.owner_id = ${ownerId} and f.parent_id is null and f.deleted_at is null
+      union all
+      select m.space_id, m.role from space_members m where m.user_id = ${ownerId}
+    ), filed as (
       select distinct sub.space_id, ff.file_id from file_folders ff
         join folders sub on sub.id = ff.folder_id and sub.deleted_at is null
-       where sub.owner_id = ${ownerId}
+       where sub.space_id in (select id from mine)
     )
     select f.id, f.name, f.color, f.wall, f.symbol, f.description, f.cover_kind, f.cover_file_id,
-      f.created_at::text,
+      f.created_at::text, mine.role, f.owner_id,
+      1 + (select count(*)::int from space_members m where m.space_id = f.id) as people,
       (select count(*)::int from filed
          join files x on x.id = filed.file_id and x.deleted_at is null
         where filed.space_id = f.id and x.kind <> 'note') as sources,
@@ -86,10 +103,26 @@ export async function listSpaces(ownerId: string): Promise<SpaceRow[]> {
          where filed.space_id = f.id
          order by x.created_at desc limit 5
        ) t) as recent
-    from folders f
-    where f.owner_id = ${ownerId} and f.parent_id is null and f.deleted_at is null
+    from folders f join mine on mine.id = f.id
+    where f.parent_id is null and f.deleted_at is null
     order by f.created_at
   `)
+  // the owners of spaces I joined, with their faces
+  const others = [...new Set(rows.filter((r) => r.role !== "owner").map((r) => r.owner_id))]
+  const owners = new Map<string, { name: string; face: Face }>()
+  if (others.length) {
+    const people = await db
+      .select({
+        id: schema.user.id,
+        name: schema.user.name,
+        image: schema.user.image,
+        profile: schema.profiles,
+      })
+      .from(schema.user)
+      .leftJoin(schema.profiles, eq(schema.profiles.userId, schema.user.id))
+      .where(inArray(schema.user.id, others))
+    for (const p of people) owners.set(p.id, { name: p.name, face: faceOf(p, p.profile) })
+  }
   return rows.map((r) => {
     const color = r.color ?? hashedColor(r.id)
     const recent: SpaceSource[] = (r.recent ?? []).map((x) => ({
@@ -118,6 +151,9 @@ export async function listSpaces(ownerId: string): Promise<SpaceRow[]> {
       thumbs,
       recent,
       createdAt: r.created_at,
+      role: r.role,
+      people: r.people,
+      owner: r.role === "owner" ? null : (owners.get(r.owner_id) ?? null),
     }
   })
 }

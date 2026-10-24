@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto"
 import { db, schema } from "@konkyo/db"
+import { reachSql, resolveReach } from "@konkyo/db/access"
 import { taped } from "@konkyo/tape"
 import { embedMany } from "ai"
 import { inArray, sql } from "drizzle-orm"
@@ -76,25 +77,13 @@ export async function embedQueries(texts: string[]): Promise<number[][]> {
   return hashes.map((h) => cached.get(h) as number[])
 }
 
-/** The files a scope covers: chosen files plus everything filed in the chosen folders' subtrees. */
+/**
+ * The files a scope covers: chosen files plus everything filed in the chosen folders' subtrees,
+ * including other people's files in a shared space you're a member of (`@konkyo/db/access`).
+ * Null means the whole library.
+ */
 export async function scopeFileIds(ownerId: string, scope: Scope): Promise<string[] | null> {
-  const fileIds = scope.fileIds ?? []
-  const folderIds = scope.folderIds ?? []
-  if (!fileIds.length && !folderIds.length) return null
-  if (!folderIds.length) return fileIds
-  const rows = await db.execute<{ file_id: string }>(sql`
-    with recursive tree as (
-      select id from folders where owner_id = ${ownerId} and deleted_at is null
-        and id in (${sql.join(
-          folderIds.map((id) => sql`${id}::uuid`),
-          sql`, `,
-        )})
-      union all
-      select f.id from folders f join tree t on f.parent_id = t.id where f.deleted_at is null
-    )
-    select distinct ff.file_id from file_folders ff join tree t on ff.folder_id = t.id
-  `)
-  return [...new Set([...fileIds, ...rows.map((r) => r.file_id)])]
+  return (await resolveReach(ownerId, scope)).fileIds
 }
 
 /** Reciprocal Rank Fusion's constant: dampens the gap between rank 1 and rank 2 (Cormack et al.). */
@@ -120,15 +109,12 @@ async function searchLibrary(
   /** Check my draft and search citation look only at sources: a note never supports a note. */
   options: { excludeNotes?: boolean } = {},
 ): Promise<{ candidates: Candidate[]; scopedFiles: number | null }> {
-  const files = await scopeFileIds(ownerId, scope)
+  // Mine as always; in a shared space, exactly the files its members may read (access.ts).
+  const reach = await resolveReach(ownerId, scope)
+  const files = reach.fileIds
   if (files && !files.length) return { candidates: [], scopedFiles: 0 }
   const notNotes = options.excludeNotes ? sql`and f.kind <> 'note'` : sql``
-  const inScope = files
-    ? sql`and p.file_id in (${sql.join(
-        files.map((id) => sql`${id}::uuid`),
-        sql`, `,
-      )})`
-    : sql``
+  const inReach = reachSql(reach, "p")
 
   const vectors = await embedQueries(queries)
   const lists = await db.transaction(async (tx) => {
@@ -142,8 +128,8 @@ async function searchLibrary(
         tx.execute<{ id: string; sim: number }>(sql`
           select p.id, 1 - (p.embedding <=> ${vector}::vector) as sim
           from passages p join files f on f.id = p.file_id
-          where p.owner_id = ${ownerId} and f.deleted_at is null and f.status = 'ready' ${notNotes}
-            and p.embedding is not null ${inScope}
+          where ${inReach} and f.deleted_at is null and f.status = 'ready' ${notNotes}
+            and p.embedding is not null
           order by p.embedding <=> ${vector}::vector
           limit ${PER_LIST}
         `),
@@ -151,8 +137,8 @@ async function searchLibrary(
           select p.id, 0 as sim
           from passages p join files f on f.id = p.file_id,
             websearch_to_tsquery('english', ${query}) q
-          where p.owner_id = ${ownerId} and f.deleted_at is null and f.status = 'ready' ${notNotes}
-            and p.tsv @@ q ${inScope}
+          where ${inReach} and f.deleted_at is null and f.status = 'ready' ${notNotes}
+            and p.tsv @@ q
           order by ts_rank_cd(p.tsv, q) desc
           limit ${PER_LIST}
         `),

@@ -183,6 +183,13 @@
       "when": 1792890300000,
       "tag": "0025_follows",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1792896000000,
+      "tag": "0026_space_members",
+      "breakpoints": true
     }
   ]
 }

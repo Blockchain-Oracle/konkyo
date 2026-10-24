@@ -1,5 +1,6 @@
 import "server-only"
 import { db, schema } from "@konkyo/db"
+import { readableFileSql } from "@konkyo/db/access"
 import { and, desc, eq, gt, inArray, isNull, ne, sql } from "drizzle-orm"
 import { todaySummary } from "./study"
 
@@ -87,7 +88,8 @@ export async function catchup(ownerId: string, here?: string | null): Promise<Ca
       .leftJoin(folders, eq(folders.id, fileFolders.folderId))
       .where(
         and(
-          eq(files.ownerId, ownerId),
+          // mine, and what others added to spaces I'm in (catch me up says who)
+          readableFileSql(ownerId, "files"),
           eq(files.status, "ready"),
           ne(files.kind, "note"),
           isNull(files.deletedAt),

@@ -14,6 +14,7 @@ import {
 } from "@konkyo/agents"
 import { type FileKind, type FileMeta, STUDY } from "@konkyo/config"
 import { db, schema } from "@konkyo/db"
+import { folderRole } from "@konkyo/db/access"
 import type { StudyCheck, StudyItemData, StudyKind, StudyMode, StudyScope } from "@konkyo/db/schema"
 import { enqueue } from "@konkyo/jobs"
 import {
@@ -35,7 +36,7 @@ import {
   streakOf,
 } from "@konkyo/study"
 import { and, count, desc, eq, inArray, isNull, sql } from "drizzle-orm"
-import { LibraryError } from "./library"
+import { LibraryError, readableFile } from "./library"
 import { createNote } from "./notes"
 import { allowanceLeft } from "./usage"
 
@@ -277,19 +278,18 @@ function scopeIds(scope: StudyScope) {
 /** A set's name: the file or folder it's made from, or how many. */
 async function titleFor(ownerId: string, scope: StudyScope) {
   if (scope.fileIds.length === 1 && !scope.folderIds.length) {
-    const file = await db.query.files.findFirst({
-      where: and(eq(files.id, scope.fileIds[0] as string), eq(files.ownerId, ownerId)),
-    })
-    if (!file || file.deletedAt) throw new LibraryError("No such file", 404)
+    // yours, or a source in a space you're in (practice from it is yours)
+    const { file } = await readableFile(ownerId, scope.fileIds[0] as string)
+    if (file.deletedAt) throw new LibraryError("No such file", 404)
     if (file.kind === "note")
       throw new LibraryError("Practice is made from sources, not notes", 400)
     if (file.status !== "ready") throw new LibraryError("That file is still being read", 409)
     return file.title
   }
   if (scope.folderIds.length === 1 && !scope.fileIds.length) {
-    const folder = await db.query.folders.findFirst({
-      where: and(eq(folders.id, scope.folderIds[0] as string), eq(folders.ownerId, ownerId)),
-    })
+    const id = scope.folderIds[0] as string
+    if (!(await folderRole(ownerId, id))) throw new LibraryError("No such folder", 404)
+    const folder = await db.query.folders.findFirst({ where: eq(folders.id, id) })
     if (!folder || folder.deletedAt) throw new LibraryError("No such folder", 404)
     return folder.name
   }

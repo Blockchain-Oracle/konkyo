@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto"
 import { bylineOf } from "@konkyo/agents"
 import type { FileMeta } from "@konkyo/config"
 import { db, schema } from "@konkyo/db"
+import { folderRole, readableFileSql } from "@konkyo/db/access"
 import { enqueue } from "@konkyo/jobs"
 import { deleteObject } from "@konkyo/storage"
 import { and, desc, eq, inArray, isNull } from "drizzle-orm"
@@ -20,13 +21,12 @@ export async function startBrief(
   if (limited) throw new LibraryError(limited, 429)
   let title: string
   if (input.folderId) {
-    const folder = await db.query.folders.findFirst({
-      where: and(
-        eq(folders.id, input.folderId),
-        eq(folders.ownerId, ownerId),
-        isNull(folders.deletedAt),
-      ),
-    })
+    // a folder of yours, or of a space you're in (the brief itself is yours)
+    const folder = (await folderRole(ownerId, input.folderId))
+      ? await db.query.folders.findFirst({
+          where: and(eq(folders.id, input.folderId), isNull(folders.deletedAt)),
+        })
+      : undefined
     if (!folder) throw new LibraryError("No such folder", 404)
     title = folder.name
   } else {
@@ -35,7 +35,9 @@ export async function startBrief(
       ? await db
           .select({ title: files.title })
           .from(files)
-          .where(and(inArray(files.id, ids), eq(files.ownerId, ownerId), isNull(files.deletedAt)))
+          .where(
+            and(inArray(files.id, ids), isNull(files.deletedAt), readableFileSql(ownerId, "files")),
+          )
       : []
     if (!rows.length) throw new LibraryError("Choose a folder or files for the brief", 400)
     title = rows.length === 1 ? (rows[0]?.title ?? "Your file") : `${rows.length} files`

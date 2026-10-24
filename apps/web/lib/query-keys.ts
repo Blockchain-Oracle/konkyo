@@ -20,6 +20,8 @@ export const qk = {
     all: ["spaces"] as const,
     list: () => ["spaces", "list"] as const,
     pins: (id: string) => ["spaces", "pins", id] as const,
+    members: (id: string) => ["spaces", "members", id] as const,
+    invite: (id: string) => ["spaces", "invite", id] as const,
   },
   /** You (F53, F54): name, look, photo, handle, bio. */
   people: {

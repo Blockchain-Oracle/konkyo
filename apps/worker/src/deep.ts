@@ -13,6 +13,8 @@ import {
 } from "@konkyo/agents"
 import { DEEP } from "@konkyo/config"
 import { db, pg, schema } from "@konkyo/db"
+import { canFileInto } from "@konkyo/db/access"
+import { fileSpaceEvents } from "@konkyo/db/live"
 import { enqueue } from "@konkyo/jobs"
 import { and, eq, inArray, isNull, sql } from "drizzle-orm"
 
@@ -276,15 +278,14 @@ async function importAndAnswer(runId: string) {
   await setRun(runId, { status: "importing" })
   await emit(runId, { type: "stage", id: "approve", label: "Sources chosen", state: "done" })
 
-  const existing = state.intoFolderId
-    ? await db.query.folders.findFirst({
-        where: and(
-          eq(folders.id, state.intoFolderId),
-          eq(folders.ownerId, run.ownerId),
-          isNull(folders.deletedAt),
-        ),
-      })
-    : undefined
+  // Re-checked now, not when the search started: a member who lost "add" files into their own
+  // new folder instead of the space.
+  const existing =
+    state.intoFolderId && (await canFileInto(run.ownerId, state.intoFolderId))
+      ? await db.query.folders.findFirst({
+          where: and(eq(folders.id, state.intoFolderId), isNull(folders.deletedAt)),
+        })
+      : undefined
   const folder =
     existing ?? (await newFolder(run.ownerId, state.approved?.folderName ?? state.topic ?? ""))
   await setRun(runId, { state: { ...state, folderId: folder.id } })
@@ -331,6 +332,8 @@ async function importAndAnswer(runId: string) {
     )
     .returning({ id: files.id, title: files.title })
   await db.insert(fileFolders).values(created.map((f) => ({ fileId: f.id, folderId: folder.id })))
+  // a shared space sees what landed, live
+  for (const f of created) await fileSpaceEvents(db, f.id, "source_added", run.ownerId)
   const keyOf = new Map(created.map((f, i) => [f.id, chosen[i]?.key as string]))
   for (const f of created) {
     await enqueue("ingest", { fileId: f.id }, f.id)

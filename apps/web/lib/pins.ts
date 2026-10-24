@@ -1,9 +1,11 @@
 import "server-only"
 import type { Citation, KonkyoMessage, Receipt } from "@konkyo/agents"
 import { db, schema } from "@konkyo/db"
+import { type Role, spaceRole } from "@konkyo/db/access"
+import { spaceEvent } from "@konkyo/db/live"
 import type { PinCitation } from "@konkyo/db/schema"
 import { and, desc, eq } from "drizzle-orm"
-import { LibraryError, ownFolder } from "./library"
+import { LibraryError } from "./library"
 
 const { spacePins, messages, runs } = schema
 
@@ -13,35 +15,52 @@ export type Pin = {
   body: string
   citations: PinCitation[]
   quotes: number
+  /** The pinner's chat: only they can open it. */
   chatId: string | null
   createdAt: string
+  /** Pinned by me; who pinned it otherwise (a shared space). */
+  mine: boolean
+  by: string | null
+  /** The pinner and the space's owner may unpin. */
+  canUnpin: boolean
 }
 
-const view = (row: typeof spacePins.$inferSelect): Pin => ({
-  id: row.id,
-  question: row.question,
-  body: row.body,
-  citations: row.citations,
-  quotes: row.quotes,
-  chatId: row.chatId,
-  createdAt: row.createdAt.toISOString(),
-})
+const view = (
+  row: typeof spacePins.$inferSelect,
+  viewer: { id: string; role: Role },
+  by: string | null = null,
+): Pin => {
+  const mine = row.ownerId === viewer.id
+  return {
+    id: row.id,
+    question: row.question,
+    body: row.body,
+    citations: row.citations,
+    quotes: row.quotes,
+    chatId: mine ? row.chatId : null,
+    createdAt: row.createdAt.toISOString(),
+    mine,
+    by: mine ? null : by,
+    canUnpin: mine || viewer.role === "owner",
+  }
+}
 
-/** A space is a top-level folder you own (shared spaces widen this in S19). */
-async function ownSpace(ownerId: string, spaceId: string) {
-  const folder = await ownFolder(ownerId, spaceId)
-  if (folder.parentId) throw new LibraryError("Pins live on a space, not a folder inside one", 400)
-  return folder
+/** A space you're in: its owner and every member may see, add and remove their own pins. */
+async function ownSpace(userId: string, spaceId: string) {
+  const role = await spaceRole(userId, spaceId)
+  if (!role) throw new LibraryError("No such space", 404)
+  return role
 }
 
 export async function listPins(ownerId: string, spaceId: string): Promise<Pin[]> {
-  await ownSpace(ownerId, spaceId)
+  const role = await ownSpace(ownerId, spaceId)
   const rows = await db
-    .select()
+    .select({ pin: spacePins, by: schema.user.name })
     .from(spacePins)
+    .leftJoin(schema.user, eq(schema.user.id, spacePins.ownerId))
     .where(eq(spacePins.spaceId, spaceId))
     .orderBy(desc(spacePins.createdAt))
-  return rows.map(view)
+  return rows.map((r) => view(r.pin, { id: ownerId, role }, r.by))
 }
 
 /**
@@ -50,7 +69,7 @@ export async function listPins(ownerId: string, spaceId: string): Promise<Pin[]>
  * answer can be pinned; pinning it again returns the pin it already has.
  */
 export async function pinAnswer(ownerId: string, spaceId: string, runId: string): Promise<Pin> {
-  await ownSpace(ownerId, spaceId)
+  const role = await ownSpace(ownerId, spaceId)
   const [row] = await db
     .select({
       id: messages.id,
@@ -96,15 +115,32 @@ export async function pinAnswer(ownerId: string, spaceId: string, runId: string)
         receipt?.type === "data-receipt" ? (receipt.data as Receipt).quotes : citations.length,
     })
     .onConflictDoNothing()
+    .returning({ id: spacePins.id })
+    .then(async ([made]) => {
+      if (made)
+        await spaceEvent(db, { spaceId, actorId: ownerId, kind: "pin_added", subjectId: made.id })
+    })
   const pin = await db.query.spacePins.findFirst({
     where: and(eq(spacePins.spaceId, spaceId), eq(spacePins.messageId, row.id)),
   })
   if (!pin) throw new LibraryError("Couldn't pin that answer", 500)
-  return view(pin)
+  return view(pin, { id: ownerId, role })
 }
 
-/** The pinner or the space's owner unpins (one and the same until spaces are shared). */
+/** The pinner or the space's owner unpins. */
 export async function unpin(ownerId: string, spaceId: string, pinId: string) {
-  await ownSpace(ownerId, spaceId)
-  await db.delete(spacePins).where(and(eq(spacePins.id, pinId), eq(spacePins.spaceId, spaceId)))
+  const role = await ownSpace(ownerId, spaceId)
+  const gone = await db
+    .delete(spacePins)
+    .where(
+      and(
+        eq(spacePins.id, pinId),
+        eq(spacePins.spaceId, spaceId),
+        role === "owner" ? undefined : eq(spacePins.ownerId, ownerId),
+      ),
+    )
+    .returning({ id: spacePins.id })
+  if (!gone.length)
+    throw new LibraryError("Only whoever pinned it, or the space's owner, can unpin", 403)
+  await spaceEvent(db, { spaceId, actorId: ownerId, kind: "pin_removed", subjectId: pinId })
 }

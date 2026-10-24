@@ -1,9 +1,10 @@
 import "server-only"
 import { type KnownClaim, knowsOf, listMemories, type MemoryItem } from "@konkyo/agents"
 import { SPACES, type SpaceColor } from "@konkyo/config"
-import { db } from "@konkyo/db"
-import { type SQL, sql } from "drizzle-orm"
-import { LibraryError, ownFolder } from "./library"
+import { db, schema } from "@konkyo/db"
+import { spaceRole } from "@konkyo/db/access"
+import { eq, type SQL, sql } from "drizzle-orm"
+import { LibraryError } from "./library"
 import { todaySummary } from "./study"
 
 /** A claim, each source with its kind so its chip can open the passage. */
@@ -61,18 +62,20 @@ export async function knows(ownerId: string, spaceId: string | null): Promise<Kn
   let name = "your library"
   let hex: string = SPACES.colors.violet.hex
   if (spaceId) {
-    const space = await ownFolder(ownerId, spaceId)
-    if (space.parentId) throw new LibraryError("That's a folder, not a space", 400)
+    if (!(await spaceRole(ownerId, spaceId))) throw new LibraryError("No such space", 404)
+    const space = await db.query.folders.findFirst({ where: eq(schema.folders.id, spaceId) })
+    if (!space) throw new LibraryError("No such space", 404)
     name = space.name
     hex = SPACES.colors[(space.color ?? "violet") as SpaceColor]?.hex ?? hex
   }
 
-  // The sources in scope: a space's files (anywhere inside it), or the whole library.
+  // The sources in scope: a space's files (anywhere inside it, whoever added them), or the
+  // whole library (mine).
   const inScope = spaceId
     ? sql`select f.id, f.kind from files f
           join file_folders ff on ff.file_id = f.id
-          join folders d on d.id = ff.folder_id
-          where f.owner_id = ${ownerId} and d.space_id = ${spaceId}
+          join folders d on d.id = ff.folder_id and d.deleted_at is null
+          where d.space_id = ${spaceId}
             and f.deleted_at is null and f.status = 'ready'`
     : sql`select id, kind from files where owner_id = ${ownerId}
             and deleted_at is null and status = 'ready'`
@@ -84,7 +87,7 @@ export async function knows(ownerId: string, spaceId: string | null): Promise<Kn
   const kinds = new Map(fileRows.map((r) => [r.id, r.kind]))
 
   const [words, today, agents, made, held] = await Promise.all([
-    fileIds.length ? sharedWords(ownerId, sql`select id from (${inScope}) s`) : Promise.resolve([]),
+    fileIds.length ? sharedWords(sql`select id from (${inScope}) s`) : Promise.resolve([]),
     todaySummary(ownerId),
     db.execute<{ id: string; name: string; at: string }>(sql`
       select id, name, next_run_at as at from agents
@@ -119,13 +122,13 @@ export async function knows(ownerId: string, spaceId: string | null): Promise<Kn
  * The words your sources use a lot: the most frequent real words (not stems) found in two or
  * more of the sources, English stopwords and paper boilerplate left out.
  */
-async function sharedWords(ownerId: string, inScope: SQL) {
+async function sharedWords(inScope: SQL) {
   const rows = await db.execute<{ word: string; files: number; uses: number }>(sql`
     with counted as (
       select w.word, count(distinct p.file_id)::int as files, count(*)::int as uses
       from passages p,
         lateral unnest(tsvector_to_array(to_tsvector('simple', p.text))) as w(word)
-      where p.owner_id = ${ownerId} and p.file_id in (${inScope})
+      where p.file_id in (${inScope})
         and length(w.word) between 4 and 24 and w.word !~ '[0-9_./:@-]'
       group by w.word
       having count(distinct p.file_id) >= 2

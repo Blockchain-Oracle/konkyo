@@ -6,7 +6,7 @@ import type { ChatScope } from "@konkyo/db/schema"
 import { enqueue } from "@konkyo/jobs"
 import { and, asc, eq, gt } from "drizzle-orm"
 import { ensureChat, saveMessage } from "./chats"
-import { LibraryError } from "./library"
+import { fileableFolder, LibraryError } from "./library"
 import { allowanceLeft } from "./usage"
 
 const { runs, runEvents, messages, userSettings } = schema
@@ -47,6 +47,8 @@ export async function startDeep(
 ) {
   const limited = await allowanceLeft(ownerId, "deepSearches")
   if (limited) throw new LibraryError(limited, 429)
+  // finds land in a folder you may add to: yours, or a shared space where you can add
+  if (input.intoFolderId) await fileableFolder(ownerId, input.intoFolderId)
 
   await ensureChat(ownerId, input.chatId, input.question, input.scope)
   if (input.userMessage) await saveMessage(ownerId, input.chatId, input.userMessage)

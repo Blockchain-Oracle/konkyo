@@ -23,6 +23,7 @@ import {
   pushSubscriptions,
   runs,
   spaceEvents,
+  spaceInvites,
   spacePins,
   studyCards,
   studyDays,
@@ -137,6 +138,20 @@ const movers: Array<
       if (!placeholder) await tx.update(user).set({ name: typed }).where(eq(user.id, to))
     }
   },
+  // Spaces you joined (F56): they come with you, at the stronger role where the account was
+  // already a member (add over read); a membership of a space the account owns is dropped.
+  async (tx, from, to) => {
+    await tx.execute(sql`
+      insert into space_members (space_id, user_id, role, invited_via, joined_at)
+      select m.space_id, ${to}, m.role, m.invited_via, m.joined_at from space_members m
+      join folders f on f.id = m.space_id
+      where m.user_id = ${from} and f.owner_id <> ${to}
+      on conflict (space_id, user_id) do update set role = case
+        when space_members.role = 'add' or excluded.role = 'add' then 'add' else 'read' end`)
+    await tx.execute(sql`delete from space_members where user_id = ${from}`)
+  },
+  (tx, from, to) =>
+    tx.update(spaceInvites).set({ createdBy: to }).where(eq(spaceInvites.createdBy, from)),
   // Follows (F55): guests can't follow or be followed, so this is defensive: whatever is there
   // moves, never as a follow of yourself.
   async (tx, from, to) => {

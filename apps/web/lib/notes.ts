@@ -1,6 +1,7 @@
 import "server-only"
 import { NOTES } from "@konkyo/config"
 import { db, schema } from "@konkyo/db"
+import { fileAccess } from "@konkyo/db/access"
 import { enqueueDebounced } from "@konkyo/jobs"
 import { and, desc, eq, isNull } from "drizzle-orm"
 import { LibraryError } from "./library"
@@ -82,6 +83,34 @@ export async function getNote(ownerId: string, fileId: string) {
 }
 
 export type NoteDetail = Awaited<ReturnType<typeof getNote>>
+
+/**
+ * Someone else's note filed in a space you're in (plan F56): read-only, with who wrote it. Its
+ * history, autosave and checks stay its author's.
+ */
+export async function readNote(userId: string, fileId: string) {
+  const access = await fileAccess(userId, fileId)
+  const file = access
+    ? await db.query.files.findFirst({
+        where: and(eq(files.id, fileId), eq(files.kind, "note"), isNull(files.deletedAt)),
+      })
+    : undefined
+  if (!access || !file) throw new LibraryError("No such note", 404)
+  const [note, author] = await Promise.all([
+    db.query.notes.findFirst({ where: eq(notes.fileId, fileId) }),
+    db.query.user.findFirst({ where: eq(schema.user.id, file.ownerId) }),
+  ])
+  return {
+    id: file.id,
+    title: file.title,
+    content: (note?.content ?? EMPTY_DOC) as NoteDoc,
+    words: note?.words ?? 0,
+    updatedAt: (note?.updatedAt ?? file.updatedAt).toISOString(),
+    author: author?.name ?? "someone",
+  }
+}
+
+export type SharedNote = Awaited<ReturnType<typeof readNote>>
 
 /**
  * Autosave (F24). The text is re-read for chat once typing pauses, and a version is kept when

@@ -1,7 +1,8 @@
 import "server-only"
 import { randomUUID } from "node:crypto"
 import { db, schema } from "@konkyo/db"
-import { and, eq, inArray, isNull, notInArray, sql } from "drizzle-orm"
+import { folderRole } from "@konkyo/db/access"
+import { and, eq, inArray, isNull, notInArray, or, sql } from "drizzle-orm"
 import { LibraryError, ownFolder } from "./library"
 
 const { folders, files, fileFolders } = schema
@@ -15,13 +16,17 @@ function cleanName(raw: string) {
   return name
 }
 
-/** Every folder of a person, flat (the sidebar builds the tree), with its file count. */
+/**
+ * Every folder of a person, flat (the sidebar builds the tree), with its file count: their own,
+ * and the folders of spaces they've joined (`mine` false: they read and maybe add, never rename).
+ */
 export async function listFolders(ownerId: string) {
   return db
     .select({
       id: folders.id,
       parentId: folders.parentId,
       name: folders.name,
+      mine: sql<boolean>`${folders.ownerId} = ${ownerId}`,
       // Aliased by hand: in a one-table select Drizzle prints columns unqualified, so
       // `${folders.id}` would bind to the inner `files.id` and every count came out 0.
       fileCount: sql<number>`(
@@ -31,7 +36,15 @@ export async function listFolders(ownerId: string) {
       )`,
     })
     .from(folders)
-    .where(and(eq(folders.ownerId, ownerId), isNull(folders.deletedAt)))
+    .where(
+      and(
+        or(
+          eq(folders.ownerId, ownerId),
+          sql`${folders.spaceId} in (select space_id from space_members where user_id = ${ownerId})`,
+        ),
+        isNull(folders.deletedAt),
+      ),
+    )
     .orderBy(folders.name)
 }
 
@@ -50,12 +63,13 @@ export async function subtree(ownerId: string, folderId: string): Promise<string
   return rows.map((r) => r.id)
 }
 
-/** The chain from the top level down to this folder, for breadcrumbs. */
+/** The chain from the top level down to this folder, for breadcrumbs (its owner and members). */
 export async function folderPath(ownerId: string, folderId: string) {
+  if (!(await folderRole(ownerId, folderId))) throw new LibraryError("No such folder", 404)
   const rows = await db.execute<{ id: string; name: string; depth: number }>(sql`
     with recursive up as (
       select id, name, parent_id, 0 as depth from ${folders}
-      where id = ${folderId} and owner_id = ${ownerId} and deleted_at is null
+      where id = ${folderId} and deleted_at is null
       union all
       select f.id, f.name, f.parent_id, up.depth + 1 from ${folders} f join up on f.id = up.parent_id
     )

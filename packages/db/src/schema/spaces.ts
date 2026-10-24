@@ -1,9 +1,11 @@
+import { sql } from "drizzle-orm"
 import {
   bigserial,
   index,
   integer,
   jsonb,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -100,4 +102,52 @@ export const spacePins = pgTable(
     uniqueIndex("space_pins_space_message_idx").on(t.spaceId, t.messageId),
     index("space_pins_space_time_idx").on(t.spaceId, t.createdAt),
   ],
+)
+
+/** What a member of someone else's space may do (plan F56): add sources, or only read and ask. */
+export type SpaceRole = "add" | "read"
+
+/**
+ * The people in a space besides its owner (the owner is `folders.owner_id`, never a row here).
+ * Members read everything in the space, ask, pin and take; with "add" they file their own sources
+ * into it. Their files stay theirs: leaving unfiles them, nobody else can delete them.
+ */
+export const spaceMembers = pgTable(
+  "space_members",
+  {
+    spaceId: uuid()
+      .notNull()
+      .references(() => folders.id, { onDelete: "cascade" }),
+    userId: text()
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    role: text().$type<SpaceRole>().notNull(),
+    /** The invite token they came in by (null when added another way). */
+    invitedVia: text(),
+    joinedAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.spaceId, t.userId] }),
+    index("space_members_user_idx").on(t.userId),
+  ],
+)
+
+/**
+ * A space's invite link: one active at a time (reset = revoke this one and make another). The
+ * token is 16 random bytes; it gives the role it was made with.
+ */
+export const spaceInvites = pgTable(
+  "space_invites",
+  {
+    token: text().primaryKey(),
+    spaceId: uuid()
+      .notNull()
+      .references(() => folders.id, { onDelete: "cascade" }),
+    role: text().$type<SpaceRole>().notNull(),
+    createdBy: text().references(() => user.id, { onDelete: "set null" }),
+    uses: integer().default(0).notNull(),
+    createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+    revokedAt: timestamp({ withTimezone: true }),
+  },
+  (t) => [uniqueIndex("space_invites_active_idx").on(t.spaceId).where(sql`${t.revokedAt} is null`)],
 )

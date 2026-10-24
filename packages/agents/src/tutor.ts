@@ -1,5 +1,6 @@
 import { ZETARIS } from "@konkyo/config"
 import { db } from "@konkyo/db"
+import { reachSql, resolveReach } from "@konkyo/db/access"
 import type { StudyCheck, StudyGround, StudyItemData, StudyKind } from "@konkyo/db/schema"
 import { checkQuotes, sqlHash } from "@konkyo/zetaris"
 import { generateText, Output } from "ai"
@@ -8,7 +9,7 @@ import { z } from "zod"
 import { quoteKey } from "./citations"
 import { recall as recallMemories } from "./memory"
 import { MODELS, type ModelChoice, model, noFallback, reasoning } from "./models"
-import { type Scope, scopeFileIds } from "./retrieve"
+import type { Scope } from "./retrieve"
 import type { Tracer } from "./trace"
 
 /** A passage the Tutor reads, labelled so its answers can say where they come from. */
@@ -133,14 +134,11 @@ export async function pickWindows(
   scope: Scope,
   count: number,
 ): Promise<{ windows: StudyWindow[]; fileIds: string[] }> {
-  const fileIds = await scopeFileIds(ownerId, scope)
+  // A space's practice covers everyone's sources in it (access.ts); elsewhere, only mine.
+  const reach = await resolveReach(ownerId, scope)
+  const fileIds = reach.fileIds
   if (fileIds && !fileIds.length) return { windows: [], fileIds: [] }
-  const inScope = fileIds
-    ? sql`and p.file_id in (${sql.join(
-        fileIds.map((id) => sql`${id}::uuid`),
-        sql`, `,
-      )})`
-    : sql``
+  const inReach = reachSql(reach, "p")
   const rows = await db.execute<{
     id: string
     file_id: string
@@ -154,9 +152,8 @@ export async function pickWindows(
     with scoped as (
       select p.id, p.file_id, f.title, p.ordinal, p.page, p.t_start, p.text, p.embedding
       from passages p join files f on f.id = p.file_id
-      where p.owner_id = ${ownerId} and f.deleted_at is null and f.status = 'ready'
+      where ${inReach} and f.deleted_at is null and f.status = 'ready'
         and f.kind <> 'note' and p.kind in ('text', 'transcript') and p.embedding is not null
-        ${inScope}
     ), centres as (select file_id, avg(embedding) as c from scoped group by file_id)
     select s.id, s.file_id, s.title, s.ordinal, s.page, s.t_start, s.text,
       1 - (s.embedding <=> c.c) as centrality

@@ -190,20 +190,23 @@ function PinnedAnswers({ spaceId, pins }: { spaceId: string; pins: Pin[] }) {
                 <span className="pin-slip-receipt">
                   ✓ {pin.quotes === 1 ? "1 quote" : `${pin.quotes} quotes`} checked
                 </span>
+                {pin.by && <span className="pin-slip-by">pinned by {pin.by.toLowerCase()}</span>}
                 {pin.chatId && (
                   <Link href={`/chats/${pin.chatId}` as Route} onClick={() => sound("tap")}>
                     open the chat ↗
                   </Link>
                 )}
-                <button
-                  type="button"
-                  onClick={() => {
-                    sound("tap")
-                    unpin.mutate(pin.id)
-                  }}
-                >
-                  unpin
-                </button>
+                {pin.canUnpin && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      sound("tap")
+                      unpin.mutate(pin.id)
+                    }}
+                  >
+                    unpin
+                  </button>
+                )}
               </div>
             </article>
           </li>

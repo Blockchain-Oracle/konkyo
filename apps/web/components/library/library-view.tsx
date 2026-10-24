@@ -34,6 +34,7 @@ import { FolderBriefs } from "@/components/briefs/folder-briefs"
 import { EmptyState } from "@/components/empty-state"
 import { StudyStarter } from "@/components/onboarding/study-starter"
 import { RoomHeader } from "@/components/page-shell"
+import { InviteButton } from "@/components/people/invite-popover"
 import {
   openImport,
   openNewFolder,
@@ -181,7 +182,7 @@ export function LibraryView({ folderId, space = false }: { folderId?: string; sp
         handles={
           space && spaceRow ? (
             <>
-              <SpaceEdit space={spaceRow} />
+              {spaceRow.role === "owner" && <SpaceEdit space={spaceRow} />}
               <Link
                 href={`/spaces/${spaceRow.id}/knows` as Route}
                 className="space-knows-chip"
@@ -243,8 +244,15 @@ export function LibraryView({ folderId, space = false }: { folderId?: string; sp
                 {selectMode ? "done" : "select"}
               </Button>
             )}
-            <AddPicker folderId={folderId} name={here?.name ?? spaceRow?.name} />
-            {here && <FolderMenu folder={here} path={path ?? []} />}
+            {space && spaceRow && (
+              <InviteButton spaceId={spaceRow.id} name={spaceRow.name} role={spaceRow.role} />
+            )}
+            {(!spaceRow || spaceRow.role !== "read") && (
+              <AddPicker folderId={folderId} name={here?.name ?? spaceRow?.name} />
+            )}
+            {here && (!spaceRow || spaceRow.role === "owner") && (
+              <FolderMenu folder={here} path={path ?? []} />
+            )}
           </>
         }
       />

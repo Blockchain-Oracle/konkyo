@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto"
 import { INGEST } from "@konkyo/config"
 import { db, schema } from "@konkyo/db"
+import { fileSpaceEvents } from "@konkyo/db/live"
 import {
   articleToPdf,
   documentHtml,
@@ -506,6 +507,8 @@ export async function ingestFile(fileId: string, { lastAttempt = true } = {}): P
     })
     // Its polaroid for the wall, made off the critical path (a failed thumb never fails a file).
     await enqueue("thumb", { fileId }, fileId).catch(() => undefined)
+    // the spaces it's filed in hear it's ready (a shared wall updates live)
+    await fileSpaceEvents(db, fileId, "source_ready", file.ownerId).catch(() => undefined)
   } catch (error) {
     const problem =
       error instanceof ProblemError
@@ -522,6 +525,7 @@ export async function ingestFile(fileId: string, { lastAttempt = true } = {}): P
         problem,
         problemDetail: (error as Error).message,
       })
+      await fileSpaceEvents(db, fileId, "source_failed", file.ownerId).catch(() => undefined)
       return
     }
     // Anything else may be transient (a model or Zetaris hiccup): let pg-boss retry, and only
@@ -533,6 +537,7 @@ export async function ingestFile(fileId: string, { lastAttempt = true } = {}): P
         problem: "failed",
         problemDetail: (error as Error).message.slice(0, 500),
       })
+      await fileSpaceEvents(db, fileId, "source_failed", file.ownerId).catch(() => undefined)
     } else {
       await update(fileId, { stage: "Retrying shortly" })
     }

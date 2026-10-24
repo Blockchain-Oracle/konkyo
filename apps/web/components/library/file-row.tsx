@@ -218,6 +218,7 @@ export function FileRow({
         )}
         <p className="mt-0.5 truncate text-meta text-ash-gray">
           {file.status === "needs_you" && file.problemDetail ? file.problemDetail : details(file)}
+          {file.mine === false && file.addedBy ? ` · added by ${file.addedBy}` : ""}
         </p>
         {uploading && (
           <Progress
@@ -290,10 +291,12 @@ export function FileRow({
             <InfoIcon strokeWidth={1.5} />
             Details
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => openMoveFiles([file.id])}>
-            <FolderInputIcon strokeWidth={1.5} />
-            Move to…
-          </DropdownMenuItem>
+          {file.mine !== false && (
+            <DropdownMenuItem onClick={() => openMoveFiles([file.id])}>
+              <FolderInputIcon strokeWidth={1.5} />
+              Move to…
+            </DropdownMenuItem>
+          )}
           {file.status === "ready" && (
             <DropdownMenuItem
               render={
@@ -308,11 +311,16 @@ export function FileRow({
               {file.sourceUrl ? "Download PDF" : "Download"}
             </DropdownMenuItem>
           )}
-          <DropdownMenuSeparator />
-          <DropdownMenuItem variant="destructive" onClick={() => remove.mutate(file.id)}>
-            <Trash2Icon strokeWidth={1.5} />
-            Move to Trash
-          </DropdownMenuItem>
+          {/* only whoever added a source can bin it; others in a shared space read it */}
+          {file.mine !== false && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem variant="destructive" onClick={() => remove.mutate(file.id)}>
+                <Trash2Icon strokeWidth={1.5} />
+                Move to Trash
+              </DropdownMenuItem>
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     </li>
