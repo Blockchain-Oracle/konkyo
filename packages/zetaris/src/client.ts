@@ -27,7 +27,21 @@ export class ZetarisError extends Error {
   }
 }
 
-let cachedToken: { token: string; org: string } | undefined
+/** A login, and when it stops working (a Zetaris id token lasts 15 minutes). */
+let cachedToken: { token: string; org: string; expiresAt: number } | undefined
+let loggingIn: Promise<{ token: string; org: string; expiresAt: number }> | undefined
+
+/** Renew this long before the token's own expiry, so no query is sent with a dying one. */
+const RENEW_BEFORE_MS = 90_000
+
+/** The `exp` of a JWT, in ms; ten minutes from now if it can't be read. */
+function expiryOf(token: string): number {
+  try {
+    const payload = JSON.parse(Buffer.from(token.split(".")[1] ?? "", "base64url").toString())
+    if (typeof payload.exp === "number") return payload.exp * 1000
+  } catch {}
+  return Date.now() + 10 * 60_000
+}
 
 /** Finds the first non-empty value of any of `keys`, at any depth (login payloads vary by version). */
 function find(obj: unknown, keys: string[]): string | undefined {
@@ -45,7 +59,17 @@ function find(obj: unknown, keys: string[]): string | undefined {
 
 async function auth(force = false): Promise<{ token: string; org: string }> {
   if (env.ZETARIS_API_KEY) return { token: env.ZETARIS_API_KEY, org: env.ZETARIS_ORG_ID ?? "1" }
-  if (cachedToken && !force) return cachedToken
+  if (cachedToken && !force && cachedToken.expiresAt - Date.now() > RENEW_BEFORE_MS)
+    return cachedToken
+  // One login at a time: every query waiting on an expired token shares it.
+  loggingIn ??= login().finally(() => {
+    loggingIn = undefined
+  })
+  cachedToken = await loggingIn
+  return cachedToken
+}
+
+async function login() {
   if (!env.ZETARIS_LOGIN_URL || !env.ZETARIS_USERNAME || !env.ZETARIS_PASSWORD) {
     throw new Error("Zetaris needs ZETARIS_API_KEY, or ZETARIS_LOGIN_URL + USERNAME + PASSWORD")
   }
@@ -57,8 +81,11 @@ async function auth(force = false): Promise<{ token: string; org: string }> {
   const body: unknown = await res.json().catch(() => null)
   const token = find(body, ["idToken", "accessToken", "token", "access_token"])
   if (!res.ok || !token) throw new Error(`Zetaris login failed (HTTP ${res.status})`)
-  cachedToken = { token, org: find(body, ["orgId"]) ?? env.ZETARIS_ORG_ID ?? "1" }
-  return cachedToken
+  return {
+    token,
+    org: find(body, ["orgId"]) ?? env.ZETARIS_ORG_ID ?? "1",
+    expiresAt: expiryOf(token),
+  }
 }
 
 async function cancel(queryId: string, token: string, org: string): Promise<void> {
@@ -119,8 +146,6 @@ async function runOnce(
         },
         body: JSON.stringify({ queryId, sql, source: "SqlEditor", limit }),
       })
-      // An expired login token: log in again once.
-      if (res.status === 401 && attempt === 0 && !env.ZETARIS_API_KEY) continue
       const body = (await res.json().catch(() => null)) as {
         headers?: string[]
         data?: (string | null)[][]
@@ -129,6 +154,11 @@ async function runOnce(
         msg?: string
         message?: string
       } | null
+      // An expired login: hosted Zetaris answers 401, a local install a bare 400 "Bad Request"
+      // (a real SQL error always says what's wrong). Log in again, once.
+      const expired =
+        res.status === 401 || (res.status === 400 && (body?.msg ?? body?.message) === "Bad Request")
+      if (expired && attempt === 0 && !env.ZETARIS_API_KEY) continue
       if (!res.ok) {
         throw new ZetarisError(body?.msg ?? body?.message ?? `HTTP ${res.status}`, res.status, sql)
       }
