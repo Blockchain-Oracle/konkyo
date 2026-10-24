@@ -15,7 +15,7 @@ import {
   FolderOpen,
   Loader2,
 } from "lucide-react"
-import { AnimatePresence, motion, type Transition, useReducedMotion } from "motion/react"
+import { AnimatePresence, m, type Transition, useReducedMotion } from "motion/react"
 import * as React from "react"
 
 const DEFAULT_HIGHLIGHT_COLOR = "var(--color-bone-white)"
@@ -463,7 +463,7 @@ function FileTreeHoverHighlight({
   return (
     <AnimatePresence>
       {highlightBounds && (
-        <motion.div
+        <m.div
           animate={{
             opacity: 1,
             top: highlightBounds.top,
@@ -515,7 +515,7 @@ function FolderIcon({
   return (
     <span className="relative inline-flex size-[1.125rem] shrink-0">
       <AnimatePresence initial={false} mode="popLayout">
-        <motion.span
+        <m.span
           animate={{ scale: 1, opacity: 1, rotate: 0 }}
           className="inline-flex"
           exit={{ scale: 0.5, opacity: 0, rotate: 15 }}
@@ -529,7 +529,7 @@ function FolderIcon({
           }}
         >
           {isOpen ? openIcon : closeIcon}
-        </motion.span>
+        </m.span>
       </AnimatePresence>
     </span>
   )
@@ -551,7 +551,7 @@ function FolderContent({
   return (
     <AnimatePresence initial={false}>
       {isOpen && (
-        <motion.div
+        <m.div
           animate={{ height: "auto", opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
           initial={{ height: 0, opacity: 0 }}
@@ -559,7 +559,7 @@ function FolderContent({
           transition={{ type: "spring", stiffness: 500, damping: 40 }}
         >
           {children}
-        </motion.div>
+        </m.div>
       )}
     </AnimatePresence>
   )

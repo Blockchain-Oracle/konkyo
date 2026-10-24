@@ -284,3 +284,83 @@ export const BREAKPOINTS = {
   lg: 1024,
   xl: 1280,
 } as const
+
+/**
+ * Spaces (plan §16.4, F45): a top-level folder owns one identity colour and one wall. Colours and
+ * walls are OurSpaces' own values; `text` is the lighter step used when the colour is text on the
+ * plum room (≥4.5:1). Ink on a wall comes from the preset, never from guesswork.
+ */
+export const SPACES = {
+  colors: {
+    violet: { hex: "#7853ff", text: "#9d85ff" },
+    pink: { hex: "#e9369d", text: "#ff5fb4" },
+    cobalt: { hex: "#3f70ff", text: "#7a9bff" },
+    orange: { hex: "#ff7c42", text: "#ff7c42" },
+    teal: { hex: "#13b8a6", text: "#13b8a6" },
+    butter: { hex: "#ffb02e", text: "#ffb02e" },
+  },
+  walls: {
+    night: { bg: "#211922", ink: "#ffffff" },
+    lagoon: { bg: "#12a594", ink: "#ffffff" },
+    spruce: { bg: "#0f5c50", ink: "#ffffff" },
+    cobalt: { bg: "#3f70ff", ink: "#ffffff" },
+    midnight: { bg: "#1f1b2d", ink: "#ffffff" },
+    violet: { bg: "#b7a7ff", ink: "#1b1532" },
+    blush: { bg: "#ffdad6", ink: "#111114" },
+    butter: { bg: "#ffe9c2", ink: "#111114" },
+    mint: { bg: "#bfe9dc", ink: "#102e27" },
+    clean: { bg: "#f4f4f2", ink: "#111114" },
+  },
+  /** The wall a colour gets by default (each colour has a wall that flatters it). */
+  defaultWall: {
+    violet: "violet",
+    pink: "blush",
+    cobalt: "cobalt",
+    orange: "butter",
+    teal: "lagoon",
+    butter: "mint",
+  },
+  /** Symbols are lucide icon names, picked for reading, studying and writing. */
+  symbols: [
+    "book-open",
+    "graduation-cap",
+    "flask-conical",
+    "pen-line",
+    "brain",
+    "globe",
+    "landmark",
+    "heart-pulse",
+    "scale",
+    "music",
+    "code",
+    "sparkles",
+  ],
+  /** Above this YIQ luminance a colour takes ink, below it white (OurSpaces readableInk). */
+  inkCutoff: 0.58,
+} as const
+
+export type SpaceColor = keyof typeof SPACES.colors
+export type SpaceWall = keyof typeof SPACES.walls
+
+/** Interface sounds (plan §16.5): Mixkit free licence, trimmed per OurSpaces' sound README. */
+export const SOUNDS = {
+  files: {
+    tap: "/sounds/tap.mp3",
+    place: "/sounds/place.mp3",
+    check: "/sounds/check.mp3",
+    promote: "/sounds/promote.mp3",
+  },
+  volumes: { tap: 0.34, place: 0.42, check: 0.4, promote: 0.52 },
+  /** localStorage key for the mute switch (the server copy lives in user_settings). */
+  storageKey: "konkyo:interface-sounds",
+} as const
+
+export type UiSound = keyof typeof SOUNDS.files
+
+/** House motion beats (OurSpaces voiceTimings / entrance): stagger between arrivals, tilt range. */
+export const MOTION = {
+  stagger: 40,
+  waveMax: 300,
+  tiltStep: 1.1,
+  tiltWidth: 240,
+} as const

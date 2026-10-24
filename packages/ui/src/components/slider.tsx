@@ -33,7 +33,7 @@ function Slider({
         >
           <SliderPrimitive.Indicator
             data-slot="slider-range"
-            className="bg-bone-white select-none data-horizontal:h-full data-vertical:w-full"
+            className="bg-lime select-none data-horizontal:h-full data-vertical:w-full"
           />
         </SliderPrimitive.Track>
         {Array.from({ length: _values.length }, (_, index) => (
@@ -41,7 +41,7 @@ function Slider({
             data-slot="slider-thumb"
             // biome-ignore lint/suspicious/noArrayIndexKey: one thumb per value, fixed order
             key={index}
-            className="relative block size-3 shrink-0 rounded-full bg-bone-white ring-silver-mist/40 transition-[color,box-shadow,scale] duration-(--duration-press) active:scale-110 select-none after:absolute after:-inset-2 hover:ring-3 focus-visible:ring-3 focus-visible:outline-hidden active:ring-3 disabled:pointer-events-none disabled:opacity-50"
+            className="relative block size-3 shrink-0 rounded-full bg-lime ring-lime/40 transition-[color,box-shadow,scale] duration-(--duration-press) active:scale-110 select-none after:absolute after:-inset-2 hover:ring-3 focus-visible:ring-3 focus-visible:outline-hidden active:ring-3 disabled:pointer-events-none disabled:opacity-50"
           />
         ))}
       </SliderPrimitive.Control>

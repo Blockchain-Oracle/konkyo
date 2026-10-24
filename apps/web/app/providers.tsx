@@ -3,9 +3,10 @@
 import { Toaster } from "@konkyo/ui/components/sonner"
 import { TooltipProvider } from "@konkyo/ui/components/tooltip"
 import { QueryClientProvider } from "@tanstack/react-query"
-import { domAnimation, LazyMotion, MotionConfig } from "motion/react"
+import { domMax, LazyMotion, MotionConfig } from "motion/react"
 import { useEffect } from "react"
 import { getQueryClient } from "@/lib/query-client"
+import { primeSounds } from "@/lib/sounds"
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const queryClient = getQueryClient()
@@ -17,11 +18,22 @@ export function Providers({ children }: { children: React.ReactNode }) {
     if (document.readyState === "complete") void register()
     else window.addEventListener("load", register, { once: true })
   }, [])
+  // The first tap anywhere unlocks audio and fetches the interface sounds (plan §16.5).
+  useEffect(() => {
+    const prime = () => primeSounds()
+    window.addEventListener("pointerdown", prime, { once: true, capture: true })
+    window.addEventListener("keydown", prime, { once: true, capture: true })
+    return () => {
+      window.removeEventListener("pointerdown", prime, { capture: true })
+      window.removeEventListener("keydown", prime, { capture: true })
+    }
+  }, [])
   return (
     <QueryClientProvider client={queryClient}>
       {/* Respect the system "reduce motion" setting everywhere: movement goes, fades stay. */}
       <MotionConfig reducedMotion="user">
-        <LazyMotion features={domAnimation}>
+        {/* domMax: shared-layout (layoutId) animations, such as the sliding segmented pill. */}
+        <LazyMotion features={domMax}>
           <TooltipProvider>
             {children}
             <Toaster position="bottom-right" />

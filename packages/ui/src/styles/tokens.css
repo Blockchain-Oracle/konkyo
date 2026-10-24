@@ -1,81 +1,133 @@
+/* biome-ignore-all lint/complexity/noImportantStyles: the reduced-motion block must beat every animation and transition. */
 /*
- * Konkyo design tokens. Source of truth: context/DESIGN.md (Dala) and plan §7.1–7.2.
- * Spacing stays on Tailwind's default 4px scale: never define numeric --spacing-N names,
- * they silently resize every shadcn/21st component (p-6 would become 6px).
+ * Konkyo design tokens: the OurSpaces direction (plan §16.4, testing). Values come from
+ * OurSpaces' own code (gen-ai/context/design/ourspaces/01-design-system.md §1–4, §10), adapted
+ * to a library: a plum-black room, flat loud identity colours per space, cream paper for
+ * everything you read, black sticker pills for chrome, lime as the one pop.
+ * Spacing stays on Tailwind's default 4px scale: never define numeric --spacing-N names.
  */
 
 @theme {
-  /* Dala brand colours (unchanged from DESIGN.md) */
-  --color-void: #000000;
+  /* ------------------------------------------------------------------ the room */
+  --color-paper: #211922; /* plum-black base: every page that isn't a space wall */
+  --color-paper-deep: #171119;
+  --color-paper-card: #fffaf7; /* the reading surface: source pane, editor, articles, slips */
+  --color-mat: #ddc8ac; /* kraft: tape, envelopes, frames */
+  --color-ink: #111114; /* text on paper and on light walls */
+  --color-ink-muted: #5f5055; /* 7.3:1 on paper */
+  --color-sticker: #0b0b0e; /* black pills, popovers, the dock */
+  --color-rail: #111114; /* the rail and dark cards */
+  --color-lime: #c9ff3d; /* the pop: primary action, live dots, focus, the newest spoken word */
+  --color-lime-deep: #3d6b00; /* lime's meaning on paper (6.1:1) */
+
+  /* Identity colours: each space owns one (its accent). Text forms are lighter steps that
+     pass 4.5:1 on the plum base and on dark cards. */
+  --color-violet: #7853ff;
+  --color-violet-text: #9d85ff;
+  --color-pink: #e9369d;
+  --color-pink-text: #ff5fb4;
+  --color-cobalt: #3f70ff;
+  --color-cobalt-text: #7a9bff;
+  --color-orange: #ff7c42;
+  --color-teal: #13b8a6;
+  --color-butter: #ffb02e;
+
+  /* Text on the plum room and dark cards (warm greys, 7.5:1 and 11.6:1 on the base). */
+  --color-room-muted: #b4a9b1;
+  --color-room-soft: #dcd2d9;
+  --color-room-raised: #2a2230; /* hover/raised on the base */
+  --color-room-line: rgb(255 255 255 / 0.12);
+
+  /* ------------------------------------------------- evidence states (never colour alone) */
+  /* On dark: verified lime, partly orange, contradicts pink, not found warm grey. */
+  --color-verified: #c9ff3d;
+  --color-partly: #ff7c42;
+  --color-contradicts: #ff5fb4;
+  --color-not-found: #b4a9b1;
+  --color-error: #ff5c74;
+  /* On paper (5.3–7.3:1 on #fffaf7). */
+  --color-verified-ink: #3d6b00;
+  --color-partly-ink: #b8401a;
+  --color-contradicts-ink: #c2185b;
+  --color-not-found-ink: #5f5055;
+  /* The cited passage: butter like a highlighter pen; the person's own highlights: cobalt. */
+  --color-highlight: rgb(255 176 46 / 0.4);
+  --color-mark: rgb(63 112 255 / 0.26);
+
+  /* ------------------------------------------- legacy names, remapped onto the new palette
+     (the old Dala names stay valid until each surface is rebuilt in S13–S22). */
+  --color-void: #211922;
   --color-bone-white: #ffffff;
-  --color-ash-gray: #9a9a9a;
-  --color-silver-mist: #bdbdbd;
-  --color-electric-iris: #8052ff;
-  --color-saffron-spark: #ffb829;
-  --color-deep-verdant: #15846e;
+  --color-ash-gray: #b4a9b1;
+  --color-silver-mist: #dcd2d9;
+  --color-electric-iris: #c9ff3d;
+  --color-saffron-spark: #ffb02e;
+  --color-deep-verdant: #c9ff3d;
+  --color-panel: #111114;
+  --color-raised: #2a2230;
+  --color-overlay: #0b0b0e;
+  --color-line-strong: rgb(255 255 255 / 0.24);
+  --color-supports: #c9ff3d;
+  --color-supports-text: #c9ff3d;
+  --color-info: #dcd2d9;
+  --color-particle-magenta: #e9369d;
+  --color-particle-teal: #13b8a6;
+  --color-particle-blue: #3f70ff;
+  /* Audio brief voices (F37): teal and orange, separable for colour-blind readers. */
+  --color-voice-a: #13b8a6;
+  --color-voice-b: #ff7c42;
 
-  /* App surfaces over the void: panel → raised/hover → popover/modal */
-  --color-panel: #0b0b0c;
-  --color-raised: #141414;
-  --color-overlay: #1a1a1a;
-  --color-line-strong: rgb(255 255 255 / 0.22);
+  /* ------------------------------------------------------------------ type */
+  --font-display:
+    var(--font-bricolage), "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
 
-  /*
-   * State colours. Dala has no red, so contradicts/error borrow Raycast's #ff6363.
-   * Verdant #15846e is 4.27:1 on panels: marks only; its text form is #449d8b.
-   * Every state also has its own glyph and underline style; colour is never alone.
-   */
-  --color-supports: #15846e;
-  --color-supports-text: #449d8b;
-  --color-partly: #ffb829;
-  --color-contradicts: #ff6363;
-  --color-not-found: #9a9a9a;
-  --color-info: #bdbdbd;
-  --color-highlight: rgb(255 184 41 / 0.35);
-  /* The person's own highlights: particle blue, so they never read as cited evidence (amber). */
-  --color-mark: rgb(45 108 175 / 0.3);
+  /* Display sizes (Bricolage 800, lowercase titles). */
+  --text-title: clamp(2.5rem, 1.6rem + 3vw, 4.5rem);
+  --text-title--line-height: 0.98;
+  --text-title--letter-spacing: -0.035em;
+  --text-title-sm: clamp(1.75rem, 1.3rem + 1.6vw, 2.5rem);
+  --text-title-sm--line-height: 1.02;
+  --text-title-sm--letter-spacing: -0.03em;
+  --text-hero: clamp(3rem, 1.4rem + 5.6vw, 7rem);
+  --text-hero--line-height: 0.95;
+  --text-hero--letter-spacing: -0.04em;
+  --text-number: clamp(2rem, 1.2rem + 3vw, 3.5rem);
+  --text-number--line-height: 1;
+  --text-number--letter-spacing: -0.02em;
+  --text-kicker: 13px;
+  --text-kicker--line-height: 1.2;
+  --text-kicker--font-weight: 600;
 
-  /* Particle palette, sampled from the live Dala canvas (landing, celebrations) */
-  --color-particle-magenta: #c265aa;
-  --color-particle-teal: #339f87;
-  --color-particle-blue: #2d6caf;
-  /* Audio brief voices (F37): teal and a deeper amber step, checked for colour-blind separation. */
-  --color-voice-a: #339f87;
-  --color-voice-b: #c08419;
-
-  /* Marketing type scale (DESIGN.md): one class sets size, leading and tracking */
+  /* Earlier named sizes stay (components use them); they now render in IBM Plex Sans. */
   --text-caption: 12px;
   --text-caption--line-height: 1.5;
   --text-nav-label: 14px;
   --text-nav-label--line-height: 1.2;
-  --text-nav-label--letter-spacing: 0.35px;
-  --text-body: 18px;
-  --text-body--line-height: 1.5;
+  --text-body: 17px;
+  --text-body--line-height: 1.55;
   --text-heading-2xs: 24px;
-  --text-heading-2xs--line-height: 1.25;
-  --text-heading-2xs--letter-spacing: -0.48px;
+  --text-heading-2xs--line-height: 1.15;
+  --text-heading-2xs--letter-spacing: -0.02em;
   --text-heading-xs: 27px;
-  --text-heading-xs--line-height: 1;
+  --text-heading-xs--line-height: 1.05;
   --text-subheading: 36px;
-  --text-subheading--line-height: 1.2;
-  --text-subheading--letter-spacing: -0.04em;
+  --text-subheading--line-height: 1.05;
+  --text-subheading--letter-spacing: -0.03em;
   --text-heading-sm: 42px;
-  --text-heading-sm--line-height: 1.2;
-  --text-heading-sm--letter-spacing: -1.68px;
+  --text-heading-sm--line-height: 1.02;
+  --text-heading-sm--letter-spacing: -0.03em;
   --text-heading: 48px;
-  --text-heading--line-height: 1.1;
-  --text-heading--letter-spacing: -1.68px;
+  --text-heading--line-height: 1;
+  --text-heading--letter-spacing: -0.035em;
   --text-heading-lg: 78px;
-  --text-heading-lg--line-height: 1.1;
-  --text-heading-lg--letter-spacing: -3.12px;
+  --text-heading-lg--line-height: 0.98;
+  --text-heading-lg--letter-spacing: -0.04em;
   --text-display: 113px;
-  --text-display--line-height: 1.1;
-  --text-display--letter-spacing: -4.52px;
-
-  /* App type scale (Linear/Raycast density at Dala's weights; plan §7.2) */
+  --text-display--line-height: 0.95;
+  --text-display--letter-spacing: -0.04em;
   --text-micro: 11px;
   --text-micro--line-height: 1.2;
-  --text-micro--letter-spacing: 0.05em;
+  --text-micro--letter-spacing: 0.02em;
   --text-micro--font-weight: 600;
   --text-meta: 12px;
   --text-meta--line-height: 1.4;
@@ -83,7 +135,6 @@
   --text-snippet--line-height: 1.4;
   --text-ui: 14px;
   --text-ui--line-height: 1.45;
-  --text-ui--letter-spacing: -0.01em;
   --text-reading: 15px;
   --text-reading--line-height: 1.6;
   --text-editor: 16px;
@@ -91,18 +142,146 @@
   --text-subhead: 17px;
   --text-subhead--line-height: 1.35;
 
-  /* Radius under its own name (shadcn's bridge rewrites --radius-3xl to 22px) */
-  --radius-card: 24px;
+  /* ------------------------------------------------------------------ shape and depth */
+  --radius-pill: 9999px;
+  --radius-tile: 15px;
+  --radius-slip: 20px;
+  --radius-card: 26px;
+  /* Hard, zero-blur offsets: a shadow is a sticker's edge, never a glow. */
+  --shadow-sticker: 0 6px 0 rgb(17 17 20 / 0.22);
+  --shadow-sticker-lift: 0 11px 0 rgb(17 17 20 / 0.24);
+  --shadow-paper: 0 6px 0 rgb(17 17 20 / 0.22);
+  --shadow-dark: 0 8px 0 rgb(45 22 31 / 0.26);
+  --shadow-slip: 7px 7px 0 #111114;
+  --shadow-brutal: 5px 5px 0 #111114;
 
-  /* Motion (Emil Kowalski's curves). These replace Tailwind's weaker defaults. */
-  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  /* ------------------------------------------------------------------ motion (OurSpaces) */
+  --ease-glide: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-pop: cubic-bezier(0.2, 0.9, 0.3, 1.18);
+  --ease-snap: cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* Kept names, now on the house curves. */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
 
-  /* The cited passage is marked like a highlighter pen, one line after another (plan §7.4 #2). */
-  --animate-sweep: sweep 280ms var(--ease-out) both;
+  /* Arrivals */
+  --animate-widget-added: widget-added var(--dur-arrive) var(--ease-glide) both;
+  --animate-settle-in: settle-in 460ms var(--ease-glide) var(--enter-delay, 0ms) both;
+  --animate-card-land: card-land var(--dur-stage) var(--ease-pop) both;
+  --animate-pill-in: pill-in var(--dur-arrive) var(--ease-pop) both;
+  --animate-slip-in: slip-in var(--dur-arrive) var(--ease-pop) backwards;
+  --animate-tile-in: tile-in var(--dur-arrive) var(--ease-pop) backwards;
+  --animate-panel-in: panel-in var(--dur-arrive) var(--ease-pop) both;
+  --animate-word-in: word-in var(--dur-base) var(--ease-glide) both;
+  --animate-blink: blink 1.1s ease-in-out infinite;
+  --animate-lime-pulse: lime-pulse 1.1s ease-out infinite;
+  /* Evidence (kept from §7.4, now in the new palette) */
+  --animate-sweep: sweep 280ms var(--ease-glide) both;
   --animate-pane-in: pane-in var(--duration-pane) var(--ease-drawer) both;
+  --animate-checking: checking 1.4s ease-in-out infinite;
+  --animate-tick: tick 200ms var(--ease-glide) both;
+  --animate-rewrite: rewrite 420ms var(--ease-glide) both;
+  --animate-line-up: line-up 1s var(--ease-glide) both;
 
+  @keyframes widget-added {
+    from {
+      opacity: 0;
+      filter: blur(2px);
+      scale: 0.94;
+      translate: 0 16px;
+    }
+    to {
+      opacity: 1;
+      filter: blur(0);
+      scale: 1;
+      translate: 0 0;
+    }
+  }
+  @keyframes settle-in {
+    from {
+      opacity: 0;
+      filter: blur(3px);
+      scale: 0.965;
+      translate: 0 14px;
+    }
+    to {
+      opacity: 1;
+      filter: blur(0);
+      scale: 1;
+      translate: 0 0;
+    }
+  }
+  @keyframes card-land {
+    0% {
+      opacity: 0;
+      scale: 1.07;
+      translate: 0 -22px;
+      animation-timing-function: var(--ease-glide);
+    }
+    42% {
+      opacity: 1;
+      scale: 1.035 0.95;
+      translate: 0 3px;
+      animation-timing-function: var(--ease-pop);
+    }
+    100% {
+      opacity: 1;
+      scale: 1;
+      translate: 0 0;
+    }
+  }
+  @keyframes pill-in {
+    from {
+      opacity: 0;
+      scale: 0.84;
+      rotate: -7deg;
+      translate: 0 16px;
+    }
+  }
+  @keyframes slip-in {
+    from {
+      opacity: 0;
+      rotate: -4deg;
+      scale: 0.9;
+      translate: 0 16px;
+    }
+  }
+  @keyframes tile-in {
+    from {
+      opacity: 0;
+      scale: 0.4;
+    }
+  }
+  /* The AI panel grows out of the dock (OurSpaces recap-in). */
+  @keyframes panel-in {
+    from {
+      opacity: 0;
+      scale: 0.86;
+      translate: 0 10px;
+    }
+  }
+  /* A spoken word arrives from a blur and settles. */
+  @keyframes word-in {
+    from {
+      opacity: 0;
+      filter: blur(8px);
+      translate: 0 0.32em;
+    }
+  }
+  @keyframes blink {
+    50% {
+      opacity: 0.25;
+    }
+  }
+  @keyframes lime-pulse {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgb(201 255 61 / 0.48);
+    }
+    55% {
+      box-shadow: 0 0 0 6px rgb(201 255 61 / 0);
+    }
+  }
   @keyframes sweep {
     from {
       clip-path: inset(0 100% 0 0);
@@ -111,12 +290,6 @@
       clip-path: inset(0);
     }
   }
-  /* Citation states (plan §7.4 #1): checking pulses without moving; a tick draws in; a
-     rewritten sentence resolves from a 2px blur. */
-  --animate-checking: checking 1.4s ease-in-out infinite;
-  --animate-tick: tick 200ms var(--ease-out) both;
-  --animate-rewrite: rewrite 420ms var(--ease-out) both;
-
   @keyframes checking {
     50% {
       opacity: 0.45;
@@ -142,8 +315,6 @@
       opacity: 0;
     }
   }
-  /* The landing's headlines rise into view line by line from behind a mask (plan §8, Dala). */
-  --animate-line-up: line-up 1s var(--ease-out) both;
   @keyframes line-up {
     from {
       transform: translateY(110%);
@@ -151,65 +322,289 @@
   }
 }
 
-/* Reduced motion: the highlight fades in and panes appear in place. */
-@media (prefers-reduced-motion: reduce) {
-  .animate-sweep {
-    animation-name: fade-in;
-  }
-  .animate-pane-in,
-  .animate-tick {
-    animation: none;
-  }
-  .animate-checking {
-    animation-duration: 3s;
-  }
-  .animate-rewrite,
-  .animate-line-up {
-    animation-name: fade-in;
-  }
+/* Plain variables: durations, and the identity colours the voice orb reads as hex at runtime. */
+:root {
+  --dur-instant: 120ms;
+  --dur-quick: 160ms;
+  --dur-base: 220ms;
+  --dur-arrive: 360ms;
+  --dur-stage: 500ms;
+  --dur-hero: 900ms;
+  --duration-press: 120ms;
+  --duration-tooltip: 160ms;
+  --duration-menu: 160ms;
+  --duration-modal: 220ms;
+  --duration-pane: 360ms;
+  --orb-a: #7853ff;
+  --orb-b: #e9369d;
+  --orb-c: #ff7c42;
+  --orb-d: #3f70ff;
 }
-@keyframes fade-in {
-  from {
-    opacity: 0;
+
+/* One rule for reduced motion (OurSpaces' global block): movement goes, colour and opacity stay. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
-:root {
-  --duration-press: 140ms;
-  --duration-tooltip: 150ms;
-  --duration-menu: 180ms;
-  --duration-modal: 220ms;
-  --duration-pane: 240ms;
+/* ------------------------------------------------------------------ walls (a space's room) */
+/* A space wall: `.wall .wall-<preset>` plus inline --space-accent/--space-accent-ink
+   (packages/ui/src/lib/space.ts). Presets and inks from OurSpaces' spaceThemes. */
+.wall {
+  --wall-bg: var(--color-paper);
+  --wall-ink: #ffffff;
+  --wall-muted: rgb(255 255 255 / 0.72);
+  --wall-dot: rgb(255 255 255 / 0.055);
+  --wall-major: rgb(120 83 255 / 0.3);
+  background-color: var(--wall-bg);
+  color: var(--wall-ink);
+  transition:
+    background-color var(--dur-base) ease-out,
+    color var(--dur-base) ease-out;
+}
+.wall-blush {
+  --wall-bg: #ffdad6;
+  --wall-ink: #111114;
+  --wall-muted: #5f5055;
+  --wall-dot: rgb(17 17 20 / 0.055);
+  --wall-major: rgb(120 83 255 / 0.2);
+}
+.wall-lagoon {
+  --wall-bg: #12a594;
+  --wall-dot: rgb(255 255 255 / 0.07);
+  --wall-major: rgb(201 255 61 / 0.24);
+}
+.wall-spruce {
+  --wall-bg: #0f5c50;
+  --wall-dot: rgb(255 255 255 / 0.06);
+  --wall-major: rgb(201 255 61 / 0.2);
+}
+.wall-night {
+  --wall-bg: #211922;
+}
+.wall-clean {
+  --wall-bg: #f4f4f2;
+  --wall-ink: #111114;
+  --wall-muted: #5f5055;
+  --wall-dot: rgb(17 17 20 / 0.055);
+  --wall-major: rgb(120 83 255 / 0.2);
+}
+.wall-violet {
+  --wall-bg: #b7a7ff;
+  --wall-ink: #1b1532;
+  --wall-muted: #3d3463;
+  --wall-dot: rgb(27 21 50 / 0.08);
+  --wall-major: rgb(255 255 255 / 0.38);
+}
+.wall-cobalt {
+  --wall-bg: #3f70ff;
+  --wall-dot: rgb(255 255 255 / 0.085);
+  --wall-major: rgb(201 255 61 / 0.28);
+}
+.wall-mint {
+  --wall-bg: #bfe9dc;
+  --wall-ink: #102e27;
+  --wall-muted: #2f5a4f;
+  --wall-dot: rgb(16 46 39 / 0.065);
+  --wall-major: rgb(120 83 255 / 0.2);
+}
+.wall-midnight {
+  --wall-bg: #1f1b2d;
+  --wall-dot: rgb(255 255 255 / 0.055);
+  --wall-major: rgb(201 255 61 / 0.24);
+}
+.wall-butter {
+  --wall-bg: #ffe9c2;
+  --wall-ink: #111114;
+  --wall-muted: #5f5055;
+  --wall-dot: rgb(17 17 20 / 0.06);
+  --wall-major: rgb(255 176 46 / 0.35);
+}
+/* The faint pegboard grid behind a wall's objects. */
+.wall-grid {
+  background-image:
+    radial-gradient(circle, var(--wall-major) 0 1.5px, transparent 1.8px),
+    radial-gradient(circle, var(--wall-dot) 0 1px, transparent 1.3px);
+  background-position:
+    16px 16px,
+    0 0;
+  background-size:
+    160px 160px,
+    32px 32px;
+}
+
+/* ------------------------------------------------------------------ house objects */
+@layer components {
+  /* Black chrome pill (labels, chips, small buttons); one or two get a tilt. */
+  .sticker-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: var(--radius-pill);
+    background: var(--color-sticker);
+    color: #fff;
+    box-shadow: var(--shadow-sticker);
+    padding: 7px 13px 7px 14px;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+  /* Black call to action (OurSpaces .welcome-cta): lifts on hover, presses on click. */
+  .sticker-cta {
+    display: inline-flex;
+    min-height: 52px;
+    align-items: center;
+    gap: 12px;
+    border-radius: var(--radius-pill);
+    background: var(--color-sticker);
+    color: #fff;
+    box-shadow: var(--shadow-sticker);
+    padding: 12px 22px;
+    font-weight: 700;
+    font-size: 16px;
+    transition:
+      translate 180ms var(--ease-glide),
+      box-shadow 180ms var(--ease-glide);
+  }
+  .sticker-cta:hover {
+    translate: 0 -4px;
+    box-shadow: var(--shadow-sticker-lift);
+  }
+  .sticker-cta:active {
+    translate: 0 1px;
+    box-shadow: 0 5px 0 rgb(17 17 20 / 0.24);
+  }
+  /* The one lime action (OurSpaces .claim-done). */
+  .lime-pill {
+    display: inline-flex;
+    min-height: 38px;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    border-radius: var(--radius-pill);
+    background: var(--color-lime);
+    color: var(--color-sticker);
+    padding: 8px 16px;
+    font-weight: 800;
+    font-size: 14px;
+    transition:
+      translate 160ms var(--ease-glide),
+      box-shadow 160ms ease-out;
+  }
+  .lime-pill:hover {
+    translate: 0 -2px;
+    box-shadow: 0 4px 0 rgb(201 255 61 / 0.24);
+  }
+  .lime-pill:active {
+    translate: 0 1px;
+  }
+  /* Dark card (popovers, settings card, the AI panel). */
+  .sticker-card {
+    border-radius: var(--radius-slip);
+    background: var(--color-sticker);
+    color: #fff;
+    box-shadow: var(--shadow-dark);
+  }
+  /* Paper object on a wall: flat at rest, tilted by id, lifts on hover. */
+  .paper-card {
+    border-radius: 14px;
+    background: var(--color-paper-card);
+    color: var(--color-ink);
+    box-shadow: var(--shadow-paper);
+    rotate: var(--tilt, 0deg);
+    transition:
+      translate 190ms var(--ease-glide),
+      rotate 260ms var(--ease-glide),
+      box-shadow 190ms var(--ease-glide);
+  }
+  .paper-card:hover {
+    translate: 0 -4px;
+    box-shadow: 0 10px 0 color-mix(in oklch, var(--space-accent, #111114) 32%, transparent);
+  }
+  .paper-card:focus-visible {
+    outline: 3px solid var(--color-lime);
+    outline-offset: 4px;
+  }
+  /* The reply slip (OurSpaces voice reply): cream, ink border, offset ink shadow, a coloured tab. */
+  .say-slip {
+    position: relative;
+    border: 2px solid var(--color-ink);
+    border-radius: var(--radius-slip);
+    background: var(--color-paper-card);
+    color: var(--color-ink);
+    box-shadow: var(--shadow-slip);
+    rotate: -1deg;
+    transform-origin: 12% 100%;
+  }
+  .say-slip > .slip-tab {
+    position: absolute;
+    top: -13px;
+    left: 22px;
+    padding: 3px 11px 4px;
+    border: 2px solid var(--color-ink);
+    border-radius: var(--radius-pill);
+    background: var(--color-lime);
+    color: var(--color-ink);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  /* The "knows" page objects: thick ink outline, offset ink shadow. */
+  .brutal-card {
+    border: 2.5px solid var(--color-ink);
+    border-radius: 18px;
+    background: var(--color-paper-card);
+    color: var(--color-ink);
+    box-shadow: var(--shadow-brutal);
+  }
+  /* Tape for polaroids and slips. */
+  .tape {
+    position: absolute;
+    width: 74px;
+    height: 22px;
+    background: color-mix(in srgb, var(--color-mat) 78%, transparent);
+    rotate: -3deg;
+  }
 }
 
 /* ------------------------------------------------------------------ notes (plan F21–F23) */
-
-/* The note editor's reading type: 16px / 1.7, a 68-character measure. */
 .note-prose {
   font-size: 16px;
   line-height: 1.7;
-  color: var(--color-bone-white);
+  color: inherit;
   max-width: 68ch;
   outline: none;
 }
 .note-prose > * + * {
   margin-top: 0.9em;
 }
+.note-prose h1,
+.note-prose h2,
+.note-prose h3 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
 .note-prose h1 {
-  font-size: 1.6em;
-  line-height: 1.25;
-  font-weight: 500;
+  font-size: 1.7em;
+  line-height: 1.1;
   margin-top: 1.4em;
 }
 .note-prose h2 {
-  font-size: 1.3em;
-  line-height: 1.3;
-  font-weight: 500;
+  font-size: 1.35em;
+  line-height: 1.15;
   margin-top: 1.3em;
 }
 .note-prose h3 {
-  font-size: 1.1em;
-  font-weight: 600;
+  font-size: 1.12em;
   margin-top: 1.2em;
 }
 .note-prose ul,
@@ -226,9 +621,9 @@
   margin-top: 0.3em;
 }
 .note-prose blockquote {
-  border-left: 2px solid rgb(255 255 255 / 0.18);
+  border-left: 3px solid currentColor;
   padding-left: 1em;
-  color: var(--color-silver-mist);
+  opacity: 0.8;
 }
 .note-prose strong {
   font-weight: 600;
@@ -241,7 +636,7 @@
   pointer-events: none;
 }
 
-/* Check my draft's verdicts, under the sentence: solid for supported, dotted while checking. */
+/* Check my draft's verdicts, under the sentence. Glyph + underline style carry the meaning. */
 .claim {
   text-decoration-line: underline;
   text-decoration-thickness: 2px;
@@ -252,22 +647,24 @@
 }
 .claim-checking {
   text-decoration-style: dotted;
-  text-decoration-color: rgb(255 184 41 / 0.5);
+  text-decoration-color: rgb(255 176 46 / 0.6);
 }
 .claim-supported {
-  text-decoration-color: var(--color-supports);
+  text-decoration-color: var(--color-verified);
 }
 .claim-partly {
+  text-decoration-style: dotted;
   text-decoration-color: var(--color-partly);
 }
 .claim-contradicted {
   text-decoration-color: var(--color-contradicts);
 }
+/* Not found is not evidence against: dashed grey, never red. */
 .claim-not-found {
-  text-decoration-style: wavy;
-  text-decoration-color: var(--color-contradicts);
+  text-decoration-style: dashed;
+  text-decoration-color: var(--color-not-found);
 }
 .claim-active,
 .claim:hover {
-  background: rgb(255 255 255 / 0.07);
+  background: rgb(255 255 255 / 0.08);
 }

@@ -1,59 +1,33 @@
 "use client"
 
+import { loadSound, playUrl, primeSounds as primeInterface } from "@/lib/sounds"
+
+export { pulse } from "@/lib/sounds"
+
 /**
- * Study's five sounds (plan §7.8), made with ElevenLabs Sound Effects. Played through Web Audio
- * once the person has tapped something (browsers allow audio only after a gesture), never
- * outside Study, and off when Settings → Study sounds is off.
+ * Study's five sounds (made with ElevenLabs Sound Effects), on the shared engine in lib/sounds.
+ * They play only in Study and only while Settings → Study sounds is on.
  */
 export type StudySound = "right" | "try-again" | "hint" | "round" | "streak"
 
 const NAMES: StudySound[] = ["right", "try-again", "hint", "round", "streak"]
-
-let context: AudioContext | null = null
-const buffers = new Map<StudySound, AudioBuffer>()
-let loading: Promise<void> | null = null
-
-function load() {
-  if (loading || typeof window === "undefined") return loading
-  const Ctx =
-    window.AudioContext ??
-    (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
-  if (!Ctx) return null
-  context = new Ctx()
-  const ctx = context
-  loading = Promise.all(
-    NAMES.map(async (name) => {
-      try {
-        const res = await fetch(`/sounds/${name}.mp3`)
-        buffers.set(name, await ctx.decodeAudioData(await res.arrayBuffer()))
-      } catch {
-        // A sound that won't load is simply skipped.
-      }
-    }),
-  ).then(() => undefined)
-  return loading
+/** Levelled against the interface sounds (tap 0.34 … promote 0.52); try again stays soft. */
+const VOLUME: Record<StudySound, number> = {
+  right: 0.5,
+  "try-again": 0.36,
+  hint: 0.4,
+  round: 0.52,
+  streak: 0.55,
 }
+
+const url = (name: StudySound) => `/sounds/${name}.mp3`
 
 /** Call from the first tap in a session: unlocks audio and starts fetching the sounds. */
 export function primeSounds() {
-  void load()
-  if (context?.state === "suspended") void context.resume()
+  primeInterface()
+  for (const name of NAMES) void loadSound(url(name))
 }
 
 export function playSound(name: StudySound, enabled: boolean) {
-  if (!enabled || !context) return
-  const buffer = buffers.get(name)
-  if (!buffer) return
-  const source = context.createBufferSource()
-  const gain = context.createGain()
-  gain.gain.value = name === "try-again" ? 0.5 : 0.7
-  source.buffer = buffer
-  source.connect(gain).connect(context.destination)
-  source.start()
-}
-
-/** A short pulse on Android (Safari on iOS has no vibration API). */
-export function pulse(pattern: number | number[]) {
-  if (typeof navigator === "undefined" || !/Android/i.test(navigator.userAgent)) return
-  navigator.vibrate?.(pattern)
+  if (enabled) playUrl(url(name), VOLUME[name])
 }

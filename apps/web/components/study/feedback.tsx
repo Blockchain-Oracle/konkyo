@@ -184,7 +184,7 @@ export function FeedbackBar({
         <span
           className={cn(
             "mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full",
-            state.kind === "right" && "bg-deep-verdant text-white",
+            state.kind === "right" && "bg-lime text-ink",
             state.kind === "wrong" && "bg-saffron-spark/15 text-saffron-spark",
             state.kind === "shown" && "bg-white/8 text-silver-mist",
           )}

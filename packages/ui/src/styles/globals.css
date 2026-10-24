@@ -9,9 +9,9 @@
 @source "../../../apps/**/*.{ts,tsx}";
 @source "../**/*.{ts,tsx}";
 
-/* shadcn bridge: component tokens → Dala values (plan §7.1). */
+/* shadcn bridge: component tokens → the OurSpaces palette (plan §16.4). */
 @theme inline {
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-display);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -58,41 +58,42 @@
 :root,
 .dark {
   color-scheme: dark;
-  --background: #000000;
+  /* The room is plum-black; dark cards are rail black; popovers are sticker black. */
+  --background: #211922;
   --foreground: #ffffff;
-  --card: #0b0b0c;
+  --card: #111114;
   --card-foreground: #ffffff;
-  --popover: #1a1a1a;
+  --popover: #0b0b0e;
   --popover-foreground: #ffffff;
-  /* Violet is the one filled primary action per view; never small text on panels (4.28:1). */
-  --primary: #8052ff;
-  --primary-foreground: #ffffff;
-  --secondary: #141414;
+  /* Lime is the one action per view, always with black text (15.7:1). */
+  --primary: #c9ff3d;
+  --primary-foreground: #0b0b0e;
+  --secondary: #0b0b0e;
   --secondary-foreground: #ffffff;
-  --muted: #0b0b0c;
-  --muted-foreground: #9a9a9a;
-  --accent: #141414;
+  --muted: #2a2230;
+  --muted-foreground: #b4a9b1;
+  --accent: #2a2230;
   --accent-foreground: #ffffff;
-  --destructive: #ff6363;
-  --destructive-foreground: #ff6363;
-  --border: rgb(255 255 255 / 0.08);
-  --input: rgb(255 255 255 / 0.12);
-  /* Focus is silver (10.5:1 on panels), keeping violet for the primary action. */
-  --ring: #bdbdbd;
-  --chart-1: #8052ff;
-  --chart-2: #ffb829;
-  --chart-3: #449d8b;
-  --chart-4: #c265aa;
-  --chart-5: #2d6caf;
-  --radius: 0.625rem;
-  --sidebar: #000000;
-  --sidebar-foreground: #bdbdbd;
-  --sidebar-primary: #8052ff;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #141414;
+  --destructive: #ff5c74;
+  --destructive-foreground: #ff5c74;
+  --border: rgb(255 255 255 / 0.12);
+  --input: rgb(255 255 255 / 0.18);
+  /* Focus is lime (OurSpaces widgets and inputs). */
+  --ring: #c9ff3d;
+  --chart-1: #7853ff;
+  --chart-2: #e9369d;
+  --chart-3: #ff7c42;
+  --chart-4: #13b8a6;
+  --chart-5: #3f70ff;
+  --radius: 0.875rem;
+  --sidebar: #111114;
+  --sidebar-foreground: #dcd2d9;
+  --sidebar-primary: #c9ff3d;
+  --sidebar-primary-foreground: #0b0b0e;
+  --sidebar-accent: #2a2230;
   --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: rgb(255 255 255 / 0.08);
-  --sidebar-ring: #bdbdbd;
+  --sidebar-border: rgb(255 255 255 / 0.1);
+  --sidebar-ring: #c9ff3d;
 }
 
 @layer base {
@@ -108,12 +109,20 @@
   body {
     @apply bg-background text-foreground;
   }
-  /* A visible, consistent focus ring for anything a component didn't style itself. */
+  /* Display type: Bricolage 800, tight (OurSpaces base layer). */
+  h1,
+  h2,
+  .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.03em;
+  }
+  /* A visible, consistent lime focus ring for anything a component didn't style itself. */
   :where(a, button, [role="button"], input, textarea, select, [tabindex]):focus-visible {
-    outline: 2px solid var(--ring);
-    outline-offset: 2px;
+    outline: 3px solid var(--ring);
+    outline-offset: 3px;
   }
   ::selection {
-    background: rgb(255 255 255 / 0.18);
+    background: rgb(201 255 61 / 0.32);
+    color: #fff;
   }
 }

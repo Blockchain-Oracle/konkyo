@@ -67,7 +67,7 @@ function Celebrate() {
 }
 
 const GLYPH: Record<Outcome, { icon: typeof CheckIcon; className: string; label: string }> = {
-  right: { icon: CheckIcon, className: "bg-deep-verdant text-white", label: "Right first time" },
+  right: { icon: CheckIcon, className: "bg-lime text-ink", label: "Right first time" },
   helped: {
     icon: RotateCcwIcon,
     className: "bg-saffron-spark/15 text-saffron-spark",

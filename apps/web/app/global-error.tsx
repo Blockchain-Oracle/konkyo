@@ -19,7 +19,7 @@ export default function GlobalError({ reset }: { error: Error; reset: () => void
           <button
             type="button"
             onClick={reset}
-            className="mt-9 h-11 rounded-full bg-electric-iris px-6 text-ui text-bone-white"
+            className="mt-9 h-11 rounded-full bg-lime px-6 text-ui font-bold text-ink"
           >
             Try again
           </button>

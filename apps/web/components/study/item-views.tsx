@@ -284,7 +284,7 @@ export function EvidenceView({
                   className={cn(
                     "mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-md border text-meta tabular-nums",
                     done && isAnswer
-                      ? "border-deep-verdant bg-deep-verdant text-white"
+                      ? "border-deep-verdant bg-lime text-ink"
                       : "border-line-strong text-ash-gray",
                   )}
                 >

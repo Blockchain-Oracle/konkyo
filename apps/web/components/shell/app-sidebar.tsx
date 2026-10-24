@@ -98,7 +98,7 @@ function UnreadBadge() {
   const { data: unread } = useUnread()
   if (!unread) return null
   return (
-    <SidebarMenuBadge className="rounded-full bg-electric-iris px-1.5 text-[11px] text-white tabular-nums">
+    <SidebarMenuBadge className="rounded-full bg-lime px-1.5 text-[11px] font-bold text-ink tabular-nums">
       {unread > 99 ? "99+" : unread}
       <span className="sr-only"> unread</span>
     </SidebarMenuBadge>
