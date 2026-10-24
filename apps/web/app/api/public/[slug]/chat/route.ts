@@ -6,7 +6,13 @@ import { NextResponse } from "next/server"
 import { z } from "zod"
 import { answerWriter } from "@/lib/answer-stream"
 import { LibraryError } from "@/lib/library"
-import { recordVisitorAnswer, shareScope, visitorLimit, visitorOf } from "@/lib/shares"
+import {
+  recordAnswerQuotes,
+  recordVisitorAnswer,
+  shareScope,
+  visitorLimit,
+  visitorOf,
+} from "@/lib/shares"
 
 export const maxDuration = 120
 
@@ -73,7 +79,7 @@ export async function POST(request: Request, ctx: { params: Promise<{ slug: stri
       { status: 422 },
     )
   }
-  await recordVisitorAnswer(scope.folderId, visitor)
+  const answerId = await recordVisitorAnswer(scope.folderId, visitor)
 
   const stream = createUIMessageStream<KonkyoMessage>({
     originalMessages: [userMessage],
@@ -93,6 +99,8 @@ export async function POST(request: Request, ctx: { params: Promise<{ slug: stri
         emit: out.emit,
       })
       out.endDraft()
+      const quotes = out.receipt()?.quotes
+      if (answerId && quotes) await recordAnswerQuotes(answerId, quotes)
     },
     onError: (error) => {
       console.error("[public chat]", error)

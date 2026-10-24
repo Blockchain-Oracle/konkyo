@@ -1,0 +1,1 @@
+ALTER TABLE "share_answers" ADD COLUMN "quotes" integer DEFAULT 0 NOT NULL;

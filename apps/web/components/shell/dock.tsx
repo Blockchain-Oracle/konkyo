@@ -1,15 +1,18 @@
 "use client"
 
+import { useChat } from "@ai-sdk/react"
+import type { KonkyoMessage } from "@konkyo/agents"
+import { useQueryClient } from "@tanstack/react-query"
+import { DefaultChatTransport } from "ai"
 import type { Route } from "next"
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
-import { useEffect, useRef, useState } from "react"
+import { usePathname } from "next/navigation"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { VoiceOrb, type VoiceState } from "@/components/voice/voice-orb"
-import { type Focus, WHOLE_LIBRARY } from "@/lib/focus"
-import { holdQuestion } from "@/lib/pending-question"
+import { setLitSources } from "@/lib/lit-sources"
 import { interfaceSoundsOn, setInterfaceSounds, sound } from "@/lib/sounds"
-import { useUnread } from "@/lib/use-inbox"
-import { useCurrentSpaceId } from "./rail"
+import { CatchupPanel, useCatchup } from "./catchup-panel"
+import { useCurrentSpaceId, useSpaces } from "./rail"
 
 /** Pages with their own composer or nothing to ask about don't show the dock (R2). */
 const NO_DOCK = [
@@ -26,15 +29,70 @@ export function useDockVisible() {
 }
 
 /**
+ * The panel's thread is a real chat (saved, openable in full), scoped to the space you're in. A
+ * new space starts a new thread, since a chat keeps the scope it was asked in.
+ */
+function usePanelChat(spaceId: string | null) {
+  const queryClient = useQueryClient()
+  const [chatId, setChatId] = useState(() => crypto.randomUUID())
+  const scope = useRef(spaceId)
+  useEffect(() => {
+    if (scope.current === spaceId) return
+    scope.current = spaceId
+    setChatId(crypto.randomUUID())
+  }, [spaceId])
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport<KonkyoMessage>({
+        api: "/api/chat",
+        prepareSendMessagesRequest: ({ id, messages, trigger }) => ({
+          body: {
+            chatId: id,
+            message: messages.at(-1),
+            trigger,
+            scope: scope.current ? { folderIds: [scope.current] } : undefined,
+          },
+        }),
+      }),
+    [],
+  )
+  const { messages, sendMessage, status, error } = useChat<KonkyoMessage>({
+    id: chatId,
+    transport,
+    onFinish: () => {
+      void queryClient.invalidateQueries({ queryKey: ["chats"] })
+      void queryClient.invalidateQueries({ queryKey: ["catchup"] })
+    },
+  })
+  const send = useCallback((text: string) => void sendMessage({ text }), [sendMessage])
+  return {
+    chatId,
+    messages,
+    running: status === "submitted" || status === "streaming",
+    error,
+    send,
+  }
+}
+
+/**
  * The dock: OurSpaces' ActionDock, ported (its markup and CSS, house.css). The orb leads, with a
  * quiet prompt beside it; tap either and the orb lifts and swells, the utilities step out and the
  * say strip takes the bar. Until the voice stage (S16) the strip takes typed words: each key
- * stirs the orb. ✦ is what moved; the bubble is your chats; ♪ turns interface sounds on or off.
+ * stirs the orb. ✦ opens catch me up, which is also where questions are answered (plan F48);
+ * the bubble is your chats; ♪ turns interface sounds on or off.
  */
 export function Dock() {
-  const router = useRouter()
   const spaceId = useCurrentSpaceId()
-  const { data: unread } = useUnread()
+  const spaces = useSpaces()
+  const spaceName = spaces.find((s) => s.id === spaceId)?.name ?? null
+  const queryClient = useQueryClient()
+  const { data: caught } = useCatchup(spaceId)
+  // The badge counts what's new since you last looked; the panel lists everything.
+  const waiting = caught?.fresh ?? 0
+  const chat = usePanelChat(spaceId)
+  const [panel, setPanel] = useState(false)
+  const [tail, setTail] = useState(200)
+  const ai = useRef<HTMLButtonElement>(null)
   const [mood, setMood] = useState<VoiceState>("idle")
   const [text, setText] = useState("")
   const [soundOn, setSoundOn] = useState(true)
@@ -61,21 +119,46 @@ export function Dock() {
     setMood(mood === "idle" ? "listening" : "idle")
     if (mood !== "idle") setText("")
   }
+  const showPanel = () => {
+    const button = ai.current
+    if (button) setTail(button.offsetLeft + button.offsetWidth / 2)
+    setPanel(true)
+  }
+  const closePanel = useCallback(
+    (seen: boolean) => {
+      setPanel(false)
+      setLitSources([])
+      sound("tap")
+      // What was shown is caught up: the next catch me up starts from now.
+      if (seen)
+        void fetch("/api/catchup", { method: "POST" }).then(() =>
+          queryClient.invalidateQueries({ queryKey: ["catchup"] }),
+        )
+    },
+    [queryClient],
+  )
+  // A question from the say strip is answered in the panel, in place (plan F48).
   const ask = () => {
     const question = text.trim()
-    if (!question) return
-    setMood("working")
-    const focus: Focus = spaceId ? { fileIds: [], folderIds: [spaceId] } : WHOLE_LIBRARY
-    const chatId = crypto.randomUUID()
-    holdQuestion(chatId, { text: question, focus })
+    if (!question || chat.running) return
     sound("place")
-    router.push(`/chats/${chatId}` as Route)
     setText("")
     setMood("idle")
+    showPanel()
+    chat.send(question)
   }
 
   return (
     <nav className="action-dock" aria-label="Ask and catch up">
+      {panel && (
+        <CatchupPanel
+          here={spaceId}
+          spaceName={spaceName}
+          tail={tail}
+          chat={chat}
+          onClose={closePanel}
+        />
+      )}
       <div className={`dock-voice is-${mood}`}>
         <button
           type="button"
@@ -85,7 +168,8 @@ export function Dock() {
           aria-label={mood === "idle" ? "Ask" : "Close"}
         >
           <span className="voice-orb-host">
-            <VoiceOrb state={mood} level={level} />
+            {/* The orb works while the panel's answer does; the dock itself stays put. */}
+            <VoiceOrb state={chat.running && mood === "idle" ? "working" : mood} level={level} />
           </span>
         </button>
         {mood === "idle" && (
@@ -124,20 +208,32 @@ export function Dock() {
         </div>
       </div>
       <span className="action-dock-divider" aria-hidden="true" />
-      <Link
-        href={"/inbox" as Route}
-        onClick={() => sound("tap")}
-        className="action-dock-ai relative inline-flex min-h-[42px] items-center rounded-full"
-        title="What moved"
+      <button
+        ref={ai}
+        type="button"
+        onClick={() => {
+          if (panel) closePanel((caught?.lines.length ?? 0) > 0)
+          else {
+            sound("tap")
+            showPanel()
+          }
+        }}
+        className={`action-dock-ai relative${panel ? " is-active" : ""}`}
+        aria-expanded={panel}
+        title="Catch me up"
       >
         <span aria-hidden="true">✦</span>
         <b className="action-dock-label">catch me up</b>
-        {unread ? (
-          <span className="absolute -top-1 -right-1 grid size-5 place-items-center rounded-full bg-white text-[10px] font-extrabold text-ink tabular-nums">
-            {unread > 9 ? "9+" : unread}
+        {waiting > 0 && !panel ? (
+          <span
+            className="absolute -top-1 -right-1 grid size-5 place-items-center rounded-full bg-white text-[10px] font-extrabold text-ink tabular-nums"
+            role="img"
+            aria-label={`${waiting} new since you last looked`}
+          >
+            {waiting > 9 ? "9+" : waiting}
           </span>
         ) : null}
-      </Link>
+      </button>
       <Link
         href={"/chats" as Route}
         onClick={() => sound("tap")}

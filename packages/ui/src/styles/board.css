@@ -903,3 +903,52 @@ button.board-object:hover,
   font-size: 9.5px;
   font-weight: 700;
 }
+
+/* A pinned answer (plan F52): OurSpaces' reply slip on the wall — cream, a 2px ink edge, a hard
+   ink shadow — holding the question, the verified answer and its receipt. */
+.pin-slip {
+  display: grid;
+  gap: 12px;
+  border: 2px solid var(--color-ink);
+  border-radius: 20px;
+  box-shadow: 7px 7px 0 var(--color-ink);
+  padding: 18px 20px 16px;
+}
+.pin-slip-kicker {
+  color: #5f5055;
+  font-size: 12px;
+  font-weight: 700;
+}
+.pin-slip-question {
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: var(--color-ink);
+}
+.pin-slip .text-reading {
+  font-size: 15px;
+}
+.pin-slip-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 16px;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.pin-slip-receipt {
+  margin-right: auto;
+  color: #0f6656;
+}
+.pin-slip-foot :is(a, button) {
+  color: var(--color-ink);
+  text-decoration: underline;
+  text-decoration-color: rgb(17 17 20 / 0.3);
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.pin-slip-foot :is(a, button):hover {
+  text-decoration-color: var(--color-ink);
+}

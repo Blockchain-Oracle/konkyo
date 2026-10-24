@@ -19,6 +19,8 @@ import {
   passages,
   pushSubscriptions,
   runs,
+  spaceEvents,
+  spacePins,
   studyCards,
   studyDays,
   studyItems,
@@ -61,6 +63,9 @@ const movers: Array<(tx: Tx, fromUserId: string, toUserId: string) => Promise<un
   (tx, from, to) =>
     tx.update(pushSubscriptions).set({ ownerId: to }).where(eq(pushSubscriptions.ownerId, from)),
   (tx, from, to) => tx.update(studySets).set({ ownerId: to }).where(eq(studySets.ownerId, from)),
+  (tx, from, to) => tx.update(spacePins).set({ ownerId: to }).where(eq(spacePins.ownerId, from)),
+  (tx, from, to) =>
+    tx.update(spaceEvents).set({ actorId: to }).where(eq(spaceEvents.actorId, from)),
   (tx, from, to) => tx.update(studyItems).set({ ownerId: to }).where(eq(studyItems.ownerId, from)),
   (tx, from, to) => tx.update(studyCards).set({ ownerId: to }).where(eq(studyCards.ownerId, from)),
   (tx, from, to) =>

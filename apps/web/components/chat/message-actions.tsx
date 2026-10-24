@@ -1,16 +1,20 @@
 "use client"
 
 import type { Citation, KonkyoMessage } from "@konkyo/agents"
+import { SPACES } from "@konkyo/config"
 import { Button } from "@konkyo/ui/components/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@konkyo/ui/components/popover"
 import { Textarea } from "@konkyo/ui/components/textarea"
 import { cn } from "@konkyo/ui/lib/utils"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import { type ReactElement, useState } from "react"
 import { toast } from "sonner"
 import { answerToNote } from "@/lib/answer-to-note"
 import { api } from "@/lib/fetcher"
+import { qk } from "@/lib/query-keys"
+import { sound } from "@/lib/sounds"
+import { useSpaceList } from "@/lib/use-spaces"
 import { whereIs } from "./citation-chip"
 
 /** What a 👎 can say (plan F17); the reason is what H-MEM remembers. */
@@ -150,6 +154,28 @@ export function MessageActions({
     }
   }
 
+  // Pin to a space's wall (F52): a frozen copy of this checked answer, on the space you pick.
+  const queryClient = useQueryClient()
+  const [pinning, setPinning] = useState(false)
+  const [pinnedTo, setPinnedTo] = useState<string | null>(null)
+  const { data: spaces } = useSpaceList()
+  const runId = message.metadata?.runId
+  const pinTo = async (space: { id: string; name: string }) => {
+    setPinning(false)
+    if (!runId) return
+    try {
+      await api(`/api/spaces/${space.id}/pins`, { method: "POST", json: { runId } })
+      setPinnedTo(space.name)
+      sound("promote")
+      void queryClient.invalidateQueries({ queryKey: qk.spaces.pins(space.id) })
+      toast.success(`Pinned to ${space.name.toLowerCase()}`, {
+        action: { label: "Open", onClick: () => router.push(`/spaces/${space.id}` as never) },
+      })
+    } catch (error) {
+      toast.error((error as Error).message)
+    }
+  }
+
   const copy = async () => {
     await navigator.clipboard.writeText(asText(body, caveat, citations))
     setCopied(true)
@@ -269,6 +295,34 @@ export function MessageActions({
           ))}
         </PopoverContent>
       </Popover>
+      {runId && (spaces?.length ?? 0) > 0 && (
+        <Popover open={pinning} onOpenChange={setPinning}>
+          <Action
+            label={pinnedTo ? `Pinned to ${pinnedTo}` : "Pin to a space's wall"}
+            word={pinnedTo ? "pinned ✓" : "pin"}
+            pressed={Boolean(pinnedTo)}
+            render={(button) => <PopoverTrigger render={button} />}
+          />
+          <PopoverContent className="w-64 p-1">
+            <p className="px-2.5 pt-2 pb-1 text-meta text-ash-gray">Pin to a space's wall</p>
+            {spaces?.map((space) => (
+              <button
+                key={space.id}
+                type="button"
+                onClick={() => void pinTo(space)}
+                className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-snippet text-bone-white hover:bg-white/6"
+              >
+                <span
+                  aria-hidden
+                  className="size-2.5 shrink-0 rounded-full"
+                  style={{ background: SPACES.colors[space.color].hex }}
+                />
+                <span className="truncate">{space.name.toLowerCase()}</span>
+              </button>
+            ))}
+          </PopoverContent>
+        </Popover>
+      )}
       {onRegenerate && <Action label="Ask again" word="ask again" onClick={onRegenerate} />}
     </div>
   )

@@ -126,6 +126,8 @@ export const userSettings = pgTable("user_settings", {
   reminderHour: integer().default(18).notNull(),
   /** When the person chose a starter or skipped it (F39); first-run Home shows it until then. */
   onboardedAt: timestamp({ withTimezone: true }),
+  /** Catch me up (F50) reads what moved after this: the last time the person closed it. */
+  catchupFrom: timestamp({ withTimezone: true }),
   updatedAt: timestamp({ withTimezone: true })
     .defaultNow()
     .notNull()

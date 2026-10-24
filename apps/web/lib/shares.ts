@@ -238,6 +238,15 @@ export async function visitorLimit(folderId: string, visitor: string) {
   return null
 }
 
+/** Counts a visitor's answer against the caps; returns its row, for the quote count at the end. */
 export async function recordVisitorAnswer(folderId: string, visitor: string) {
-  await db.insert(shareAnswers).values({ folderId, visitor })
+  const [row] = await db
+    .insert(shareAnswers)
+    .values({ folderId, visitor })
+    .returning({ id: shareAnswers.id })
+  return row?.id
+}
+
+export async function recordAnswerQuotes(answerId: string, quotes: number) {
+  await db.update(shareAnswers).set({ quotes }).where(eq(shareAnswers.id, answerId))
 }

@@ -1,0 +1,898 @@
+/*
+ * Catch me up and the AI panel (plan F48, F50): OurSpaces' recap panel (MIT, Copyright (c) 2026
+ * Thomas Nguyen; src/components/ActionDock.tsx and its recap-* rules in src/index.css, all three
+ * passes in cascade order), ported. Konkyo's changes are marked.
+ */
+
+/* While the say strip is open, the dock's other keys step out; the panel stays. */
+.action-dock:has(.dock-voice:not(.is-idle)) > :not(.dock-voice, .recap-panel) {
+  display: none;
+}
+
+.recap-panel {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 12px);
+  display: flex;
+  width: 396px;
+  flex-direction: column;
+  gap: 12px;
+  border-radius: 22px;
+  background: var(--color-sticker);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 10px 0 rgba(17, 17, 20, 0.32),
+    0 26px 56px rgba(0, 0, 0, 0.42);
+  color: white;
+  padding: 16px 18px 18px;
+  transform-origin: var(--recap-tail, 200px) calc(100% + 18px);
+  animation: recap-in var(--dur-arrive) var(--ease-pop) both;
+}
+
+@keyframes recap-in {
+  from {
+    opacity: 0;
+    translate: 0 10px;
+    scale: 0.86;
+  }
+}
+
+.recap-panel ::selection {
+  background: var(--color-lime);
+  color: var(--color-sticker);
+}
+
+.recap-panel::after {
+  position: absolute;
+  left: calc(var(--recap-tail, 200px) - 6px);
+  bottom: -6px;
+  width: 13px;
+  height: 13px;
+  background: var(--color-sticker);
+  content: "";
+  rotate: 45deg;
+}
+
+.recap-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.recap-head-id {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.recap-badge {
+  display: grid;
+  width: 27px;
+  height: 27px;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--color-lime);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.45);
+  color: var(--color-sticker);
+  font-size: 14px;
+  line-height: 1;
+  rotate: -8deg;
+  animation: recap-badge-in 420ms var(--ease-pop) 80ms both;
+}
+
+@keyframes recap-badge-in {
+  from {
+    scale: 0;
+    rotate: -60deg;
+  }
+}
+
+.recap-since {
+  border-radius: 999px;
+  background: var(--color-lime);
+  color: var(--color-sticker);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  padding: 5px 11px;
+}
+
+.action-dock .recap-panel-close {
+  display: grid;
+  width: 24px;
+  min-height: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 15px;
+  padding: 0;
+}
+
+.action-dock .recap-panel-close:hover {
+  translate: 0;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.recap-thinking {
+  display: flex;
+  gap: 5px;
+  padding: 10px 2px 14px;
+}
+
+.recap-thinking span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-lime);
+  animation: recap-think 900ms ease-in-out infinite;
+}
+
+.recap-thinking span:nth-child(2) {
+  animation-delay: 150ms;
+}
+
+.recap-thinking span:nth-child(3) {
+  animation-delay: 300ms;
+}
+
+@keyframes recap-think {
+  0%,
+  100% {
+    opacity: 0.22;
+    scale: 0.7;
+  }
+  50% {
+    opacity: 1;
+    scale: 1.15;
+  }
+}
+
+.recap-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.recap-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  border-radius: 13px;
+  padding: 9px 10px;
+  cursor: default;
+  transition: background 160ms ease-out;
+  animation: recap-line-in 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes recap-line-in {
+  from {
+    opacity: 0;
+    translate: 0 10px;
+  }
+}
+
+.recap-list li:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+.recap-list .recap-kicker {
+  padding: 0 10px 2px;
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.recap-list .recap-kicker:hover {
+  background: transparent;
+}
+
+.recap-list p {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.recap-panel {
+  max-height: min(540px, calc(100vh - 132px));
+  overflow: hidden;
+}
+
+.recap-panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.action-dock .recap-expand {
+  display: grid;
+  width: 24px;
+  min-height: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  padding: 0;
+}
+
+.action-dock .recap-expand:hover {
+  translate: 0;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.action-dock .recap-expand.is-active {
+  background: rgba(255, 255, 255, 0.24);
+  color: white;
+}
+.recap-panel.is-expanded {
+  width: min(620px, calc(100vw - 48px));
+  max-height: min(780px, calc(100vh - 132px));
+}
+
+.recap-panel.is-expanded .recap-thread li {
+  max-width: 76%;
+}
+
+.action-dock .recap-refresh {
+  display: grid;
+  width: 24px;
+  min-height: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  padding: 0;
+  transition:
+    rotate 220ms var(--ease-glide),
+    background 180ms ease-out,
+    color 180ms ease-out;
+}
+
+.action-dock .recap-refresh:hover {
+  translate: 0;
+  rotate: -50deg;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.action-dock .recap-refresh.is-busy {
+  animation: recap-spin 700ms linear infinite;
+}
+
+@keyframes recap-spin {
+  to {
+    rotate: 360deg;
+  }
+}
+
+.recap-body {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+}
+@supports (animation-timeline: scroll()) {
+  .recap-panel {
+    timeline-scope: --recap-scroll;
+  }
+
+  .recap-body {
+    scroll-timeline: --recap-scroll block;
+  }
+
+  .recap-panel::before {
+    position: absolute;
+    z-index: 2;
+    top: 54px;
+    right: 14px;
+    left: 14px;
+    height: 20px;
+    background: linear-gradient(180deg, var(--color-sticker) 25%, transparent);
+    content: "";
+    opacity: 0;
+    pointer-events: none;
+    animation: recap-scroll-fade linear both;
+    animation-timeline: --recap-scroll;
+  }
+
+  @keyframes recap-scroll-fade {
+    0% {
+      opacity: 0;
+    }
+    4%,
+    100% {
+      opacity: 1;
+    }
+  }
+}
+
+.recap-empty {
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  padding: 8px 2px 4px;
+}
+.recap-thread {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 2px 0 0;
+  padding: 15px 2px 4px 10px;
+  list-style: none;
+}
+
+.recap-thread::before {
+  position: absolute;
+  top: 0;
+  right: 2px;
+  left: 2px;
+  height: 1px;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.22) 0 5px,
+    transparent 5px 11px
+  );
+  content: "";
+}
+
+.recap-thread li {
+  position: relative;
+  display: flex;
+  max-width: 88%;
+  flex-direction: column;
+  gap: 3px;
+  animation: recap-turn-in var(--dur-base) var(--ease-pop) both;
+}
+
+@keyframes recap-turn-in {
+  from {
+    opacity: 0;
+    translate: 0 9px;
+    scale: 0.95;
+  }
+}
+
+.recap-thread li.is-you {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.recap-thread li.is-recap {
+  align-self: flex-start;
+}
+
+.recap-thread li b {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-right: 2px;
+  color: var(--recap-face, var(--color-lime));
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.recap-thread li > p {
+  width: fit-content;
+  border-radius: 14px 4px 14px 14px;
+  background: var(--color-lime);
+  color: var(--color-sticker);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.45;
+  padding: 8px 12px;
+}
+
+.recap-thread li.is-recap > p {
+  border-radius: 4px 14px 14px 14px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 500;
+  padding: 9px 13px 9px 15px;
+}
+.recap-spark {
+  position: absolute;
+  z-index: 1;
+  top: -9px;
+  left: -8px;
+  display: grid;
+  width: 19px;
+  height: 19px;
+  place-items: center;
+  border-radius: 7px;
+  background: var(--color-lime);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.4);
+  color: var(--color-sticker);
+  font-size: 11px;
+  line-height: 1;
+  rotate: -10deg;
+}
+
+.recap-thread li.is-live .recap-spark,
+.recap-thread li.is-thinking .recap-spark {
+  animation: recap-spark-live 1s ease-in-out infinite;
+}
+
+@keyframes recap-spark-live {
+  0%,
+  100% {
+    scale: 1;
+    rotate: -10deg;
+  }
+  50% {
+    scale: 1.12;
+    rotate: 2deg;
+  }
+}
+
+.recap-thread .recap-typing {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 13px 15px;
+}
+
+.recap-typing span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.55);
+  animation: recap-think 900ms ease-in-out infinite;
+}
+
+.recap-typing span:nth-child(2) {
+  animation-delay: 150ms;
+}
+
+.recap-typing span:nth-child(3) {
+  animation-delay: 300ms;
+}
+
+.recap-caret {
+  display: inline-block;
+  width: 2px;
+  height: 0.85em;
+  margin-left: 1px;
+  background: var(--color-lime);
+  vertical-align: -1px;
+  animation: recap-caret 0.72s steps(1) infinite;
+}
+
+@keyframes recap-caret {
+  50% {
+    opacity: 0;
+  }
+}
+.recap-composer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.09);
+  padding: 5px 5px 5px 15px;
+  transition: background var(--dur-quick) ease-out;
+}
+
+.recap-composer:focus-within {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.recap-composer:has(input:disabled) {
+  opacity: 0.55;
+}
+
+.recap-composer input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  caret-color: var(--color-lime);
+  color: white;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 0;
+}
+
+.recap-composer input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.action-dock .recap-composer button {
+  width: 34px;
+  height: 34px;
+  min-height: 34px;
+  flex: 0 0 auto;
+  justify-content: center;
+  background: var(--color-lime);
+  color: var(--color-sticker);
+  font-size: 16px;
+  padding: 0;
+  transition:
+    background var(--dur-quick) ease-out,
+    color var(--dur-quick) ease-out,
+    scale var(--dur-instant) ease-out;
+}
+
+.action-dock .recap-composer button:hover {
+  translate: 0;
+  scale: 1.08;
+}
+
+.action-dock .recap-composer button:active {
+  scale: 0.9;
+}
+
+.action-dock .recap-composer button:disabled {
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.4);
+  cursor: default;
+  scale: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .action-dock .recap-refresh.is-busy {
+    animation: none;
+  }
+}
+
+.recap-panel {
+  width: 420px;
+}
+
+.recap-head-id {
+  min-width: 0;
+  gap: 8px;
+}
+
+.recap-title {
+  color: white;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  white-space: nowrap;
+}
+.recap-since {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  padding: 5px 10px;
+  white-space: nowrap;
+  animation: recap-turn-in var(--dur-base) var(--ease-pop) both;
+}
+
+.recap-since.is-reading {
+  color: var(--color-lime);
+}
+
+.recap-since.is-reading i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-lime);
+  animation: recap-think 900ms ease-in-out infinite;
+}
+.recap-list {
+  gap: 2px;
+  padding: 2px 0 0;
+}
+
+.recap-list li {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  align-items: start;
+  gap: 0 8px;
+  border-radius: 14px;
+  padding: 9px 10px 10px 8px;
+}
+
+.recap-num {
+  color: var(--color-lime);
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 22px;
+  animation: recap-num-in 520ms var(--ease-pop) both;
+}
+
+@keyframes recap-num-in {
+  from {
+    scale: 0;
+    rotate: -20deg;
+  }
+}
+
+.recap-list li.is-unrescued .recap-num {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.recap-line {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.recap-list .recap-line p {
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  line-height: 1.4;
+}
+.recap-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.action-dock .recap-chip {
+  display: inline-flex;
+  min-height: 0;
+  align-items: center;
+  gap: 5px;
+  border-radius: 999px;
+  background: white;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.5);
+  color: var(--color-sticker);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  padding: 4px 9px 4px 10px;
+  rotate: -1.5deg;
+  transition:
+    rotate var(--dur-quick) var(--ease-glide),
+    translate var(--dur-quick) var(--ease-glide),
+    background var(--dur-quick) ease-out,
+    box-shadow var(--dur-instant) ease-out;
+  animation: recap-chip-in 420ms var(--ease-pop) 120ms both;
+}
+
+.action-dock .recap-chip i {
+  font-size: 11px;
+  font-style: normal;
+  transition: translate var(--dur-quick) var(--ease-glide);
+}
+
+.action-dock .recap-chip:hover {
+  translate: 0 -1px;
+  rotate: 0deg;
+  background: var(--color-lime);
+}
+
+.action-dock .recap-chip:hover i {
+  translate: 2px -1px;
+}
+
+.action-dock .recap-chip:active {
+  translate: 0 1px;
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0.5);
+}
+
+.action-dock .recap-chip.is-chat {
+  background: var(--color-lime);
+  rotate: 1.5deg;
+}
+
+.action-dock .recap-chip.is-chat:hover {
+  background: white;
+}
+
+@keyframes recap-chip-in {
+  from {
+    opacity: 0;
+    scale: 0.6;
+  }
+}
+.recap-starters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px 2px 2px;
+}
+
+.action-dock .recap-starter {
+  min-height: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 11px;
+  transition:
+    background var(--dur-quick) ease-out,
+    color var(--dur-quick) ease-out,
+    translate var(--dur-quick) var(--ease-glide);
+  animation: recap-turn-in var(--dur-arrive) var(--ease-pop) both;
+  animation-delay: calc(200ms + var(--i, 0) * 60ms);
+}
+
+.action-dock .recap-starter:hover {
+  translate: 0 -1px;
+  background: white;
+  color: var(--color-sticker);
+}
+.recap-thread li .recap-chips {
+  padding: 1px 0 0 2px;
+}
+
+.recap-thread li .recap-chips .recap-chip {
+  animation-delay: 0ms;
+}
+
+@media (max-width: 480px) {
+  .recap-panel {
+    width: calc(100vw - 20px);
+    left: calc(50% - 50vw + 10px);
+  }
+}
+
+/* ---------------------------------------------------------------- Konkyo */
+
+/* Section labels: what waits on you, then what moved. */
+.recap-kicker {
+  padding: 2px 10px 0;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* A checked answer in the thread: the recap bubble, holding citations, chips and the receipt. */
+.recap-answer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-radius: 4px 14px 14px 14px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 14px;
+  line-height: 1.55;
+  padding: 11px 14px 12px 15px;
+}
+.recap-thread li.is-recap:has(.recap-answer) {
+  max-width: 100%;
+}
+.recap-answer-steps {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-lime);
+  font-size: 12px;
+  font-weight: 700;
+}
+.recap-answer-steps i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-lime);
+  animation: recap-think 900ms ease-in-out infinite;
+}
+.recap-receipt {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #4dd9b1; /* verified teal on black (R16), 10.9:1 */
+  font-size: 12px;
+  font-weight: 700;
+}
+.recap-answer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.action-dock .recap-answer-actions :is(a, button) {
+  min-height: 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  color: rgba(255, 255, 255, 0.78);
+  font: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 255, 255, 0.3);
+  text-underline-offset: 3px;
+}
+.action-dock .recap-answer-actions :is(a, button):hover {
+  translate: 0;
+  color: white;
+  text-decoration-color: var(--color-lime);
+}
+.action-dock .recap-answer-actions .is-done {
+  color: var(--color-lime);
+  text-decoration: none;
+}
+
+/* The sources an answer is reading ring lime on the wall behind (OurSpaces' is-recap-cited). */
+.is-lit {
+  outline: 3px solid var(--color-lime);
+  outline-offset: 6px;
+  animation:
+    recap-bloom 520ms cubic-bezier(0.16, 1, 0.3, 1) both,
+    recap-cite 2s ease-in-out 520ms infinite;
+}
+@keyframes recap-bloom {
+  from {
+    outline-offset: 26px;
+    outline-color: rgb(201 255 61 / 0);
+  }
+  55% {
+    outline-color: rgb(201 255 61 / 1);
+  }
+  to {
+    outline-offset: 6px;
+  }
+}
+@keyframes recap-cite {
+  0%,
+  100% {
+    outline-offset: 6px;
+  }
+  50% {
+    outline-offset: 11px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recap-panel,
+  .recap-badge,
+  .recap-list li,
+  .recap-num,
+  .recap-chip,
+  .recap-starter,
+  .recap-since,
+  .recap-thinking span,
+  .recap-caret,
+  .recap-thread li,
+  .recap-typing span,
+  .recap-spark,
+  .recap-answer-steps i,
+  .is-lit {
+    animation: none !important;
+  }
+}
+
+/* Konkyo: a section label inside the numbered list sheds the line's grid. */
+.recap-list li.recap-kicker {
+  display: block;
+  padding: 6px 10px 0;
+  animation: none;
+}
+.recap-list li.recap-kicker:hover {
+  background: transparent;
+}
+
+/* Konkyo: an answer reads at 15px in the 420px panel (its citations and chips keep it dense). */
+.recap-answer .text-reading {
+  font-size: 15px;
+  line-height: 1.6;
+}

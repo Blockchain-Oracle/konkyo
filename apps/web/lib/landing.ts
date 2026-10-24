@@ -7,8 +7,9 @@ export type LiveTotals = { spaces: number; sources: number; quotes: number }
 
 /**
  * The landing's live counters (plan §16.8, section 4): real totals across Konkyo, cached for a
- * minute. "Quotes checked" counts every quote an answer's receipt verified plus every practice
- * question whose quote Zetaris confirmed: each was found word for word in its source.
+ * minute. "Quotes checked" counts every quote an answer's receipt verified (in chats and on public
+ * spaces) plus every practice question whose quote Zetaris confirmed: each was found word for word
+ * in its source.
  */
 export async function liveTotals(): Promise<LiveTotals> {
   "use cache"
@@ -21,6 +22,7 @@ export async function liveTotals(): Promise<LiveTotals> {
         (select coalesce(sum((p->'data'->>'quotes')::int), 0)
            from messages m, jsonb_array_elements(m.parts) p
           where p->>'type' = 'data-receipt')
+        + (select coalesce(sum(quotes), 0) from share_answers)
         + (select count(*) from study_items where "check"->>'zetaris' = 'true')
       )::int as quotes
   `)

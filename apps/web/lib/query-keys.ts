@@ -19,7 +19,10 @@ export const qk = {
   spaces: {
     all: ["spaces"] as const,
     list: () => ["spaces", "list"] as const,
+    pins: (id: string) => ["spaces", "pins", id] as const,
   },
+  /** Catch me up (F50): what moved, sorted for the space you're in. */
+  catchup: (here: string | null) => ["catchup", here ?? "library"] as const,
   memories: ["memories"] as const,
   highlights: (fileId: string) => ["highlights", fileId] as const,
   connections: {

@@ -1,17 +1,23 @@
 "use client"
 
+import type { Citation } from "@konkyo/agents"
 import { Button } from "@konkyo/ui/components/button"
 import { tiltFor } from "@konkyo/ui/lib/space"
+import { cn } from "@konkyo/ui/lib/utils"
 import type { Route } from "next"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import type { CSSProperties } from "react"
 import { FolderBriefs } from "@/components/briefs/folder-briefs"
+import { AnswerText } from "@/components/chat/answer-text"
+import { useLitSource } from "@/lib/lit-sources"
+import type { Pin } from "@/lib/pins"
 import { openFile } from "@/lib/preview"
 import { sound } from "@/lib/sounds"
 import { useFolderBriefs, useMakeBrief } from "@/lib/use-briefs"
 import type { LibraryFile } from "@/lib/use-library"
 import { useSpaceFiles } from "@/lib/use-library"
+import { usePins, useUnpin } from "@/lib/use-pins"
 import { FileStatus } from "./file-status"
 import { KIND_LABEL } from "./kind-icon"
 import { SourceFace } from "./source-face"
@@ -45,9 +51,11 @@ export function SpaceWall({
   subfolders: { id: string; name: string; fileCount: number }[]
 }) {
   const { data: files } = useSpaceFiles(spaceId)
+  const { data: pins } = usePins(spaceId)
   return (
     <div className="space-board">
       <section aria-label="Sources">
+        {pins?.length ? <PinnedAnswers spaceId={spaceId} pins={pins} /> : null}
         <div className="board-label">
           <span className="room-pill">sources · newest first</span>
         </div>
@@ -141,8 +149,68 @@ function ListenCard({ spaceId, ready }: { spaceId: string; ready: boolean }) {
   )
 }
 
+/** A pin's frozen citations, in the shape the answer renderer reads (every one was verified). */
+const pinCitations = (pin: Pin): Citation[] =>
+  pin.citations.map((c) => ({
+    ...c,
+    label: `p${c.n}`,
+    text: c.quote,
+    state: "verified" as const,
+  }))
+
+/**
+ * Answers pinned to the wall (plan F52, OurSpaces' promoted message): a cream reply slip each,
+ * the question, the verified answer with its citations (they open the passage), the receipt.
+ */
+function PinnedAnswers({ spaceId, pins }: { spaceId: string; pins: Pin[] }) {
+  const unpin = useUnpin(spaceId)
+  return (
+    <div className="mb-10">
+      <div className="board-label">
+        <span className="room-pill">pinned answers</span>
+      </div>
+      <ul className="grid items-start gap-7 xl:grid-cols-2">
+        {pins.map((pin) => (
+          <li key={pin.id}>
+            <article
+              className="pin-slip surface-paper"
+              style={{ rotate: tiltFor(pin.id, 160) } as CSSProperties}
+            >
+              <span className="pin-slip-kicker">pinned answer · {shortDate(pin.createdAt)}</span>
+              <h3 className="pin-slip-question">{pin.question}</h3>
+              <AnswerText body={pin.body} citations={pinCitations(pin)} />
+              <div className="pin-slip-foot">
+                <span className="pin-slip-receipt">
+                  ✓ {pin.quotes === 1 ? "1 quote" : `${pin.quotes} quotes`} checked
+                </span>
+                {pin.chatId && (
+                  <Link href={`/chats/${pin.chatId}` as Route} onClick={() => sound("tap")}>
+                    open the chat ↗
+                  </Link>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    sound("tap")
+                    unpin.mutate(pin.id)
+                  }}
+                >
+                  unpin
+                </button>
+              </div>
+            </article>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+/** One source on the wall, as the paper object its kind is. */
 function WallObject({ file }: { file: LibraryFile }) {
   const router = useRouter()
+  // An answer in the panel is reading or citing this source (plan F48's reading scan).
+  const lit = useLitSource(file.id)
   const ready = file.status === "ready"
   const open = () => ready && openFile(file, (href) => router.push(href as Route))
   const style = { rotate: tiltFor(file.id, 240) } as CSSProperties
@@ -168,7 +236,12 @@ function WallObject({ file }: { file: LibraryFile }) {
 
   if (file.kind === "note")
     return (
-      <button type="button" onClick={open} className="board-sticky board-object" style={style}>
+      <button
+        type="button"
+        onClick={open}
+        className={cn("board-sticky board-object", lit && "is-lit")}
+        style={style}
+      >
         <span className="board-sticky-kicker">note · {shortDate(file.createdAt)}</span>
         <strong>{file.title}</strong>
       </button>
@@ -176,7 +249,12 @@ function WallObject({ file }: { file: LibraryFile }) {
 
   if (file.kind === "email")
     return (
-      <button type="button" onClick={open} className="board-envelope board-object" style={style}>
+      <button
+        type="button"
+        onClick={open}
+        className={cn("board-envelope board-object", lit && "is-lit")}
+        style={style}
+      >
         <span className="board-envelope-flap" aria-hidden />
         <span className="board-envelope-kicker">mail · {shortDate(file.createdAt)}</span>
         <strong>{file.title}</strong>
@@ -185,7 +263,12 @@ function WallObject({ file }: { file: LibraryFile }) {
 
   if (file.kind === "web" && file.hasThumb)
     return (
-      <button type="button" onClick={open} className="board-clip board-object" style={style}>
+      <button
+        type="button"
+        onClick={open}
+        className={cn("board-clip board-object", lit && "is-lit")}
+        style={style}
+      >
         <span className="photo-tape" aria-hidden />
         {/* biome-ignore lint/performance/noImgElement: same-origin webp thumbs, already sized */}
         <img src={`/api/files/${file.id}/thumb`} alt="" loading="lazy" />
@@ -198,7 +281,12 @@ function WallObject({ file }: { file: LibraryFile }) {
 
   if (PRINTS.has(file.kind) && file.hasThumb)
     return (
-      <button type="button" onClick={open} className="board-print board-object" style={style}>
+      <button
+        type="button"
+        onClick={open}
+        className={cn("board-print board-object", lit && "is-lit")}
+        style={style}
+      >
         <span className="photo-tape photo-tape-left" aria-hidden />
         <span className="photo-tape photo-tape-right" aria-hidden />
         {/* biome-ignore lint/performance/noImgElement: same-origin webp thumbs, already sized */}
@@ -214,7 +302,10 @@ function WallObject({ file }: { file: LibraryFile }) {
     <button
       type="button"
       onClick={open}
-      className="surface-paper board-sheet board-object block w-full px-4! py-4! text-left"
+      className={cn(
+        "surface-paper board-sheet board-object block w-full px-4! py-4! text-left",
+        lit && "is-lit",
+      )}
       style={style}
     >
       <span className="flex items-start gap-3">

@@ -1,5 +1,5 @@
 import "server-only"
-import type { AnswerEvent, KonkyoMessage } from "@konkyo/agents"
+import type { AnswerEvent, KonkyoMessage, Receipt } from "@konkyo/agents"
 import type { UIMessageStreamWriter } from "ai"
 
 /**
@@ -9,7 +9,7 @@ import type { UIMessageStreamWriter } from "ai"
  */
 export function answerWriter(writer: UIMessageStreamWriter<KonkyoMessage>) {
   let drafting = false
-  let receipt: unknown
+  let receipt: Receipt | undefined
   const endDraft = () => {
     if (drafting) writer.write({ type: "text-end", id: "draft" })
     drafting = false

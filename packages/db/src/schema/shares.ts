@@ -1,4 +1,4 @@
-import { boolean, index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core"
+import { boolean, index, integer, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core"
 import { folders, owner } from "./library"
 
 /**
@@ -32,6 +32,8 @@ export const shareAnswers = pgTable(
       .references(() => folders.id, { onDelete: "cascade" }),
     /** A keyed hash of the visitor's address, never the address itself. */
     visitor: text().notNull(),
+    /** Quotes the answer's receipt checked (the landing's live counter counts these too). */
+    quotes: integer().default(0).notNull(),
     createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
