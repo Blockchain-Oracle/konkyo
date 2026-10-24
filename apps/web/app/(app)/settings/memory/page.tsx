@@ -1,13 +1,6 @@
-import type { Metadata } from "next"
-import { PageShell } from "@/components/page-shell"
-import { MemoryView } from "./memory-view"
+import { redirect } from "next/navigation"
 
-export const metadata: Metadata = { title: "Memory" }
-
+/** Memory moved to what Konkyo knows (plan F51), where it sits beside everything else it knows. */
 export default function MemoryPage() {
-  return (
-    <PageShell title="Memory">
-      <MemoryView />
-    </PageShell>
-  )
+  redirect("/knows")
 }

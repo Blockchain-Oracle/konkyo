@@ -24,6 +24,25 @@ export function contrast(a: string, b: string) {
  * Black or white text on a colour, whichever measures higher. OurSpaces used a YIQ cutoff, which
  * puts white on cobalt (4.2:1) and pink (3.8:1); measuring picks ink there (4.7 and 4.9).
  */
+/**
+ * The colour darkened (mixed toward black in 5% steps) until it reaches `min` against `bg`: a
+ * space's own colour, kept recognisable, used as ink on paper (3:1 for display type).
+ */
+export function deepen(hex: string, bg: string, min = 3) {
+  const rgb = [1, 3, 5].map((i) => Number.parseInt(hex.slice(i, i + 2), 16))
+  for (let k = 0; k <= 20; k++) {
+    const out = `#${rgb
+      .map((v) =>
+        Math.round(v * (1 - k * 0.05))
+          .toString(16)
+          .padStart(2, "0"),
+      )
+      .join("")}`
+    if (contrast(out, bg) >= min) return out
+  }
+  return "#111114"
+}
+
 export function readableInk(hex: string): "#0b0b0e" | "#ffffff" {
   return contrast(hex, "#0b0b0e") >= contrast(hex, "#ffffff") ? "#0b0b0e" : "#ffffff"
 }

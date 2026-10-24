@@ -108,7 +108,7 @@ export function MessageActions({
       if (remembered)
         toast.success("Konkyo will remember this", {
           description: "It shapes the next answer to a question like this one.",
-          action: { label: "Memory", onClick: () => router.push("/settings/memory") },
+          action: { label: "See it", onClick: () => router.push("/knows") },
         })
     } catch (error) {
       setRating(previous)

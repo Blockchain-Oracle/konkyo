@@ -101,6 +101,84 @@ function worldFor(ownerId: string) {
   return { world, namespace }
 }
 
+/** One claim the World Model holds, with where each source stands on it (plan F51). */
+export type KnownClaim = {
+  id: string
+  text: string
+  at: string
+  cells: {
+    fileId: string
+    title: string
+    stance: Stance
+    quote: string
+    passageId: string
+    page: number | null
+  }[]
+}
+
+const STANCE_OF: Record<string, Stance> = {
+  supports: "agrees",
+  contradicts: "disagrees",
+  qualifies: "partly",
+}
+
+type ShapeEntity = {
+  id: string
+  type: string
+  name?: string
+  attrs: Record<string, unknown>
+  createdAt: string
+}
+type ShapeRelation = {
+  from: string
+  to: string
+  type: string
+  validTo?: string
+  createdAt: string
+  attrs?: Record<string, unknown>
+}
+
+/**
+ * What a person's World Model holds (the knows page, plan F51): every claim two or more sources
+ * take a position on, each source's stance with the quote it was read from, newest first. Read
+ * from the rows the Analyst wrote, never a model. `fileIds` keeps only those sources (a space's).
+ */
+export function knowsOf(ownerId: string, fileIds?: ReadonlySet<string>): KnownClaim[] {
+  const { world } = worldFor(ownerId)
+  const shape = world.stateShape() as { entities: ShapeEntity[]; relationships: ShapeRelation[] }
+  const entities = new Map(shape.entities.map((e) => [e.id, e]))
+  const claims = new Map<string, KnownClaim>()
+  for (const rel of shape.relationships) {
+    const stance = STANCE_OF[rel.type]
+    if (!stance || rel.validTo) continue
+    const source = entities.get(rel.from)
+    const claim = entities.get(rel.to)
+    if (source?.type !== "source" || claim?.type !== "claim") continue
+    const fileId = source.id.replace(/^source:konkyo:/, "")
+    if (fileIds && !fileIds.has(fileId)) continue
+    const known = claims.get(claim.id) ?? {
+      id: claim.id,
+      text: String(claim.attrs.text ?? claim.name ?? ""),
+      at: claim.createdAt,
+      cells: [],
+    }
+    if (rel.createdAt > known.at) known.at = rel.createdAt
+    if (!known.cells.some((c) => c.fileId === fileId))
+      known.cells.push({
+        fileId,
+        title: String(source.attrs.title ?? source.name ?? "A source"),
+        stance,
+        quote: String(rel.attrs?.quote ?? ""),
+        passageId: String(rel.attrs?.passageId ?? ""),
+        page: typeof rel.attrs?.page === "number" ? rel.attrs.page : null,
+      })
+    claims.set(claim.id, known)
+  }
+  return [...claims.values()]
+    .filter((c) => c.cells.length >= 2 && c.text)
+    .sort((a, b) => b.at.localeCompare(a.at))
+}
+
 /** Deletes a person's World Model file (account deletion). */
 export async function deleteWorldOf(ownerId: string) {
   await rm(worldFile(ownerId), { force: true })

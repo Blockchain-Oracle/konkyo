@@ -118,13 +118,14 @@ export default function SettingsPage() {
           Memory
         </h2>
         <Link
-          href="/settings/memory"
+          href="/knows"
           className="mt-4.5 flex items-center gap-3 border-y border-border py-4 text-ui text-bone-white hover:text-silver-mist"
         >
           <span className="flex-1">
-            What Konkyo remembers
+            What Konkyo knows
             <span className="mt-0.5 block text-snippet text-ash-gray">
-              Corrections from your 👎, read before every answer. View, edit or forget them.
+              What you told it, read before every answer, beside where your sources agree and
+              disagree. Cross out anything it has wrong.
             </span>
           </span>
           <ChevronRightIcon className="size-4 text-ash-gray" strokeWidth={1.5} aria-hidden />

@@ -46,7 +46,7 @@ const SETTINGS: { label: string; href: Route }[] = [
   { label: "Notifications and reminders", href: "/settings#notifications" as Route },
   { label: "API keys", href: "/settings#api-keys" as Route },
   { label: "Usage and limits", href: "/settings#usage" as Route },
-  { label: "What Konkyo remembers (memory)", href: "/settings/memory" as Route },
+  { label: "What Konkyo knows (memory, sources)", href: "/knows" as Route },
 ]
 const DOI = /^(?:doi:\s*|https?:\/\/(?:dx\.)?doi\.org\/)?(10\.\d{4,9}\/\S+)$/i
 const RECENT = 5

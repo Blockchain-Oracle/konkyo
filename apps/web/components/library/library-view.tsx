@@ -178,7 +178,20 @@ export function LibraryView({ folderId, space = false }: { folderId?: string; sp
     >
       <RoomHeader
         title={folderId ? (spaceRow?.name ?? here?.name ?? "…").toLowerCase() : "library"}
-        handles={space && spaceRow ? <SpaceEdit space={spaceRow} /> : undefined}
+        handles={
+          space && spaceRow ? (
+            <>
+              <SpaceEdit space={spaceRow} />
+              <Link
+                href={`/spaces/${spaceRow.id}/knows` as Route}
+                className="space-knows-chip"
+                onClick={() => sound("tap")}
+              >
+                this space knows ↗
+              </Link>
+            </>
+          ) : undefined
+        }
         kicker={
           space ? (
             <>

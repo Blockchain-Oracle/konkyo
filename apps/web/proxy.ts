@@ -24,6 +24,7 @@ export const config = {
     "/agents/:path*",
     "/inbox/:path*",
     "/settings/:path*",
+    "/knows/:path*",
     "/trash/:path*",
   ],
 }

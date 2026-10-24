@@ -101,6 +101,24 @@ export function recordCorrection(
   })
 }
 
+/** "Tell it something" on the knows page (plan F51): a line the person wrote themselves. */
+export function tellMemory(userId: string, content: string): MemoryRecord {
+  return memoryFor(userId).add({
+    content: content.replace(/\s+/g, " ").trim(),
+    type: "factual",
+    layer: "working",
+    tags: ["told"],
+    confidence: 0.9,
+    source: "knows",
+    provenance: {
+      origin: "user_correction",
+      learnedAt: Date.now(),
+      label: "Told on the knows page",
+      refs: [],
+    },
+  })
+}
+
 /** 👎 on a cited passage ("Right passage?"): that passage didn't support the answer. */
 export function recordWrongPassage(
   userId: string,

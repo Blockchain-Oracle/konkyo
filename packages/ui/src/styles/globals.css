@@ -8,6 +8,7 @@
 @import "./study.css";
 @import "./landing.css";
 @import "./recap.css";
+@import "./knows.css";
 
 /* The app is dark only: <html class="dark"> is permanent, so copied components' dark: variants apply. */
 @custom-variant dark (&:is(.dark *));
