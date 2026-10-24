@@ -1,0 +1,122 @@
+# Production stack (plan S11, e.g. on Coolify): every app service built from this repository's
+# Dockerfiles, with Postgres + pgvector, RustFS (S3) and Gotenberg beside them. Zetaris is the
+# organizers' instance (ZETARIS_* in the environment), not part of this stack.
+#
+#   docker compose -f infra/compose.prod.yaml up -d --build
+#
+# Variables come from ../.env when it exists (see .env.example) or from the host's environment.
+# Inside the stack, services reach each other by name; the overrides below say so.
+name: konkyo
+
+x-app-env: &app-env
+  env_file:
+    - path: ../.env
+      required: false
+  environment:
+    DATABASE_URL: postgres://konkyo:${POSTGRES_PASSWORD:-konkyo}@postgres:5432/konkyo
+    S3_ENDPOINT: http://s3:9000
+    GOTENBERG_URL: http://gotenberg:3000
+    KONKYO_ROOT: /data
+
+services:
+  postgres:
+    image: pgvector/pgvector:0.8.7-pg17
+    environment:
+      POSTGRES_USER: konkyo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-konkyo}
+      POSTGRES_DB: konkyo
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U konkyo -d konkyo"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  s3:
+    image: rustfs/rustfs:1.0.1
+    command: ["/data"]
+    environment:
+      RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY_ID:?set S3_ACCESS_KEY_ID}
+      RUSTFS_SECRET_KEY: ${S3_SECRET_ACCESS_KEY:?set S3_SECRET_ACCESS_KEY}
+      RUSTFS_ADDRESS: ":9000"
+      RUSTFS_CONSOLE_ENABLE: "false"
+      # Browsers upload straight to S3 with presigned URLs, from the app's address.
+      RUSTFS_CORS_ALLOWED_ORIGINS: ${BETTER_AUTH_URL:?set BETTER_AUTH_URL}
+      RUSTFS_OBS_LOGGER_LEVEL: error
+    # S3_PUBLIC_ENDPOINT must reach this port from browsers (a domain in front of it).
+    expose: ["9000"]
+    volumes:
+      - s3data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:9000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  gotenberg:
+    image: gotenberg/gotenberg:8.38.1
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  # Applies database migrations, then exits; the app starts after it succeeds.
+  migrate:
+    <<: *app-env
+    build: { context: .., dockerfile: apps/worker/Dockerfile }
+    image: konkyo-worker
+    command: ["pnpm", "db:migrate"]
+    depends_on:
+      postgres: { condition: service_healthy }
+    restart: "no"
+
+  web:
+    <<: *app-env
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+      args:
+        BETTER_AUTH_URL: ${BETTER_AUTH_URL:?set BETTER_AUTH_URL}
+    image: konkyo-web
+    expose: ["3210"]
+    volumes:
+      - appdata:/data
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      s3: { condition: service_healthy }
+      gotenberg: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3210/sign-in').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  worker:
+    <<: *app-env
+    image: konkyo-worker
+    # Built once by `migrate` (same Dockerfile).
+    volumes:
+      - appdata:/data
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      s3: { condition: service_healthy }
+      gotenberg: { condition: service_healthy }
+    restart: unless-stopped
+
+  docs:
+    build: { context: .., dockerfile: apps/docs/Dockerfile }
+    image: konkyo-docs
+    expose: ["80"]
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  s3data:
+  # Shared by web and worker: traces (logs/), and each person's H-MEM memory and World Model.
+  appdata:

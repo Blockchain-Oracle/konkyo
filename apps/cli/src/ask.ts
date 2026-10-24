@@ -86,7 +86,10 @@ export async function ask(options: Options) {
     mode,
     status: result.status === "not-found" ? "not-found" : "answered",
     runId,
-    trace: path.relative(root, tracer.file),
+    // Relative to the repository when it's inside it; absolute otherwise (KONKYO_ROOT elsewhere).
+    trace: path.relative(root, tracer.file).startsWith("..")
+      ? tracer.file
+      : path.relative(root, tracer.file),
     traceEvents: tracer.events.length,
     recordedMs,
   }

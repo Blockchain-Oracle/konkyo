@@ -14,6 +14,20 @@ pnpm db:migrate
 pnpm dev                        # the web app on :3210, the worker, and these docs on :3211
 ```
 
+## All in Docker
+
+`infra/compose.prod.yaml` is the production stack: the web app, the worker (with OCRmyPDF and
+yt-dlp) and these docs, built from their Dockerfiles, beside Postgres, RustFS and Gotenberg.
+Migrations run first, in a one-shot container; web and worker share one `/data` volume for
+traces and each person's memory and World Model.
+
+```bash
+docker compose -f infra/compose.prod.yaml up -d --build
+```
+
+Browsers upload straight to S3 with presigned URLs, so `S3_PUBLIC_ENDPOINT` must be an address
+browsers can reach (a domain in front of the `s3` service).
+
 ## Zetaris
 
 Use the hackathon's instance (`ZETARIS_REST_URL`, `ZETARIS_API_KEY`) or a local bundle

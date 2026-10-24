@@ -1,0 +1,14 @@
+# Never in an image: secrets, local data, traces, builds made on the host.
+.env
+.env.*
+!.env.example
+**/node_modules
+**/.next
+**/.turbo
+**/out
+**/.source
+.data
+logs/*.jsonl
+.git
+.claude
+**/*.tsbuildinfo

@@ -4,6 +4,7 @@ import { Button } from "@konkyo/ui/components/button"
 import type { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
+import { connection } from "next/server"
 import { Suspense } from "react"
 import { BrandMark } from "@/components/brand-mark"
 import { LiveAnswer } from "@/components/landing/live-answer"
@@ -133,6 +134,8 @@ async function demoShare() {
 
 /** The live answer, when this server has a demo folder; otherwise the section says where to look. */
 async function LiveDemo() {
+  // At request time: the demo folder is configured per server, and the build has no .env.
+  await connection()
   const demo = await demoShare()
   if (!demo)
     return (

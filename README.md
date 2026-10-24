@@ -194,6 +194,15 @@ bundle (`ZETARIS_LOGIN_URL`, `ZETARIS_USERNAME`, `ZETARIS_PASSWORD`, `ZETARIS_OR
 folder as Zetaris sees it. **ElevenLabs** is needed for recordings and audio briefs; **Google
 OAuth** for sign-in; **Composio** and **VAPID** keys are optional.
 
+**All in Docker** (what production runs): `infra/compose.prod.yaml` builds the web app, the
+worker (with OCRmyPDF and yt-dlp) and the docs from their Dockerfiles, and runs them with
+Postgres, RustFS and Gotenberg. Migrations run first; web and worker share one `/data` volume
+(traces, memory, World Model). Zetaris stays outside (set `ZETARIS_*`).
+
+```bash
+docker compose -f infra/compose.prod.yaml up -d --build
+```
+
 A sample library for the CLI: `pnpm konkyo seed --user you@example.com`, then
 `pnpm konkyo ask "Does a nap help motor learning?" --user you@example.com --folder "Essay starter: Sleep and learning"`.
 
