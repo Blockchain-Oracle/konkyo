@@ -3,7 +3,6 @@
 import { Button } from "@konkyo/ui/components/button"
 import { Input } from "@konkyo/ui/components/input"
 import { Skeleton } from "@konkyo/ui/components/skeleton"
-import { MessageSquareIcon, PinIcon, SearchIcon } from "lucide-react"
 import type { Route } from "next"
 import Link from "next/link"
 import { useMemo, useState } from "react"
@@ -59,42 +58,32 @@ export function ChatsList() {
   }
   return (
     <>
-      <div className="relative mt-9">
-        <SearchIcon
-          className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ash-gray"
-          strokeWidth={1.5}
-          aria-hidden
-        />
-        <Input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search chats"
-          aria-label="Search chats"
-          className="h-10 rounded-full pl-9"
-        />
-      </div>
+      <Input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="search your chats…"
+        aria-label="Search chats"
+        className="h-11 rounded-full px-4.5"
+      />
       <ul className="mt-4.5 border-t border-border">
         {shown.map((chat) => (
           <li
             key={chat.id}
-            className="relative flex min-h-14 items-center gap-3 border-b border-border px-2 py-2.5 transition-colors duration-(--duration-press) hover:bg-accent"
+            className="relative flex min-h-16 items-center gap-3 border-b border-border px-2 py-3 transition-colors duration-(--duration-press) hover:bg-accent"
           >
-            <MessageSquareIcon
-              className="size-4 shrink-0 text-ash-gray"
-              strokeWidth={1.5}
-              aria-hidden
-            />
             <div className="min-w-0 flex-1">
               <Link
                 href={`/chats/${chat.id}` as Route}
-                className="block truncate text-ui text-bone-white after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
+                className="block truncate font-display text-[17px] font-extrabold tracking-[-0.015em] text-bone-white after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
               >
                 {chat.title}
               </Link>
               <p className="mt-0.5 text-meta text-ash-gray">{ago(chat.updatedAt)}</p>
             </div>
             {chat.pinnedAt && (
-              <PinIcon className="size-3.5 text-ash-gray" strokeWidth={1.75} aria-label="Pinned" />
+              <span className="shrink-0 rounded-full bg-sticker px-2.5 py-1 text-[11.5px] font-bold text-white">
+                pinned
+              </span>
             )}
             <ChatMenu chat={chat} />
           </li>
