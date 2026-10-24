@@ -215,8 +215,9 @@ function partsOf_(run: Run, listening: boolean): StagePart[] {
       ]
     }
     case "find": {
+      // the newest eight found get a pip each (the card shows the newest five rows)
       const found: StagePart[] = card.found.length
-        ? card.found.map((s, i) => fact(`found-${i}`, "found", 2, s.title))
+        ? card.found.slice(-8).map((s, i) => fact(`found-${i}`, "found", 2, s.title))
         : [0, 1, 2].map((i) => fact(`found-${i}`, "found", 2, null))
       return [
         words("topic", "topic", 0, card.topic),
@@ -512,9 +513,8 @@ export function useVoiceBuild(room: VoiceRoom): {
   /** The second card of one breath, after the stage has gone: it runs and says when it's ready. */
   const startChained = useCallback((first: Run) => {
     const next = first.next
-    if (!next || next.complete || next.failed || next.started)
-      return
-    ;next.started = true
+    if (!next || next.complete || next.failed || next.started) return
+    next.started = true
     next.fileIds = first.fileIds
     next.answers.spaceId = first.spaceId ?? undefined
     void pipeline.current(next).then(() => {
@@ -549,9 +549,13 @@ export function useVoiceBuild(room: VoiceRoom): {
           const onWall = window.location.pathname === `/spaces/${folderId}`
           run.target = {
             el: () =>
-              document.querySelector<HTMLElement>(
-                onWall ? ".space-masonry" : `.space-rail a[href="/spaces/${folderId}"]`,
-              ) ?? document.querySelector<HTMLElement>(".space-rail"),
+              // an empty wall has no masonry yet: the board itself takes it
+              (onWall
+                ? (document.querySelector<HTMLElement>(".space-masonry") ??
+                  document.querySelector<HTMLElement>(".space-board"))
+                : document.querySelector<HTMLElement>(
+                    `.space-rail a[href="/spaces/${folderId}"]`,
+                  )) ?? document.querySelector<HTMLElement>(".space-rail"),
           }
           if (!onWall) run.after = () => router.push(`/spaces/${folderId}` as Route)
           run.complete = true
@@ -702,11 +706,19 @@ export function useVoiceBuild(room: VoiceRoom): {
             // a late word reopened an ask whose answer had started: that one is stopped and this
             // one replaces it, never answered twice
             if (run.messageFrom !== undefined && !run.complete) {
-              const earlier = r.chat.messages.slice(run.messageFrom).findLast((m) => m.role === "assistant")
+              const earlier = r.chat.messages
+                .slice(run.messageFrom)
+                .findLast((m) => m.role === "assistant")
               const runId = earlier?.metadata?.runId
               await r.chat.stop()
               if (runId) void api(`/api/runs/${runId}/stop`, { method: "POST" }).catch(() => {})
-              Object.assign(card, { sources: [], answer: "", final: false, quotes: null, notFound: false })
+              Object.assign(card, {
+                sources: [],
+                answer: "",
+                final: false,
+                quotes: null,
+                notFound: false,
+              })
             }
             run.messageFrom = r.chat.messages.length
             run.target = {

@@ -370,10 +370,6 @@
   gap: 22px;
 }
 
-.voice-two-card.is-next {
-  opacity: 0.86;
-}
-
 /* no mic: the words area takes typing */
 .voice-two-type {
   display: grid;
@@ -716,4 +712,40 @@ body.voice-stage-up .orb-hint {
 
 .voice-two-try > button i {
   flex: none;
+}
+
+/* the second thing said in one breath (voice-stage.tsx): a slim strip under the first card that
+   waits in your colour's marching ring, then runs once the first has landed */
+.voice-two-next {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: 2px dashed var(--maker, var(--color-violet));
+  border-radius: 999px;
+  background: var(--color-sticker);
+  color: white;
+  padding: 7px 16px 7px 8px;
+  font-size: 15px;
+  font-weight: 600;
+  animation: voice-stage-in calc(var(--dur-arrive) * var(--slow)) var(--ease-glide)
+    calc(160ms * var(--slow)) backwards;
+}
+
+.voice-two-next b {
+  border-radius: 999px;
+  background: var(--color-lime);
+  color: var(--color-ink);
+  padding: 4px 10px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.voice-two-next-kind {
+  border-radius: 999px;
+  background: var(--maker, var(--color-violet));
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }

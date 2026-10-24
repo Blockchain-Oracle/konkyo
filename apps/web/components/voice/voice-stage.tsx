@@ -473,13 +473,13 @@ function StageCard({
   const kind = build.card?.kind ?? build.kind ?? "ask"
   const size = CARD_SIZE[kind as keyof typeof CARD_SIZE] ?? CARD_SIZE.ask
   // the size is fixed by the card kind, so the card doesn't breathe as rows land
-  const [scale] = useState(() => (next ? 0.86 : 1) * stageScale(size.w, size.h))
+  const [scale] = useState(() => (next ? 0.78 : 1) * stageScale(size.w, size.h))
   if (!build.card) return null
   const whole = build.complete && reveal.all
   const question = build.question
   return (
     <div
-      className={`voice-two-card${next ? " is-next" : ""}`}
+      className="voice-two-card"
       data-kind={kind}
       data-state={whole ? "complete" : asking ? "asking" : "skeleton"}
     >
@@ -500,14 +500,19 @@ function StageCard({
           ))}
         </span>
         {asking && question && <strong className="voice-two-ask">{question.ask}</strong>}
-        {next && !asking && <strong className="voice-two-ask is-found">then</strong>}
       </header>
       <div className="voice-two-fly" ref={fly}>
         <svg className="voice-two-ring" aria-hidden="true">
           <rect x="1.5" y="1.5" rx="28" />
         </svg>
         <div className="voice-two-card-body" ref={body} style={{ zoom: scale }}>
-          <StageCardBody card={build.card} shown={reveal.shown} parts={build.parts} size={size} />
+          <StageCardBody
+            card={build.card}
+            shown={reveal.shown}
+            parts={build.parts}
+            size={size}
+            compact={next}
+          />
         </div>
       </div>
       {asking && question && question.offers.length > 0 && (
@@ -530,7 +535,7 @@ function StageCard({
           ))}
         </div>
       )}
-      {build.parts.some((p) => p.library && p.id in reveal.at) && !asking && (
+      {build.parts.some((p) => p.library && p.id in reveal.at) && !asking && !next && (
         <p className="voice-two-sources">
           <i aria-hidden="true" />
           from your library
@@ -657,7 +662,6 @@ export function useVoiceStage(
   }, [])
   const slot = useRef<HTMLDivElement>(null)
   const card = useRef<HTMLDivElement>(null)
-  const nextCard = useRef<HTMLDivElement>(null)
   const flight = useRef<() => void>(() => {})
   const voiceRef = useRef(voice)
   voiceRef.current = voice
@@ -1007,16 +1011,17 @@ export function useVoiceStage(
                 fly={card}
                 asking={asking}
                 onOffer={takeOffer}
+                next={Boolean(build.next?.card)}
               />
               {build.next?.card && (
-                <StageCard
-                  key={`${build.key}-next`}
-                  build={build.next}
-                  fly={nextCard}
-                  asking={false}
-                  onOffer={takeOffer}
-                  next
-                />
+                // the second thing said in the same breath: it waits on the first and runs after it
+                <div className="voice-two-next">
+                  <b>then</b>
+                  <span className="voice-two-next-kind">
+                    {KIND_LABEL[build.next.kind ?? "ask"]}
+                  </span>
+                  <span>{build.next.kind === "quiz" ? "on what it finds" : "after this one"}</span>
+                </div>
               )}
             </div>
           ) : (

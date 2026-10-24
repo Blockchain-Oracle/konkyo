@@ -125,7 +125,7 @@ function about(text: string) {
     /^(?:.*?\s)?(?:on|about|regarding|for|into|around|covering|called|named|titled)\s+(.+)$/i.exec(
       text,
     )
-  return (m?.[1] ?? "").replace(/[.?!]+$/, "").trim()
+  return (m?.[1] ?? "").replace(/[.?!,;:]+$/, "").trim()
 }
 
 function countIn(text: string) {
@@ -144,7 +144,7 @@ const HERE =
   /^(?:them|these|those|it|that|this|here|this space|this folder|these papers|these sources|everything(?: here)?|my library|all of (?:it|them))$/i
 
 function topicFor(kind: VoiceKind, text: string, cue: [number, number]): string {
-  const clean = text.replace(/[.?!]+$/, "").trim()
+  const clean = text.replace(/[.?!,;:]+$/, "").trim()
   switch (kind) {
     case "ask":
     case "show":

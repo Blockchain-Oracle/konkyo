@@ -59,9 +59,17 @@ function SourceMark({ source }: { source: StageSource }) {
     .replace(/^www\./, "")
     .slice(0, 1)
     .toUpperCase()
-  if (source.kind === "paper" || !site)
+  // a paper was found through OpenAlex: its mark, not the DOI resolver's
+  if (source.kind === "paper")
     return (
       <span className="vcard-mark is-paper" aria-hidden="true">
+        {/* biome-ignore lint/performance/noImgElement: a 16 px partner mark from our own public folder */}
+        <img src="/logos/partners/openalex.png" alt="" width={18} height={17} />
+      </span>
+    )
+  if (!site)
+    return (
+      <span className="vcard-mark" aria-hidden="true">
         {letter}
       </span>
     )
@@ -132,12 +140,16 @@ export function StageCardBody({
   shown,
   parts,
   size,
+  compact = false,
 }: {
   card: StageCardData
   shown: Shown
   parts: StagePart[]
   size: { w: number; h: number }
+  /** Another card waits under this one: fewer rows. */
+  compact?: boolean
 }) {
+  const rows = compact ? 3 : 5
   const final = (id: string) => parts.find((p) => p.id === id)?.status === "final"
   switch (card.kind) {
     case "ask": {
@@ -211,8 +223,10 @@ export function StageCardBody({
             {show(shown, "topic", (v) => String(v), <Skel w="70%" tall />)}
           </h3>
           <ul className="vcard-rows" aria-label="Sources found">
-            {(card.found.length ? card.found : [null, null, null]).slice(-5).map((s, i) => {
-              const id = `found-${card.found.length > 5 ? card.found.length - 5 + i : i}`
+            {(card.found.length ? card.found : [null, null, null]).slice(-rows).map((s, i) => {
+              // the pips cover the newest eight found (found-0…7); these rows are the newest few
+              const n = card.found.length
+              const id = `found-${Math.min(8, n) - Math.min(rows, n) + i}`
               return s && id in shown ? (
                 <li key={id} className="vcard-row">
                   <SourceMark source={{ ...s, host: s.host ?? host(s.detail) }} />
