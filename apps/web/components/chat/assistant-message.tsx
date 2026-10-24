@@ -8,6 +8,7 @@ import { useEffect, useRef } from "react"
 import { useUploads } from "@/components/library/uploads-provider"
 import { openImport } from "@/components/shell/app-dialogs"
 import { partsOf } from "@/lib/message-parts"
+import { useSpokenHighlight } from "@/lib/read-aloud"
 import { sound } from "@/lib/sounds"
 import { AgreeMatrix } from "./agree-matrix"
 import { AnswerText } from "./answer-text"
@@ -43,6 +44,9 @@ export function AssistantMessage({
 }) {
   const { steps, draft, sources, final, receipt, notFound, matrix } = partsOf(message)
   const { pickFiles } = useUploads()
+  // read aloud (▶ listen in its actions): the sentence being said is underlined in place
+  const said = useRef<HTMLDivElement>(null)
+  useSpokenHighlight(said, message.id)
   // The receipt lands with its sound (plan §16.5), once, while you watch it arrive.
   const announced = useRef(false)
   useEffect(() => {
@@ -111,7 +115,7 @@ export function AssistantMessage({
 
   if (final) {
     return (
-      <div>
+      <div ref={said}>
         <CitedIn.Provider value={message.id}>
           <AnswerText body={final.body} citations={final.citations} rewritten={final.rewritten} />
         </CitedIn.Provider>

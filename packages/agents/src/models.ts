@@ -62,6 +62,14 @@ export const MODELS = {
     primary: { id: "gpt-6-luna", reasoning: "none" },
     fallback: { id: "gpt-5-nano", reasoning: "low" },
   },
+  /**
+   * Reads a spoken ask that no pattern placed (S16): a one-line JSON pick while you are still
+   * talking, so it runs with no reasoning on the fast writer model.
+   */
+  intent: {
+    primary: { id: "gpt-6-luna", reasoning: "none" },
+    fallback: { id: "gpt-5-nano", reasoning: "minimal" },
+  },
   /** Judges a typed answer the code check couldn't settle, with feedback that never gives it away. */
   grader: {
     primary: { id: "gpt-6-luna", reasoning: "low" },

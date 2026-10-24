@@ -225,6 +225,29 @@ export const BRIEF = {
   perDay: 5,
 } as const
 
+/**
+ * Talking to Konkyo (plan S16, §16.5). Scribe realtime hears you ($0.39 an hour); ElevenLabs
+ * Flash reads answers back with timestamps ($0.04 per 1K characters), every clip cached by its
+ * text and voice. The ElevenLabs plan has no overage, so both have a daily fair-use cap.
+ */
+export const VOICE = {
+  /** Konkyo's own voice, and the one that says the example asks (you, asking). */
+  speaker: { name: "Bella", id: "hpp4J3VqNfWAUOO0d1Us" },
+  asker: { name: "George", id: "JBFqnCBsd6RMkjVDRZzb" },
+  ttsModel: "eleven_flash_v2_5",
+  outputFormat: "mp3_44100_64",
+  /** After a spoken ask it says the short answer: the first sentences up to about this long. */
+  shortAnswerChars: 320,
+  /** ▶ listen on any answer reads at most this much. */
+  maxSpeakChars: 2_400,
+  /** Voice sessions a day (one Scribe token each, up to 15 minutes). */
+  sessionsPerDay: 80,
+  guestSessionsPerDay: 12,
+  /** Characters newly read aloud a day (cached clips are free). */
+  speakCharsPerDay: 8_000,
+  guestSpeakCharsPerDay: 1_500,
+} as const
+
 /** Deep search (plan F18): how long it waits for imports before answering from what's ready. */
 export const DEEP = {
   importWaitMs: 8 * 60_000,

@@ -10,6 +10,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import { type ReactElement, useState } from "react"
 import { toast } from "sonner"
+import { ListenButton } from "@/components/voice/listen-button"
 import { answerToNote } from "@/lib/answer-to-note"
 import { api } from "@/lib/fetcher"
 import { qk } from "@/lib/query-keys"
@@ -185,6 +186,11 @@ export function MessageActions({
 
   return (
     <div className="mt-4 flex flex-wrap items-center gap-1.5">
+      <ListenButton
+        id={message.id}
+        text={body}
+        className="inline-flex h-8 items-center gap-1 rounded-full px-3 text-[13px] font-semibold text-silver-mist hover:bg-white/8 hover:text-bone-white"
+      />
       <Action
         label={copied ? "Copied" : "Copy with sources"}
         word={copied ? "copied ✓" : "copy"}

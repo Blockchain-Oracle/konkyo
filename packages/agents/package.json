@@ -6,7 +6,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./citations": "./src/citations.ts",
-    "./deep": "./src/deep.ts"
+    "./deep": "./src/deep.ts",
+    "./intent": "./src/intent.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"

@@ -11,6 +11,7 @@ import { type FormEvent, useEffect, useRef, useState } from "react"
 import { flushSync } from "react-dom"
 import { AnswerText } from "@/components/chat/answer-text"
 import { LitSource } from "@/components/chat/citation-chip"
+import { ListenButton } from "@/components/voice/listen-button"
 import type { Catchup, CatchupChip, CatchupLine } from "@/lib/catchup"
 import {
   composerMounted,
@@ -23,6 +24,7 @@ import { setLitSources } from "@/lib/lit-sources"
 import { partsOf } from "@/lib/message-parts"
 import { openFile } from "@/lib/preview"
 import { qk } from "@/lib/query-keys"
+import { useSpokenHighlight } from "@/lib/read-aloud"
 import { sound } from "@/lib/sounds"
 import { useQuery } from "@/lib/use-query"
 
@@ -442,6 +444,9 @@ function PanelAnswer({
   const { steps, draft, sources, final, receipt, notFound } = partsOf(message)
   const [pin, setPin] = useState<"idle" | "pinning" | "pinned" | "failed">("idle")
   const runId = message.metadata?.runId
+  // read aloud: the sentence being said is underlined in place
+  const said = useRef<HTMLDivElement>(null)
+  useSpokenHighlight(said, message.id)
 
   // The wall rings what the newest answer reads, then what it cites.
   const citedKey = final?.citations.map((c) => c.fileId).join("|")
@@ -492,7 +497,7 @@ function PanelAnswer({
 
   return (
     <LitSource.Provider value={(fileId) => setLitSources(fileId ? [fileId] : [])}>
-      <div className="recap-answer surface-sticker">
+      <div className="recap-answer surface-sticker" ref={said}>
         {running && !final && step && (
           <span className="recap-answer-steps" role="status">
             <i aria-hidden="true" />
@@ -530,6 +535,7 @@ function PanelAnswer({
         )}
         {!running && final && (
           <div className="recap-answer-actions">
+            <ListenButton id={message.id} text={final.body} />
             <Link href={`/chats/${chatId}` as Route}>open the full chat ↗</Link>
             {here && runId && (
               <button

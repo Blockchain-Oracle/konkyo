@@ -1,5 +1,5 @@
 import "server-only"
-import { BRIEF, LIMITS, STUDY } from "@konkyo/config"
+import { BRIEF, LIMITS, STUDY, VOICE } from "@konkyo/config"
 import { db, schema } from "@konkyo/db"
 import { eq, sql } from "drizzle-orm"
 
@@ -68,6 +68,25 @@ const RULES = {
         ? `Guests can add ${limit} files a day. Continue with Google to add more.`
         : `You've added ${limit} files today. Each one frees up 24 hours after it was added.`,
   },
+  voiceSessions: {
+    label: "Voice",
+    about: "Each time you talk to Konkyo through the orb (up to 15 minutes each).",
+    limit: (guest: boolean) => (guest ? VOICE.guestSessionsPerDay : VOICE.sessionsPerDay),
+    rows: (ownerId: string, since: string) =>
+      sql`select created_at, amount from voice_usage where owner_id = ${ownerId} and kind = 'listen' and created_at >= ${since}::timestamptz`,
+    reached: (guest: boolean, limit: number) =>
+      guest
+        ? `Guests can talk to Konkyo ${limit} times a day. Continue with Google for more, or type instead.`
+        : "Voice is resting for today. Type instead; it frees up 24 hours after you used it.",
+  },
+  readAloud: {
+    label: "Read aloud",
+    about: "Characters of answers read to you. A clip already made is free.",
+    limit: (guest: boolean) => (guest ? VOICE.guestSpeakCharsPerDay : VOICE.speakCharsPerDay),
+    rows: (ownerId: string, since: string) =>
+      sql`select created_at, amount from voice_usage where owner_id = ${ownerId} and kind = 'speak' and created_at >= ${since}::timestamptz`,
+    reached: () => "Read-aloud is resting for today. It frees up 24 hours after it was used.",
+  },
 } as const
 
 export type Allowance = keyof typeof RULES
@@ -93,13 +112,14 @@ async function isGuest(ownerId: string) {
 async function lineFor(ownerId: string, key: Allowance, guest: boolean): Promise<UsageLine> {
   const rule = RULES[key]
   const limit = rule.limit(guest)
-  const rows = await db.execute<{ created_at: string }>(
+  const rows = await db.execute<{ created_at: string; amount?: number }>(
     // Raw templates hand values to the driver unconverted, and it rejects a Date: an ISO string.
     sql`${rule.rows(ownerId, new Date(Date.now() - DAY_MS).toISOString())} order by created_at`,
   )
-  const used = rows.length
+  // a row counts one, or its amount (characters read aloud)
+  const used = rows.reduce((sum, r) => sum + (r.amount ?? 1), 0)
   // With every slot taken, a slot frees up when the oldest counted one turns 24 hours old.
-  const oldest = used >= limit ? rows[used - limit] : undefined
+  const oldest = used >= limit ? rows[Math.max(0, rows.length - limit)] : undefined
   return {
     key,
     label: rule.label,

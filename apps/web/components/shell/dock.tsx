@@ -2,13 +2,16 @@
 
 import { useChat } from "@ai-sdk/react"
 import type { KonkyoMessage } from "@konkyo/agents"
+import { SPACES } from "@konkyo/config"
 import { useQueryClient } from "@tanstack/react-query"
 import { DefaultChatTransport } from "ai"
 import type { Route } from "next"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { VoiceOrb, type VoiceState } from "@/components/voice/voice-orb"
+import { OrbHint, orbHintWanted } from "@/components/voice/orb-hint"
+import { useVoiceBuild } from "@/components/voice/voice-build"
+import { type StageExample, useVoiceStage } from "@/components/voice/voice-stage"
 import {
   composerMounted,
   type QuotedPassage,
@@ -16,8 +19,19 @@ import {
   useComposerQuote,
   useDockPresence,
 } from "@/lib/composer-draft"
+import { api } from "@/lib/fetcher"
 import { setLitSources } from "@/lib/lit-sources"
+import { speakingLevel, useReading } from "@/lib/read-aloud"
+import { keytermsFrom } from "@/lib/scribe"
 import { interfaceSoundsOn, setInterfaceSounds, sound } from "@/lib/sounds"
+import { useQuery } from "@/lib/use-query"
+import {
+  primeVoice,
+  setNextVoiceScript,
+  useVoice,
+  type VoiceClip,
+  type VoiceState,
+} from "@/lib/voice"
 import { CatchupPanel, useCatchup } from "./catchup-panel"
 import { useCurrentSpaceId, useSpaces } from "./rail"
 
@@ -39,7 +53,7 @@ export function useDockVisible() {
  * The panel's thread is a real chat (saved, openable in full), scoped to the space you're in. A
  * new space starts a new thread, since a chat keeps the scope it was asked in.
  */
-function usePanelChat(spaceId: string | null) {
+export function usePanelChat(spaceId: string | null) {
   const queryClient = useQueryClient()
   const [chatId, setChatId] = useState(() => crypto.randomUUID())
   const scope = useRef(spaceId)
@@ -63,7 +77,7 @@ function usePanelChat(spaceId: string | null) {
       }),
     [],
   )
-  const { messages, sendMessage, status, error } = useChat<KonkyoMessage>({
+  const { messages, sendMessage, status, error, stop } = useChat<KonkyoMessage>({
     id: chatId,
     transport,
     onFinish: () => {
@@ -89,20 +103,68 @@ function usePanelChat(spaceId: string | null) {
     running: status === "submitted" || status === "streaming",
     error,
     send,
+    stop,
   }
 }
 
 /**
- * The dock: OurSpaces' ActionDock, ported (its markup and CSS, house.css). The orb leads, with a
- * quiet prompt beside it; tap either and the orb lifts and swells, the utilities step out and the
- * say strip takes the bar. Until the voice stage (S16) the strip takes typed words: each key
- * stirs the orb. ✦ opens catch me up, which is also where questions are answered (plan F48);
- * the bubble is your chats; ♪ turns interface sounds on or off.
+ * Example asks for where you are (plan §16.5, "or tap one to hear it said"): the space's own
+ * suggested questions (F16) and what voice can do there, each said by a real recorded voice
+ * (made once by ElevenLabs, cached by its text) so the orb, waveform and words move to it.
+ */
+function useStageExamples(spaceId: string | null, spaceName: string | null, wanted: boolean) {
+  const { data } = useQuery({
+    queryKey: ["suggest", "panel", spaceId ?? "library"],
+    queryFn: () =>
+      api<{ questions: string[] }>("/api/suggest", {
+        method: "POST",
+        json: spaceId ? { folderIds: [spaceId] } : {},
+      }),
+    staleTime: 10 * 60_000,
+  })
+  const says = useMemo(() => {
+    const questions = (data?.questions ?? []).slice(0, 2).map((q) => q.replace(/\?*$/, "?"))
+    const name = spaceName?.toLowerCase()
+    return [
+      ...questions,
+      name ? `quiz me on ${name}` : "catch me up",
+      name ? `find papers on ${name}` : "make a space for my next essay",
+    ].slice(0, 4)
+  }, [data, spaceName])
+  const clips = useQuery({
+    queryKey: ["voice", "examples", says],
+    enabled: wanted && says.length > 0,
+    staleTime: Number.POSITIVE_INFINITY,
+    queryFn: () =>
+      Promise.all(
+        says.map((say) =>
+          api<{ url: string; words: Array<{ word: string; end: number }> }>("/api/voice/speak", {
+            method: "POST",
+            json: { text: say, voice: "asker" },
+          })
+            .then((clip): VoiceClip => ({ url: clip.url, words: clip.words }))
+            .catch(() => null),
+        ),
+      ),
+  })
+  return useMemo<StageExample[]>(
+    () => says.map((say, i) => ({ say, clip: clips.data?.[i] ?? null })),
+    [says, clips.data],
+  )
+}
+
+/**
+ * The dock: OurSpaces' ActionDock, ported (its markup and CSS, house.css). The orb leads: tap it
+ * and it lifts out of the dock into the voice stage (S16), where you talk and Konkyo builds what
+ * you said (components/voice). The quiet "ask this space" beside it opens the say strip for typing
+ * instead. ✦ opens catch me up, which is also where answers land (plan F48); the bubble is your
+ * chats; ♪ turns interface sounds on or off.
  */
 export function Dock() {
   const spaceId = useCurrentSpaceId()
   const spaces = useSpaces()
-  const spaceName = spaces.find((s) => s.id === spaceId)?.name ?? null
+  const space = spaces.find((s) => s.id === spaceId) ?? null
+  const spaceName = space?.name ?? null
   const queryClient = useQueryClient()
   const { data: caught } = useCatchup(spaceId)
   // The badge counts what's new since you last looked; the panel lists everything.
@@ -111,37 +173,89 @@ export function Dock() {
   const [panel, setPanel] = useState(false)
   const [tail, setTail] = useState(200)
   const ai = useRef<HTMLButtonElement>(null)
-  const [mood, setMood] = useState<VoiceState>("idle")
+  const [typing, setTyping] = useState(false)
   const [text, setText] = useState("")
   const [soundOn, setSoundOn] = useState(true)
-  const level = useRef(0)
   const input = useRef<HTMLInputElement>(null)
+  const seat = useRef<HTMLButtonElement>(null)
 
   useEffect(() => setSoundOn(interfaceSoundsOn()), [])
   useEffect(() => {
-    if (mood === "listening") input.current?.focus()
-  }, [mood])
-  // Each key stirs the orb, then it settles (a fast attack and slow release, as for a voice).
-  useEffect(() => {
-    let raf = 0
-    const settle = () => {
-      level.current *= 0.9
-      raf = requestAnimationFrame(settle)
-    }
-    raf = requestAnimationFrame(settle)
-    return () => cancelAnimationFrame(raf)
-  }, [])
+    if (typing) input.current?.focus()
+  }, [typing])
 
-  const open = () => {
-    sound(mood === "idle" ? "promote" : "tap")
-    setMood(mood === "idle" ? "listening" : "idle")
-    if (mood !== "idle") setText("")
-  }
   const showPanel = useCallback(() => {
     const button = ai.current
     if (button) setTail(button.offsetLeft + button.offsetWidth / 2)
     setPanel(true)
   }, [])
+
+  // ---- voice (S16): the orb hears you, the stage shows what it builds ----
+  const voiceRef = useRef<ReturnType<typeof useVoice> | null>(null)
+  const build = useVoiceBuild({
+    spaceId,
+    spaceName,
+    spaces,
+    chat,
+    openPanel: showPanel,
+    voice: () => voiceRef.current,
+  })
+  // Scribe leans towards the words of this library: space names and the newest sources' titles
+  const keyterms = useMemo(
+    () =>
+      keytermsFrom([...(space?.recent.map((r) => r.title) ?? []), ...spaces.map((s) => s.name)]),
+    [space, spaces],
+  )
+  const voice = useVoice(build.hooks, { keyterms })
+  voiceRef.current = voice
+  const [examplesWanted, setExamplesWanted] = useState(false)
+  const examples = useStageExamples(spaceId, spaceName, examplesWanted)
+  // the orb swells with Konkyo's own voice while it reads an answer aloud
+  const orbLevel = useRef(0)
+  useEffect(() => {
+    let raf = 0
+    const mix = () => {
+      orbLevel.current = Math.max(voice.level.current ?? 0, speakingLevel.current)
+      raf = requestAnimationFrame(mix)
+    }
+    raf = requestAnimationFrame(mix)
+    return () => cancelAnimationFrame(raf)
+  }, [voice.level])
+  const lastAnswer = chat.messages.findLast((m) => m.role === "assistant")
+  const reading = useReading(lastAnswer?.id)
+  const color = space ? SPACES.colors[space.color].hex : "var(--color-violet)"
+  const stage = useVoiceStage(voice, seat, {
+    color,
+    examples,
+    onLanded: build.onLanded,
+    orbLevel,
+    orbState: reading
+      ? "listening"
+      : chat.running && voice.state === "idle"
+        ? "working"
+        : undefined,
+  })
+  const mood: VoiceState = stage.up ? "idle" : typing ? "listening" : voice.state
+
+  const talk = () => {
+    if (voice.state === "listening") {
+      sound("tap")
+      voice.finish("done")
+      return
+    }
+    sound("promote")
+    setTyping(false)
+    setExamplesWanted(true)
+    void voice.start()
+    stage.open()
+  }
+  const [hint, setHint] = useState(false)
+  useEffect(() => {
+    const wanted = orbHintWanted()
+    setHint(wanted)
+    if (wanted) setExamplesWanted(true)
+  }, [])
+
   // "Ask" on a selection where no composer is on the page: the panel takes the quote (gap #2).
   const quote = useComposerQuote()
   useDockPresence()
@@ -162,16 +276,17 @@ export function Dock() {
     },
     [queryClient],
   )
-  // A question from the say strip is answered in the panel, in place (plan F48).
+  // A typed question from the say strip is answered in the panel, in place (plan F48).
   const ask = () => {
     const question = text.trim()
     if (!question || chat.running) return
     sound("place")
     setText("")
-    setMood("idle")
+    setTyping(false)
     showPanel()
     chat.send(question)
   }
+  const said = voice.transcript.length > 46 ? `…${voice.transcript.slice(-45)}` : voice.transcript
 
   return (
     <nav className="action-dock" aria-label="Ask and catch up">
@@ -184,21 +299,41 @@ export function Dock() {
           onClose={closePanel}
         />
       )}
+      {hint && !stage.up && (
+        <OrbHint
+          spaceName={spaceName}
+          starters={examples.slice(0, 3).map((e) => e.say)}
+          onAsk={(words) => {
+            // a starter is said by the same recorded voice as the stage's examples
+            const clip = examples.find((e) => e.say === words)?.clip
+            if (!clip) setNextVoiceScript(words)
+            talk()
+            if (clip) void voice.play(clip)
+          }}
+          onGone={() => setHint(false)}
+        />
+      )}
       <div className={`dock-voice is-${mood}`}>
         <button
+          ref={seat}
           type="button"
           className="dock-voice-orb"
-          onClick={open}
-          title={mood === "idle" ? "Ask" : "Close"}
-          aria-label={mood === "idle" ? "Ask" : "Close"}
-        >
-          <span className="voice-orb-host">
-            {/* The orb works while the panel's answer does; the dock itself stays put. */}
-            <VoiceOrb state={chat.running && mood === "idle" ? "working" : mood} level={level} />
-          </span>
-        </button>
+          onClick={talk}
+          // a token is minted (and counted) only when a tap is on its way, never on a hover
+          onPointerDown={primeVoice}
+          title={voice.state === "listening" ? "Done talking" : "Talk to Konkyo"}
+          aria-label={voice.state === "listening" ? "Done talking" : "Talk to Konkyo"}
+        />
+        {stage.layer}
         {mood === "idle" && (
-          <button type="button" className="dock-voice-ask" onClick={open}>
+          <button
+            type="button"
+            className="dock-voice-ask"
+            onClick={() => {
+              sound("tap")
+              setTyping(true)
+            }}
+          >
             {spaceId ? "ask this space" : "ask anything"}
           </button>
         )}
@@ -210,23 +345,37 @@ export function Dock() {
               ask()
             }}
           >
-            {mood !== "idle" && (
+            {typing ? (
               <input
                 ref={input}
                 value={text}
-                onChange={(event) => {
-                  setText(event.target.value)
-                  level.current = Math.min(1, level.current + 0.45)
+                onChange={(event) => setText(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") {
+                    setTyping(false)
+                    setText("")
+                  }
                 }}
-                onKeyDown={(event) => event.key === "Escape" && open()}
                 placeholder={spaceId ? "ask this space…" : "ask your library…"}
                 aria-label="Your question"
                 className="dock-voice-text w-[min(52vw,420px)] bg-transparent caret-lime outline-none placeholder:text-white/45"
               />
-            )}
-            {mood === "listening" && (
+            ) : mood !== "idle" && said ? (
+              <span className="dock-voice-text">{said}</span>
+            ) : mood !== "idle" ? (
+              <span className="dock-voice-listening">
+                <i aria-hidden="true" />
+                listening
+              </span>
+            ) : null}
+            {typing && (
               <button type="submit" className="dock-voice-done" disabled={!text.trim()}>
                 ask
+              </button>
+            )}
+            {!typing && mood === "listening" && (
+              <button type="button" className="dock-voice-done" onClick={talk}>
+                done
               </button>
             )}
           </form>

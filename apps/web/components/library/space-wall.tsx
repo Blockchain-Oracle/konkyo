@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation"
 import type { CSSProperties } from "react"
 import { FolderBriefs } from "@/components/briefs/folder-briefs"
 import { AnswerText } from "@/components/chat/answer-text"
+import { WallTape } from "@/components/voice/wall-tape"
 import { useLitSource } from "@/lib/lit-sources"
 import type { Pin } from "@/lib/pins"
 import { openFile } from "@/lib/preview"
@@ -54,6 +55,7 @@ export function SpaceWall({
   const { data: pins } = usePins(spaceId)
   return (
     <div className="space-wall-frame">
+      <WallTape />
       <div className="space-board">
         <section aria-label="Sources">
           {pins?.length ? <PinnedAnswers spaceId={spaceId} pins={pins} /> : null}
@@ -63,7 +65,7 @@ export function SpaceWall({
           {files?.length ? (
             <ul className="space-masonry">
               {files.map((file) => (
-                <li key={file.id}>
+                <li key={file.id} data-file-id={file.id}>
                   <WallObject file={file} />
                 </li>
               ))}
@@ -176,7 +178,7 @@ function PinnedAnswers({ spaceId, pins }: { spaceId: string; pins: Pin[] }) {
       </div>
       <ul className="grid items-start gap-7 xl:grid-cols-2">
         {pins.map((pin) => (
-          <li key={pin.id}>
+          <li key={pin.id} data-pin-id={pin.id}>
             <article
               className="pin-slip surface-paper"
               style={{ rotate: tiltFor(pin.id, 160) } as CSSProperties}
