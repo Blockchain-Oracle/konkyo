@@ -1,7 +1,7 @@
 "use client"
 
 import { usePathname } from "next/navigation"
-import { useEffect } from "react"
+import { useEffect, useSyncExternalStore } from "react"
 import { useSpaceList } from "@/lib/use-spaces"
 import { useCurrentSpaceId } from "./rail"
 
@@ -21,6 +21,31 @@ const PLACE_WALL: [RegExp, string][] = [
   [/^\/inbox/, "blush"],
   [/^\/briefs/, "violet"],
 ]
+/** A page can pick its own wall (a study round plays on its game's colour); null gives it back. */
+let override: string | null = null
+const listeners = new Set<() => void>()
+export function setRoomWall(wall: string | null) {
+  override = wall
+  for (const l of listeners) l()
+}
+/** Sets this page's wall while it's shown. */
+export function useRoomWall(wall: string | null) {
+  useEffect(() => {
+    setRoomWall(wall)
+    return () => setRoomWall(null)
+  }, [wall])
+}
+function useOverride() {
+  return useSyncExternalStore(
+    (l) => {
+      listeners.add(l)
+      return () => listeners.delete(l)
+    },
+    () => override,
+    () => null,
+  )
+}
+
 /** Walls the black chrome would sink into; it takes a light rim on these. */
 const DARK_WALLS = new Set(["spruce", "nightwall", "midnight"])
 
@@ -29,7 +54,8 @@ export function WallBackground({ children }: { children: React.ReactNode }) {
   const spaceId = useCurrentSpaceId()
   const { data: spaces } = useSpaceList()
   const space = spaceId ? spaces?.find((s) => s.id === spaceId) : undefined
-  const wall = space?.wall ?? PLACE_WALL.find(([re]) => re.test(pathname))?.[1] ?? "white"
+  const chosen = useOverride()
+  const wall = chosen ?? space?.wall ?? PLACE_WALL.find(([re]) => re.test(pathname))?.[1] ?? "white"
   const theme = wall === "night" ? "nightwall" : wall === "clean" ? "white" : wall
 
   useEffect(() => {

@@ -2,9 +2,7 @@
 
 import { GRADE_LABEL, GRADES, type GradeValue } from "@konkyo/study"
 import { Button } from "@konkyo/ui/components/button"
-import { Kbd } from "@konkyo/ui/components/kbd"
 import { cn } from "@konkyo/ui/lib/utils"
-import { CheckIcon, LightbulbIcon, RotateCcwIcon } from "lucide-react"
 import { m } from "motion/react"
 import { useEffect, useRef } from "react"
 import { openSource } from "@/lib/preview"
@@ -45,13 +43,14 @@ export function SourceChip({
       type="button"
       onClick={() => openGround(ground)}
       className={cn(
-        "inline-flex max-w-full items-center gap-1.5 rounded-full border border-border bg-raised px-2.5 py-0.5 align-baseline text-snippet text-silver-mist transition-colors duration-(--duration-press) hover:border-white/24 hover:text-bone-white",
+        "inline-flex max-w-full items-center gap-1.5 rounded-full border-2 border-ink bg-white px-2.5 py-0.5 align-baseline text-[13px] font-semibold text-ink transition-[translate,background-color] duration-(--duration-press) hover:-translate-y-px hover:bg-lime",
         className,
       )}
     >
-      {n != null && <span className="text-meta text-ash-gray tabular-nums">{n}</span>}
+      {n != null && <span className="font-extrabold tabular-nums">{n}</span>}
       <span className="truncate">{ground.byline ?? ground.title}</span>
-      {where && <span className="shrink-0 text-meta text-ash-gray">{where}</span>}
+      {where && <span className="shrink-0 text-ink-muted">{where}</span>}
+      <span aria-hidden>↗</span>
     </button>
   )
 }
@@ -65,10 +64,10 @@ export function WhyPanel({ item }: { item: RoundItem }) {
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
-      className="rounded-xl border border-border bg-panel p-4"
+      className="rounded-[18px] bg-white p-5 text-ink shadow-[0_0_0_2px_rgb(17_17_20/0.12),0_6px_0_rgb(17_17_20/0.1)]"
     >
-      <p className="text-micro text-ash-gray uppercase">Why</p>
-      <p className="mt-2 text-reading text-bone-white">
+      <p className="text-[12.5px] font-extrabold text-ink-muted">why, from your own sources</p>
+      <p className="mt-2 text-[16.5px] leading-relaxed text-ink">
         {parts.map((part, i) => {
           const n = /^\[(\d)\]$/.exec(part)?.[1]
           const ground = n ? grounds[Number(n) - 1] : undefined
@@ -82,8 +81,8 @@ export function WhyPanel({ item }: { item: RoundItem }) {
         })}
       </p>
       {!/\[\d\]/.test(item.why) && <SourceChip ground={item.ground} n={1} className="mt-3" />}
-      <blockquote className="mt-3 border-l-2 border-saffron-spark/60 pl-3 text-snippet text-silver-mist">
-        “{item.ground.quote}”
+      <blockquote className="mt-4 text-[15.5px] leading-relaxed text-ink">
+        <span className="hl">“{item.ground.quote}”</span>
       </blockquote>
     </m.div>
   )
@@ -109,18 +108,11 @@ export function GradeRow({
           role="radio"
           aria-checked={value === g}
           onClick={() => onChange(g)}
-          className={cn(
-            "inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-snippet transition-colors duration-(--duration-press)",
-            value === g
-              ? "border-bone-white/70 bg-bone-white text-black"
-              : "border-border text-silver-mist hover:border-white/24 hover:text-bone-white",
-          )}
+          className="game-grade"
         >
-          <span className="hidden text-meta opacity-60 sm:inline">{i + 1}</span>
-          {GRADE_LABEL[g]}
-          <span className={cn("tabular-nums", value === g ? "text-black/60" : "text-ash-gray")}>
-            {intervals[g]}
-          </span>
+          <span className="hidden tabular-nums sm:inline">{i + 1}</span>
+          {GRADE_LABEL[g].toLowerCase()}
+          <small className="tabular-nums">{intervals[g]}</small>
         </button>
       ))}
     </div>
@@ -166,110 +158,78 @@ export function FeedbackBar({
   useEffect(() => {
     if (state.kind) bar.current?.scrollIntoView({ block: "nearest", behavior: "smooth" })
   }, [state.kind])
+  const tab =
+    state.kind === "right" ? "right ✓" : state.kind === "wrong" ? "not quite" : "the answer"
   return (
     <m.div
       ref={bar}
       key={state.kind}
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.24, ease: [0.23, 1, 0.32, 1] }}
-      className={cn(
-        "scroll-mb-24 rounded-2xl border bg-panel p-4 sm:p-5",
-        state.kind === "right" && "border-deep-verdant/70",
-        state.kind === "wrong" && "border-saffron-spark/55",
-        state.kind === "shown" && "border-border",
-      )}
+      initial={{ opacity: 0, y: 14, rotate: -2.4 }}
+      animate={{ opacity: 1, y: 0, rotate: -0.6 }}
+      transition={{ duration: 0.36, ease: [0.2, 0.9, 0.3, 1.18] }}
+      className={cn("reply-slip scroll-mb-24", `tone-${state.kind}`)}
     >
-      <div aria-live="polite" className="flex items-start gap-3">
-        <span
-          className={cn(
-            "mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full",
-            state.kind === "right" && "bg-lime text-ink",
-            state.kind === "wrong" && "bg-saffron-spark/15 text-saffron-spark",
-            state.kind === "shown" && "bg-white/8 text-silver-mist",
-          )}
-        >
-          {state.kind === "right" ? (
-            <CheckIcon className="size-3.5" strokeWidth={2.25} />
-          ) : state.kind === "wrong" ? (
-            <RotateCcwIcon className="size-3.5" strokeWidth={2} />
-          ) : (
-            <LightbulbIcon className="size-3.5" strokeWidth={1.75} />
-          )}
-        </span>
-        <div className="min-w-0 flex-1">
-          <p
-            className={cn(
-              "text-subhead",
-              state.kind === "right" && "text-supports-text",
-              state.kind === "wrong" && "text-saffron-spark",
-              state.kind === "shown" && "text-bone-white",
-            )}
-          >
-            {state.kind === "right"
-              ? "Right"
-              : state.kind === "wrong"
-                ? "Not quite. Try again."
-                : "The answer"}
-          </p>
-          {state.kind === "right" && state.note && (
-            <p className="mt-1 text-snippet text-silver-mist">{state.note}</p>
-          )}
-          {state.kind === "wrong" && state.feedback && (
-            <p className="mt-1 text-snippet text-silver-mist">{state.feedback}</p>
-          )}
-          {state.kind === "wrong" &&
-            state.hints.map((hint, i) => (
-              <m.p
-                // biome-ignore lint/suspicious/noArrayIndexKey: hints only ever append
-                key={i}
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-2 flex gap-2 text-snippet text-bone-white"
-              >
-                <LightbulbIcon
-                  className="mt-0.5 size-3.5 shrink-0 text-saffron-spark"
-                  strokeWidth={1.75}
-                />
-                {hint}
-              </m.p>
-            ))}
-          {state.kind === "shown" && (
-            <div className="mt-1 text-reading text-bone-white">{state.answer}</div>
-          )}
-        </div>
+      <span className="reply-slip-tab">{tab}</span>
+      <div aria-live="polite">
+        <p className="reply-slip-title">
+          {state.kind === "right"
+            ? "That's it."
+            : state.kind === "wrong"
+              ? "Close. Try once more."
+              : "Here's what the source says."}
+        </p>
+        {state.kind === "right" && state.note && <p className="reply-slip-text">{state.note}</p>}
+        {state.kind === "wrong" && state.feedback && (
+          <p className="reply-slip-text">{state.feedback}</p>
+        )}
+        {state.kind === "wrong" &&
+          state.hints.map((hint, i) => (
+            <m.p
+              // biome-ignore lint/suspicious/noArrayIndexKey: hints only ever append
+              key={i}
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="reply-slip-hint"
+            >
+              <b>hint {i + 1}</b>
+              <span>{hint}</span>
+            </m.p>
+          ))}
+        {state.kind === "shown" && (
+          <div className="mt-2 text-[17px] leading-relaxed font-semibold text-ink">
+            {state.answer}
+          </div>
+        )}
       </div>
 
       {done && !repeat && (
-        <div className="mt-4 border-t border-border pt-4">
-          <p className="mb-2 text-meta text-ash-gray">See it again</p>
+        <div className="mt-5 border-t-2 border-dashed border-ink/15 pt-4">
+          <p className="mb-2.5 text-[12.5px] font-extrabold text-ink-muted">see it again</p>
           <GradeRow intervals={intervals} value={grade} onChange={onGrade} />
         </div>
       )}
 
-      <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
+      <div className="mt-5 flex flex-wrap items-center justify-end gap-2">
         {state.kind === "wrong" ? (
           state.canHint ? (
-            <Button variant="secondary" onClick={onHint}>
-              <LightbulbIcon strokeWidth={1.5} />
-              {state.hints.length ? "Another hint" : "Hint"}
-              <Kbd className="ml-1 hidden sm:inline-flex">H</Kbd>
+            <Button variant="sticker" onClick={onHint}>
+              {state.hints.length ? "another hint" : "a hint"}
+              <span className="ml-1 hidden text-white/70 sm:inline">H</span>
             </Button>
           ) : (
-            <Button variant="secondary" onClick={onReveal}>
-              See answer
+            <Button variant="sticker" onClick={onReveal}>
+              show me the answer
             </Button>
           )
         ) : (
           <>
             {!whyOpen && (
-              <Button variant="ghost" onClick={onWhy}>
-                Why?
+              <Button variant="sticker" onClick={onWhy}>
+                why?
               </Button>
             )}
             <Button onClick={onContinue} autoFocus>
-              Continue
-              <Kbd className="ml-1 hidden bg-white/15 text-white sm:inline-flex">↵</Kbd>
+              next ↵
             </Button>
           </>
         )}

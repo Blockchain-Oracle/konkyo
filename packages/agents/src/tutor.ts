@@ -315,6 +315,17 @@ const FlashcardBundle = Bundle.extend({
   order: z.null(),
 })
 
+/**
+ * A practice set wants every game to have something to play: with recall and cloze optional, the
+ * Tutor wrote only the true/false for 12 of 13 windows (in testing), leaving Recall Sprint and Find the
+ * Evidence empty. Recall, cloze and true/false are required; order stays for real sequences.
+ */
+const SetBundle = Bundle.extend({
+  recall: Recall,
+  cloze: Cloze,
+  truefalse: Bundle.shape.truefalse.unwrap(),
+})
+
 const VerifyResult = z.object({
   items: z.array(
     z.object({
@@ -564,7 +575,10 @@ export async function makeItems(
     generateText({
       model: model(c),
       providerOptions: reasoning(c),
-      output: Output.object({ schema: focus ? FlashcardBundle : Bundle }),
+      // Both are Bundle with some parts required (never a different shape), so read as Bundle.
+      output: Output.object({
+        schema: (focus ? FlashcardBundle : SetBundle) as unknown as typeof Bundle,
+      }),
       instructions: TUTOR_INSTRUCTIONS + corrections,
       prompt: focus
         ? `From "${w.title}". These become flashcards: ask only about this part, which the student selected: "${clean(focus).slice(0, 1200)}"\n\n${passageText(w)}`

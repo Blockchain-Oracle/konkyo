@@ -3,7 +3,6 @@
 import type { Outcome } from "@konkyo/study"
 import { Button } from "@konkyo/ui/components/button"
 import { cn } from "@konkyo/ui/lib/utils"
-import { CheckIcon, LightbulbIcon, RotateCcwIcon } from "lucide-react"
 import { m } from "motion/react"
 import type { Route } from "next"
 import Link from "next/link"
@@ -20,7 +19,7 @@ export type Finished = {
   streak: StreakView
 }
 
-const COLOURS = ["#8052ff", "#15846e", "#c265aa", "#339f87", "#2d6caf", "#ffb829"]
+const COLOURS = ["#7853ff", "#e9369d", "#3f70ff", "#ff7c42", "#13b8a6", "#c9ff3d"]
 
 /** Day 7 (and every seventh): the brand's triangles burst out once. */
 function Celebrate() {
@@ -66,14 +65,10 @@ function Celebrate() {
   )
 }
 
-const GLYPH: Record<Outcome, { icon: typeof CheckIcon; className: string; label: string }> = {
-  right: { icon: CheckIcon, className: "bg-lime text-ink", label: "Right first time" },
-  helped: {
-    icon: RotateCcwIcon,
-    className: "bg-saffron-spark/15 text-saffron-spark",
-    label: "Right with help",
-  },
-  shown: { icon: LightbulbIcon, className: "bg-white/8 text-silver-mist", label: "Answer shown" },
+const GLYPH: Record<Outcome, { mark: string; className: string; label: string }> = {
+  right: { mark: "✓", className: "bg-lime text-ink", label: "Right first time" },
+  helped: { mark: "↺", className: "bg-orange text-ink", label: "Right with help" },
+  shown: { mark: "?", className: "bg-white text-ink ring-2 ring-ink", label: "Answer shown" },
 }
 
 /**
@@ -100,111 +95,132 @@ export function RoundSummary({
   useEffect(() => {
     top.current?.scrollIntoView({ block: "start" })
   }, [])
+  const streakLine = finished
+    ? finished.celebrate
+      ? `${finished.streak.current} days in a row`
+      : finished.repaired
+        ? "streak repaired"
+        : finished.counted
+          ? finished.streak.current > 1
+            ? `${finished.streak.current}-day streak`
+            : "streak started"
+          : "this round didn't count"
+    : null
   return (
-    <div ref={top} className="relative scroll-mt-6 pt-6">
+    <div ref={top} className="relative scroll-mt-24">
       {finished?.celebrate && <Celebrate />}
+      <span className="room-pill">
+        <span className="game-dot" aria-hidden /> round complete
+      </span>
+
       <m.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
+        initial={{ opacity: 0, y: 14, rotate: 1 }}
+        animate={{ opacity: 1, y: 0, rotate: 0 }}
+        transition={{ duration: 0.4, ease: [0.2, 0.9, 0.3, 1.18] }}
+        className="scoreboard mt-5"
       >
-        <p className="text-micro text-saffron-spark uppercase">Round complete</p>
-        <h1 className="mt-3 text-heading-sm font-normal text-bone-white">
-          {right + helped} of {results.length}
-        </h1>
-        <p className="mt-2 text-reading text-ash-gray">
-          {[
-            right ? `${right} right first time` : null,
-            helped ? `${helped} with help` : null,
-            shown ? `${shown} shown` : null,
-          ]
-            .filter(Boolean)
-            .join(" · ")}
-        </p>
+        {finished?.celebrate && (
+          // biome-ignore lint/performance/noImgElement: a static sticker
+          <img
+            src="/stickers/day-seven.webp"
+            alt=""
+            className="absolute -top-10 -right-6 w-36 rotate-[9deg] drop-shadow-[0_6px_0_rgb(17_17_20/0.25)]"
+          />
+        )}
+        <div className="flex flex-wrap items-end justify-between gap-6">
+          <div>
+            <p className="scoreboard-number">
+              {right + helped}
+              <span className="text-[0.42em] text-white">/{results.length}</span>
+            </p>
+            <p className="scoreboard-label mt-2">
+              {right + helped === results.length ? "every one" : "recalled"}
+            </p>
+            <p className="scoreboard-sub mt-1">
+              {[
+                right ? `${right} right first time` : null,
+                helped ? `${helped} with help` : null,
+                shown ? `${shown} shown` : null,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+          </div>
+          {finished && (
+            <div className="grid justify-items-end gap-3">
+              <p className="font-display text-[20px] font-extrabold text-white">{streakLine}</p>
+              <WeekStrip week={finished.streak.week} />
+              <StreakPill streak={finished.streak} />
+            </div>
+          )}
+        </div>
+        {finished && (
+          <p className="scoreboard-sub mt-5 border-t border-white/12 pt-4">
+            {finished.celebrate
+              ? "A week of real recall. You've earned a freeze back."
+              : finished.counted
+                ? "Answers you recalled count; shown ones don't."
+                : "A round counts when you recall at least one answer yourself."}
+          </p>
+        )}
       </m.div>
 
-      {finished && (
-        <div className="mt-8 flex flex-wrap items-end justify-between gap-5 rounded-2xl border border-border bg-panel p-5">
-          <div>
-            <p className="text-subhead text-bone-white">
-              {finished.celebrate
-                ? `${finished.streak.current} days in a row`
-                : finished.repaired
-                  ? "Streak repaired"
-                  : finished.counted
-                    ? finished.streak.current > 1
-                      ? `${finished.streak.current}-day streak`
-                      : "Streak started"
-                    : "This round didn't count"}
-            </p>
-            <p className="mt-1 text-snippet text-ash-gray">
-              {finished.celebrate
-                ? "A week of real recall. You've earned a freeze back."
-                : finished.counted
-                  ? "Answers you recalled count; shown ones don't."
-                  : "A round counts when you recall at least one answer yourself."}
-            </p>
-            <StreakPill streak={finished.streak} className="mt-3" />
-          </div>
-          <WeekStrip week={finished.streak.week} />
-        </div>
-      )}
-
-      <ul className="mt-8 border-t border-border">
-        {results.map((r) => {
-          const g = GLYPH[r.outcome]
-          const Icon = g.icon
-          return (
-            <li
-              key={`${r.item.id}-${r.item.kind}`}
-              className="flex items-start gap-3 border-b border-border py-3.5"
-            >
-              <span
-                className={cn(
-                  "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full",
-                  g.className,
-                )}
-                title={g.label}
+      <section aria-label="This round" className="surface-paper paper-sheet mt-9">
+        <ul>
+          {results.map((r, i) => {
+            const g = GLYPH[r.outcome]
+            return (
+              <li
+                key={`${r.item.id}-${r.item.kind}`}
+                className={cn("flex items-start gap-3.5 py-3.5", i > 0 && "border-t border-ink/10")}
               >
-                <Icon className="size-3" strokeWidth={2.25} />
-                <span className="sr-only">{g.label}</span>
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="line-clamp-2 text-ui text-bone-white">
-                  {r.item.kind === "cloze"
-                    ? r.item.prompt.replace("____", r.item.answer)
-                    : r.item.prompt}
+                <span
+                  className={cn(
+                    "mt-0.5 grid size-7 shrink-0 place-items-center rounded-full text-[13px] font-black",
+                    g.className,
+                  )}
+                  title={g.label}
+                >
+                  {g.mark}
+                  <span className="sr-only">{g.label}</span>
                 </span>
-                {r.recovered && (
-                  <span className="mt-0.5 block text-meta text-supports-text">
-                    Got it on the second go
+                <span className="min-w-0 flex-1">
+                  <span className="line-clamp-2 text-[16px] leading-snug font-semibold text-ink">
+                    {r.item.kind === "cloze"
+                      ? r.item.prompt.replace("____", r.item.answer)
+                      : r.item.prompt}
                   </span>
-                )}
-              </span>
-              <SourceChip
-                ground={r.item.ground}
-                className="hidden max-w-56 shrink-0 sm:inline-flex"
-              />
-            </li>
-          )
-        })}
-      </ul>
+                  {r.recovered && (
+                    <span className="mt-1 block text-[12.5px] font-bold text-supports-text">
+                      got it on the second go
+                    </span>
+                  )}
+                </span>
+                <SourceChip
+                  ground={r.item.ground}
+                  className="hidden max-w-56 shrink-0 sm:inline-flex"
+                />
+              </li>
+            )
+          })}
+        </ul>
+      </section>
 
-      <div className="mt-8 flex flex-wrap gap-2">
+      <div className="mt-8 flex flex-wrap gap-2.5">
         {againHref && missed > 0 && (
           <Button render={<Link href={againHref as Route} />} nativeButton={false}>
-            Try the {missed} you missed again
+            try the {missed} you missed
           </Button>
         )}
         <Button
           render={<Link href={nextHref as Route} />}
           nativeButton={false}
-          variant={againHref && missed ? "secondary" : "default"}
+          variant={againHref && missed ? "sticker" : "default"}
         >
-          Another round
+          another round
         </Button>
-        <Button render={<Link href="/study" />} nativeButton={false} variant="ghost">
-          Back to Study
+        <Button render={<Link href="/study" />} nativeButton={false} variant="sticker">
+          back to study
         </Button>
       </div>
     </div>

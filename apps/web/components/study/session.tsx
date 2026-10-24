@@ -4,22 +4,23 @@ import { STUDY } from "@konkyo/config"
 import type { StudyMode } from "@konkyo/db/schema"
 import { type GradeValue, gradeFor, normalizeAnswer, type Outcome, quickGrade } from "@konkyo/study"
 import { Button } from "@konkyo/ui/components/button"
-import { Progress } from "@konkyo/ui/components/progress"
 import { Skeleton } from "@konkyo/ui/components/skeleton"
 import { Spinner } from "@konkyo/ui/components/spinner"
+import { readableInk } from "@konkyo/ui/lib/space"
 import { cn } from "@konkyo/ui/lib/utils"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { CheckIcon, XIcon } from "lucide-react"
 import { AnimatePresence, m } from "motion/react"
 import Link from "next/link"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { type CSSProperties, useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { EmptyState } from "@/components/empty-state"
+import { useRoomWall } from "@/components/shell/wall"
 import { api } from "@/lib/fetcher"
 import type { Round, RoundItem, SetSummary } from "@/lib/study"
 import { playSound, primeSounds, pulse, type StudySound } from "@/lib/study-sound"
 import { sessionHref, studyKeys, useSet, useToday } from "@/lib/use-study"
 import { FeedbackBar, type FeedbackState, openGround, WhyPanel } from "./feedback"
+import { GAME_LOOK, type GameId, gameOfKind, wallOfMode } from "./games"
 import { ItemMenu } from "./item-menu"
 import {
   CompareView,
@@ -91,82 +92,88 @@ const wide = () => typeof window !== "undefined" && window.matchMedia("(min-widt
 
 // ------------------------------------------------------------------ while a set is being made
 
-/** The set being made, live: every triangle is an item that passed the Verifier and Zetaris. */
+/** The set being made, live, on a black scoreboard: every lime dot is a question that passed. */
 function MakingSet({ set }: { set?: SetSummary }) {
   const made = set?.made ?? 0
   const dropped = set?.dropped ?? 0
   const slots = Math.max(STUDY.startAfter + 6, made + dropped)
   const steps = [
     {
-      label: "Tutor",
+      who: "the tutor",
       text: set?.passages
-        ? `Reading ${set.passages} passages and drafting questions`
-        : "Choosing the passages worth asking about",
+        ? `read ${set.passages} passages and is writing questions`
+        : "is choosing the passages worth asking about",
       done: Boolean(set?.passages),
     },
     {
-      label: "Verifier",
-      text: `Checking every answer key against its passage${made + dropped ? ` · ${made} passed${dropped ? `, ${dropped} refused` : ""}` : ""}`,
+      who: "the verifier",
+      text: `checks every answer key against its passage${made + dropped ? ` · ${made} passed${dropped ? `, ${dropped} refused` : ""}` : ""}`,
       done: made >= STUDY.startAfter,
     },
     {
-      label: "Zetaris",
-      text: "Confirming each quote in its own reading of the source",
+      who: "zetaris",
+      text: "confirms each quote in its own reading of the source",
       done: made >= STUDY.startAfter,
     },
   ]
   return (
-    <div className="pt-6">
-      <p className="text-micro text-saffron-spark uppercase">Making practice</p>
-      <h1 className="mt-3 text-heading-2xs font-normal text-bone-white">{set?.title ?? "…"}</h1>
-      <svg
-        viewBox={`0 0 ${slots * 14} 16`}
-        preserveAspectRatio="xMinYMid meet"
-        className="mt-8 h-4 w-full max-w-md"
-        aria-label={`${made} items ready`}
-      >
-        {Array.from({ length: slots }, (_, i) => {
-          const state = i < made ? "made" : i < made + dropped ? "dropped" : "waiting"
-          return (
-            <polygon
-              // biome-ignore lint/suspicious/noArrayIndexKey: fixed positions
-              key={i}
-              points="0,-5 4.33,2.5 -4.33,2.5"
-              transform={`translate(${i * 14 + 7} 9)`}
-              strokeWidth="1"
-              strokeLinejoin="round"
-              className={cn(
-                "transition-[fill,stroke] duration-300",
-                state === "made" && "fill-deep-verdant stroke-deep-verdant",
-                state === "dropped" && "fill-none stroke-ash-gray/50",
-                state === "waiting" && "fill-none stroke-white/12",
-              )}
-            />
-          )
-        })}
-      </svg>
-      <ol className="mt-8 space-y-4">
-        {steps.map((s) => (
-          <li key={s.label} className="flex items-start gap-3">
-            <span className="mt-0.5 flex size-5 items-center justify-center">
-              {s.done ? (
-                <CheckIcon className="size-4 text-supports-text" strokeWidth={2} />
-              ) : (
-                <Spinner className="size-3.5 text-ash-gray" />
-              )}
-            </span>
-            <span>
-              <span className="block text-ui text-bone-white">{s.label}</span>
-              <span className="block text-snippet text-ash-gray">{s.text}</span>
-            </span>
-          </li>
-        ))}
-      </ol>
-      <div className="mt-10 max-w-md">
-        <Progress value={Math.min(100, (made / STUDY.startAfter) * 100)} />
-        <p className="mt-2 text-meta text-ash-gray">
-          Your round starts once {STUDY.startAfter} items have passed every check; the rest keep
-          coming.
+    <div>
+      <span className="room-pill">
+        <span className="game-dot" aria-hidden /> making practice
+      </span>
+      <h1 className="mt-3 font-display text-[clamp(2.2rem,1.6rem+2.4vw,3.6rem)] leading-[1.02] font-extrabold tracking-[-0.03em] text-(--space-heading-color) lowercase">
+        {set?.title ?? "…"}
+      </h1>
+      <div className="scoreboard mt-7">
+        <div className="flex flex-wrap items-end justify-between gap-6">
+          <div>
+            <span className="scoreboard-live">checking as it writes</span>
+            <p className="scoreboard-number mt-2">{made}</p>
+            <p className="scoreboard-label mt-1">questions passed every check</p>
+          </div>
+          <div
+            className="flex max-w-[22rem] flex-wrap gap-1.5"
+            role="img"
+            aria-label={`${made} passed, ${dropped} refused`}
+          >
+            {Array.from({ length: slots }, (_, i) => {
+              const state = i < made ? "made" : i < made + dropped ? "dropped" : "waiting"
+              return (
+                <i
+                  // biome-ignore lint/suspicious/noArrayIndexKey: fixed positions
+                  key={i}
+                  className={cn(
+                    "size-3.5 rounded-full transition-colors duration-300",
+                    state === "made" && "bg-lime",
+                    state === "dropped" && "bg-orange",
+                    state === "waiting" && "bg-white/18",
+                  )}
+                />
+              )
+            })}
+          </div>
+        </div>
+        <ol className="mt-6 grid gap-3 border-t border-white/12 pt-5">
+          {steps.map((step) => (
+            <li key={step.who} className="flex items-start gap-3">
+              <span className="mt-0.5 grid size-5 place-items-center">
+                {step.done ? (
+                  <span className="grid size-5 place-items-center rounded-full bg-lime text-[11px] font-black text-ink">
+                    ✓
+                  </span>
+                ) : (
+                  <Spinner className="size-4 text-white" />
+                )}
+              </span>
+              <span className="text-[15px] text-white">
+                <b className="font-extrabold">{step.who}</b>{" "}
+                <span className="text-room-muted">{step.text}</span>
+              </span>
+            </li>
+          ))}
+        </ol>
+        <p className="mt-5 text-[13.5px] text-room-muted">
+          Your round starts once {STUDY.startAfter} questions have passed; the rest keep coming.
         </p>
       </div>
     </div>
@@ -175,6 +182,7 @@ function MakingSet({ set }: { set?: SetSummary }) {
 
 // ------------------------------------------------------------------ the round
 
+/** Where you are in the round: a dot per item in a black sticker (lime right, orange helped). */
 function Segments({
   slots,
   index,
@@ -185,26 +193,24 @@ function Segments({
   results: RoundResult[]
 }) {
   return (
-    <div className="flex flex-1 gap-1" aria-hidden>
+    <span className="game-progress" aria-hidden>
       {slots.map((slot, i) => {
         const r = i < index ? results[i] : undefined
         return (
-          <span
+          <i
             // biome-ignore lint/suspicious/noArrayIndexKey: positions
             key={i}
             className={cn(
-              "h-1 flex-1 rounded-full transition-colors duration-300",
-              slot.repeat && "max-w-6",
-              r?.outcome === "right" && "bg-deep-verdant",
-              r?.outcome === "helped" && "bg-saffron-spark/70",
-              r?.outcome === "shown" && "bg-white/30",
-              i === index && "bg-bone-white/70",
-              i > index && "bg-white/10",
+              slot.repeat && "is-repeat",
+              r?.outcome === "right" && "is-right",
+              r?.outcome === "helped" && "is-helped",
+              r?.outcome === "shown" && "is-shown",
+              i === index && "is-now",
             )}
           />
         )
       })}
-    </div>
+    </span>
   )
 }
 
@@ -218,6 +224,7 @@ export function StudySession({
   ids?: string[]
 }) {
   const queryClient = useQueryClient()
+  useRoomWall(wallOfMode(mode))
   const set = useSet(setId)
   const today = useToday()
   const sound = today.data?.sound ?? true
@@ -555,7 +562,7 @@ export function StudySession({
 
   if (failed)
     return (
-      <div className="pt-12 md:pt-16">
+      <div className="surface-paper paper-sheet">
         <EmptyState
           label="Practice"
           title="Couldn't make practice"
@@ -570,7 +577,7 @@ export function StudySession({
   if (waiting) return <MakingSet set={set.data} />
   if (round.isError)
     return (
-      <div className="pt-12 md:pt-16">
+      <div className="surface-paper paper-sheet">
         <EmptyState
           label="Practice"
           title="Couldn't start the round"
@@ -584,7 +591,7 @@ export function StudySession({
     )
   if (!round.data || !slots)
     return (
-      <div className="space-y-6 pt-6">
+      <div className="surface-paper paper-sheet space-y-6">
         <Skeleton className="h-1 w-full" />
         <Skeleton className="h-10 w-3/4" />
         <Skeleton className="h-12 w-full" />
@@ -592,7 +599,7 @@ export function StudySession({
     )
   if (!slots.length && !over)
     return (
-      <div className="pt-12 md:pt-16">
+      <div className="surface-paper paper-sheet">
         <EmptyState
           label={mode === "review" ? "Today's review" : "Practice"}
           title={mode === "review" ? "Nothing due right now" : "Nothing to play here yet"}
@@ -655,125 +662,129 @@ export function StudySession({
             }
           : null
 
+  const game = gameOfKind(item.kind)
+  const look2 = GAME_LOOK[game]
   return (
-    <div ref={top} className="pb-16">
-      <header className="sticky top-0 z-10 -mx-6 flex items-center gap-4 bg-background/90 px-6 pt-4 pb-3 backdrop-blur-sm md:pt-6">
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          render={<Link href="/study" />}
-          nativeButton={false}
-          aria-label="End the round"
-        >
-          <XIcon strokeWidth={1.5} />
-        </Button>
+    <div
+      ref={top}
+      className="scroll-mt-24 pb-16"
+      style={{ "--game": look2.accent, "--game-ink": readableInk(look2.accent) } as CSSProperties}
+    >
+      <header className="mb-8 flex flex-wrap items-center gap-2.5">
+        <Link href="/study" className="room-pill hover:bg-ink" aria-label="End the round">
+          ← end round
+        </Link>
+        <span className="room-pill">
+          <span className="game-dot" aria-hidden />
+          {mode in GAME_LOOK ? GAME_LOOK[mode as GameId].label : look2.label}
+        </span>
         <Segments slots={slots} index={index} results={results} />
-        <span className="text-snippet text-ash-gray tabular-nums">
-          {index + 1} / {slots.length}
+        <span className="room-pill tabular-nums">
+          <b>{index + 1}</b> of {slots.length}
         </span>
       </header>
 
       <AnimatePresence mode="wait" initial={false}>
         <m.section
           key={`${index}-${item.id}-${item.kind}`}
-          initial={{ opacity: 0, x: 16 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -16 }}
-          transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
-          className="pt-8 md:pt-12"
+          initial={{ opacity: 0, y: 18, rotate: 0.8 }}
+          animate={{ opacity: 1, y: 0, rotate: 0 }}
+          exit={{ opacity: 0, y: -10, rotate: -0.6 }}
+          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           aria-label="Practice item"
         >
-          <div className="mb-1 flex items-center justify-between gap-3">
-            <span className="truncate text-meta text-ash-gray">
-              {item.topic}
-              {slot?.repeat ? " · one more try" : item.isNew ? " · new" : ""}
-              {item.unchecked ? " · your edit, not checked" : ""}
-            </span>
-            <ItemMenu
-              item={item}
-              onEdited={(edited) =>
-                setSlots((prev) =>
-                  prev
-                    ? prev.map((s, i) =>
-                        i === index ? { ...s, item: { ...s.item, ...edited } } : s,
-                      )
-                    : prev,
-                )
-              }
-              onRemoved={dropCurrent}
-            />
+          <div className="surface-paper paper-sheet game-card">
+            <div className="mb-1 flex items-center justify-between gap-3">
+              <span className="truncate text-[12.5px] font-bold text-ink-muted">
+                {item.topic}
+                {slot?.repeat ? " · one more try" : item.isNew ? " · new" : ""}
+                {item.unchecked ? " · your edit, not checked" : ""}
+              </span>
+              <ItemMenu
+                item={item}
+                onEdited={(edited) =>
+                  setSlots((prev) =>
+                    prev
+                      ? prev.map((s, i) =>
+                          i === index ? { ...s, item: { ...s.item, ...edited } } : s,
+                        )
+                      : prev,
+                  )
+                }
+                onRemoved={dropCurrent}
+              />
+            </div>
+            {(item.kind === "recall" || item.kind === "cloze") && (
+              <TypedAnswer
+                item={item}
+                value={a.value}
+                onChange={(value) =>
+                  patch({ value, ...(a.phase === "wrong" ? { phase: "answer" } : {}) })
+                }
+                onCheck={() => void checkTyped()}
+                look={look}
+              />
+            )}
+            {item.kind === "truefalse" && (
+              <TrueFalseView
+                item={item}
+                stage={a.tfStage}
+                tried={a.tfTried}
+                onJudge={judge}
+                fix={a.fix}
+                onFix={(fix) =>
+                  patch({
+                    fix,
+                    ...(a.phase === "wrong" && a.tfStage === "fix" ? { phase: "answer" } : {}),
+                  })
+                }
+                onCheckFix={() => void checkFix()}
+                look={look}
+              />
+            )}
+            {item.kind === "evidence" && (
+              <EvidenceView
+                item={item}
+                tried={a.evTried}
+                eliminated={a.evGone}
+                onChoose={choose}
+                look={look}
+              />
+            )}
+            {item.kind === "order" && (
+              <OrderView
+                item={item}
+                placed={a.placed}
+                marks={a.marks}
+                onPlace={(i) => patch({ placed: [...a.placed, i], marks: [] })}
+                onUnplace={(slotIndex) =>
+                  patch({ placed: a.placed.filter((_, j) => j !== slotIndex), marks: [] })
+                }
+                onCheck={checkOrder}
+                look={look}
+              />
+            )}
+            {item.kind === "compare" && (
+              <CompareView
+                item={item}
+                stage={a.cmpStage}
+                tried={a.cmpTried}
+                onRelation={relate}
+                picks={a.picks}
+                sideMarks={a.sideMarks}
+                onPick={(side, i) =>
+                  patch({
+                    picks: { ...a.picks, [side]: i },
+                    sideMarks: { ...a.sideMarks, [side]: null },
+                  })
+                }
+                onCheckPoint={checkPoint}
+                look={look}
+              />
+            )}
           </div>
 
-          {(item.kind === "recall" || item.kind === "cloze") && (
-            <TypedAnswer
-              item={item}
-              value={a.value}
-              onChange={(value) =>
-                patch({ value, ...(a.phase === "wrong" ? { phase: "answer" } : {}) })
-              }
-              onCheck={() => void checkTyped()}
-              look={look}
-            />
-          )}
-          {item.kind === "truefalse" && (
-            <TrueFalseView
-              item={item}
-              stage={a.tfStage}
-              tried={a.tfTried}
-              onJudge={judge}
-              fix={a.fix}
-              onFix={(fix) =>
-                patch({
-                  fix,
-                  ...(a.phase === "wrong" && a.tfStage === "fix" ? { phase: "answer" } : {}),
-                })
-              }
-              onCheckFix={() => void checkFix()}
-              look={look}
-            />
-          )}
-          {item.kind === "evidence" && (
-            <EvidenceView
-              item={item}
-              tried={a.evTried}
-              eliminated={a.evGone}
-              onChoose={choose}
-              look={look}
-            />
-          )}
-          {item.kind === "order" && (
-            <OrderView
-              item={item}
-              placed={a.placed}
-              marks={a.marks}
-              onPlace={(i) => patch({ placed: [...a.placed, i], marks: [] })}
-              onUnplace={(slotIndex) =>
-                patch({ placed: a.placed.filter((_, j) => j !== slotIndex), marks: [] })
-              }
-              onCheck={checkOrder}
-              look={look}
-            />
-          )}
-          {item.kind === "compare" && (
-            <CompareView
-              item={item}
-              stage={a.cmpStage}
-              tried={a.cmpTried}
-              onRelation={relate}
-              picks={a.picks}
-              sideMarks={a.sideMarks}
-              onPick={(side, i) =>
-                patch({
-                  picks: { ...a.picks, [side]: i },
-                  sideMarks: { ...a.sideMarks, [side]: null },
-                })
-              }
-              onCheckPoint={checkPoint}
-              look={look}
-            />
-          )}
-
-          <div className="mt-8 space-y-3">
+          <div className="mt-10 space-y-6">
             {feedback && (
               <FeedbackBar
                 state={feedback}

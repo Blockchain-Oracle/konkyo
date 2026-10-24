@@ -320,6 +320,8 @@ export type SetSummary = {
   due: number
   fresh: number
   kinds: Record<string, number>
+  /** What it was made from, so a failed set can be made again. */
+  scope: { fileIds: string[]; folderIds: string[] }
   createdAt: string
 }
 
@@ -337,8 +339,9 @@ export async function listSets(ownerId: string, id?: string): Promise<SetSummary
     due: number
     fresh: number
     kinds: Record<string, number> | null
+    scope: { fileIds?: string[]; folderIds?: string[] } | null
   }>(sql`
-    select s.id, s.title, s.status, s.problem, s.passages, s.made, s.dropped, s.created_at,
+    select s.id, s.title, s.status, s.problem, s.passages, s.made, s.dropped, s.created_at, s.scope,
       count(i.id)::int as items,
       (count(*) filter (where c.state <> 0 and c.due <= now()))::int as due,
       (count(*) filter (where c.state = 0))::int as fresh,
@@ -371,6 +374,7 @@ export async function listSets(ownerId: string, id?: string): Promise<SetSummary
     due: r.due,
     fresh: r.fresh,
     kinds: r.kinds ?? {},
+    scope: { fileIds: r.scope?.fileIds ?? [], folderIds: r.scope?.folderIds ?? [] },
     createdAt: new Date(r.created_at).toISOString(),
   }))
 }

@@ -3,79 +3,48 @@
 import { weekdayInitial } from "@konkyo/study"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@konkyo/ui/components/tooltip"
 import { cn } from "@konkyo/ui/lib/utils"
-import { FlameIcon, SnowflakeIcon } from "lucide-react"
 import type { StreakView } from "@/lib/study"
 
-/** The streak count and the freezes held (plan F31). */
+/**
+ * The streak and the freezes held (plan F31), in words on a white sticker (no icons): "3-day
+ * streak · 2 freezes". It sits on the black scoreboard.
+ */
 export function StreakPill({ streak, className }: { streak: StreakView; className?: string }) {
   return (
-    <div className={cn("flex items-center gap-1.5", className)}>
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <span
-              className={cn(
-                "inline-flex h-7 items-center gap-1.5 rounded-full border border-border px-2.5 text-snippet tabular-nums",
-                streak.doneToday ? "text-bone-white" : "text-silver-mist",
-              )}
-            />
-          }
-        >
-          <FlameIcon
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <span
             className={cn(
-              "size-3.5",
-              streak.doneToday ? "fill-saffron-spark text-saffron-spark" : "text-ash-gray",
+              "inline-flex h-7 items-center gap-1.5 rounded-full px-3 text-[12.5px] font-extrabold tabular-nums",
+              streak.doneToday ? "bg-lime text-ink" : "bg-white text-ink",
+              className,
             )}
-            strokeWidth={1.5}
-            aria-hidden
           />
-          {streak.current}
-          <span className="sr-only">-day streak</span>
-        </TooltipTrigger>
-        <TooltipContent>
-          {streak.current
-            ? `${streak.current}-day streak${streak.doneToday ? "" : " · a round today keeps it"}`
-            : "Finish a round to start a streak"}
-        </TooltipContent>
-      </Tooltip>
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <span className="inline-flex h-7 items-center gap-1 rounded-full border border-border px-2.5 text-snippet text-silver-mist tabular-nums" />
-          }
-        >
-          <SnowflakeIcon className="size-3.5 text-ash-gray" strokeWidth={1.5} aria-hidden />
-          {streak.freezes}
-          <span className="sr-only">freezes</span>
-        </TooltipTrigger>
-        <TooltipContent>
-          {streak.freezes === 1 ? "1 freeze" : `${streak.freezes} freezes`}: a missed day is covered
-          automatically. One comes back every 7 days.
-        </TooltipContent>
-      </Tooltip>
-    </div>
+        }
+      >
+        {streak.current ? `${streak.current}-day streak` : "no streak yet"}
+        <span aria-hidden>·</span>
+        {streak.freezes === 1 ? "1 freeze" : `${streak.freezes} freezes`}
+      </TooltipTrigger>
+      <TooltipContent>
+        {streak.current
+          ? `${streak.current}-day streak${streak.doneToday ? "" : " · a round today keeps it"}`
+          : "Finish a round to start a streak"}
+        . A freeze covers a missed day automatically; one comes back every 7 days.
+      </TooltipContent>
+    </Tooltip>
   )
 }
 
-/** A triangle, the brand's particle: filled for a studied day, outlined for today still open. */
-function Mark({ filled, className }: { filled: boolean; className?: string }) {
-  return (
-    <svg viewBox="-6 -6 12 12" className={cn("size-3.5", className)} aria-hidden>
-      <polygon
-        points="0,-5 4.33,2.5 -4.33,2.5"
-        className={cn(filled ? "fill-current" : "fill-none")}
-        stroke="currentColor"
-        strokeWidth="1.1"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
-/** The last seven days. A missed day is just empty: the break is never highlighted. */
+/**
+ * The last seven days as dots (study.css .week-strip): lime for a studied day, a dashed ring for a
+ * day a freeze covered, a white ring for today still open. A missed day is just empty: the break
+ * is never highlighted.
+ */
 export function WeekStrip({ week, className }: { week: StreakView["week"]; className?: string }) {
   return (
-    <ol className={cn("flex items-end gap-2.5", className)} aria-label="The last seven days">
+    <ol className={cn("week-strip", className)} aria-label="The last seven days">
       {week.map((d) => {
         const label =
           d.kind === "done"
@@ -88,28 +57,14 @@ export function WeekStrip({ week, className }: { week: StreakView["week"]; class
                   ? "today, not yet"
                   : "no round"
         return (
-          <li
-            key={d.day}
-            className="flex w-4 flex-col items-center gap-1.5"
-            aria-label={`${d.day}: ${label}`}
-          >
-            <span className="flex size-4 items-center justify-center">
-              {d.kind === "freeze" ? (
-                <SnowflakeIcon className="size-3.5 text-silver-mist" strokeWidth={1.5} />
-              ) : d.kind ? (
-                <Mark filled className="text-deep-verdant" />
-              ) : d.today ? (
-                <Mark filled={false} className="text-ash-gray" />
-              ) : (
-                <span className="size-1 rounded-full bg-white/18" />
-              )}
-            </span>
-            <span
-              className={cn(
-                "text-[10px] leading-none",
-                d.today ? "text-bone-white" : "text-ash-gray",
-              )}
-            >
+          <li key={d.day} aria-label={`${d.day}: ${label}`}>
+            <span className={cn(d.today && "is-today")}>
+              <i
+                className={cn(
+                  (d.kind === "done" || d.kind === "repair") && "is-on",
+                  d.kind === "freeze" && "border-dashed! border-white!",
+                )}
+              />
               {weekdayInitial(d.day)}
             </span>
           </li>

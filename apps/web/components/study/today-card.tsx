@@ -3,7 +3,6 @@
 import { Button } from "@konkyo/ui/components/button"
 import { Skeleton } from "@konkyo/ui/components/skeleton"
 import { cn } from "@konkyo/ui/lib/utils"
-import { ArrowRightIcon } from "lucide-react"
 import Link from "next/link"
 import { useSyncExternalStore } from "react"
 import { sessionHref, useToday } from "@/lib/use-study"
@@ -70,46 +69,48 @@ export function TodayCard({
   return (
     <section
       aria-labelledby={`today-${variant}`}
-      className={cn(
-        "relative rounded-2xl border border-border bg-panel p-5 sm:p-6",
-        variant === "home" && !className && "mt-12",
-        className,
-      )}
+      className={cn("scoreboard", variant === "home" && !className && "mt-12", className)}
     >
       {pinned && <span className="board-pin" aria-hidden />}
-      <div className="flex items-start justify-between gap-4">
-        <h2 id={`today-${variant}`} className="text-micro text-saffron-spark uppercase">
-          Today's review
+      <div className="flex items-center justify-between gap-4">
+        <h2 id={`today-${variant}`} className="scoreboard-live">
+          today's review
         </h2>
         <StreakPill streak={streak} />
       </div>
       <div className="mt-3 flex flex-wrap items-end justify-between gap-x-6 gap-y-5">
         <div className="min-w-0">
-          <p className="text-heading-2xs font-normal text-bone-white">{title}</p>
-          <p className="mt-1.5 text-snippet text-ash-gray">{detail}</p>
+          <p className="scoreboard-number">{data.due}</p>
+          <p className="scoreboard-label mt-2">
+            {data.due
+              ? `due, from ${plural(Math.max(1, data.files), "source")}`
+              : title.toLowerCase()}
+          </p>
+          <p className="scoreboard-sub mt-1">{detail}</p>
         </div>
         <WeekStrip week={streak.week} />
       </div>
       {streak.repair && !streak.doneToday && (
-        <p className="mt-5 border-t border-border pt-4 text-snippet text-silver-mist">
+        <p className="scoreboard-sub mt-5 border-t border-white/12 pt-4">
           Your {streak.repair.streak}-day streak can come back:{" "}
           {streak.repair.roundsLeft
             ? `finish ${plural(streak.repair.roundsLeft, "round")} today.`
             : "it's back."}
         </p>
       )}
-      {data.due > 0 && (
-        <div className="mt-5 flex items-center gap-3">
-          <Button render={<Link href={sessionHref({ mode: "review" })} />} nativeButton={false}>
-            Start review
-            <ArrowRightIcon strokeWidth={1.75} data-icon="inline-end" />
-          </Button>
+      {(data.due > 0 || variant === "home") && (
+        <div className="mt-6 flex flex-wrap items-center gap-2.5">
+          {data.due > 0 && (
+            <Button render={<Link href={sessionHref({ mode: "review" })} />} nativeButton={false}>
+              start review →
+            </Button>
+          )}
           {variant === "home" && (
             <Link
               href="/study"
-              className="text-snippet text-ash-gray transition-colors duration-(--duration-press) hover:text-bone-white"
+              className="rounded-full bg-white px-3.5 py-2 text-[13px] font-extrabold text-ink transition-transform duration-(--duration-press) hover:-translate-y-0.5"
             >
-              All practice
+              all practice ↗
             </Link>
           )}
         </div>

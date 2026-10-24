@@ -769,6 +769,7 @@ html[data-wall-tone="dark"] .status-pill {
   /* A black sticker: chrome, panels, popovers. Every token flips back to white-on-black, so a
      black card inside paper reads as well as one on a wall. */
   .surface-sticker,
+  .scoreboard,
   .bg-panel,
   .bg-sticker,
   .bg-rail,
