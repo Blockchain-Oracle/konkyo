@@ -19,6 +19,7 @@ import { qk } from "@/lib/query-keys"
 import { sound } from "@/lib/sounds"
 import { useQuery } from "@/lib/use-query"
 import { openShareFolder } from "../shell/app-dialogs"
+import { usePresence } from "../shell/live-provider"
 import { MemberFace } from "./member-face"
 
 type Role = "owner" | "add" | "read"
@@ -41,6 +42,7 @@ export function InviteButton({
     queryFn: () => api<{ members: Member[] }>(`/api/spaces/${spaceId}/members`),
   })
   const members = data?.members ?? []
+  const here = usePresence(spaceId)
   return (
     <>
       <button
@@ -77,6 +79,12 @@ export function InviteButton({
           </svg>
         )}
         <span className="invite-button-label">{role === "read" ? "people" : "invite"}</span>
+        {here.length > 1 && (
+          <span className="invite-here" title={`${here.length} here right now`}>
+            <i aria-hidden="true" />
+            {here.length} here
+          </span>
+        )}
       </button>
       {open &&
         createPortal(
@@ -85,6 +93,7 @@ export function InviteButton({
             name={name}
             role={role}
             members={members}
+            here={here}
             anchor={button.current}
             onClose={() => setOpen(false)}
           />,
@@ -99,6 +108,7 @@ function InvitePopover({
   name,
   role,
   members,
+  here,
   anchor,
   onClose,
 }: {
@@ -106,6 +116,7 @@ function InvitePopover({
   name: string
   role: Role
   members: Member[]
+  here: { userId: string; face: Member["face"] }[]
   anchor: HTMLElement | null
   onClose: () => void
 }) {
@@ -273,6 +284,17 @@ function InvitePopover({
             </div>
             <small>choosing makes a new link; the old one stops working</small>
           </fieldset>
+        )}
+
+        {here.length > 0 && (
+          <div className="invite-popover-presence">
+            <div className="invite-face-stack" aria-hidden="true">
+              {here.slice(0, 6).map((p) => (
+                <MemberFace key={p.userId} face={p.face} size="sm" />
+              ))}
+            </div>
+            <strong>{here.length} here right now</strong>
+          </div>
         )}
 
         <div className="invite-people">

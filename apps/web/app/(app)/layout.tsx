@@ -6,6 +6,7 @@ import { FileDetailsSheet } from "@/components/library/file-details"
 import { UploadsProvider } from "@/components/library/uploads-provider"
 import { AppDialogs } from "@/components/shell/app-dialogs"
 import { CommandPalette } from "@/components/shell/command-palette"
+import { LiveProvider } from "@/components/shell/live-provider"
 import { PlacesBar } from "@/components/shell/places-bar"
 import { Rail } from "@/components/shell/rail"
 import { StatusPill } from "@/components/shell/status-pill"
@@ -24,19 +25,21 @@ async function Shell({ children }: { children: React.ReactNode }) {
   // places as words top right, the dock with the orb, the live pill bottom left.
   return (
     <UploadsProvider>
-      <Rail user={shellUser} />
-      <PlacesBar />
-      {/* Room for the rail on the left (OurSpaces' header starts at 118px), and on phones for
+      <LiveProvider>
+        <Rail user={shellUser} />
+        <PlacesBar />
+        {/* Room for the rail on the left (OurSpaces' header starts at 118px), and on phones for
           the rail as a bottom bar with the dock above it. */}
-      <WallBackground>
-        <div className="min-w-0 min-[801px]:pl-[112px] max-[800px]:pt-16 max-[800px]:pb-[190px]">
-          <Workspace>{children}</Workspace>
-        </div>
-      </WallBackground>
-      <StatusPill />
-      <CommandPalette />
-      <AppDialogs />
-      <FileDetailsSheet />
+        <WallBackground>
+          <div className="min-w-0 min-[801px]:pl-[112px] max-[800px]:pt-16 max-[800px]:pb-[190px]">
+            <Workspace>{children}</Workspace>
+          </div>
+        </WallBackground>
+        <StatusPill />
+        <CommandPalette />
+        <AppDialogs />
+        <FileDetailsSheet />
+      </LiveProvider>
     </UploadsProvider>
   )
 }
