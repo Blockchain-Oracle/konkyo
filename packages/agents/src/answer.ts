@@ -198,7 +198,7 @@ async function plan(input: AnswerInput, memories: Recalled[]) {
 
 const WRITER_INSTRUCTIONS = `You are the Writer in a research assistant. Answer ONLY from the given passages from the user's library.
 Every sentence must carry at least one numbered citation [n], placed before the sentence's final punctuation, and for each citation number a quote that is an EXACT verbatim substring of its passage (copy the characters exactly, at least five words, no ellipses).
-Choose each quote so that it, on its own, states what its sentence claims: the reader is shown the quote as proof. So write one finding per sentence; never pack several findings behind one citation.
+Choose each quote so that it, on its own, states what its sentence claims: the reader is shown the quote as proof. So write one finding per sentence; never pack several findings behind one citation. Quotes go only on the Sources lines: never paste a quotation into the answer as a sentence of its own.
 When passages come from several sources, say what each relevant source found (with its own citation), and where they differ.
 If the question contains a claim the passages do not support, answer it directly in a cited sentence ("No: the paper reports … [1].") and say what the passages actually report. Be direct and plain. Use 2-7 sentences; start a new paragraph for a new idea.
 If the passages do not answer the question at all, reply with exactly: ${NOT_IN_LIBRARY}
@@ -359,11 +359,17 @@ async function reviseSentences(
     )
     rewritten.push(texts[i] as string)
   }
-  let body = draft.body
+  // The body again from its sentences, in their paragraphs, with the fixes in place.
+  const paragraphs: string[][] = []
   draft.sentences.forEach((sn, i) => {
-    if (texts[i] !== sn.text) body = body.replace(sn.text, texts[i] ?? "")
+    const text = texts[i]?.trim()
+    if (text) paragraphs[sn.para] = [...(paragraphs[sn.para] ?? []), text]
   })
-  const raw = `${body.replace(/[ \t]+\n/g, "\n").trim()}\n${draft.caveat ? `Caveat: ${draft.caveat}\n` : ""}Sources:\n${lines
+  const body = paragraphs
+    .filter(Boolean)
+    .map((p) => p.join(" "))
+    .join("\n\n")
+  const raw = `${body}\n${draft.caveat ? `Caveat: ${draft.caveat}\n` : ""}Sources:\n${lines
     .map((l) => `[${l.n}] ${l.label}: "${l.quote}"`)
     .join("\n")}`
   return { draft: parseAnswer(raw), rewritten }
@@ -607,13 +613,14 @@ function finalise(
     return s.cites.length === 0 || good.length > 0
   })
   const renumber = new Map<number, number>()
+  const byQuote = new Map<string, number>()
   const citations: Citation[] = []
   const rewritten: string[] = []
-  const paragraphs = draft.body.split(/\n{2,}/)
   const out: string[] = []
-  for (const paragraph of paragraphs) {
-    const sentences = kept.filter((s) => paragraph.includes(s.text))
-    if (!sentences.length) continue
+  // Paragraph by paragraph, from the sentences themselves (their text may differ from the body's:
+  // a stranded marker moved onto the sentence before, a pasted quote trimmed off).
+  for (const para of new Set(kept.map((s) => s.para))) {
+    const sentences = kept.filter((s) => s.para === para)
     out.push(
       sentences
         .map((s) => {
@@ -623,18 +630,24 @@ function finalise(
                 (n) => !verdict.badQuotes.has(n) && lineByN.has(n),
               )
               if (!nums.length) return ""
-              return nums
-                .map((n) => {
-                  if (!renumber.has(n)) {
-                    const line = lineByN.get(n) as SourceLine
-                    const source = byLabel.get(line.label) as SourceRef
-                    const next = renumber.size + 1
+              const numbers = nums.map((n) => {
+                if (!renumber.has(n)) {
+                  const line = lineByN.get(n) as SourceLine
+                  const source = byLabel.get(line.label) as SourceRef
+                  // A rewrite can cite a quote the answer already cites: it keeps its number.
+                  const key = `${source.passageId}|${normalise(line.quote).replace(/\.$/, "")}`
+                  const same = byQuote.get(key)
+                  if (same) renumber.set(n, same)
+                  else {
+                    const next = citations.length + 1
                     renumber.set(n, next)
+                    byQuote.set(key, next)
                     citations.push({ ...source, n: next, quote: line.quote, state: "verified" })
                   }
-                  return `[${renumber.get(n)}]`
-                })
-                .join("")
+                }
+                return renumber.get(n) as number
+              })
+              return [...new Set(numbers)].map((n) => `[${n}]`).join("")
             })
             .replace(/\s+([.,;:!?])/g, "$1")
           if (rewrittenTexts.has(plainKey(s.text))) rewritten.push(text)

@@ -3,6 +3,7 @@ import type { Db } from "./index"
 import {
   agentRuns,
   agents,
+  apiKeys,
   briefs,
   chats,
   connections,
@@ -41,6 +42,7 @@ const movers: Array<(tx: Tx, fromUserId: string, toUserId: string) => Promise<un
   (tx, from, to) => tx.update(files).set({ ownerId: to }).where(eq(files.ownerId, from)),
   (tx, from, to) =>
     tx.update(connections).set({ ownerId: to }).where(eq(connections.ownerId, from)),
+  (tx, from, to) => tx.update(apiKeys).set({ ownerId: to }).where(eq(apiKeys.ownerId, from)),
   (tx, from, to) =>
     tx.update(folderShares).set({ ownerId: to }).where(eq(folderShares.ownerId, from)),
   (tx, from, to) => tx.update(passages).set({ ownerId: to }).where(eq(passages.ownerId, from)),

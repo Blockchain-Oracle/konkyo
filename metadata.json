@@ -1,0 +1,185 @@
+{
+  "name": "Konkyo",
+  "tagline": "A research library whose agents answer only from your sources, and prove every quote.",
+  "event": "Open Agent Hackathon 2026",
+  "track": {
+    "id": "02",
+    "title": "The Agent That Can Explain Why",
+    "statement": "Build agents that investigate complex questions across multiple data sources, connect findings, and produce evidence-backed answers or recommendations."
+  },
+  "users": "Students and researchers who read many sources and must cite them: thesis students, course takers with lecture recordings and slides, reading groups comparing papers.",
+  "problem": "Chat assistants answer fluently from memory, mix up sources and invent quotes; checking them takes as long as reading. Konkyo answers only from the person's library, refuses when it can't, and makes every claim checkable at the passage.",
+  "entryPoints": {
+    "sample": "pnpm konkyo ask --sample",
+    "cli": "pnpm konkyo ask \"<question>\" [--folder <name>] [--compare] [--json]",
+    "http": "POST /api/v1/ask (Authorization: Bearer <key from Settings → API keys>)",
+    "web": "pnpm dev → http://localhost:3210"
+  },
+  "sampleMode": {
+    "command": "pnpm konkyo ask --sample [n]",
+    "needs": "Node 22.18+ and pnpm; no keys, no services",
+    "how": "Replays the recorded replies of OpenAI, Zetaris, the library search and H-MEM recall (examples/*/tape.jsonl) while every step of Konkyo's own logic runs again: planning, citation parsing, quote checks, Verifier verdicts and rewrites, the matrix, the World Model and a new trace in logs/. Unrecorded questions are refused.",
+    "code": ["packages/tape/src/index.ts", "apps/cli/src/index.ts"]
+  },
+  "examples": [
+    {
+      "path": "examples/01-cited-answer",
+      "shows": "A cited answer across the papers; every quote found in Zetaris"
+    },
+    {
+      "path": "examples/02-agree-disagree",
+      "shows": "The Analyst's agree/disagree matrix, checked in Zetaris and kept in the World Model"
+    },
+    { "path": "examples/03-wrong-premise", "shows": "A false premise corrected from the source" },
+    {
+      "path": "examples/04-lecture-and-textbook",
+      "shows": "A textbook and a lecture transcript together; the Verifier sends a sentence back and it is rewritten"
+    },
+    {
+      "path": "examples/05-not-in-library",
+      "shows": "Not in the library: Konkyo says so instead of answering"
+    }
+  ],
+  "traces": {
+    "path": "logs/<runId>.jsonl",
+    "fields": [
+      "ts",
+      "runId",
+      "agent",
+      "step",
+      "action",
+      "model",
+      "sqlHash",
+      "rowsReturned",
+      "verdict",
+      "latencyMs",
+      "tokens",
+      "detail"
+    ],
+    "code": "packages/agents/src/trace.ts"
+  },
+  "agents": [
+    {
+      "name": "Planner",
+      "role": "Stand-alone question, 1-3 searches, comparison flag; reads H-MEM corrections first",
+      "model": "gpt-6-luna",
+      "code": "packages/agents/src/answer.ts"
+    },
+    {
+      "name": "Retriever",
+      "role": "Hybrid search (pgvector + Postgres full text, Reciprocal Rank Fusion)",
+      "model": "text-embedding-3-small",
+      "code": "packages/agents/src/retrieve.ts"
+    },
+    {
+      "name": "Writer",
+      "role": "Cited draft, one finding per sentence, exact quotes; rewrites rejected sentences",
+      "model": "gpt-6-luna",
+      "code": "packages/agents/src/answer.ts"
+    },
+    {
+      "name": "Verifier",
+      "role": "Code check of each quote, one Zetaris statement for all quotes, support judgement; sends failures back (max 2 rounds), drops what still fails",
+      "model": "gpt-6-luna",
+      "code": "packages/agents/src/answer.ts"
+    },
+    {
+      "name": "Analyst",
+      "role": "Claims × sources with stances, quotes checked in Zetaris, recorded in the World Model",
+      "model": "gpt-6-luna",
+      "code": "packages/agents/src/analyst.ts"
+    },
+    {
+      "name": "Scout",
+      "role": "Deep search over OpenAlex and the web, screened in Markovian steps",
+      "model": "gpt-5-nano",
+      "code": "packages/agents/src/scout.ts"
+    },
+    {
+      "name": "Tutor",
+      "role": "Practice items with Verifier-checked answer keys and Zetaris-checked quotes",
+      "model": "gpt-6-luna",
+      "code": "packages/agents/src/tutor.ts"
+    }
+  ],
+  "sponsors": {
+    "zetaris": {
+      "used": true,
+      "role": "The evidence store every quote is checked against; nothing is marked verified without it.",
+      "where": [
+        {
+          "use": "Evidence store: passages as a FILESTORE JSON table and Zetaris's own PDFBox reading of each PDF rendition; a file is Ready only after Zetaris answers for it",
+          "code": "packages/zetaris/src/evidence.ts"
+        },
+        {
+          "use": "Pre-check that retrieved documents are in the evidence store",
+          "code": "packages/zetaris/src/checks.ts"
+        },
+        {
+          "use": "Every quote of an answer verified in one Spark SQL statement (VALUES joined to Zetaris's PDF text or stored transcripts); also for the matrix, study items, lecture notes and audio briefs",
+          "code": "packages/zetaris/src/checks.ts"
+        },
+        {
+          "use": "Topic watches as Lightning REST tables over OpenAlex, new papers found with one LEFT ANTI JOIN",
+          "code": "packages/zetaris/src/watch.ts"
+        },
+        {
+          "use": "REST client (sql-editor/sqls/run), deadlines and cancellation",
+          "code": "packages/zetaris/src/client.ts"
+        }
+      ],
+      "evidence": [
+        "Trace action queried_zetaris with sqlHash and rowsReturned",
+        "The receipt's Show SQL in the app",
+        "examples/*/output.md"
+      ]
+    },
+    "meterless": {
+      "used": true,
+      "vendored": "packages/meterless (Apache-2.0, from github.com/meterless/meterless commit 0aa7417)",
+      "engines": [
+        {
+          "engine": "H-MEM",
+          "use": "Per-person corrections memory from 👎 reasons, wrong passages and wrong study items; read by the Planner before every answer; ratings adjust confidence",
+          "code": "packages/agents/src/memory.ts"
+        },
+        {
+          "engine": "World Model",
+          "use": "The Analyst's sources, claims and supports/contradicts/qualifies relations with passage provenance, one event-sourced model per person",
+          "code": "packages/agents/src/analyst.ts"
+        },
+        {
+          "engine": "Markovian",
+          "use": "Deep search screening in bounded RESEARCH steps carrying only the shortlist; its token estimate shown and logged",
+          "code": "packages/agents/src/scout.ts"
+        }
+      ],
+      "evidence": [
+        "Trace actions read_hmem and asserted_world_model",
+        "Settings → Memory in the app"
+      ]
+    }
+  },
+  "otherServices": {
+    "OpenAI": "All language models and embeddings",
+    "ElevenLabs": "Scribe transcription with word timing; Text-to-Dialogue audio briefs; study sounds",
+    "OpenAlex": "Paper metadata, open-access PDFs, topic watches",
+    "Composio": "Gmail, Google Drive and Notion connectors",
+    "Gotenberg": "Word, PowerPoint and web pages to PDF renditions",
+    "OCRmyPDF": "Text layers for scanned PDFs"
+  },
+  "stack": [
+    "TypeScript",
+    "Next.js 16",
+    "React 19",
+    "AI SDK",
+    "Drizzle ORM",
+    "Postgres + pgvector",
+    "pg-boss",
+    "Better Auth",
+    "RustFS (S3)",
+    "Turborepo",
+    "pnpm"
+  ],
+  "setup": "README.md#run-it-yourself"
+}

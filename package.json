@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "turbo dev",
+    "konkyo": "node scripts/with-env.mjs tsx apps/cli/src/index.ts",
     "build": "turbo build",
     "typecheck": "turbo typecheck",
     "check": "biome check .",
@@ -24,6 +25,7 @@
     "@konkyo/typescript-config": "workspace:*",
     "@types/node": "24.19.2",
     "postgres": "3.4.9",
+    "tsx": "4.23.15",
     "turbo": "2.11.8",
     "typescript": "7.0.2"
   },

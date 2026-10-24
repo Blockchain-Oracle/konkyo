@@ -18,6 +18,7 @@
     "@konkyo/env": "workspace:*",
     "@konkyo/ingest": "workspace:*",
     "@konkyo/meterless": "workspace:*",
+    "@konkyo/tape": "workspace:*",
     "@konkyo/zetaris": "workspace:*",
     "ai": "7.0.141",
     "drizzle-orm": "0.45.4",

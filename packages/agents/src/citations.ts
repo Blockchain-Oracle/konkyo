@@ -10,7 +10,12 @@
  */
 
 export type SourceLine = { n: number; label: string; quote: string }
-export type Sentence = { text: string; cites: number[] }
+export type Sentence = {
+  text: string
+  cites: number[]
+  /** Its paragraph in the body (0-based): the body is rebuilt from sentences, never searched. */
+  para: number
+}
 
 export type ParsedAnswer = {
   body: string
@@ -50,26 +55,40 @@ const segmenter = new Intl.Segmenter("en", { granularity: "sentence" })
  */
 const PASTED_TAIL = /([.!?])\s+["“‘][^"”’]{12,}["”’]\s*(?:\[\d[^\]]*\]\s*)*\.?$/
 
+/**
+ * A quotation standing as sentences of its own (the Writer pasting its evidence into the prose):
+ * it opens where a sentence would start and closes where one ends. A quote inside a sentence
+ * (`found a “16% enhancement” [1].`, `“Sleep is vital,” they write`) is not matched.
+ */
+const STANDALONE_QUOTE =
+  /(^|[.!?]["”’)]?(?:\s*\[\d[^\]]*\])*)\s*["“][^"“”]{12,}["”](?:\s*\[\d[^\]]*\])*\.?(?=\s*$|\s+[\p{Lu}"“[(])/gu
+
 /** Sentences with their citation markers; markers stranded at a sentence's start join the one before. */
 export function splitSentences(body: string): Sentence[] {
   const out: Sentence[] = []
-  for (const paragraph of body.split(/\n{2,}/)) {
-    for (const { segment } of segmenter.segment(paragraph)) {
+  for (const [para, paragraph] of body.split(/\n{2,}/).entries()) {
+    // A multi-sentence quotation would otherwise split into pieces that look like claims.
+    for (const { segment } of segmenter.segment(paragraph.replace(STANDALONE_QUOTE, "$1"))) {
       let text = segment.trim()
       if (!text) continue
       const lead = text.match(/^(\s*\[\d[^\]]*\]\s*)+/)?.[0]
       if (lead && out.length) {
         const prev = out[out.length - 1] as Sentence
-        // Markers belong before the sentence's own closing punctuation: "… solution [4][2]."
-        prev.text = /[.!?]["”’)]*$/.test(prev.text)
-          ? prev.text.replace(/\s*([.!?]["”’)]*)$/, ` ${lead.trim()}$1`)
-          : `${prev.text} ${lead.trim()}`
-        prev.cites = citesOf(prev.text)
+        // Only what the sentence before doesn't cite already ("… networks [1]. [1] The …").
+        const extra = citesOf(lead).filter((n) => !prev.cites.includes(n))
+        if (extra.length) {
+          const markers = extra.map((n) => `[${n}]`).join("")
+          // Markers belong before the sentence's own closing punctuation: "… solution [4][2]."
+          prev.text = /[.!?]["”’)]*$/.test(prev.text)
+            ? prev.text.replace(/\s*([.!?]["”’)]*)$/, ` ${markers}$1`)
+            : `${prev.text} ${markers}`
+          prev.cites = citesOf(prev.text)
+        }
         text = text.slice(lead.length).trim()
         if (!text) continue
       }
       text = text.replace(PASTED_TAIL, "$1")
-      out.push({ text, cites: citesOf(text) })
+      out.push({ text, cites: citesOf(text), para })
     }
   }
   return out
@@ -80,7 +99,8 @@ export function splitSentences(body: string): Sentence[] {
  * a habit the benchmark saw): the citation chip already shows the quote, so it is dropped.
  */
 const isPastedQuote = (text: string) =>
-  /^["“'‘].*["”'’][.,;]?$/s.test(text.replace(/\[[^\]]*\]/g, "").trim())
+  // Markers go with the space before them: `“…neocortex” [1].` must read `“…neocortex”.`
+  /^["“'‘].*["”'’][.,;]?$/s.test(text.replace(/\s*\[[^\]]*\]/g, "").trim())
 
 /** Splits a (possibly partial, still streaming) Writer output into its parts. */
 export function parseAnswer(raw: string): ParsedAnswer {

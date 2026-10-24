@@ -11,7 +11,8 @@
   },
   "dependencies": {
     "@konkyo/config": "workspace:*",
-    "@konkyo/env": "workspace:*"
+    "@konkyo/env": "workspace:*",
+    "@konkyo/tape": "workspace:*"
   },
   "devDependencies": {
     "@konkyo/typescript-config": "workspace:*",

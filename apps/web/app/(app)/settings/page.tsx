@@ -6,6 +6,7 @@ import { Suspense } from "react"
 import { PageShell } from "@/components/page-shell"
 import { getSession } from "@/lib/session"
 import { AccountActions } from "./account-actions"
+import { ApiKeysSection } from "./api-keys-section"
 import { CitationStyleSetting } from "./citation-style-setting"
 import { ConnectorsSection } from "./connectors-section"
 import { DeepSearchSetting } from "./deep-search-setting"
@@ -41,6 +42,12 @@ async function Account() {
       ))}
     </dl>
   )
+}
+
+async function ApiKeys() {
+  const session = await getSession()
+  if (!session) return null
+  return <ApiKeysSection guest={Boolean(session.user.isAnonymous)} />
 }
 
 async function LeaveActions() {
@@ -122,6 +129,16 @@ export default function SettingsPage() {
           </span>
           <ChevronRightIcon className="size-4 text-ash-gray" strokeWidth={1.5} aria-hidden />
         </Link>
+      </section>
+      <section id="api-keys" aria-labelledby="api-keys-heading" className="mt-15 scroll-mt-24">
+        <h2 id="api-keys-heading" className="text-micro text-saffron-spark uppercase">
+          API keys
+        </h2>
+        <div className="mt-4.5">
+          <Suspense fallback={<Skeleton className="h-24 w-full" />}>
+            <ApiKeys />
+          </Suspense>
+        </div>
       </section>
       <section id="usage" aria-labelledby="usage-heading" className="mt-15 scroll-mt-24">
         <h2 id="usage-heading" className="text-micro text-saffron-spark uppercase">

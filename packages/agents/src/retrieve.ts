@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto"
 import { db, schema } from "@konkyo/db"
+import { taped } from "@konkyo/tape"
 import { embedMany } from "ai"
 import { inArray, sql } from "drizzle-orm"
 import { EMBEDDING_MODEL, openai } from "./models"
@@ -104,7 +105,14 @@ const PER_LIST = 40
  * Hybrid search over the person's passages (plan §2 Retriever): pgvector cosine and Postgres full
  * text for each query, fused by Reciprocal Rank Fusion. Only Ready, non-deleted files count.
  */
-export async function hybridSearch(
+export const hybridSearch = taped(
+  "library.search",
+  searchLibrary,
+  // The person's id isn't part of the key, so a recorded run replays for anyone.
+  (_ownerId, queries, scope?, limit?, options?) => [queries, scope, limit, options],
+)
+
+async function searchLibrary(
   ownerId: string,
   queries: string[],
   scope: Scope = {},

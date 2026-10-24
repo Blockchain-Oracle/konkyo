@@ -38,6 +38,7 @@
     "@konkyo/notify": "workspace:*",
     "@konkyo/storage": "workspace:*",
     "@konkyo/study": "workspace:*",
+    "@konkyo/tape": "workspace:*",
     "@konkyo/ui": "workspace:*",
     "@konkyo/zetaris": "workspace:*",
     "@tanstack/react-query": "5.104.2",

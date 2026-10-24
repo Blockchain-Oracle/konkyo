@@ -124,6 +124,13 @@ export async function connect(ownerId: string, toolkit: Toolkit) {
 export async function checkConnection(ownerId: string, id: string) {
   const row = await ownConnection(ownerId, id)
   const status = await accountStatus(row.accountId).catch(() => "failed" as const)
+  // A sign-in that was never finished (the hosted link lasts 10 minutes) leaves nothing to keep:
+  // the connection goes, and Settings offers Connect again.
+  if (row.status === "initiated" && (status === "expired" || status === "failed")) {
+    await db.delete(connections).where(eq(connections.id, id))
+    void removeAccount(row.accountId)
+    return { status: "unfinished" as const, label: null }
+  }
   const next = status === "active" ? "active" : status === "initiated" ? "initiated" : "expired"
   let label = row.label
   if (next === "active" && !label && row.toolkit === "gmail")

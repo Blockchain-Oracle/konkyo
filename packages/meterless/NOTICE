@@ -7,4 +7,5 @@ Vendored unchanged from https://github.com/meterless/meterless
   engines/world-model/reference/src -> src/world-model
   engines/markovian/reference/src   -> src/markovian
 
-Konkyo's own code (adapters for Postgres persistence and OpenAI) lives in src/adapters.
+Konkyo's own code that drives them (OpenAI embeddings, storage paths, tracing) lives in
+packages/agents/src: memory.ts (H-MEM), analyst.ts (World Model), scout.ts (Markovian).

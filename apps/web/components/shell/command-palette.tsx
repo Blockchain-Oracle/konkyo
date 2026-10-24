@@ -15,6 +15,7 @@ import {
   FolderPlusIcon,
   FolderUpIcon,
   LinkIcon,
+  PlugIcon,
   UploadIcon,
 } from "lucide-react"
 import type { Route } from "next"
@@ -24,10 +25,10 @@ import { toast } from "sonner"
 import { KindIcon } from "@/components/library/kind-icon"
 import { useUploads } from "@/components/library/uploads-provider"
 import { FOOTER_NAV, MAIN_NAV } from "@/lib/navigation"
-import { openFile, openSource } from "@/lib/preview"
+import { openFile } from "@/lib/preview"
 import { useFolders } from "@/lib/use-folders"
 import { useFileActions, useFiles } from "@/lib/use-library"
-import { openImport, openNewFolder } from "./app-dialogs"
+import { openConnectorImport, openImport, openNewFolder } from "./app-dialogs"
 
 const GO_TO = [...MAIN_NAV, ...FOOTER_NAV]
 const DOI = /^(?:doi:\s*|https?:\/\/(?:dx\.)?doi\.org\/)?(10\.\d{4,9}\/\S+)$/i
@@ -102,6 +103,11 @@ export function CommandPalette() {
     { label: "Upload a folder", icon: FolderUpIcon, onSelect: run(() => pickFolder()) },
     { label: "New folder", icon: FolderPlusIcon, onSelect: run(() => openNewFolder(null)) },
     { label: "Import by URL", icon: LinkIcon, onSelect: run(() => openImport()) },
+    {
+      label: "Import from Gmail, Drive or Notion",
+      icon: PlugIcon,
+      onSelect: run(() => openConnectorImport()),
+    },
   ].filter((a) => say(a.label))
 
   return (

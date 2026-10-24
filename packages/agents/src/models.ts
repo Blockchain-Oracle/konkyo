@@ -1,10 +1,12 @@
 import { createOpenAI } from "@ai-sdk/openai"
 import { env } from "@konkyo/env/server"
+import { tapedFetch } from "@konkyo/tape"
 import { type LanguageModel, wrapLanguageModel } from "ai"
 import { limiter } from "./limiter"
 import type { TraceEvent, Tracer } from "./trace"
 
-export const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY })
+// Through the tape: a CLI sample run replays recorded replies (S09); otherwise plain fetch.
+export const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY, fetch: tapedFetch })
 
 type Effort = "none" | "minimal" | "low" | "medium"
 export type ModelChoice = { id: string; reasoning: Effort }

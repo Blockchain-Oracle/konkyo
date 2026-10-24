@@ -1,20 +1,10 @@
-import { randomUUID } from "node:crypto"
-import { answer, type KonkyoMessage, Tracer } from "@konkyo/agents"
-import { consumeStream, createUIMessageStream, createUIMessageStreamResponse } from "ai"
+import type { KonkyoMessage } from "@konkyo/agents"
+import { consumeStream, createUIMessageStreamResponse } from "ai"
 import { NextResponse } from "next/server"
 import { z } from "zod"
-import { answerWriter } from "@/lib/answer-stream"
-import {
-  answerLimit,
-  dropAfter,
-  ensureChat,
-  finishRun,
-  historyFor,
-  saveMessage,
-  startRun,
-} from "@/lib/chats"
+import { startAnswer } from "@/lib/ask"
+import { answerLimit } from "@/lib/chats"
 import { LibraryError } from "@/lib/library"
-import { endRun, registerRun } from "@/lib/run-registry"
 import { getSession } from "@/lib/session"
 
 /** An answer is planned, written and verified in this request (plan §3: the fast path). */
@@ -64,71 +54,15 @@ export async function POST(request: Request) {
   const limited = await answerLimit(ownerId)
   if (limited) return NextResponse.json({ error: limited }, { status: 429 })
 
-  let chat: Awaited<ReturnType<typeof ensureChat>>
+  let started: Awaited<ReturnType<typeof startAnswer>>
   try {
-    chat = await ensureChat(ownerId, chatId, question, scope)
+    started = await startAnswer({ ownerId, chatId, userMessage, question, asked, scope })
   } catch (error) {
     if (error instanceof LibraryError)
       return NextResponse.json({ error: error.message }, { status: error.status })
     throw error
   }
-  // Regenerate, or an edited question: what came after it is replaced by the new answer.
-  await dropAfter(chatId, userMessage.id)
-  const history = await historyFor(chatId, userMessage.id)
-  await saveMessage(ownerId, chatId, userMessage)
-
-  const runId = randomUUID()
-  await startRun(ownerId, chatId, runId, question)
-  const stopSignal = registerRun(runId, ownerId)
-  let status: "answered" | "not-found" | "failed" | "stopped" = "failed"
-  let receipt: unknown
-  const tracer = new Tracer(runId)
-
-  const stream = createUIMessageStream<KonkyoMessage>({
-    originalMessages: [userMessage],
-    execute: async ({ writer }) => {
-      writer.write({
-        type: "start",
-        messageMetadata: { runId, createdAt: new Date().toISOString() },
-      })
-      const out = answerWriter(writer)
-      const result = await answer({
-        ownerId,
-        question: asked,
-        history,
-        scope: chat.scope,
-        tracer,
-        // Not request.signal: leaving the page must not throw the answer away; Stop aborts.
-        abortSignal: stopSignal,
-        emit: out.emit,
-      })
-      out.endDraft()
-      receipt = out.receipt()
-      status = result.status
-    },
-    onError: (error) => {
-      console.error("[chat]", error)
-      tracer.log({
-        agent: "system",
-        step: "error",
-        action: "failed",
-        detail: { message: (error as Error).message },
-      })
-      return "Something went wrong while answering. Try again."
-    },
-    onEnd: async ({ messages, isAborted }) => {
-      endRun(runId)
-      const response = messages.at(-1)
-      if (response && response.role === "assistant")
-        await saveMessage(ownerId, chatId, response, runId)
-      await tracer.flush()
-      await finishRun(runId, {
-        status: isAborted || stopSignal.aborted ? "stopped" : status,
-        receipt,
-        events: tracer.events,
-      })
-    },
-  })
+  const { stream } = started
   // A copy of the stream is drained here, so the run completes and saves even if the browser leaves.
   return createUIMessageStreamResponse({
     stream,

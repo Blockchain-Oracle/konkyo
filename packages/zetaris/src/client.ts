@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto"
 import { ZETARIS } from "@konkyo/config"
 import { env } from "@konkyo/env/server"
+import { taped } from "@konkyo/tape"
 
 /** Zetaris returns values as strings (or null); rows are keyed by column name here. */
 export type Row = Record<string, string | null>
@@ -71,7 +72,13 @@ async function cancel(queryId: string, token: string, org: string): Promise<void
  * SQL-editor REST route. Applies our own deadline and cancels the query when it passes, because an
  * abandoned Zetaris job keeps the engine busy and blocks every other query.
  */
-export async function run(
+export const run = taped(
+  "zetaris.run",
+  runWithRetry,
+  (sql: string, options?: { limit?: number }) => [sql, options?.limit],
+)
+
+async function runWithRetry(
   sql: string,
   options: { limit?: number; timeoutMs?: number } = {},
 ): Promise<QueryResult> {

@@ -1,6 +1,7 @@
 import { rm } from "node:fs/promises"
 import path from "node:path"
 import { embed, HMEM, type MemoryRecord } from "@konkyo/meterless/hmem"
+import { taped } from "@konkyo/tape"
 import { freshCache } from "./fresh"
 import { embedQueries } from "./retrieve"
 
@@ -54,7 +55,13 @@ const cosine = (a: number[], b: number[]) => {
  * about the same thing: H-MEM's built-in embedder hashes words, so "memory" in two unrelated
  * questions looks alike to it.
  */
-export async function recall(userId: string, question: string, topN = 3): Promise<Recalled[]> {
+export const recall = taped(
+  "memory.recall",
+  recallFor,
+  (_userId: string, question: string, topN?: number) => [question, topN],
+)
+
+async function recallFor(userId: string, question: string, topN = 3): Promise<Recalled[]> {
   const { memories } = memoryFor(userId).query(question, { topN: 8, threshold: 0.25 })
   if (!memories.length) return []
   const [q, ...vectors] = await embedQueries([question, ...memories.map((m) => m.memory.content)])

@@ -25,7 +25,7 @@ type Connection = typeof connections.$inferSelect
 const NAMES = { gmail: "Gmail", googledrive: "Google Drive", notion: "Notion" } as const
 
 const safeName = (name: string) => name.replace(/[^\w.\- ]+/g, "_").slice(-120) || "file"
-const escape = (s: string) =>
+const escapeHtml = (s: string) =>
   s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
 
 /** An email's text as paragraphs (a blank line between them, line breaks kept), not a code block. */
@@ -35,7 +35,7 @@ const paragraphs = (text: string) =>
     .split(/\n{2,}/)
     .map((p) => p.trim())
     .filter(Boolean)
-    .map((p) => `<p>${escape(p).replaceAll("\n", "<br>")}</p>`)
+    .map((p) => `<p>${escapeHtml(p).replaceAll("\n", "<br>")}</p>`)
     .join("")
 
 /** Bytes behind a Composio file link (temporary S3 URLs), within the upload size limit. */
@@ -164,11 +164,11 @@ export async function materialize(file: FileRow): Promise<FileRow> {
       const when = message.date ? new Date(message.date).toUTCString() : ""
       const head = [`From ${message.from}`, message.to ? `To ${message.to}` : "", when]
         .filter(Boolean)
-        .map(escape)
+        .map(escapeHtml)
         .join(" · ")
       const html = documentHtml(
         message.subject,
-        `<h1>${escape(message.subject)}</h1><p class="source">${head}</p>${paragraphs(message.text)}`,
+        `<h1>${escapeHtml(message.subject)}</h1><p class="source">${head}</p>${paragraphs(message.text)}`,
       )
       const row = await store(
         file,

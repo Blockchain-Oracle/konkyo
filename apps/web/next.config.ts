@@ -15,6 +15,7 @@ const nextConfig: NextConfig = {
   transpilePackages: [
     "@konkyo/agents",
     "@konkyo/config",
+    "@konkyo/connectors",
     "@konkyo/db",
     "@konkyo/ingest",
     "@konkyo/env",
@@ -22,6 +23,7 @@ const nextConfig: NextConfig = {
     "@konkyo/notify",
     "@konkyo/storage",
     "@konkyo/study",
+    "@konkyo/tape",
     "@konkyo/ui",
     "@konkyo/zetaris",
   ],

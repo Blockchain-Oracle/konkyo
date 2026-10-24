@@ -1,0 +1,23 @@
+{
+  "name": "@konkyo/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Konkyo from the terminal: ask the library, replay the recorded samples, seed a sample library.",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@konkyo/agents": "workspace:*",
+    "@konkyo/config": "workspace:*",
+    "@konkyo/db": "workspace:*",
+    "@konkyo/jobs": "workspace:*",
+    "@konkyo/tape": "workspace:*",
+    "drizzle-orm": "0.45.4"
+  },
+  "devDependencies": {
+    "@konkyo/typescript-config": "workspace:*",
+    "@types/node": "24.19.2",
+    "typescript": "7.0.2"
+  }
+}
