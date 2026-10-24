@@ -76,8 +76,12 @@ export function EnterCard({
   /* The guest session, then who you are in it. A photo waits in the page until there's a person
      to own it. */
   const becomeGuest = async () => {
-    const { error: failed } = await authClient.signIn.anonymous()
-    if (failed) throw new Error("Couldn't open the door just now. Try again.")
+    // A retry after a half-finished entry already has its guest: only who they are is saved again.
+    const { data: session } = await authClient.getSession()
+    if (!session) {
+      const { error: failed } = await authClient.signIn.anonymous()
+      if (failed) throw new Error("Couldn't open the door just now. Try again.")
+    }
     await saveProfile({ name: name.trim() || start.name, lookId })
     if (photo && usePhoto) await uploadPhoto(photo.blob)
   }
@@ -131,6 +135,8 @@ export function EnterCard({
       const { error: failed } = await authClient.signIn.social({
         provider: "google",
         callbackURL: next,
+        // backing out at Google returns you inside as the guest you already are
+        errorCallbackURL: next,
       })
       if (failed)
         throw new Error("Google didn't open. You're in as a guest; keep it from settings.")
@@ -149,6 +155,7 @@ export function EnterCard({
     const { error: failed } = await authClient.signIn.social({
       provider: "google",
       callbackURL: next,
+      errorCallbackURL: "/sign-in",
     })
     if (failed) {
       setPending(null)

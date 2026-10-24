@@ -176,6 +176,13 @@
       "when": 1792884600000,
       "tag": "0024_share_listed",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1792890300000,
+      "tag": "0025_follows",
+      "breakpoints": true
     }
   ]
 }

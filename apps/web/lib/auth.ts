@@ -4,6 +4,7 @@ import { db } from "@konkyo/db"
 import { reownUserData } from "@konkyo/db/owned"
 import * as schema from "@konkyo/db/schema"
 import { env } from "@konkyo/env/server"
+import { deleteObject } from "@konkyo/storage"
 import { betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { nextCookies } from "better-auth/next-js"
@@ -38,7 +39,9 @@ export const auth = betterAuth({
       // because 1.7.8 skips it for first-time Google sign-ups.
       disableDeleteAnonymousUser: true,
       onLinkAccount: async ({ anonymousUser, newUser }) => {
-        await reownUserData(db, anonymousUser.user.id, newUser.user.id)
+        const moved = await reownUserData(db, anonymousUser.user.id, newUser.user.id)
+        // a guest photo the account didn't take
+        await Promise.all(moved.orphans.map((key) => deleteObject(key).catch(() => undefined)))
         // Corrections memory and the World Model live on disk under the guest's id.
         await moveMemory(anonymousUser.user.id, newUser.user.id)
         await moveWorld(anonymousUser.user.id, newUser.user.id)

@@ -8,6 +8,7 @@ import {
   PenLineIcon,
   SettingsIcon,
   Trash2Icon,
+  UsersIcon,
 } from "lucide-react"
 import type { Route } from "next"
 
@@ -25,6 +26,7 @@ export const MAIN_NAV: NavItem[] = [
 ]
 
 export const FOOTER_NAV: NavItem[] = [
+  { href: "/people" as Route, label: "People", icon: UsersIcon },
   { href: "/trash", label: "Trash", icon: Trash2Icon },
   { href: "/settings", label: "Settings", icon: SettingsIcon },
 ]

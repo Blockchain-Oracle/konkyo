@@ -4,8 +4,10 @@ import type { Metadata, Route } from "next"
 import Link from "next/link"
 import { type CSSProperties, Suspense } from "react"
 import { BrandMark } from "@/components/brand-mark"
+import { FollowButton } from "@/components/people/follow-button"
 import { MemberFace } from "@/components/people/member-face"
 import { ShareProfile } from "@/components/people/share-profile"
+import { countsFor, relationTo } from "@/lib/people"
 import { publicProfile } from "@/lib/profiles"
 import { getSession } from "@/lib/session"
 
@@ -49,6 +51,11 @@ async function Profile({ params }: Props) {
       </main>
     )
   const isMine = session?.user.id === profile.userId
+  const [counts, relation] = await Promise.all([
+    countsFor(profile.userId),
+    relationTo(session?.user.id ?? null, profile.userId),
+  ])
+  const viewer = !session ? "signed-out" : session.user.isAnonymous ? "guest" : "kept"
   const wall = wallFor(profile.face.color)
   const spaces = profile.spaces
   return (
@@ -71,16 +78,37 @@ async function Profile({ params }: Props) {
           <h1 className="me-name">{profile.name}</h1>
           {profile.bio && <p className="me-bio">{profile.bio}</p>}
           <p className="me-meta">
-            <span>
-              {spaces.length} public space{spaces.length === 1 ? "" : "s"}
-            </span>
+            {isMine ? (
+              <>
+                <Link href={"/people?tab=followers" as Route}>
+                  <b>{counts.followers}</b> follower{counts.followers === 1 ? "" : "s"}
+                </Link>
+                <Link href={"/people?tab=following" as Route}>
+                  <b>{counts.following}</b> following
+                </Link>
+              </>
+            ) : (
+              <>
+                <span>
+                  <b>{counts.followers}</b> follower{counts.followers === 1 ? "" : "s"}
+                </span>
+                <span>
+                  <b>{counts.following}</b> following
+                </span>
+              </>
+            )}
             <span>joined {MONTH.format(new Date(profile.joinedAt)).toLowerCase()}</span>
           </p>
+          {relation.followsYou && !relation.friends && (
+            <span className="me-follows-you">follows you</span>
+          )}
           <div className="me-actions">
-            {isMine && (
+            {isMine ? (
               <Link className="claim-done" href={"/settings#you" as Route}>
                 edit
               </Link>
+            ) : (
+              <FollowButton handle={profile.handle} relation={relation} viewer={viewer} />
             )}
             <ShareProfile handle={profile.handle} name={profile.name} />
           </div>

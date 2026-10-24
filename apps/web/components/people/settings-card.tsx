@@ -125,6 +125,9 @@ function SettingsCard({ me, onClose }: { me: Me; onClose: () => void }) {
           <Link href={ROUTES.settings as Route} onClick={onClose}>
             all settings
           </Link>
+          <Link href={"/people" as Route} onClick={onClose}>
+            people
+          </Link>
           <Link href={ROUTES.trash as Route} onClick={onClose}>
             trash
           </Link>
@@ -175,9 +178,14 @@ async function keepWithGoogle() {
  * name, the looks and your photo, the account that keeps them, and your page.
  */
 export function SettingsBody({ me }: { me: Me }) {
-  const { save, photo } = useMe()
+  const { save, photo, removePhoto } = useMe()
   const fileRef = useRef<HTMLInputElement>(null)
+  const nameRef = useRef<HTMLInputElement>(null)
   const [name, setName] = useState(me.name)
+  // Saved elsewhere (the other card, a refused save rolled back): show it, unless you're typing.
+  useEffect(() => {
+    if (document.activeElement !== nameRef.current) setName(me.name)
+  }, [me.name])
 
   const commitName = () => {
     const next = name.trim()
@@ -201,6 +209,7 @@ export function SettingsBody({ me }: { me: Me }) {
         <label className="claim-name-label settings-name">
           your name
           <input
+            ref={nameRef}
             className="claim-name-input"
             value={name}
             maxLength={PEOPLE.nameMax}
@@ -230,16 +239,27 @@ export function SettingsBody({ me }: { me: Me }) {
               : fileRef.current?.click()
           }
         />
-        {me.hasGoogle && me.avatar !== "google" && (
-          <button
-            type="button"
-            className="claim-join-link"
-            style={{ alignSelf: "flex-start" }}
-            onClick={() => save.mutate({ avatar: "google" })}
-          >
-            use my Google photo
-          </button>
-        )}
+        <span className="settings-face-links">
+          {me.hasGoogle && me.avatar !== "google" && (
+            <button
+              type="button"
+              className="claim-join-link"
+              onClick={() => save.mutate({ avatar: "google" })}
+            >
+              use my Google photo
+            </button>
+          )}
+          {me.hasPhoto && (
+            <button
+              type="button"
+              className="claim-join-link"
+              onClick={() => removePhoto.mutate()}
+              disabled={removePhoto.isPending}
+            >
+              remove my photo
+            </button>
+          )}
+        </span>
       </div>
       <PhotoInput ref={fileRef} onPhoto={(blob) => photo.mutateAsync(blob)} />
 

@@ -1,6 +1,14 @@
 import type { LookId } from "@konkyo/config"
 import { sql } from "drizzle-orm"
-import { pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core"
+import {
+  check,
+  index,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+  uniqueIndex,
+} from "drizzle-orm/pg-core"
 import { user } from "./auth"
 
 /**
@@ -29,4 +37,26 @@ export const profiles = pgTable(
       .$onUpdate(() => new Date()),
   },
   (t) => [uniqueIndex("profiles_handle_idx").on(t.handle).where(sql`${t.handle} is not null`)],
+)
+
+/**
+ * Who follows whom (plan F55). Counts are computed; two people who follow each other are friends.
+ * Only kept accounts follow or are followed (a page needs a handle).
+ */
+export const follows = pgTable(
+  "follows",
+  {
+    followerId: text()
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    followeeId: text()
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.followerId, t.followeeId] }),
+    index("follows_followee_idx").on(t.followeeId),
+    check("follows_not_self", sql`${t.followerId} <> ${t.followeeId}`),
+  ],
 )

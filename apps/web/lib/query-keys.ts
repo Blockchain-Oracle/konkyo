@@ -25,6 +25,9 @@ export const qk = {
   people: {
     me: ["people", "me"] as const,
     handle: (handle: string) => ["people", "handle", handle] as const,
+    tab: (tab: string) => ["people", "tab", tab] as const,
+    search: (q: string) => ["people", "search", q] as const,
+    feed: ["people", "feed"] as const,
   },
   /** What Konkyo knows (F51), for one space or the whole library. */
   knows: (spaceId: string | null) => ["knows", spaceId ?? "library"] as const,

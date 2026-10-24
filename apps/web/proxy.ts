@@ -25,6 +25,7 @@ export const config = {
     "/inbox/:path*",
     "/settings/:path*",
     "/knows/:path*",
+    "/people/:path*",
     "/trash/:path*",
   ],
 }

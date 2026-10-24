@@ -13,10 +13,15 @@ import { openShare } from "@/lib/shares"
 
 export const metadata: Metadata = { title: "Enter" }
 
-/** Only same-site paths are honoured, so `?next=` can never send someone to another site. */
+/**
+ * Only same-site paths are honoured, so `?next=` can never send someone to another site (a
+ * browser reads `/\\evil.com` as `//evil.com`, so backslashes are refused too).
+ */
 function safeNext(value: string | string[] | undefined): string {
   const next = typeof value === "string" ? value : undefined
-  return next?.startsWith("/") && !next.startsWith("//") ? next : ROUTES.home
+  if (!next?.startsWith("/") || next.startsWith("//") || next.includes("\\")) return ROUTES.home
+  const base = "https://konkyo.invalid"
+  return new URL(next, base).origin === base ? next : ROUTES.home
 }
 
 /** Signed in already → on to where you were going; else the door, with a look picked for you. */

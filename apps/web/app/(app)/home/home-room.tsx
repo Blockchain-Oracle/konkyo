@@ -11,17 +11,22 @@ import { KIND_LABEL } from "@/components/library/kind-icon"
 import { SourceFace } from "@/components/library/source-face"
 import { SpaceShelf } from "@/components/library/space-shelf"
 import { RoomHeader } from "@/components/page-shell"
+import { MemberFace } from "@/components/people/member-face"
 import { AddPicker } from "@/components/shell/add-picker"
 import { openNewFolder } from "@/components/shell/app-dialogs"
 import { TodayCard } from "@/components/study/today-card"
+import { api } from "@/lib/fetcher"
 import { WHOLE_LIBRARY } from "@/lib/focus"
 import { holdQuestion } from "@/lib/pending-question"
+import type { FeedItem } from "@/lib/people"
 import { openFile } from "@/lib/preview"
+import { qk } from "@/lib/query-keys"
 import { sound } from "@/lib/sounds"
 import { sortChats, useChats } from "@/lib/use-chats"
 import type { LibraryFile } from "@/lib/use-library"
 import { useFiles } from "@/lib/use-library"
 import { useMe } from "@/lib/use-me"
+import { useQuery } from "@/lib/use-query"
 import { useSpaceList } from "@/lib/use-spaces"
 import { useSuggestions } from "@/lib/use-suggestions"
 import { HomeComposer } from "./home-composer"
@@ -83,6 +88,7 @@ export function HomeRoom() {
         <div className="board-area-side grid grid-cols-[minmax(0,1fr)] content-start gap-10 pt-2">
           <TodayCard pinned className="board-sticker-card rounded-[20px] border-0" />
           <Chats />
+          <FromPeople />
         </div>
 
         <div className="board-area-spaces">
@@ -216,6 +222,52 @@ function Chats() {
               </Link>
             </li>
           ))}
+      </ul>
+    </section>
+  )
+}
+
+/**
+ * From people you follow (F55): what they made public lately, on the same black card as your
+ * chats. Shown once you follow someone; their articles join it with S20.
+ */
+function FromPeople() {
+  const { data } = useQuery({
+    queryKey: qk.people.feed,
+    queryFn: () => api<{ items: FeedItem[]; following: number }>("/api/people/feed"),
+  })
+  if (!data?.following) return null
+  return (
+    <section aria-label="From people you follow" className="board-object">
+      <div className="board-label">
+        <span className="room-pill">from people you follow</span>
+        <Link href={"/people?tab=following" as Route} className="room-pill hover:bg-ink">
+          your people ↗
+        </Link>
+      </div>
+      <ul className="surface-sticker board-sticker-card overflow-hidden p-2">
+        {data.items.length === 0 ? (
+          <li className="px-3.5 py-3 text-[14px] text-room-muted">
+            Nothing new from them yet. When they share a space on their page, it lands here.
+          </li>
+        ) : (
+          data.items.slice(0, 5).map((item) => (
+            <li key={`${item.person.handle}-${item.object.href}`}>
+              <a
+                href={item.object.href}
+                onClick={() => sound("tap")}
+                className="flex items-center gap-3 rounded-[14px] px-3.5 py-3 transition-colors duration-(--dur-quick) hover:bg-white/8"
+              >
+                <MemberFace face={item.person.face} size="sm" />
+                <span className="min-w-0 flex-1 text-[14px] leading-snug text-room-muted">
+                  <b className="font-bold text-white">@{item.person.handle}</b> {item.verb}{" "}
+                  <b className="font-bold text-white">{item.object.name}</b>
+                </span>
+                <span className="shrink-0 text-[12px] text-room-muted">{shortDate(item.at)}</span>
+              </a>
+            </li>
+          ))
+        )}
       </ul>
     </section>
   )

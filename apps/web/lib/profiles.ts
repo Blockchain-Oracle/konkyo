@@ -5,6 +5,7 @@ import { LOOKS, type LookId, PEOPLE, SPACES } from "@konkyo/config"
 import { db, schema } from "@konkyo/db"
 import { deleteObject, objectKey, putBytes } from "@konkyo/storage"
 import { and, desc, eq, sql } from "drizzle-orm"
+import sharp from "sharp"
 import { LibraryError } from "./library"
 import { sharePath, shareScope } from "./shares"
 
@@ -117,6 +118,13 @@ export async function handleProblem(handle: string, userId: string): Promise<str
   return owner && owner.userId !== userId ? "that one's taken" : null
 }
 
+/** Postgres' unique violation on the handle index: someone claimed it a moment earlier. */
+function handleTaken(error: unknown) {
+  const e = error as { code?: string; constraint_name?: string; cause?: unknown }
+  const pg = (e.code ? e : (e.cause as typeof e | undefined)) ?? {}
+  return pg.code === "23505" && (pg.constraint_name ?? "").includes("handle")
+}
+
 export async function updateProfile(userId: string, patch: ProfilePatch): Promise<Me> {
   const me = await getMe(userId)
   if ((patch.handle !== undefined || patch.bio !== undefined) && me.isGuest)
@@ -125,18 +133,21 @@ export async function updateProfile(userId: string, patch: ProfilePatch): Promis
     const problem = await handleProblem(patch.handle, userId)
     if (problem) throw new LibraryError(problem, 409)
   }
-  if (patch.bio) {
-    const check = await moderate(patch.bio)
-    if (check.flagged) throw new LibraryError("That bio can't go on a public page.", 400)
+  // What shows on a public page goes through moderation: the bio, and the name once there's a page.
+  const name = patch.name?.trim()
+  if (patch.name !== undefined && !name) throw new LibraryError("A name can't be empty", 400)
+  const onPage = Boolean(patch.handle ?? me.handle)
+  const checks = [patch.bio || null, onPage && name && name !== me.name ? name : null].filter(
+    (text): text is string => Boolean(text),
+  )
+  if (checks.length) {
+    const results = await Promise.all(checks.map((text) => moderate(text)))
+    if (results.some((r) => r.flagged))
+      throw new LibraryError("That can't go on a public page.", 400)
   }
   if (patch.avatar === "photo" && !me.hasPhoto) throw new LibraryError("Add a photo first", 400)
   if (patch.avatar === "google" && !me.hasGoogle)
     throw new LibraryError("There's no Google photo on this account", 400)
-  if (patch.name !== undefined) {
-    const name = patch.name.trim()
-    if (!name) throw new LibraryError("A name can't be empty", 400)
-    await db.update(user).set({ name }).where(eq(user.id, userId))
-  }
   const { name: _name, ...rest } = patch
   const fields = {
     ...rest,
@@ -144,39 +155,42 @@ export async function updateProfile(userId: string, patch: ProfilePatch): Promis
     ...(patch.lookId && !patch.avatar ? { avatar: "look" as const } : {}),
     ...(patch.bio !== undefined ? { bio: patch.bio?.trim() || null } : {}),
   }
-  if (Object.keys(fields).length > 0)
-    await db
-      .insert(profiles)
-      .values({ userId, ...fields })
-      .onConflictDoUpdate({ target: profiles.userId, set: fields })
+  try {
+    await db.transaction(async (tx) => {
+      if (name !== undefined) await tx.update(user).set({ name }).where(eq(user.id, userId))
+      if (Object.keys(fields).length > 0)
+        await tx
+          .insert(profiles)
+          .values({ userId, ...fields })
+          .onConflictDoUpdate({ target: profiles.userId, set: fields })
+    })
+  } catch (error) {
+    if (handleTaken(error)) throw new LibraryError("that one's taken", 409)
+    throw error
+  }
   return getMe(userId)
 }
 
-/** JPEG, PNG or WebP by their first bytes: a photo is only ever served as one of these. */
-function imageType(bytes: Uint8Array): { type: string; ext: string } | null {
-  const b = bytes
-  if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return { type: "image/jpeg", ext: "jpg" }
-  if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47)
-    return { type: "image/png", ext: "png" }
-  if (
-    String.fromCharCode(...b.subarray(0, 4)) === "RIFF" &&
-    String.fromCharCode(...b.subarray(8, 12)) === "WEBP"
-  )
-    return { type: "image/webp", ext: "webp" }
-  return null
-}
-
 /**
- * A photo of you (F53): the browser crops it to a 256 px square and re-encodes it (which also
- * drops its location data); the server takes only a small JPEG, PNG or WebP and shows it at once.
+ * A photo of you (F53): the browser crops it to a square; the server decodes whatever arrived and
+ * writes its own 256 px JPEG (no metadata, nothing but pixels), so only an image Konkyo made is
+ * ever served. Anything that doesn't decode as an image is refused.
  */
 export async function setPhoto(userId: string, bytes: Uint8Array): Promise<Me> {
   if (bytes.byteLength === 0) throw new LibraryError("That photo was empty", 400)
   if (bytes.byteLength > PEOPLE.photoMaxBytes) throw new LibraryError("That photo is too big", 413)
-  const kind = imageType(bytes)
-  if (!kind) throw new LibraryError("Use a JPEG, PNG or WebP photo", 415)
-  const key = objectKey("avatars", userId, `${randomBytes(8).toString("hex")}.${kind.ext}`)
-  await putBytes(key, bytes, kind.type)
+  let jpeg: Buffer
+  try {
+    jpeg = await sharp(bytes, { limitInputPixels: 40_000_000 })
+      .rotate()
+      .resize(PEOPLE.photoPx, PEOPLE.photoPx, { fit: "cover" })
+      .jpeg({ quality: 86 })
+      .toBuffer()
+  } catch {
+    throw new LibraryError("That isn't a photo we can read. Try a JPEG or PNG.", 415)
+  }
+  const key = objectKey("avatars", userId, `${randomBytes(8).toString("hex")}.jpg`)
+  await putBytes(key, jpeg, "image/jpeg")
   const before = await db.query.profiles.findFirst({ where: eq(profiles.userId, userId) })
   await db
     .insert(profiles)
@@ -198,12 +212,15 @@ export async function removePhoto(userId: string): Promise<Me> {
   return getMe(userId)
 }
 
-export async function photoKeyOf(userId: string): Promise<string | null> {
+/** The photo to serve for this address: only while it's the face shown, and only this version. */
+export async function photoKeyOf(userId: string, version: string | null): Promise<string | null> {
   const row = await db.query.profiles.findFirst({
-    columns: { photoKey: true },
+    columns: { photoKey: true, avatar: true },
     where: eq(profiles.userId, userId),
   })
-  return row?.photoKey ?? null
+  if (!row?.photoKey || row.avatar !== "photo") return null
+  const current = row.photoKey.split("/").at(-1)?.split(".")[0]
+  return version === current ? row.photoKey : null
 }
 
 export type PublicProfile = {

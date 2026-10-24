@@ -47,7 +47,12 @@ export function useMe() {
     onSuccess: settle,
     onError: (error: Error) => toast.error(error.message),
   })
-  return { me: data, save, photo }
+  const removePhoto = useMutation({
+    mutationFn: () => api<Me>("/api/me/photo", { method: "DELETE" }),
+    onSuccess: settle,
+    onError: (error: Error) => toast.error(error.message),
+  })
+  return { me: data, save, photo, removePhoto }
 }
 
 /** Saves a profile change without the hook (the enter card, right after a guest session starts). */

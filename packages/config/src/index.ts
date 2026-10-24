@@ -389,6 +389,8 @@ export const PEOPLE = {
   /** A photo is cropped to a square in the browser; the server takes at most this much. */
   photoPx: 256,
   photoMaxBytes: 512 * 1024,
+  /** Follows a person can make in a day (F55): plenty for people, not for a script. */
+  followsPerDay: 100,
   /** "N here right now" on the enter card counts people active this recently. */
   hereWindowMinutes: 15,
   /** Handles nobody can take: they would read as Konkyo itself or shadow a route. */

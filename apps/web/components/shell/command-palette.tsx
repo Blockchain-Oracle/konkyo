@@ -25,23 +25,28 @@ import {
 } from "lucide-react"
 import type { Route } from "next"
 import { useRouter } from "next/navigation"
-import { useEffect, useMemo, useState } from "react"
+import { useDeferredValue, useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { KindIcon } from "@/components/library/kind-icon"
 import { useUploads } from "@/components/library/uploads-provider"
 import { api } from "@/lib/fetcher"
 import { FOOTER_NAV, MAIN_NAV } from "@/lib/navigation"
+import type { Person } from "@/lib/people"
 import { openFile } from "@/lib/preview"
+import { qk } from "@/lib/query-keys"
 import { sortChats, useChats } from "@/lib/use-chats"
 import { useFolders } from "@/lib/use-folders"
 import { useFileActions, useFiles } from "@/lib/use-library"
 import { useQuery } from "@/lib/use-query"
+import { MemberFace } from "../people/member-face"
 import { openConnectorImport, openImport, openNewFolder } from "./app-dialogs"
 
 const GO_TO = [...MAIN_NAV, ...FOOTER_NAV]
 
 /** Settings sections ⌘K can jump to (their anchors on the Settings page). */
 const SETTINGS: { label: string; href: Route }[] = [
+  { label: "You: name, look, photo, your page", href: "/settings#you" as Route },
+  { label: "Sounds and voice", href: "/settings#sounds" as Route },
   { label: "Connectors: Gmail, Drive, Notion", href: "/settings#connectors" as Route },
   { label: "Notifications and reminders", href: "/settings#notifications" as Route },
   { label: "API keys", href: "/settings#api-keys" as Route },
@@ -85,6 +90,15 @@ export function CommandPalette() {
     queryFn: () =>
       api<{ notes: { id: string; title: string }[] }>("/api/notes").then((r) => r.notes),
     enabled: open,
+  })
+  // People (F55): kept accounts with a page, by handle or name, asked once typing settles.
+  const who = useDeferredValue(search.trim().replace(/^@/, ""))
+  const { data: people } = useQuery({
+    queryKey: qk.people.search(who),
+    queryFn: () =>
+      api<{ people: Person[] }>(`/api/people?q=${encodeURIComponent(who)}`).then((r) => r.people),
+    enabled: open && who.length >= 2,
+    staleTime: 30_000,
   })
   const { importUrl } = useFileActions()
   const { pickFiles, pickFolder } = useUploads()
@@ -154,7 +168,7 @@ export function CommandPalette() {
       open={open}
       onOpenChange={(next) => (next ? setOpen(true) : close())}
       title="Search and go"
-      description="Find a file, space, chat or note, run an action, or paste a link to import"
+      description="Find a file, space, chat, note or person, run an action, or paste a link to import"
     >
       {/* Our own filtering: a big library must not render thousands of hidden rows. */}
       <Command shouldFilter={false}>
@@ -219,6 +233,28 @@ export function CommandPalette() {
                 >
                   <MessageSquareIcon strokeWidth={1.5} />
                   <span className="truncate">{chat.title}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
+          {!pasted && words.length > 0 && (people?.length ?? 0) > 0 && (
+            <CommandGroup heading="People">
+              {people?.map((person) => (
+                <CommandItem
+                  key={person.handle}
+                  value={`person:${person.handle}`}
+                  onSelect={go(`/u/${person.handle}` as Route)}
+                >
+                  <MemberFace face={person.face} size="xs" />
+                  <span className="truncate">{person.name}</span>
+                  <span className="ml-auto text-snippet text-muted-foreground">
+                    @{person.handle}
+                    {person.relation.friends
+                      ? " · friends"
+                      : person.relation.following
+                        ? " · following"
+                        : ""}
+                  </span>
                 </CommandItem>
               ))}
             </CommandGroup>

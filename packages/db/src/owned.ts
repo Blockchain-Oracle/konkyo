@@ -1,5 +1,5 @@
 import { LOOKS } from "@konkyo/config"
-import { and, eq } from "drizzle-orm"
+import { and, eq, or, sql } from "drizzle-orm"
 import type { Db } from "./index"
 import {
   agentRuns,
@@ -11,6 +11,7 @@ import {
   files,
   folderShares,
   folders,
+  follows,
   highlights,
   inboxItems,
   messages,
@@ -41,7 +42,12 @@ type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0]
  * guest (cascading its rows), so everything the guest made must move first.
  * Each stage that adds a user-owned table adds its mover in the same commit.
  */
-const movers: Array<(tx: Tx, fromUserId: string, toUserId: string) => Promise<unknown>> = [
+/** What a move leaves for the caller to clear outside Postgres (a guest photo nobody kept). */
+type MoveResult = { orphans: string[] }
+
+const movers: Array<
+  (tx: Tx, fromUserId: string, toUserId: string, done: MoveResult) => Promise<unknown>
+> = [
   (tx, from, to) => tx.update(folders).set({ ownerId: to }).where(eq(folders.ownerId, from)),
   (tx, from, to) => tx.update(files).set({ ownerId: to }).where(eq(files.ownerId, from)),
   (tx, from, to) =>
@@ -86,33 +92,65 @@ const movers: Array<(tx: Tx, fromUserId: string, toUserId: string) => Promise<un
       if (!taken.has(d.day)) await tx.insert(studyDays).values({ ...d, ownerId: to })
     await tx.delete(studyDays).where(eq(studyDays.ownerId, from))
   },
-  // Who you are (F53): a new account takes the guest's look, photo and the name they typed (a
-  // look's placeholder name or Better Auth's "Anonymous" gives way to Google's). An account that
-  // already has a profile keeps it and only fills what it lacks.
-  async (tx, from, to) => {
+  // Who you are (F53). The account linked during "keep this" is newer than the guest: it takes the
+  // guest's look and photo, and the name they typed (a look's placeholder name or Better Auth's
+  // "Anonymous" gives way to Google's). An account that existed before keeps its name and the face
+  // it shows; it only gains a look or photo it didn't have. A guest photo nobody keeps is dropped.
+  async (tx, from, to, done) => {
     const mine = await tx.query.profiles.findFirst({ where: eq(profiles.userId, from) })
     if (!mine) return
-    const theirs = await tx.query.profiles.findFirst({ where: eq(profiles.userId, to) })
-    if (!theirs) {
-      await tx.update(profiles).set({ userId: to }).where(eq(profiles.userId, from))
-      const guest = await tx.query.user.findFirst({ where: eq(user.id, from) })
+    const [guest, account, theirs] = await Promise.all([
+      tx.query.user.findFirst({ where: eq(user.id, from) }),
+      tx.query.user.findFirst({ where: eq(user.id, to) }),
+      tx.query.profiles.findFirst({ where: eq(profiles.userId, to) }),
+    ])
+    const fresh = Boolean(guest && account && account.createdAt >= guest.createdAt)
+    const adoptPhoto = Boolean(mine.photoKey) && !theirs?.photoKey
+    const avatar =
+      fresh || (!theirs?.lookId && !theirs?.photoKey && !account?.image)
+        ? mine.avatar
+        : (theirs?.avatar ?? (account?.image ? ("google" as const) : mine.avatar))
+    await tx
+      .insert(profiles)
+      .values({
+        userId: to,
+        lookId: theirs?.lookId ?? mine.lookId,
+        bio: theirs?.bio ?? mine.bio,
+        photoKey: theirs?.photoKey ?? mine.photoKey,
+        avatar,
+        handle: theirs?.handle ?? null,
+      })
+      .onConflictDoUpdate({
+        target: profiles.userId,
+        set: {
+          lookId: sql`coalesce(${profiles.lookId}, ${mine.lookId})`,
+          bio: sql`coalesce(${profiles.bio}, ${mine.bio})`,
+          photoKey: sql`coalesce(${profiles.photoKey}, ${mine.photoKey})`,
+        },
+      })
+    await tx.delete(profiles).where(eq(profiles.userId, from))
+    if (mine.photoKey && !adoptPhoto) done.orphans.push(mine.photoKey)
+    if (fresh) {
       const typed = guest?.name.trim() ?? ""
       const placeholder =
         typed === "" || typed === "Anonymous" || LOOKS.some((look) => look.name === typed)
       if (!placeholder) await tx.update(user).set({ name: typed }).where(eq(user.id, to))
-      return
     }
-    const adoptPhoto = !theirs.photoKey && Boolean(mine.photoKey)
-    await tx
-      .update(profiles)
-      .set({
-        lookId: theirs.lookId ?? mine.lookId,
-        bio: theirs.bio ?? mine.bio,
-        ...(adoptPhoto ? { photoKey: mine.photoKey } : {}),
-        ...(!theirs.lookId && !theirs.photoKey ? { avatar: mine.avatar } : {}),
-      })
-      .where(eq(profiles.userId, to))
-    await tx.delete(profiles).where(eq(profiles.userId, from))
+  },
+  // Follows (F55): guests can't follow or be followed, so this is defensive: whatever is there
+  // moves, never as a follow of yourself.
+  async (tx, from, to) => {
+    await tx.execute(sql`
+      insert into follows (follower_id, followee_id, created_at)
+      select ${to}, followee_id, created_at from follows
+      where follower_id = ${from} and followee_id <> ${to}
+      on conflict do nothing`)
+    await tx.execute(sql`
+      insert into follows (follower_id, followee_id, created_at)
+      select follower_id, ${to}, created_at from follows
+      where followee_id = ${from} and follower_id <> ${to}
+      on conflict do nothing`)
+    await tx.delete(follows).where(or(eq(follows.followerId, from), eq(follows.followeeId, from)))
   },
   // The account signed into keeps its own settings if it has them.
   async (tx, from, to) => {
@@ -127,12 +165,18 @@ const movers: Array<(tx: Tx, fromUserId: string, toUserId: string) => Promise<un
  * Better Auth 1.7.8 skips its own guest cleanup when the Google account is brand new (the guest row survived a first-time sign-up), so the guest is deleted here too.
  * Only rows still flagged as guests are deleted; sessions cascade with the user.
  */
-export async function reownUserData(db: Db, fromUserId: string, toUserId: string): Promise<void> {
-  if (fromUserId === toUserId) return
+export async function reownUserData(
+  db: Db,
+  fromUserId: string,
+  toUserId: string,
+): Promise<MoveResult> {
+  const done: MoveResult = { orphans: [] }
+  if (fromUserId === toUserId) return done
   await db.transaction(async (tx) => {
-    for (const move of movers) await move(tx, fromUserId, toUserId)
+    for (const move of movers) await move(tx, fromUserId, toUserId, done)
     await tx.delete(user).where(and(eq(user.id, fromUserId), eq(user.isAnonymous, true)))
   })
+  return done
 }
 
 /** What deleting a person leaves outside Postgres: stored bytes, Zetaris evidence, watch tables. */
