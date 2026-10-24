@@ -16,4 +16,7 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
   && mkdir -p /data && chown -R node:node /data /repo
 ENV NODE_ENV=production KONKYO_ROOT=/data
 USER node
-CMD ["pnpm", "--filter", "@konkyo/worker", "start"]
+# Node itself is PID 1 (tsx compiles the TypeScript as it loads), so stop signals reach the
+# worker and running jobs are handed back cleanly.
+WORKDIR /repo/apps/worker
+CMD ["node", "--import", "tsx", "src/index.ts"]

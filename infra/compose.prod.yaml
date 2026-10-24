@@ -70,6 +70,7 @@ services:
     <<: *app-env
     build: { context: .., dockerfile: apps/worker/Dockerfile }
     image: konkyo-worker
+    working_dir: /repo
     command: ["pnpm", "db:migrate"]
     depends_on:
       postgres: { condition: service_healthy }
@@ -91,7 +92,7 @@ services:
       s3: { condition: service_healthy }
       gotenberg: { condition: service_healthy }
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3210/sign-in').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3210/api/health"]
       interval: 15s
       timeout: 5s
       retries: 10

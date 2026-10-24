@@ -16,6 +16,9 @@ ENV SKIP_ENV_VALIDATION=1 BETTER_AUTH_URL=$BETTER_AUTH_URL
 RUN pnpm --filter @konkyo/web build
 
 FROM node:22.23.3-bookworm-slim AS run
+# curl for the platform's HTTP health check (GET /api/health).
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+  && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production PORT=3210 HOSTNAME=0.0.0.0 NEXT_TELEMETRY_DISABLED=1 \
     KONKYO_ROOT=/data
 WORKDIR /app
@@ -26,4 +29,6 @@ COPY --from=build --chown=node:node /repo/apps/web/public ./apps/web/public
 RUN mkdir -p /data && chown node:node /data
 USER node
 EXPOSE 3210
+HEALTHCHECK --interval=15s --timeout=5s --start-period=30s --retries=5 \
+  CMD curl -fsS http://127.0.0.1:3210/api/health || exit 1
 CMD ["node", "apps/web/server.js"]
