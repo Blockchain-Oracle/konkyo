@@ -1,3 +1,4 @@
+import { resolveReach } from "@konkyo/db/access"
 import { checkQuotes, evidenceKey, presentDocuments, sqlHash } from "@konkyo/zetaris"
 import { generateText, Output, streamText } from "ai"
 import { z } from "zod"
@@ -90,6 +91,8 @@ export type AnswerInput = {
    * and nothing is written to the owner's World Model; every check runs as usual.
    */
   visitor?: boolean
+  /** Set when the files searched are exactly one space: its World Model learns too (S19). */
+  spaceId?: string
 }
 
 const MAX_ROUNDS = 2
@@ -681,6 +684,9 @@ function finalise(
 export async function answer(input: AnswerInput) {
   const runStarted = performance.now()
   const { tracer, emit } = input
+  // An ask over exactly one space also teaches that space's World Model (what its members see).
+  if (!input.visitor && input.spaceId === undefined)
+    input.spaceId = (await resolveReach(input.ownerId, input.scope)).spaceId
   const step = (id: string, label: string, state: "running" | "done" | "failed", detail?: string) =>
     emit({ type: "step", id, label, state, detail })
 

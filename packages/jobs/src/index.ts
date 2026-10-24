@@ -72,6 +72,8 @@ export const QUEUES = {
       tables: z.array(z.string()).optional(),
       accounts: z.array(z.string()).optional(),
       ownerId: z.string().optional(),
+      /** Spaces deleted for good: their shared World Models go too. */
+      spaceIds: z.array(z.uuid()).optional(),
     }),
     options: { retryLimit: 5, retryDelay: 60, retryBackoff: true, expireInSeconds: 10 * 60 },
     send: {},

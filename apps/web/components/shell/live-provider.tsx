@@ -62,6 +62,9 @@ function staleFor(event: SpaceMessage): QueryKey[] {
     case "space_trashed":
     case "space_restored":
       return [qk.spaces.all, ["folders"]]
+    case "take_added":
+    case "take_removed":
+      return [["takes", event.spaceId]]
     case "message_added":
     case "message_updated":
     case "message_removed":

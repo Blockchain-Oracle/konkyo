@@ -25,6 +25,7 @@ import {
   spaceEvents,
   spaceInvites,
   spacePins,
+  spaceTakes,
   studyCards,
   studyDays,
   studyItems,
@@ -152,6 +153,7 @@ const movers: Array<
   },
   (tx, from, to) =>
     tx.update(spaceInvites).set({ createdBy: to }).where(eq(spaceInvites.createdBy, from)),
+  (tx, from, to) => tx.update(spaceTakes).set({ authorId: to }).where(eq(spaceTakes.authorId, from)),
   // Follows (F55): guests can't follow or be followed, so this is defensive: whatever is there
   // moves, never as a follow of yourself.
   async (tx, from, to) => {

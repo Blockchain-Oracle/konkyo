@@ -13,7 +13,7 @@ import {
 } from "drizzle-orm/pg-core"
 import { user } from "./auth"
 import { chats } from "./chat"
-import { folders, owner } from "./library"
+import { files, folders, owner } from "./library"
 
 /** What happened in a space: the live stream replays these (S19) and catch me up reads them. */
 export type SpaceEventKind =
@@ -150,4 +150,32 @@ export const spaceInvites = pgTable(
     revokedAt: timestamp({ withTimezone: true }),
   },
   (t) => [uniqueIndex("space_invites_active_idx").on(t.spaceId).where(sql`${t.revokedAt} is null`)],
+)
+
+/**
+ * Takes (plan F56): a short thread per source in a shared space ("your take…"), each pinned to the
+ * passage or page it's about when there is one. The author edits or removes theirs; the space's
+ * owner removes anything.
+ */
+export const spaceTakes = pgTable(
+  "space_takes",
+  {
+    id: uuid().defaultRandom().primaryKey(),
+    spaceId: uuid()
+      .notNull()
+      .references(() => folders.id, { onDelete: "cascade" }),
+    fileId: uuid()
+      .notNull()
+      .references(() => files.id, { onDelete: "cascade" }),
+    authorId: text()
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    body: text().notNull(),
+    passageId: uuid(),
+    page: integer(),
+    createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+    editedAt: timestamp({ withTimezone: true }),
+    deletedAt: timestamp({ withTimezone: true }),
+  },
+  (t) => [index("space_takes_file_idx").on(t.spaceId, t.fileId, t.createdAt)],
 )

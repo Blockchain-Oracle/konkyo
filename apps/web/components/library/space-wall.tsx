@@ -22,6 +22,7 @@ import { usePins, useUnpin } from "@/lib/use-pins"
 import { FileStatus } from "./file-status"
 import { KIND_LABEL } from "./kind-icon"
 import { SourceFace } from "./source-face"
+import { TakesChip, useTakeCounts } from "./takes"
 
 const shortDate = (iso: string | Date) =>
   new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short" })
@@ -47,12 +48,16 @@ const PRINTS = new Set(["pdf", "docx", "pptx", "markdown", "text", "youtube", "v
 export function SpaceWall({
   spaceId,
   subfolders,
+  shared = false,
 }: {
   spaceId: string
   subfolders: { id: string; name: string; fileCount: number }[]
+  /** More than one person in it: sources say who added them and carry takes (F56). */
+  shared?: boolean
 }) {
   const { data: files } = useSpaceFiles(spaceId)
   const { data: pins } = usePins(spaceId)
+  const { data: takes } = useTakeCounts(spaceId)
   return (
     <div className="space-wall-frame">
       <WallTape />
@@ -65,8 +70,20 @@ export function SpaceWall({
           {files?.length ? (
             <ul className="space-masonry">
               {files.map((file) => (
-                <li key={file.id} data-file-id={file.id}>
+                <li key={file.id} data-file-id={file.id} className="wall-item">
                   <WallObject file={file} />
+                  {/* a member's source says whose it is; the owner's are the space's own */}
+                  {shared && !file.byOwner && file.mine === false && file.addedBy && (
+                    <span className="wall-by">by {file.addedBy.toLowerCase()}</span>
+                  )}
+                  {shared && file.status === "ready" && (
+                    <TakesChip
+                      spaceId={spaceId}
+                      fileId={file.id}
+                      title={file.title}
+                      count={takes?.[file.id] ?? 0}
+                    />
+                  )}
                 </li>
               ))}
             </ul>

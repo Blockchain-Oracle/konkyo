@@ -1,4 +1,4 @@
-import { deleteMemoryOf, deleteWorldOf } from "@konkyo/agents"
+import { deleteMemoryOf, deleteSpaceWorld, deleteWorldOf } from "@konkyo/agents"
 import { TRASH } from "@konkyo/config"
 import { removeAccount } from "@konkyo/connectors"
 import { db, schema } from "@konkyo/db"
@@ -20,12 +20,14 @@ export async function purgeFiles({
   tables = [],
   accounts = [],
   ownerId,
+  spaceIds = [],
 }: Payload<"purge">) {
   await Promise.all(keys.map((key) => deleteObject(key)))
   await Promise.all(fileIds.map((id) => unpublish(id)))
   await Promise.all(tables.map((table) => dropWatchTable(table)))
   await Promise.all(accounts.map((account) => removeAccount(account)))
   if (ownerId) await Promise.all([deleteMemoryOf(ownerId), deleteWorldOf(ownerId)])
+  await Promise.all(spaceIds.map((id) => deleteSpaceWorld(id)))
 }
 
 /** The daily sweep: anything in Trash longer than the keep period is deleted for good. */
@@ -35,7 +37,12 @@ export async function purgeExpired() {
     .delete(files)
     .where(lt(files.deletedAt, cutoff))
     .returning({ id: files.id, originalKey: files.originalKey, renditionKey: files.renditionKey })
-  await db.delete(folders).where(lt(folders.deletedAt, cutoff))
+  const spaces = await db
+    .delete(folders)
+    .where(lt(folders.deletedAt, cutoff))
+    .returning({ id: folders.id, parentId: folders.parentId })
+  // a space gone for good takes its shared World Model with it
+  await Promise.all(spaces.filter((f) => !f.parentId).map((f) => deleteSpaceWorld(f.id)))
   await db.delete(chats).where(lt(chats.deletedAt, cutoff))
   await purgeFiles({
     fileIds: gone.map((f) => f.id),

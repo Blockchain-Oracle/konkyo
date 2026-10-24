@@ -74,6 +74,10 @@ export async function listFiles(ownerId: string, folderId?: string, spaceId?: st
       // in a shared space: whose source it is (only they can change or delete it)
       mine: sql<boolean>`${files.ownerId} = ${ownerId}`,
       addedBy: user.name,
+      // added by the space's owner (the folders in a space are all its owner's)
+      byOwner: scoped
+        ? sql<boolean>`${files.ownerId} = (select owner_id from folders where id = ${folderId ?? spaceId})`
+        : sql<boolean>`true`,
     })
     .from(files)
     .leftJoin(firstFolder, eq(firstFolder.fileId, files.id))

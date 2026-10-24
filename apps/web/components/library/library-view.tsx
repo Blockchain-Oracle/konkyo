@@ -247,7 +247,7 @@ export function LibraryView({ folderId, space = false }: { folderId?: string; sp
             {space && spaceRow && (
               <InviteButton spaceId={spaceRow.id} name={spaceRow.name} role={spaceRow.role} />
             )}
-            {(!spaceRow || spaceRow.role !== "read") && (
+            {spaceRow?.role !== "read" && (
               <AddPicker folderId={folderId} name={here?.name ?? spaceRow?.name} />
             )}
             {here && (!spaceRow || spaceRow.role === "owner") && (
@@ -259,7 +259,11 @@ export function LibraryView({ folderId, space = false }: { folderId?: string; sp
 
       {!folderId && <SpaceShelf />}
       {view === "wall" && folderId ? (
-        <SpaceWall spaceId={folderId} subfolders={subfolders} />
+        <SpaceWall
+          spaceId={folderId}
+          subfolders={subfolders}
+          shared={(spaceRow?.people ?? 1) > 1}
+        />
       ) : (
         <div className="surface-paper paper-sheet min-h-[50vh]">
           {isPending ? (

@@ -86,16 +86,21 @@ const WORLD_DIR =
   path.resolve(process.env.KONKYO_ROOT ?? process.cwd(), ".data", "world")
 const cachedWorld = freshCache<WorldModel>("__konkyoWorld")
 
-/** One World Model per person, rebuilt when another process (web, worker) changed its file. */
-const namespaceOf = (ownerId: string) => `owner-${ownerId.replace(/[^A-Za-z0-9_-]/g, "")}`
-const worldFile = (ownerId: string) =>
-  path.join(WORLD_DIR, ".world", `${namespaceOf(ownerId)}.json`)
+/**
+ * Whose World Model: a person's (`owner-<id>`), or a space's (`space-<id>`, plan §16.9) that grows
+ * from everyone's asks in it. Each is rebuilt when another process (web, worker) changed its file.
+ */
+export type WorldKey = { owner: string } | { space: string }
+const clean = (id: string) => id.replace(/[^A-Za-z0-9_-]/g, "")
+const namespaceOf = (key: WorldKey) =>
+  "space" in key ? `space-${clean(key.space)}` : `owner-${clean(key.owner)}`
+const worldFile = (key: WorldKey) => path.join(WORLD_DIR, ".world", `${namespaceOf(key)}.json`)
 
-function worldFor(ownerId: string) {
-  const namespace = namespaceOf(ownerId)
+function worldFor(key: WorldKey) {
+  const namespace = namespaceOf(key)
   const world = cachedWorld(
     namespace,
-    worldFile(ownerId),
+    worldFile(key),
     () => new WorldModel({ namespace, storage: "local", directory: WORLD_DIR }),
   )
   return { world, namespace }
@@ -143,8 +148,8 @@ type ShapeRelation = {
  * take a position on, each source's stance with the quote it was read from, newest first. Read
  * from the rows the Analyst wrote, never a model. `fileIds` keeps only those sources (a space's).
  */
-export function knowsOf(ownerId: string, fileIds?: ReadonlySet<string>): KnownClaim[] {
-  const { world } = worldFor(ownerId)
+export function knowsOf(key: WorldKey, fileIds?: ReadonlySet<string>): KnownClaim[] {
+  const { world } = worldFor(key)
   const shape = world.stateShape() as { entities: ShapeEntity[]; relationships: ShapeRelation[] }
   const entities = new Map(shape.entities.map((e) => [e.id, e]))
   const claims = new Map<string, KnownClaim>()
@@ -181,7 +186,12 @@ export function knowsOf(ownerId: string, fileIds?: ReadonlySet<string>): KnownCl
 
 /** Deletes a person's World Model file (account deletion). */
 export async function deleteWorldOf(ownerId: string) {
-  await rm(worldFile(ownerId), { force: true })
+  await rm(worldFile({ owner: ownerId }), { force: true })
+}
+
+/** Deletes a space's World Model file (the space is gone for good). */
+export async function deleteSpaceWorld(spaceId: string) {
+  await rm(worldFile({ space: spaceId }), { force: true })
 }
 
 /**
@@ -189,12 +199,14 @@ export async function deleteWorldOf(ownerId: string) {
  * owner only in the filename, so moving is a rename; an account that already has one keeps its own.
  */
 export async function moveWorld(fromOwnerId: string, toOwnerId: string) {
-  const taken = await access(worldFile(toOwnerId)).then(
+  const from = worldFile({ owner: fromOwnerId })
+  const to = worldFile({ owner: toOwnerId })
+  const taken = await access(to).then(
     () => true,
     () => false,
   )
-  if (taken) await rm(worldFile(fromOwnerId), { force: true })
-  else await rename(worldFile(fromOwnerId), worldFile(toOwnerId)).catch(() => undefined)
+  if (taken) await rm(from, { force: true })
+  else await rename(from, to).catch(() => undefined)
 }
 
 function countsOf(claims: Matrix["claims"], sources: MatrixSource[]): Matrix["counts"] {
@@ -342,7 +354,13 @@ export async function analyse(
   }))
   const matrix = shape(verified, sources, "done")
 
-  const worldModel = input.visitor ? undefined : await recordInWorld(input, question, matrix)
+  // Your World Model always; a space's too when the ask covered exactly one space (its members
+  // see what everyone's asks found there).
+  const worldModel = input.visitor
+    ? undefined
+    : await recordInWorld(input, question, matrix, { owner: input.ownerId })
+  if (!input.visitor && input.spaceId)
+    await recordInWorld(input, question, matrix, { space: input.spaceId }).catch(() => undefined)
   onMatrix(matrix)
   return {
     matrix,
@@ -353,9 +371,9 @@ export async function analyse(
 }
 
 /** The World Model keeps every source's stance on every claim, with where it was read. */
-async function recordInWorld(input: AnswerInput, question: string, matrix: Matrix) {
+async function recordInWorld(input: AnswerInput, question: string, matrix: Matrix, key: WorldKey) {
   const { tracer } = input
-  const { world, namespace } = worldFor(input.ownerId)
+  const { world, namespace } = worldFor(key)
   const at = new Date()
   const by = (passageId?: string): Provenance => ({
     kind: "agent",

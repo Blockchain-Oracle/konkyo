@@ -99,7 +99,7 @@ export async function knows(ownerId: string, spaceId: string | null): Promise<Kn
 
   return {
     scope: { spaceId, name, hex, sources: fileIds.length },
-    claims: knowsOf(ownerId, new Set(kinds.keys()))
+    claims: claimsFor(ownerId, spaceId, new Set(kinds.keys()))
       .slice(0, MAX_CLAIMS)
       .map((c) => ({
         ...c,
@@ -116,6 +116,27 @@ export async function knows(ownerId: string, spaceId: string | null): Promise<Kn
     made,
     heldBack: held,
   }
+}
+
+/**
+ * Where the sources agree and disagree: your own World Model, and for a space also the space's
+ * (what everyone's asks there found), one claim per id with every source's stance.
+ */
+function claimsFor(ownerId: string, spaceId: string | null, fileIds: ReadonlySet<string>) {
+  const lists = [knowsOf({ owner: ownerId }, fileIds)]
+  if (spaceId) lists.push(knowsOf({ space: spaceId }, fileIds))
+  const merged = new Map<string, KnownClaim>()
+  for (const claim of lists.flat()) {
+    const known = merged.get(claim.id)
+    if (!known) {
+      merged.set(claim.id, { ...claim, cells: [...claim.cells] })
+      continue
+    }
+    if (claim.at > known.at) known.at = claim.at
+    for (const cell of claim.cells)
+      if (!known.cells.some((c) => c.fileId === cell.fileId)) known.cells.push(cell)
+  }
+  return [...merged.values()].sort((a, b) => b.at.localeCompare(a.at))
 }
 
 /**

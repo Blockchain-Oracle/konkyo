@@ -103,19 +103,26 @@ export async function deleteBatches(ownerId: string, batches: string[]) {
       .delete(files)
       .where(and(eq(files.ownerId, ownerId), inArray(files.trashBatch, batches)))
       .returning({ id: files.id, originalKey: files.originalKey, renditionKey: files.renditionKey })
-    await tx
+    const removedFolders = await tx
       .delete(folders)
       .where(and(eq(folders.ownerId, ownerId), inArray(folders.trashBatch, batches)))
+      .returning({ id: folders.id, parentId: folders.parentId })
     // Messages and runs go with their chat (cascade).
     await tx
       .delete(chats)
       .where(and(eq(chats.ownerId, ownerId), inArray(chats.trashBatch, batches)))
-    return removedFiles
+    return {
+      files: removedFiles,
+      spaceIds: removedFolders.filter((f) => !f.parentId).map((f) => f.id),
+    }
   })
-  if (gone.length) {
+  if (gone.files.length || gone.spaceIds.length) {
     await enqueue("purge", {
-      fileIds: gone.map((f) => f.id),
-      keys: gone.flatMap((f) => [f.originalKey, f.renditionKey].filter((k): k is string => !!k)),
+      fileIds: gone.files.map((f) => f.id),
+      keys: gone.files.flatMap((f) =>
+        [f.originalKey, f.renditionKey].filter((k): k is string => !!k),
+      ),
+      spaceIds: gone.spaceIds,
     })
   }
 }
