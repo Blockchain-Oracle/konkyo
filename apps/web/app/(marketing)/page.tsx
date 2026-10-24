@@ -1,15 +1,17 @@
 import { APP } from "@konkyo/config"
 import { env } from "@konkyo/env/server"
-import { Button } from "@konkyo/ui/components/button"
+import { readableInk } from "@konkyo/ui/lib/space"
 import type { Metadata } from "next"
-import Image from "next/image"
 import Link from "next/link"
 import { connection } from "next/server"
+import type { CSSProperties } from "react"
 import { Suspense } from "react"
 import { BrandMark } from "@/components/brand-mark"
+import { HeroBoard } from "@/components/landing/hero-board"
 import { LiveAnswer } from "@/components/landing/live-answer"
-import { ParticleField } from "@/components/landing/particle-field"
-import { RevealLines } from "@/components/landing/reveal"
+import { LiveCounts } from "@/components/landing/live-counts"
+import { type Vendor, VendorLogo } from "@/components/landing/vendor-logo"
+import { liveTotals } from "@/lib/landing"
 import { LibraryError } from "@/lib/library"
 import { openShare } from "@/lib/shares"
 
@@ -19,107 +21,122 @@ export const metadata: Metadata = {
     "A research library whose agents answer only from your sources, check every quote word for word, and show where your sources agree and where they don't.",
 }
 
-const JOBS = [
+const DOCS = APP.docs ?? "https://docs.konkyo.xyz"
+
+/** Who Konkyo is built on (plan F61), each with the docs section that shows the real use. */
+const MAKERS: { vendor: Vendor; body: string; href: string }[] = [
   {
-    id: "study",
-    label: "Study",
-    title: ["Learn it, then", "prove you know it"],
-    body: "Quiz yourself from your own lectures and readings. Every answer key is checked against its passage, hints never give the answer away, and spaced repetition brings back what you're about to forget.",
-    frame: "max-w-[46rem]",
-    image: {
-      src: "/landing/study.jpg",
-      width: 1420,
-      height: 1000,
-      alt: "A true-or-false item from a lecture, answered wrong: an amber “Not quite. Try again.” with a hint that doesn't give the answer away.",
-    },
+    vendor: "zetaris",
+    body: "Checks every quote word for word against its own reading of the source.",
+    href: `${DOCS}/sponsor-tech#zetaris-the-evidence-store-every-claim-is-checked-against`,
   },
   {
-    id: "research",
-    label: "Research",
-    title: ["See where your", "sources disagree"],
-    body: "Ask across all your papers at once. The Analyst lines up each claim against each source (agrees, disagrees, partly) with the quote that shows it. When your library runs out, deep search finds and reads new papers.",
-    frame: "max-w-[66rem]",
-    image: {
-      src: "/landing/research.jpg",
-      width: 2160,
-      height: 1350,
-      alt: "An answer comparing three sleep papers, with verified citations and an agree/disagree table of four claims across the three sources.",
-    },
+    vendor: "meterless",
+    body: "Remembers your corrections and which source said what.",
+    href: `${DOCS}/sponsor-tech#meterless-memory-world-state-and-long-tasks`,
   },
   {
-    id: "write",
-    label: "Write",
-    title: ["Cite while", "you write"],
-    body: "Select a sentence and find the passage that supports it. Check my draft marks what your sources back, contradict, or don't cover at all. Export to Word in any citation style.",
-    frame: "max-w-[80rem]",
-    image: {
-      src: "/landing/write.jpg",
-      width: 2340,
-      height: 1000,
-      alt: "A note checked against its sources: two claims supported, and one, that older adults gain as much from sleep, contradicted.",
-    },
+    vendor: "openai",
+    body: "The models that plan, write, check and make your practice.",
+    href: `${DOCS}/sponsor-tech#openai-the-models-that-plan-write-check-and-teach`,
+  },
+  {
+    vendor: "elevenlabs",
+    body: "Transcribes your lectures and reads your audio briefs aloud.",
+    href: `${DOCS}/sponsor-tech#elevenlabs-listening-and-speaking`,
+  },
+  {
+    vendor: "composio",
+    body: "Brings in what's waiting in Gmail, Drive and Notion.",
+    href: `${DOCS}/sponsor-tech#composio-gmail-google-drive-and-notion`,
+  },
+  {
+    vendor: "openalex",
+    body: "Open papers for deep search when your library runs out.",
+    href: `${DOCS}/sponsor-tech#openalex-open-papers`,
   },
 ]
 
-const BUILT_ON = [
+const AGENTS = [
+  ["Planner", "Turns your question into one to three searches, reading your corrections first."],
+  ["Retriever", "Searches your sources by meaning and by words at once, and merges the two."],
+  ["Writer", "Drafts the answer one finding per sentence, each with its quote."],
+  [
+    "Verifier",
+    "Finds every quote in Zetaris in one statement; a sentence that fails is rewritten.",
+  ],
+  ["Analyst", "Lines each claim up against each source: agrees, disagrees or partly."],
+  ["Tutor", "Makes practice whose answer keys are checked against their passages."],
+] as const
+
+/** What it does, only what is built (plan §16.8, section 5). */
+const WAYS = [
   {
-    name: "Zetaris",
-    body: "The evidence store. Every quote is checked in one SQL statement against Zetaris's own reading of the source; without it, nothing is marked verified.",
+    mark: "1",
+    color: "var(--color-lime)",
+    title: "Ask, and see the passage.",
+    body: "Every sentence of an answer carries its citation. Click one and the page opens with the passage highlighted.",
+    note: "PDFs, Word, slides, web pages, YouTube and recordings",
   },
   {
-    name: "Meterless",
-    body: "Memory and world state: H-MEM keeps your corrections, the World Model keeps which source said what, and Markovian keeps deep search lean.",
+    mark: "2",
+    color: "var(--color-teal)",
+    title: "Every quote, checked word for word.",
+    body: "Before you see an answer, each quote is found in its source. A sentence that doesn't hold up is rewritten or dropped, and the receipt says so.",
   },
   {
-    name: "OpenAI",
-    body: "The models that plan, write, verify and compare, each chosen by a measured benchmark for its role.",
+    mark: "3",
+    color: "var(--color-pink)",
+    title: "See where sources disagree.",
+    body: "Ask across papers and each claim is lined up against each source, with the quote that shows where it agrees, disagrees or only partly does.",
+  },
+  {
+    mark: "4",
+    color: "var(--color-butter)",
+    title: "Learn it, then prove it.",
+    body: "Practice made from your own lectures and readings: recall, fix the false statement, find the evidence. A review each day brings back what you're about to forget.",
+  },
+  {
+    mark: "5",
+    color: "var(--color-cobalt)",
+    title: "Write with your grounds.",
+    body: "Check my draft marks what your sources back, contradict or don't cover. Export to Word in any citation style.",
   },
 ]
 
-function Header() {
-  return (
-    <header className="fixed inset-x-0 top-0 z-30">
-      <div className="mx-auto flex h-16 max-w-[90rem] items-center gap-6 px-5 sm:px-10">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-nav-label font-semibold text-bone-white uppercase"
-        >
-          <BrandMark small className="size-5" />
-          {APP.name}
-        </Link>
-        <nav aria-label="Sections" className="hidden items-center gap-6 md:flex">
-          {[
-            ["#answer", "Live answer"],
-            ["#study", "Study"],
-            ["#research", "Research"],
-            ["#write", "Write"],
-          ].map(([href, label]) => (
-            <a
-              key={href}
-              href={href}
-              className="text-nav-label text-silver-mist uppercase transition-colors hover:text-bone-white"
-            >
-              {label}
-            </a>
-          ))}
-        </nav>
-        <div className="ml-auto flex items-center gap-2">
-          <Button
-            variant="ghost"
-            className="px-4"
-            nativeButton={false}
-            render={<Link href="/sign-in" />}
-          >
-            Sign in
-          </Button>
-          <Button className="px-4" nativeButton={false} render={<Link href="/sign-in" />}>
-            Start free
-          </Button>
-        </div>
-      </div>
-    </header>
-  )
-}
+/** "Every kind of reader": each opens a space template (plan F45). */
+const READERS = [
+  {
+    name: "students",
+    color: "#7853ff",
+    image: "/landing/students.webp",
+    detail: "Exam prep: practice from your lectures and a review each day.",
+  },
+  {
+    name: "essay writers",
+    color: "#e9369d",
+    image: "/landing/writers.webp",
+    detail: "An essay or IA: your sources, your draft, and Check my draft.",
+  },
+  {
+    name: "researchers",
+    color: "#3f70ff",
+    image: "/landing/researchers.webp",
+    detail: "A literature review: deep search and where the papers disagree.",
+  },
+  {
+    name: "reading groups",
+    color: "#13b8a6",
+    image: "/landing/reading-groups.webp",
+    detail: "The week's papers in one space, with an audio brief to listen to.",
+  },
+  {
+    name: "professionals",
+    color: "#ff7c42",
+    image: "/landing/professionals.webp",
+    detail: "Reports from Gmail, Drive and Notion, every quote checked.",
+  },
+]
 
 async function demoShare() {
   const slug = env.DEMO_SHARE_SLUG
@@ -132,216 +149,270 @@ async function demoShare() {
   }
 }
 
-/** The live answer, when this server has a demo folder; otherwise the section says where to look. */
+/** The live answer, when this server has a demo space; otherwise the section says where to look. */
 async function LiveDemo() {
-  // At request time: the demo folder is configured per server, and the build has no .env.
+  // At request time: the demo space is configured per server, and the build has no .env.
   await connection()
   const demo = await demoShare()
   if (!demo)
     return (
-      <p className="rounded-card border border-border bg-black/70 p-6 text-body font-extralight text-silver-mist">
-        The live demo isn't set up on this server. The recorded examples in the repository show real
-        runs, quote checks and traces.
+      <p className="p-6 text-body text-ash-gray">
+        The live demo isn't set up on this server. The docs walk through a real answer, its quote
+        checks and its trace.
       </p>
     )
   return <LiveAnswer slug={demo.slug} share={demo.share} />
 }
 
+/** Real totals across Konkyo (cached for a minute), at request time. */
+async function LiveTotals() {
+  await connection()
+  return <LiveCounts totals={await liveTotals()} />
+}
+
+function Brand() {
+  return (
+    <Link href="/" className="about-brand" aria-label={`${APP.name} home`}>
+      <BrandMark small className="size-[30px]" />
+      <span>{APP.name.toLowerCase()}</span>
+    </Link>
+  )
+}
+
 /**
- * The landing page (plan §8), after Dala's live site: one particle field that becomes a brain, a
- * swarm, an open book and the Konkyo mark as you scroll; headlines revealed line by line.
+ * The landing page (plan §16.8): OurSpaces' about page (About.tsx, MIT), told with Konkyo's own
+ * story and real data: the hero board is the public sample space, the counters are live, the
+ * partners link to the docs that show their use, and the demo asks three real papers.
  */
 export default function LandingPage() {
   return (
-    <div className="relative isolate overflow-x-clip">
-      <ParticleField />
-      <Header />
+    <div className="about-page">
+      <header className="about-wrap about-bar">
+        <Brand />
+        <nav aria-label="Account" className="about-bar-links">
+          <a href={DOCS} className="about-back">
+            docs
+          </a>
+          <Link href="/sign-in" className="about-back">
+            sign in <span aria-hidden>→</span>
+          </Link>
+        </nav>
+      </header>
 
       <main>
-        {/* 1. A brain. */}
-        <section
-          data-stage="0"
-          data-dim="1"
-          className="mx-auto flex min-h-svh max-w-[90rem] flex-col justify-center px-5 pt-24 pb-16 sm:px-10"
-        >
-          <p className="text-micro text-saffron-spark uppercase">
-            A research library that checks itself
-          </p>
-          <RevealLines
-            as="h1"
-            immediate
-            lines={["Every answer", "shows its", "grounds."]}
-            className="mt-6 text-heading font-normal text-bone-white sm:text-heading-lg xl:text-display"
-          />
-          <p className="mt-8 max-w-[34rem] text-body font-extralight text-pretty text-bone-white">
-            Konkyo reads your papers, lectures and notes. Ask it anything: its agents answer only
-            from your sources, check every quote word for word, and show you where the sources agree
-            and where they don't.
-          </p>
-          <div className="mt-10 flex flex-wrap items-center gap-3">
-            <Button
-              size="lg"
-              className="h-11 px-6"
-              nativeButton={false}
-              render={<Link href="/sign-in" />}
-            >
-              Start free
-            </Button>
-            <Button
-              size="lg"
-              variant="ghost"
-              className="h-11 px-5"
-              nativeButton={false}
-              render={<a href="#answer" />}
-            >
-              See a checked answer
-            </Button>
+        <section className="about-wrap about-hero">
+          <div className="about-hero-copy">
+            <p className="about-intro">a library that checks itself.</p>
+            <h1>
+              Your sources.
+              <br />
+              Your questions.
+              <br />
+              <span>Your grounds.</span>
+            </h1>
+            <p className="about-lede">
+              Papers, lectures, notes. Ask anything, and every answer shows{" "}
+              <em>the exact passage it came from</em>, checked word for word before you see it.
+            </p>
+            <div className="about-hero-actions">
+              <Link href="/sign-in" className="about-button is-lime">
+                step into the library <span aria-hidden>↗</span>
+              </Link>
+              <a href="#ask" className="about-text-button">
+                ask three real papers <span aria-hidden>↓</span>
+              </a>
+            </div>
+            <p className="about-invitation">
+              No account needed: walk in as a guest, and keep it later with Google.
+            </p>
+          </div>
+          <HeroBoard />
+        </section>
+
+        <section className="about-wrap about-made" aria-labelledby="made-title">
+          <div className="about-section-heading">
+            <h2 id="made-title">
+              A little help
+              <br />
+              behind the <span>scenes.</span>
+            </h2>
+            <p>Six partners' tools each do a real job in Konkyo. Follow any of them in the docs.</p>
+          </div>
+          <ul className="about-makers">
+            {MAKERS.map((m) => (
+              <li key={m.vendor}>
+                <a href={m.href} className="about-maker-link">
+                  <VendorLogo vendor={m.vendor} />
+                  <p>{m.body}</p>
+                  <small>
+                    see how it works <span aria-hidden>↗</span>
+                  </small>
+                </a>
+              </li>
+            ))}
+          </ul>
+          <details className="about-under-hood">
+            <summary>
+              For the curious: under the hood <span aria-hidden>+</span>
+            </summary>
+            <div className="about-tech">
+              <p>
+                Konkyo is a Next.js app with a background worker, Postgres with pgvector, and object
+                storage, on one Coolify server. Each answer passes through six agents, and the
+                receipt under it shows what each did.
+              </p>
+              <dl>
+                {AGENTS.map(([name, does]) => (
+                  <div key={name}>
+                    <dt>{name}</dt>
+                    <dd>{does}</dd>
+                  </div>
+                ))}
+              </dl>
+              <a href={`${DOCS}/how-answers-are-checked`}>read how an answer is checked ↗</a>
+            </div>
+          </details>
+        </section>
+
+        <div className="about-wrap about-live">
+          <span className="about-live-label">
+            <i aria-hidden /> across konkyo, right now
+          </span>
+          <Suspense fallback={<dl aria-hidden className="about-live-pending" />}>
+            <LiveTotals />
+          </Suspense>
+        </div>
+
+        <section className="about-wrap about-how" aria-labelledby="how-title">
+          <div className="about-how-heading">
+            <h2 id="how-title">
+              Good answers
+              <br />
+              get lost in
+              <br />
+              <span>the tabs.</span>
+            </h2>
+            <p>
+              Papers in one app, notes in another, a chatbot in a third, and citations nobody opens.
+              Konkyo keeps your sources in one place and checks every answer against them.
+            </p>
+            <img src="/stickers/magnifier.webp" alt="" width={158} height={158} />
+          </div>
+          <div className="about-ways">
+            {WAYS.map((w) => (
+              <article key={w.mark}>
+                <span
+                  className="about-way-mark"
+                  style={{ "--way-color": w.color } as CSSProperties}
+                  aria-hidden
+                >
+                  {w.mark}
+                </span>
+                <div>
+                  <h3>{w.title}</h3>
+                  <p>{w.body}</p>
+                  {w.note && <small className="about-way-note">{w.note}</small>}
+                </div>
+              </article>
+            ))}
           </div>
         </section>
 
-        {/* 2. The swarm: the problem. */}
-        <section
-          data-stage="1"
-          data-dim="0.55"
-          className="mx-auto flex min-h-[90svh] max-w-[64rem] flex-col items-center justify-center px-5 py-24 text-center sm:px-10"
-        >
-          <p className="text-micro text-saffron-spark uppercase">Why it checks</p>
-          <RevealLines
-            lines={["Only 23 of 319", "knowledge workers", "checked the sources", "AI gave them."]}
-            className="mt-6 text-heading-sm font-normal text-bone-white sm:text-heading lg:text-heading-lg"
-          />
-          <p className="mt-8 max-w-[38rem] text-body font-extralight text-pretty text-bone-white">
-            Citations make an answer look trustworthy whether or not anyone opens them. So Konkyo
-            opens every one for you: each quote is found, word for word, in its source before you
-            see the answer.
-          </p>
-          <a
-            href="https://doi.org/10.1145/3706598.3713778"
-            className="mt-5 text-meta text-ash-gray underline-offset-4 hover:text-silver-mist hover:underline"
-          >
-            Lee et al., CHI 2025
-          </a>
-        </section>
-
-        {/* 3. A live checked answer; the swarm dims behind it. */}
-        <section
-          id="answer"
-          data-stage="1"
-          data-dim="0.22"
-          className="mx-auto max-w-[56rem] scroll-mt-16 px-5 py-24 sm:px-10"
-        >
-          <p className="text-micro text-saffron-spark uppercase">Try it, live</p>
-          <RevealLines
-            lines={["Ask three", "real papers"]}
-            className="mt-6 text-heading-sm font-normal text-bone-white sm:text-heading"
-          />
-          <p className="mt-6 max-w-[38rem] text-body font-extralight text-pretty text-bone-white">
-            A real shared folder of open-access papers. Ask anything, watch each quote get checked,
-            then click a citation to see the passage it came from.
-          </p>
-          <div className="mt-10">
-            <Suspense
-              fallback={<div className="h-56 rounded-card border border-border bg-black/70" />}
-            >
+        <section id="ask" className="about-wrap about-ask" aria-labelledby="ask-title">
+          <div className="about-section-heading">
+            <h2 id="ask-title">
+              Ask three
+              <br />
+              real <span>papers.</span>
+            </h2>
+            <p>
+              A real shared space of open-access papers on sleep. Ask anything, watch each quote get
+              checked, then click a citation to see its passage.
+            </p>
+          </div>
+          <div className="surface-paper paper-sheet about-ask-sheet">
+            <Suspense fallback={<div className="h-56" />}>
               <LiveDemo />
             </Suspense>
           </div>
         </section>
 
-        {/* 4. The book: what it's for. */}
-        <div data-stage="2" data-dim="0.5">
-          {JOBS.map((job) => (
-            <section
-              key={job.id}
-              id={job.id}
-              className="mx-auto grid max-w-[90rem] scroll-mt-16 gap-8 px-5 py-20 sm:px-10 lg:grid-cols-2 lg:gap-16 lg:py-28"
-            >
-              <RevealLines
-                lines={job.title}
-                className="text-heading-sm font-normal text-bone-white sm:text-heading lg:text-heading-lg"
-              />
-              <div className="lg:pt-4">
-                <p className="text-micro text-saffron-spark uppercase">{job.label}</p>
-                <p className="mt-4 max-w-[34rem] text-body font-extralight text-pretty text-bone-white">
-                  {job.body}
-                </p>
-              </div>
-              {/* A real screen from the product, captured from the sample library. */}
-              <Image
-                src={job.image.src}
-                width={job.image.width}
-                height={job.image.height}
-                alt={job.image.alt}
-                sizes="(min-width: 1440px) 1360px, 100vw"
-                className={`w-full justify-self-center rounded-card border border-line-strong lg:col-span-2 ${job.frame}`}
-              />
-            </section>
-          ))}
+        <section className="about-wrap about-rooms" aria-labelledby="readers-title">
+          <div className="about-section-heading">
+            <h2 id="readers-title">
+              Every kind
+              <br />
+              of <span>reader.</span>
+            </h2>
+            <p>Start from a space made for how you work; each comes with the right pieces.</p>
+          </div>
+          <div className="about-room-list">
+            {READERS.map((r) => (
+              <Link
+                key={r.name}
+                href="/sign-in"
+                className="about-room"
+                style={
+                  { "--room-color": r.color, "--room-ink": readableInk(r.color) } as CSSProperties
+                }
+              >
+                <span className="about-room-picture">
+                  <img src={r.image} alt="" width={120} height={120} />
+                </span>
+                <span className="about-room-name">{r.name}</span>
+                <span className="about-room-detail">{r.detail}</span>
+                <span className="about-room-arrow" aria-hidden>
+                  ↗
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
 
-          {/* 5. Built on. */}
-          <section className="mx-auto max-w-[90rem] px-5 py-20 sm:px-10 lg:py-28">
-            <p className="text-micro text-saffron-spark uppercase">Built on</p>
-            <ul className="mt-8 grid gap-px overflow-hidden rounded-card border border-border bg-border md:grid-cols-3">
-              {BUILT_ON.map((b) => (
-                <li key={b.name} className="bg-black/80 p-7 backdrop-blur-sm">
-                  <p className="text-heading-2xs text-bone-white">{b.name}</p>
-                  <p className="mt-3 text-reading font-extralight text-pretty text-silver-mist">
-                    {b.body}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          </section>
-        </div>
-
-        {/* 6. The Konkyo mark. */}
-        <section
-          data-stage="3"
-          data-dim="1"
-          className="mx-auto flex min-h-svh max-w-[64rem] flex-col items-center justify-end px-5 pb-[18svh] text-center sm:px-10"
-        >
-          <RevealLines
-            lines={["Start with your", "own sources."]}
-            className="text-heading-sm font-normal text-bone-white sm:text-heading lg:text-heading-lg"
-          />
-          <Button
-            size="lg"
-            className="mt-10 h-11 px-6"
-            nativeButton={false}
-            render={<Link href="/sign-in" />}
-          >
-            Start free
-          </Button>
-          <p className="mt-4 text-snippet text-ash-gray">
-            Free. Sign in with Google, or try it as a guest.
-          </p>
+        <section className="about-story" aria-labelledby="story-title">
+          <div className="about-wrap about-story-inner">
+            <div>
+              <span className="about-sticker">why it checks</span>
+              <h2 id="story-title">“Only 23 of 319 checked the sources.”</h2>
+            </div>
+            <div className="about-story-copy">
+              <p>
+                In a survey of 319 knowledge workers using AI at work, only 23 checked the sources
+                it referenced (
+                <a href="https://doi.org/10.1145/3706598.3713778">Lee et al., CHI 2025</a>). Another
+                study found citations raised trust in an answer even when they were random (
+                <a href="https://ojs.aaai.org/index.php/AAAI/article/view/34550">
+                  Ding et al., AAAI 2025
+                </a>
+                ).
+              </p>
+              <p>
+                A citation only helps if someone opens it. So Konkyo opens every one for you, and
+                shows you what it found.
+              </p>
+              <p className="about-signature">
+                every quote, checked <span aria-hidden>✓</span>
+              </p>
+            </div>
+          </div>
         </section>
       </main>
 
-      <footer className="border-t border-border">
-        <div className="mx-auto flex max-w-[90rem] flex-wrap items-center gap-x-6 gap-y-3 px-5 py-8 text-meta text-ash-gray sm:px-10">
-          <span className="inline-flex items-center gap-2 text-bone-white">
-            <BrandMark small className="size-4" />
-            {APP.name}
-          </span>
+      <footer className="about-wrap about-footer">
+        <div className="about-footer-invite">
+          <h2>There's room for you.</h2>
+          <Link href="/sign-in" className="about-button is-lime">
+            come on in <span aria-hidden>↗</span>
+          </Link>
+        </div>
+        <div className="about-footer-meta">
+          <Brand />
           <span>Built for the Open Agent Hackathon 2026</span>
-          <nav aria-label="Footer" className="ml-auto flex gap-5">
-            {APP.docs && (
-              <a href={APP.docs} className="hover:text-silver-mist">
-                Docs
-              </a>
-            )}
-            {APP.repository && (
-              <a href={APP.repository} className="hover:text-silver-mist">
-                GitHub
-              </a>
-            )}
-            <Link href="/privacy" className="hover:text-silver-mist">
-              Privacy
-            </Link>
-            <Link href="/terms" className="hover:text-silver-mist">
-              Terms
-            </Link>
+          <nav aria-label="Footer" className="about-footer-links">
+            <a href={DOCS}>docs</a>
+            {APP.repository && <a href={APP.repository}>code</a>}
+            <Link href="/privacy">privacy</Link>
+            <Link href="/terms">terms</Link>
           </nav>
         </div>
       </footer>

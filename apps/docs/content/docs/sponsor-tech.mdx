@@ -1,6 +1,6 @@
 ---
-title: Zetaris and Meterless
-description: Where the sponsor technology sits, and why Konkyo doesn't work without it.
+title: What Konkyo is built on
+description: Where Zetaris, Meterless, OpenAI, ElevenLabs, Composio and OpenAlex sit, and what each one does.
 ---
 
 ## Zetaris: the evidence store every claim is checked against
@@ -31,3 +31,33 @@ The engines are vendored unchanged (Apache-2.0) in `packages/meterless` and driv
   `supports` / `contradicts` / `qualifies` relations, each with the passage it was read from.
 - **Markovian** (`scout.ts`): deep search screens what it found in bounded steps that carry only
   the shortlist forward; its estimate of tokens saved is shown and logged.
+
+## OpenAI: the models that plan, write, check and teach
+
+Every agent runs on an OpenAI model chosen for its role by a measured cost and quality benchmark
+(the table is in [The agents and their trace](/agents-and-traces)). Embeddings for search are
+`text-embedding-3-small`. Each role has a fallback model, and the switch is logged.
+
+## ElevenLabs: listening and speaking
+
+- **Recordings and lectures** are transcribed with Scribe (`scribe_v2`), word timings kept, so a
+  citation can play the moment it quotes. (`packages/ingest/src/transcript.ts`)
+- **Audio briefs**: two voices talk a folder through in one Text-to-Dialogue request
+  (`eleven_v3`); every quote they read was checked first. (`packages/ingest/src/dialogue.ts`)
+- **Study sounds** (right, try again, hint, round done, day seven) were made once with its sound
+  effects model and ship as small files.
+
+## Composio: Gmail, Google Drive and Notion
+
+Connectors run through Composio: each person links their own account, and every tool call is
+pinned to a measured toolkit version. Attachments, documents and pages import through the same
+pipeline as an upload. (`packages/connectors/src/index.ts`)
+
+## OpenAlex: open papers
+
+- **Deep search** looks up open-access papers on OpenAlex when your library runs out.
+  (`packages/agents/src/scout.ts`)
+- **Citation records**: a DOI or title is matched on OpenAlex for authors, venue and licence.
+  (`packages/ingest/src/metadata.ts`)
+- **Topic watches** are Zetaris `REST` tables over the OpenAlex API (see Zetaris above).
+

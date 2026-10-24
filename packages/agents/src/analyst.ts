@@ -67,6 +67,14 @@ const AnalystSchema = z.object({
     .max(6),
 })
 
+/**
+ * How long each Analyst model gets. The primary usually answers in 10–17 s for ~4k tokens in and
+ * ~900 out, but OpenAI's slow tail reached 88 s and 127 s for the same work (traces, 17 and 19
+ * Oct), and the receipt waits for the comparison. Past its budget the fast fallback takes over;
+ * past that, the answer lands without a comparison (the step shows failed).
+ */
+const ANALYST_BUDGET_MS = { primary: 25_000, fallback: 20_000 }
+
 const ANALYST_INSTRUCTIONS = `You are the Analyst in a research assistant. You compare what the user's sources say about the question.
 List 3-6 SPECIFIC claims (one finding, number, mechanism or condition each; never one broad summary) that two or more DIFFERENT sources (different titles) take a position on. Include the main points they agree on and every point where they differ or one qualifies another.
 For each passage that addresses a claim: "agrees" if it states the claim, "disagrees" if it states the opposite or a conflicting value, "partly" if it supports it only with a limit or condition. Skip passages that don't address it.
@@ -151,7 +159,7 @@ export async function analyse(
 ): Promise<Analysis | null> {
   const { tracer } = input
   const started = performance.now()
-  const call = (c: ModelChoice) =>
+  const call = (c: ModelChoice, budgetMs: number) =>
     generateText({
       model: model(c),
       providerOptions: reasoning(c),
@@ -160,12 +168,16 @@ export async function analyse(
       prompt: `Passages:\n${sources
         .map((s) => `[${s.label}] (${s.title})\n${s.text}`)
         .join("\n\n")}\n\nQuestion: ${question}`,
-      abortSignal: input.abortSignal,
+      // A stopped run aborts it; so does its time budget (a TimeoutError, which falls back).
+      abortSignal: AbortSignal.any([
+        AbortSignal.timeout(budgetMs),
+        ...(input.abortSignal ? [input.abortSignal] : []),
+      ]),
     })
   let choice: ModelChoice = MODELS.analyst.primary
   let result: Awaited<ReturnType<typeof call>>
   try {
-    result = await call(choice)
+    result = await call(choice, ANALYST_BUDGET_MS.primary)
   } catch (error) {
     if (noFallback(error)) throw error
     choice = MODELS.analyst.fallback
@@ -176,7 +188,7 @@ export async function analyse(
       model: choice.id,
       detail: { reason: (error as Error).message.slice(0, 300) },
     })
-    result = await call(choice)
+    result = await call(choice, ANALYST_BUDGET_MS.fallback)
   }
 
   // Code check: a cell stays only if its quote is in the passage it names.
