@@ -50,7 +50,8 @@ function staleFor(event: SpaceMessage): QueryKey[] {
       return [qk.files.all, qk.spaces.all, ["catchup"], ["folders"]]
     case "pin_added":
     case "pin_removed":
-      return [qk.spaces.pins(event.spaceId), ["catchup"]]
+      // a pin from the space chat marks its message too
+      return [qk.spaces.pins(event.spaceId), ["space-messages", event.spaceId], ["catchup"]]
     case "member_joined":
     case "role_changed":
       return [qk.spaces.members(event.spaceId), qk.spaces.list()]
@@ -113,6 +114,15 @@ export function LiveProvider({ children }: { children: React.ReactNode }) {
       }
       if (event.subjectId === meId && event.kind === "role_changed")
         toast("Your role in a space changed")
+    })
+    // Konkyo's answer in a space chat moved a step: its thread refetches
+    source.addEventListener("signal", (e) => {
+      const signal = JSON.parse((e as MessageEvent).data) as { topic: string; kind: string }
+      if (signal.kind === "answer_progress" && signal.topic.startsWith("space:")) {
+        const key = ["space-messages", signal.topic.slice(6)]
+        stale.current.set(JSON.stringify(key), key)
+        flush.current ??= setTimeout(refresh, 300)
+      }
     })
     source.addEventListener("presence", (e) => {
       const { spaceId, people } = JSON.parse((e as MessageEvent).data) as {

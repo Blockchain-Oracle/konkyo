@@ -15,10 +15,15 @@ const DAY_MS = 86_400_000
 const RULES = {
   questions: {
     label: "Questions",
-    about: "Every chat answer and deep search counts.",
+    about: "Every chat answer, deep search and @konkyo in a space counts.",
     limit: (guest: boolean) => (guest ? LIMITS.guestAnswersPerDay : LIMITS.answersPerDay),
     rows: (ownerId: string, since: string) =>
-      sql`select created_at from runs where owner_id = ${ownerId} and created_at >= ${since}::timestamptz`,
+      sql`select created_at from (
+        select created_at from runs where owner_id = ${ownerId} and created_at >= ${since}::timestamptz
+        union all
+        select created_at from space_messages
+         where asker_id = ${ownerId} and kind = 'answer' and created_at >= ${since}::timestamptz
+      ) asked`,
     reached: (guest: boolean, limit: number) =>
       guest
         ? `Guests can ask ${limit} questions a day. Continue with Google to keep going.`

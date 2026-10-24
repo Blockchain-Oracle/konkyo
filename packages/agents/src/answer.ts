@@ -711,7 +711,11 @@ export async function answer(input: AnswerInput) {
   const planned = await plan(input, memories)
   step("plan", "Planning", "done", planned.standalone)
 
-  const searching = input.visitor ? "Searching this folder" : "Searching your library"
+  const searching = input.visitor
+    ? "Searching this folder"
+    : input.spaceId
+      ? "Searching this space"
+      : "Searching your library"
   step("search", searching, "running")
   const searchStarted = performance.now()
   // A comparison needs every source heard: fetch wider, then keep at most 3 passages per file

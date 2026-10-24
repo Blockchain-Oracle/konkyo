@@ -2436,3 +2436,152 @@ label.setting-text {
 .takes-form .invite-copy-button {
   flex: 0 0 auto;
 }
+
+/* ---- Konkyo: the space chat's asks and Konkyo's answer card (F56) ---- */
+.space-chat {
+  z-index: 66;
+}
+
+.thread-message.is-ask p {
+  color: white;
+}
+
+.space-chat-at {
+  border-radius: 999px;
+  background: var(--color-lime);
+  color: var(--color-sticker);
+  padding: 1px 6px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.thread-composer .space-chat-at-button {
+  width: 26px;
+  height: 26px;
+  margin-left: -8px;
+  background: var(--color-lime);
+  font-family: var(--font-display);
+  font-size: 14px;
+}
+
+.thread-composer button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.space-chat-answer {
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 10px 12px 12px;
+}
+
+.space-chat-answer .thread-message-author strong {
+  color: white;
+}
+
+.space-chat-mark {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-sticker);
+  box-shadow: 0 0 0 1.5px var(--color-lime);
+}
+
+.space-chat-steps {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.space-chat-steps ul {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.space-chat-steps li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.space-chat-steps li i {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.space-chat-steps li.is-running i {
+  background: var(--color-lime);
+  animation: gate-live-dot 1.2s ease-in-out infinite;
+}
+
+.space-chat-steps li.is-done {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.space-chat-steps li.is-done i {
+  background: var(--color-lime);
+}
+
+.space-chat-steps li.is-failed i {
+  background: #ff6b5e;
+}
+
+.space-chat-steps button,
+.space-chat-foot button {
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  background: transparent;
+  color: white;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.space-chat-steps button:hover,
+.space-chat-foot button:hover {
+  border-color: var(--color-lime);
+  color: var(--color-lime);
+}
+
+.space-chat-final {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.space-chat-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.space-chat-receipt,
+.space-chat-pinned {
+  color: var(--color-lime);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.thread-message p.space-chat-note {
+  margin: 6px 0 0;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 12px;
+}

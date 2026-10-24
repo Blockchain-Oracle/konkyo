@@ -179,3 +179,39 @@ export const spaceTakes = pgTable(
   },
   (t) => [index("space_takes_file_idx").on(t.spaceId, t.fileId, t.createdAt)],
 )
+
+/** What Konkyo's answer in a space chat holds as it's made: its named steps, then the result. */
+export type SpaceAnswerParts = {
+  steps: { id: string; label: string; state: "running" | "done" | "failed" }[]
+  final?: { body: string; caveat?: string; citations: PinCitation[] }
+  /** Quotes the receipt checked against their sources. */
+  quotes?: number
+  notFound?: boolean
+}
+
+/**
+ * The space chat (plan F56): members talk; "@konkyo …" asks inside the thread and Konkyo's one
+ * verified answer posts for everyone (`answer`, no author, the asker on `askerId`). Removing is
+ * soft, so a reply never dangles.
+ */
+export const spaceMessages = pgTable(
+  "space_messages",
+  {
+    id: text().primaryKey(),
+    spaceId: uuid()
+      .notNull()
+      .references(() => folders.id, { onDelete: "cascade" }),
+    kind: text().$type<"text" | "ask" | "answer">().notNull(),
+    authorId: text().references(() => user.id, { onDelete: "cascade" }),
+    askerId: text().references(() => user.id, { onDelete: "set null" }),
+    body: text().notNull(),
+    replyToId: text(),
+    parts: jsonb().$type<SpaceAnswerParts>(),
+    status: text().$type<"answering" | "answered" | "not-found" | "failed" | "stopped">(),
+    runId: uuid(),
+    createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+    editedAt: timestamp({ withTimezone: true }),
+    deletedAt: timestamp({ withTimezone: true }),
+  },
+  (t) => [index("space_messages_space_idx").on(t.spaceId, t.createdAt)],
+)

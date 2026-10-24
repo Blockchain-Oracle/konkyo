@@ -41,6 +41,7 @@ import {
   openRenameFolder,
   openShareFolder,
 } from "@/components/shell/app-dialogs"
+import { SpaceChat } from "@/components/spaces/space-chat"
 import { chatWithHref } from "@/lib/focus"
 import { holdQuestion } from "@/lib/pending-question"
 import { sound } from "@/lib/sounds"
@@ -258,6 +259,9 @@ export function LibraryView({ folderId, space = false }: { folderId?: string; sp
       />
 
       {!folderId && <SpaceShelf />}
+      {space && spaceRow && spaceRow.people > 1 && (
+        <SpaceChat spaceId={spaceRow.id} name={spaceRow.name.toLowerCase()} />
+      )}
       {view === "wall" && folderId ? (
         <SpaceWall
           spaceId={folderId}
