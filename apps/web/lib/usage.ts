@@ -1,5 +1,5 @@
 import "server-only"
-import { BRIEF, LIMITS, STUDY, VOICE } from "@konkyo/config"
+import { ARTICLES, BRIEF, LIMITS, STUDY, VOICE } from "@konkyo/config"
 import { db, schema } from "@konkyo/db"
 import { eq, sql } from "drizzle-orm"
 
@@ -61,6 +61,15 @@ const RULES = {
       guest
         ? `Guests can make ${limit} audio brief a day. Continue with Google for more.`
         : `You've made ${limit} audio briefs today. Each one frees up 24 hours after it was made.`,
+  },
+  publishes: {
+    label: "Publishes",
+    about: "Each publish or republish of an article (kept accounts).",
+    limit: () => ARTICLES.perDay,
+    rows: (ownerId: string, since: string) =>
+      sql`select created_at from publish_attempts where owner_id = ${ownerId} and created_at >= ${since}::timestamptz`,
+    reached: (_guest: boolean, limit: number) =>
+      `You've published ${limit} times today. Each one frees up 24 hours after it.`,
   },
   files: {
     label: "Files added",

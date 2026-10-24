@@ -4,7 +4,7 @@ import { removeAccount } from "@konkyo/connectors"
 import { db, schema } from "@konkyo/db"
 import { deleteUserRows } from "@konkyo/db/owned"
 import type { Payload } from "@konkyo/jobs"
-import { deleteObject } from "@konkyo/storage"
+import { deleteObject, listKeys, objectKey } from "@konkyo/storage"
 import { dropWatchTable, unpublish } from "@konkyo/zetaris"
 import { lt, sql } from "drizzle-orm"
 
@@ -12,7 +12,7 @@ const { files, folders, chats } = schema
 
 /**
  * Removes deleted files' stored bytes and Zetaris evidence; for a deleted account, also its
- * watch tables and memory files. Safe to repeat.
+ * watch tables, memory files and its articles' pictures. Safe to repeat.
  */
 export async function purgeFiles({
   fileIds,
@@ -21,8 +21,13 @@ export async function purgeFiles({
   accounts = [],
   ownerId,
   spaceIds = [],
+  articleIds = [],
 }: Payload<"purge">) {
   await Promise.all(keys.map((key) => deleteObject(key)))
+  for (const id of articleIds)
+    await Promise.all(
+      (await listKeys(`${objectKey("articles", id)}/`)).map((key) => deleteObject(key)),
+    )
   await Promise.all(fileIds.map((id) => unpublish(id)))
   await Promise.all(tables.map((table) => dropWatchTable(table)))
   await Promise.all(accounts.map((account) => removeAccount(account)))

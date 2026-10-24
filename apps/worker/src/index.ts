@@ -3,6 +3,7 @@ import { boss, QUEUES } from "@konkyo/jobs"
 import { ensureBucket } from "@konkyo/storage"
 import { warmUp } from "@konkyo/zetaris"
 import { queueDueAgents, runAgent } from "./agents"
+import { makeArticleAssets } from "./articles"
 import { makeBrief } from "./brief"
 import { syncConnections } from "./connectors"
 import { deepJob } from "./deep"
@@ -41,6 +42,11 @@ await queues.work(QUEUES.thumb.name, { localConcurrency: 3 }, async ([job]) => {
   if (job) await makeThumb(QUEUES.thumb.payload.parse(job.data).fileId)
 })
 void backfillThumbs().then((n) => n && console.info(`[thumb] queued ${n} older sources`))
+
+// An article's cover and cited pages (plan F57), drawn after it's published.
+await queues.work(QUEUES.articleAssets.name, { localConcurrency: 2 }, async ([job]) => {
+  if (job) await makeArticleAssets(QUEUES.articleAssets.payload.parse(job.data))
+})
 
 // Deep searches wait on ingest jobs, so they run beside them, a few at a time.
 await queues.work(QUEUES.deep.name, { localConcurrency: 3 }, async ([job]) => {
@@ -121,7 +127,7 @@ await queues.work(REMINDERS, async () => {
 })
 
 console.info(
-  `[worker] listening on "${QUEUES.ingest.name}" (×${INGEST_CONCURRENCY}), "deep" (×3), "study" (×3), "purge", daily sweep, hourly reminders, agents every 5 min, connectors every 15 min`,
+  `[worker] listening on "${QUEUES.ingest.name}" (×${INGEST_CONCURRENCY}), "deep" (×3), "study" (×3), "purge", "article-assets" (×2), daily sweep, hourly reminders, agents every 5 min, connectors every 15 min`,
 )
 
 // On shutdown stop taking jobs and exit promptly: a job cut off here stops sending heartbeats and

@@ -10,6 +10,7 @@
  */
 
 import { type RefObject, useEffect, useRef, useSyncExternalStore } from "react"
+import { tapAudio } from "./sounds"
 
 export type Reading = {
   /** The message (or slip) being read. */
@@ -92,6 +93,8 @@ export function stopReading() {
 export async function readAloud(id: string, sentences: string[]): Promise<void> {
   stopReading()
   if (!sentences.length) return
+  // made inside the tap that asked, so it may still play once the clip arrives (iPhone)
+  const player = tapAudio()
   set({ id, sentences, index: 0, state: "loading", sentence: sentences[0] ?? "" })
   let clip: { url: string; words: Word[] }
   try {
@@ -112,7 +115,7 @@ export async function readAloud(id: string, sentences: string[]): Promise<void> 
   sentences.forEach((s, i) => {
     for (const _ of s.split(/\s+/).filter(Boolean)) owner.push(i)
   })
-  const player = new Audio(clip.url)
+  player.src = clip.url
   audio = player
   return new Promise<void>((resolve) => {
     settle = resolve

@@ -7,17 +7,24 @@ import { BrandMark } from "@/components/brand-mark"
 import { FollowButton } from "@/components/people/follow-button"
 import { MemberFace } from "@/components/people/member-face"
 import { ShareProfile } from "@/components/people/share-profile"
+import { articlesBy } from "@/lib/articles"
 import { countsFor, relationTo } from "@/lib/people"
 import { publicProfile } from "@/lib/profiles"
 import { getSession } from "@/lib/session"
 
-type Props = { params: Promise<{ handle: string }> }
+type Props = {
+  params: Promise<{ handle: string }>
+  searchParams: Promise<{ tab?: string }>
+}
 
 // Static on purpose (a request-time generateMetadata blocks hydration with Cache Components, as
 // on /s): the page sets its own <title>, which React hoists into the head.
 export const metadata: Metadata = { title: "Profile" }
 
 const MONTH = new Intl.DateTimeFormat("en", { month: "short", year: "numeric" })
+const DAY = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" })
+/** Reading speed for "N min read", as on the article itself. */
+const WORDS_PER_MINUTE = 230
 
 /** The wall behind a page is the person's own colour (their look's), as a space's is. */
 function wallFor(color: string) {
@@ -28,8 +35,8 @@ function wallFor(color: string) {
   return SPACES.walls[wall]
 }
 
-async function Profile({ params }: Props) {
-  const { handle } = await params
+async function Profile({ params, searchParams }: Props) {
+  const [{ handle }, { tab }] = await Promise.all([params, searchParams])
   const [profile, session] = await Promise.all([publicProfile(handle), getSession()])
   if (!profile)
     return (
@@ -51,13 +58,18 @@ async function Profile({ params }: Props) {
       </main>
     )
   const isMine = session?.user.id === profile.userId
-  const [counts, relation] = await Promise.all([
+  const [counts, relation, written] = await Promise.all([
     countsFor(profile.userId),
     relationTo(session?.user.id ?? null, profile.userId),
+    articlesBy(profile.userId),
   ])
   const viewer = !session ? "signed-out" : session.user.isAnonymous ? "guest" : "kept"
   const wall = wallFor(profile.face.color)
   const spaces = profile.spaces
+  // Articles lead when there are any; a link can ask for either.
+  const showing =
+    tab === "spaces" || tab === "articles" ? tab : written.length ? "articles" : "spaces"
+  const here = `/u/${profile.handle}`
   return (
     <main
       className="me-page"
@@ -115,12 +127,55 @@ async function Profile({ params }: Props) {
         </section>
 
         <nav className="me-tabs" aria-label="On this page">
-          <span>
+          <Link
+            href={`${here}?tab=articles` as Route}
+            aria-current={showing === "articles" ? "page" : undefined}
+            scroll={false}
+          >
+            articles <small>{written.length}</small>
+          </Link>
+          <Link
+            href={`${here}?tab=spaces` as Route}
+            aria-current={showing === "spaces" ? "page" : undefined}
+            scroll={false}
+          >
             public spaces <small>{spaces.length}</small>
-          </span>
+          </Link>
         </nav>
 
-        {spaces.length === 0 ? (
+        {showing === "articles" ? (
+          written.length === 0 ? (
+            <p className="me-spaces-empty">
+              {isMine
+                ? "Nothing published yet. Write a note with citations, check it, and press Publish ↗ in the editor."
+                : `${profile.name} hasn't published an article yet.`}
+            </p>
+          ) : (
+            <div className="me-article-list">
+              {written.map((a) => (
+                <Link key={a.slug} className="me-article" href={`/a/${a.slug}` as Route}>
+                  {a.coverKey && (
+                    // biome-ignore lint/performance/noImgElement: same-origin cover webp
+                    <img src={`/api/a/${a.slug}/cover?v=${a.version}`} alt="" loading="lazy" />
+                  )}
+                  <span className="me-article-body">
+                    <strong>{a.title}</strong>
+                    {a.summary && <p>{a.summary}</p>}
+                    <small>
+                      {DAY.format(a.publishedAt).toLowerCase()} ·{" "}
+                      {Math.max(1, Math.round(a.words / WORDS_PER_MINUTE))} min read
+                      {a.check?.total ? (
+                        <b>
+                          ✓ {a.check.supported} of {a.check.total} claims supported
+                        </b>
+                      ) : null}
+                    </small>
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )
+        ) : spaces.length === 0 ? (
           <p className="me-spaces-empty">
             {isMine
               ? "Nothing listed yet. Share a space and switch on “show on my page” in its share box, and it shows here."
@@ -158,17 +213,17 @@ async function Profile({ params }: Props) {
 }
 
 /**
- * Someone's page (plan F54, Literal's profile): their face, name, @handle and bio, and the
- * spaces they chose to list. Open to anyone, signed in or not.
+ * Someone's page (plan F54, Literal's profile): their face, name, @handle and bio, the articles
+ * they published and the spaces they chose to list. Open to anyone, signed in or not.
  */
-export default function ProfilePage({ params }: Props) {
+export default function ProfilePage({ params, searchParams }: Props) {
   return (
     <Suspense
       fallback={
         <main className="me-page" aria-busy style={{ background: SPACES.walls.violet.bg }} />
       }
     >
-      <Profile params={params} />
+      <Profile params={params} searchParams={searchParams} />
     </Suspense>
   )
 }

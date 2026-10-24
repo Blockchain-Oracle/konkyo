@@ -12,11 +12,20 @@ export const THUMB = { width: 480, quality: 82, maxImageBytes: 5 * 1024 * 1024 }
 let Factory: any
 
 /** Page one of a PDF, white behind it, `width` pixels wide. */
-export async function pdfThumb(pdf: Uint8Array, width: number = THUMB.width): Promise<Uint8Array> {
+export function pdfThumb(pdf: Uint8Array, width: number = THUMB.width): Promise<Uint8Array> {
+  return pdfPage(pdf, 1, width)
+}
+
+/** Any page of a PDF as a WebP this wide (an article's cited page, plan F57). */
+export async function pdfPage(
+  pdf: Uint8Array,
+  pageNumber: number,
+  width: number = THUMB.width,
+): Promise<Uint8Array> {
   Factory ??= await createIsomorphicCanvasFactory(() => import("@napi-rs/canvas"))
   const doc = await openPdf(pdf)
   try {
-    const page = await doc.getPage(1)
+    const page = await doc.getPage(Math.min(Math.max(1, pageNumber), doc.numPages))
     const base = page.getViewport({ scale: 1 })
     const viewport = page.getViewport({ scale: width / base.width })
     const f = new Factory()

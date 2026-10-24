@@ -204,6 +204,27 @@
       "when": 1792907400000,
       "tag": "0028_space_messages",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1792913100000,
+      "tag": "0029_articles",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1792918800000,
+      "tag": "0030_article_passage_text",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1792924500000,
+      "tag": "0031_article_limits",
+      "breakpoints": true
     }
   ]
 }

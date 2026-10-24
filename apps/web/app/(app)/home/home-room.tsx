@@ -228,10 +228,10 @@ function Chats() {
 }
 
 /**
- * From people you follow (F55): what they made public lately, on the same black card as your
- * chats. Shown once you follow someone; their articles join it with S20.
+ * From people you follow (F55): the articles they published and the spaces they listed, on the
+ * same black card as your chats. Shown once you follow someone.
  */
-function FromPeople() {
+export function FromPeople() {
   const { data } = useQuery({
     queryKey: qk.people.feed,
     queryFn: () => api<{ items: FeedItem[]; following: number }>("/api/people/feed"),
@@ -248,7 +248,8 @@ function FromPeople() {
       <ul className="surface-sticker board-sticker-card overflow-hidden p-2">
         {data.items.length === 0 ? (
           <li className="px-3.5 py-3 text-[14px] text-room-muted">
-            Nothing new from them yet. When they share a space on their page, it lands here.
+            Nothing new from them yet. When they publish an article or list a space on their page,
+            it lands here.
           </li>
         ) : (
           data.items.slice(0, 5).map((item) => (

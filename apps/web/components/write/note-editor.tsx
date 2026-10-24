@@ -35,6 +35,7 @@ import { Citation, type CitationAttrs } from "./citation-node"
 import { ClaimMarks, sentenceEnd } from "./claim-marks"
 import { ExportDialog, exportToGoogle, openDocToast } from "./export-dialog"
 import { RecordPanel, VersionsPanel } from "./history-panels"
+import { PublishSheet } from "./publish-sheet"
 import { SourcesPanel } from "./sources-panel"
 
 type Tab = "sources" | "check" | "versions" | "record"
@@ -85,10 +86,11 @@ function Tool({
 export function NoteEditor({ note }: { note: NoteDetail }) {
   const [backup] = useState(() => readBackup(note.id, note.updatedAt))
   const [title, setTitle] = useState(backup?.title ?? note.title)
-  const { state: saveState, schedule } = useAutosave(note.id)
+  const { state: saveState, schedule, flush } = useAutosave(note.id)
   const [tab, setTab] = useState<Tab>("sources")
   const [sheet, setSheet] = useState(false)
   const [exporting, setExporting] = useState(false)
+  const [publishing, setPublishing] = useState(false)
   const [lookup, setLookup] = useState<{ text: string; nonce: number } | null>(null)
   const [activeClaim, setActiveClaim] = useState<string | null>(null)
   const [empty, setEmpty] = useState(true)
@@ -305,6 +307,17 @@ export function NoteEditor({ note }: { note: NoteDetail }) {
                 : "Not saved, retrying"}
           </span>
           <div className="ml-auto flex items-center gap-1">
+            <button
+              type="button"
+              className="publish-open"
+              onClick={async () => {
+                // publishing reads the saved note: send what's pending first
+                await flush()
+                setPublishing(true)
+              }}
+            >
+              publish <span aria-hidden="true">↗</span>
+            </button>
             <Button
               variant="ghost"
               size="sm"
@@ -452,6 +465,9 @@ export function NoteEditor({ note }: { note: NoteDetail }) {
       </Sheet>
       {exporting && (
         <ExportDialog noteId={note.id} title={title} onClose={() => setExporting(false)} />
+      )}
+      {publishing && (
+        <PublishSheet noteId={note.id} noteTitle={title} onClose={() => setPublishing(false)} />
       )}
     </div>
   )

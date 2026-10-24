@@ -5,6 +5,9 @@ import {
   agentRuns,
   agents,
   apiKeys,
+  articleLikes,
+  articleReports,
+  articles,
   briefs,
   chats,
   connections,
@@ -160,6 +163,17 @@ const movers: Array<
     tx.update(spaceMessages).set({ authorId: to }).where(eq(spaceMessages.authorId, from)),
   (tx, from, to) =>
     tx.update(spaceMessages).set({ askerId: to }).where(eq(spaceMessages.askerId, from)),
+  // Articles (F57) need a kept account, so a guest has none; likes and reports move defensively.
+  (tx, from, to) => tx.update(articles).set({ authorId: to }).where(eq(articles.authorId, from)),
+  async (tx, from, to) => {
+    await tx.execute(sql`
+      insert into article_likes (article_id, user_id, created_at)
+      select article_id, ${to}, created_at from article_likes where user_id = ${from}
+      on conflict do nothing`)
+    await tx.delete(articleLikes).where(eq(articleLikes.userId, from))
+  },
+  (tx, from, to) =>
+    tx.update(articleReports).set({ reporterId: to }).where(eq(articleReports.reporterId, from)),
   // Follows (F55): guests can't follow or be followed, so this is defensive: whatever is there
   // moves, never as a follow of yourself.
   async (tx, from, to) => {
@@ -204,7 +218,7 @@ export async function reownUserData(
 
 /** What deleting a person leaves outside Postgres: stored bytes, Zetaris evidence, watch tables. */
 export async function ownedOutsidePostgres(db: Db, userId: string) {
-  const [owned, watches, spoken, connected, profile] = await Promise.all([
+  const [owned, watches, spoken, connected, profile, written] = await Promise.all([
     db
       .select({ id: files.id, originalKey: files.originalKey, renditionKey: files.renditionKey })
       .from(files)
@@ -216,6 +230,7 @@ export async function ownedOutsidePostgres(db: Db, userId: string) {
       .from(connections)
       .where(eq(connections.ownerId, userId)),
     db.query.profiles.findFirst({ where: eq(profiles.userId, userId) }),
+    db.select({ id: articles.id }).from(articles).where(eq(articles.authorId, userId)),
   ])
   return {
     fileIds: owned.map((f) => f.id),
@@ -227,6 +242,8 @@ export async function ownedOutsidePostgres(db: Db, userId: string) {
     tables: watches.map((w) => w.table).filter((t): t is string => !!t),
     /** Composio connected accounts, revoked so nothing keeps access to the person's mail. */
     accounts: connected.map((c) => c.accountId),
+    /** Their articles: the covers and page images stored for each go with them. */
+    articleIds: written.map((a) => a.id),
   }
 }
 

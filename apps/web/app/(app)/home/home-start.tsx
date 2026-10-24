@@ -14,6 +14,7 @@ import { sound } from "@/lib/sounds"
 import { useFiles } from "@/lib/use-library"
 import { useMe } from "@/lib/use-me"
 import { useSettings } from "@/lib/use-settings"
+import { FromPeople } from "./home-room"
 
 /** What each starting piece of a template turns into, said plainly. */
 const PIECES = { find: "a search for sources", watch: "a weekly watch", quiz: "a monday quiz" }
@@ -39,6 +40,8 @@ export function HomeStart({ children }: { children: React.ReactNode }) {
   return (
     <PageShell title="what are you here for?" kicker={hello} bare>
       <section aria-label="Make your first space" className="first-run">
+        {/* followed someone before adding a file: what they published comes first */}
+        <FromPeople />
         <ul className="first-run-templates">
           {TEMPLATES.map((template, i) => {
             const hex = SPACES.colors[template.color].hex

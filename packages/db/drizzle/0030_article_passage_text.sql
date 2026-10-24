@@ -1,0 +1,1 @@
+ALTER TABLE "article_citations" ALTER COLUMN "passage_id" SET DATA TYPE text;

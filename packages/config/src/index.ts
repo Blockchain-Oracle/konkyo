@@ -36,6 +36,7 @@ export const STORAGE = {
     briefs: "briefs",
     exports: "exports",
     avatars: "avatars",
+    articles: "articles",
   },
   /** Presigned upload URLs expire quickly; uploads start right after signing. */
   presignExpirySeconds: 15 * 60,
@@ -378,6 +379,26 @@ export const LOOKS = [
 ] as const
 
 export type LookId = (typeof LOOKS)[number]["id"]
+
+/** Published articles (F57). */
+export const ARTICLES = {
+  /** Publishes (and republishes) a person can make in a day. */
+  perDay: 3,
+  /** The random tail of a slug, so two "notes on sleep" don't collide. */
+  slugRandom: 6,
+  slugMax: 60,
+  /** A citation card shows this much of the passage around its quote. */
+  contextChars: 600,
+  summaryMax: 280,
+  titleMax: 140,
+  /** Moderation reads every word, in pieces this long; an article is at most this many pieces. */
+  moderateChunk: 4_000,
+  moderateChunks: 12,
+  /** Cited page images and the cover are this wide. */
+  pageWidth: 900,
+  /** ▶ listen reads the first this-many characters. */
+  listenChars: 2_400,
+} as const
 
 /** People (F53, F54): names, handles, bios and photos. */
 export const PEOPLE = {

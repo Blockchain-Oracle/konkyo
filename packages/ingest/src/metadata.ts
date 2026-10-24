@@ -339,3 +339,24 @@ export async function openAlexIdWithPdf(doi: string): Promise<string | null> {
   ).catch(() => null)
   return work?.has_content?.pdf ? work.id.replace("https://openalex.org/", "") : null
 }
+
+/**
+ * A work's open-access licence (an article's page images, plan F57): OpenAlex's best open
+ * location. Open means a Creative Commons or public-domain licence; unknown is closed.
+ */
+export async function openAccessLicence(
+  doi: string,
+): Promise<{ name: string | null; url: string | null; open: boolean } | null> {
+  const work = await openAlex<{
+    best_oa_location?: { license?: string | null; landing_page_url?: string | null } | null
+  }>(`/works/doi:${encodeURIComponent(doi.toLowerCase())}?select=best_oa_location`).catch(
+    () => null,
+  )
+  if (!work) return null
+  const name = work.best_oa_location?.license ?? null
+  return {
+    name,
+    url: work.best_oa_location?.landing_page_url ?? null,
+    open: Boolean(name && /^(cc|public-domain)/i.test(name)),
+  }
+}

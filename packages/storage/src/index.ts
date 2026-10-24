@@ -7,6 +7,7 @@ import {
   GetObjectCommand,
   HeadBucketCommand,
   HeadObjectCommand,
+  ListObjectsV2Command,
   ListPartsCommand,
   PutObjectCommand,
   S3Client,
@@ -143,6 +144,20 @@ export async function putBytes(key: string, body: Uint8Array, contentType: strin
 
 export async function deleteObject(key: string): Promise<void> {
   await s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }))
+}
+
+/** Every key under a prefix (an article's pictures), page by page. */
+export async function listKeys(prefix: string): Promise<string[]> {
+  const keys: string[] = []
+  let token: string | undefined
+  do {
+    const out = await s3.send(
+      new ListObjectsV2Command({ Bucket: bucket, Prefix: prefix, ContinuationToken: token }),
+    )
+    for (const item of out.Contents ?? []) if (item.Key) keys.push(item.Key)
+    token = out.IsTruncated ? out.NextContinuationToken : undefined
+  } while (token)
+  return keys
 }
 
 export async function headObject(

@@ -2,11 +2,15 @@ import { randomUUID } from "node:crypto"
 import { type CheckEvent, checkDraft, Tracer } from "@konkyo/agents"
 import { NextResponse } from "next/server"
 import { z } from "zod"
+import { docText } from "@/lib/export-note"
 import { LibraryError } from "@/lib/library"
-import { getNote, logNoteEvent } from "@/lib/notes"
+import { getNote, logNoteEvent, textHash } from "@/lib/notes"
 import { getSession } from "@/lib/session"
 
 export const maxDuration = 120
+
+/** The most text one check reads. */
+const CHECK_MAX = 60_000
 
 /**
  * Check my draft (plan F23), streamed as one JSON event per line: the claims first, then each
@@ -16,16 +20,33 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
   const session = await getSession()
   if (!session) return NextResponse.json({ error: "Sign in first" }, { status: 401 })
   const id = z.uuid().safeParse((await ctx.params).id)
-  const body = z.object({ text: z.string().min(1).max(60_000) }).safeParse(await request.json())
+  // The editor sends its text; publishing asks for the saved note (`saved`), whose words the
+  // server reads from the stored document itself, so the article's badge is about what publishes.
+  const body = z
+    .object({
+      text: z.string().min(1).max(CHECK_MAX).optional(),
+      saved: z.literal(true).optional(),
+    })
+    .refine((b) => Boolean(b.text) !== Boolean(b.saved))
+    .safeParse(await request.json())
   if (!id.success || !body.success)
     return NextResponse.json({ error: "That request wasn't valid" }, { status: 400 })
+  let text: string
   try {
-    await getNote(session.user.id, id.data)
+    const note = await getNote(session.user.id, id.data)
+    text = body.data.saved ? docText(note.content) : (body.data.text as string)
   } catch (error) {
     if (error instanceof LibraryError)
       return NextResponse.json({ error: error.message }, { status: error.status })
     throw error
   }
+  if (!text.trim() || text.length > CHECK_MAX)
+    return NextResponse.json(
+      {
+        error: text.trim() ? "This note is too long to check in one go." : "Nothing to check yet.",
+      },
+      { status: 400 },
+    )
   const ownerId = session.user.id
   const encoder = new TextEncoder()
   const stream = new ReadableStream<Uint8Array>({
@@ -42,9 +63,11 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
       }
       try {
         const tracer = new Tracer(randomUUID())
-        const { results, counts } = await checkDraft(ownerId, body.data.text, tracer, send)
+        const { results, counts } = await checkDraft(ownerId, text, tracer, send)
         await logNoteEvent(ownerId, id.data, "checked", {
           runId: tracer.runId,
+          // only a check of the saved note can stand behind a published article
+          ...(body.data.saved ? { savedHash: textHash(text) } : {}),
           counts,
           claims: results.map((r) => ({
             claim: r.claim,

@@ -3,6 +3,7 @@ import { db, schema } from "@konkyo/db"
 import { readableFileSql } from "@konkyo/db/access"
 import { and, desc, eq, gt, inArray, isNull, ne, sql } from "drizzle-orm"
 import { readableFolderSql } from "./library"
+import { followedArticles } from "./people"
 import { todaySummary } from "./study"
 
 const { files, folders, fileFolders, inboxItems, runs, userSettings } = schema
@@ -38,8 +39,8 @@ const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? o
 
 /**
  * Catch me up (plan F50, OurSpaces' "what moved"): what is waiting on you, then what moved since
- * you last closed it, built from rows (sources, the inbox, deep searches, practice), never a model,
- * so it opens at once and says nothing that didn't happen.
+ * you last closed it, built from rows (sources, the inbox, deep searches, practice, articles by
+ * people you follow), never a model, so it opens at once and says nothing that didn't happen.
  */
 export async function catchup(ownerId: string, here?: string | null): Promise<Catchup> {
   const prefs = await db.query.userSettings.findFirst({
@@ -48,7 +49,7 @@ export async function catchup(ownerId: string, here?: string | null): Promise<Ca
   })
   const since = prefs?.catchupFrom ?? new Date(Date.now() - FIRST_LOOK_DAYS * 86_400_000)
 
-  const [today, stuck, landed, inbox, awaiting, answered] = await Promise.all([
+  const [today, stuck, landed, inbox, awaiting, answered, published] = await Promise.all([
     todaySummary(ownerId),
     // Files that need the person (a fix-it each), whenever they arrived.
     db
@@ -125,6 +126,8 @@ export async function catchup(ownerId: string, here?: string | null): Promise<Ca
       )
       .orderBy(desc(runs.finishedAt))
       .limit(3),
+    // What people you follow published since (F55, F57).
+    followedArticles(ownerId, since),
   ])
 
   const lines: Omit<CatchupLine, "fresh">[] = []
@@ -212,6 +215,16 @@ export async function catchup(ownerId: string, here?: string | null): Promise<Ca
       chips: [{ label: "read it", href: `/chats/${run.chatId}` }],
       spaceId: null,
       at: run.at?.toISOString() ?? now,
+    })
+
+  for (const item of published.slice(0, MAX_CHIPS))
+    lines.push({
+      id: `article-${item.object.href}`,
+      waiting: false,
+      text: `@${item.person.handle} published “${item.object.name}”`,
+      chips: [{ label: "read it", href: item.object.href }],
+      spaceId: null,
+      at: item.at,
     })
 
   const CHIP: Partial<Record<string, string>> = {

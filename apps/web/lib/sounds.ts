@@ -50,6 +50,21 @@ export function playUrl(url: string, volume: number) {
   source.start()
 }
 
+/** A silent, empty WAV: playing it inside a tap marks the element as started by the person. */
+const SILENT_WAV =
+  "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA="
+
+/**
+ * An audio element for a clip that arrives after a fetch. Make it inside the tap, then set `src`
+ * and `play()` once the clip is ready: Safari on iPhone refuses a play() that isn't tied to a
+ * tap, and an element already started inside one keeps that permission.
+ */
+export function tapAudio() {
+  const audio = new Audio(SILENT_WAV)
+  void audio.play().catch(() => undefined)
+  return audio
+}
+
 /** Call from the first tap: unlocks audio and starts fetching the interface sounds. */
 export function primeSounds() {
   const audio = ctx()

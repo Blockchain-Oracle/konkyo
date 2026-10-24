@@ -10,7 +10,13 @@ import { VOICE } from "@konkyo/config"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { api } from "@/lib/fetcher"
-import { adoptInterfaceSounds, interfaceSoundsOn, setInterfaceSounds, sound } from "@/lib/sounds"
+import {
+  adoptInterfaceSounds,
+  interfaceSoundsOn,
+  setInterfaceSounds,
+  sound,
+  tapAudio,
+} from "@/lib/sounds"
 import { useSettings } from "@/lib/use-settings"
 
 export function SoundsMenu() {
@@ -60,16 +66,19 @@ export function SoundsMenu() {
   /** Hear a voice say one line (made once per voice, then cached for everyone). */
   const tryVoice = async (id: string) => {
     player.current?.pause()
+    player.current = null
     if (trying === id) return setTrying(null)
     setTrying(id)
+    const audio = tapAudio()
+    player.current = audio
     try {
       const { url } = await api<{ url: string }>("/api/voice/sample", {
         method: "POST",
         json: { voiceId: id },
       })
-      const audio = new Audio(url)
-      player.current = audio
+      if (player.current !== audio) return
       audio.onended = () => setTrying((now) => (now === id ? null : now))
+      audio.src = url
       await audio.play()
     } catch (error) {
       setTrying(null)

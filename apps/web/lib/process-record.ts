@@ -1,4 +1,5 @@
 import "server-only"
+import { APP } from "@konkyo/config"
 import { Document, HeadingLevel, Packer, Paragraph, TextRun } from "docx"
 import { getNote, listNoteEvents, listVersions } from "./notes"
 
@@ -65,6 +66,12 @@ export async function processRecord(ownerId: string, noteId: string) {
           at: e.createdAt,
           what: `Cited ${String(d.title ?? "a source")}${d.page ? `, p. ${String(d.page)}` : ""}`,
           details: d.quote ? [`Quote: “${String(d.quote)}”`] : [],
+        }
+      case "published":
+        return {
+          at: e.createdAt,
+          what: `${Number(d.version) > 1 ? "Republished" : "Published"} as “${String(d.title ?? "")}”`,
+          details: [`${APP.url}/a/${String(d.slug ?? "")}`],
         }
       case "restored":
         return {

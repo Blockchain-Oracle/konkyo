@@ -1,12 +1,12 @@
 import "server-only"
 import { PEOPLE, SPACES } from "@konkyo/config"
 import { db, schema } from "@konkyo/db"
-import { and, count, desc, eq, gt, ilike, inArray, isNotNull, or, sql } from "drizzle-orm"
+import { and, count, desc, eq, gt, ilike, inArray, isNotNull, isNull, or, sql } from "drizzle-orm"
 import { LibraryError } from "./library"
 import { type Face, faceOf } from "./profiles"
 import { sharePath } from "./shares"
 
-const { follows, profiles, user, folderShares, folders } = schema
+const { articles, follows, profiles, user, folderShares, folders } = schema
 
 /** How the viewer stands with someone (Threads' states; mutual = friends). */
 export type Relation = { you: boolean; following: boolean; followsYou: boolean; friends: boolean }
@@ -216,10 +216,54 @@ export type FeedItem = {
 }
 
 /**
- * Home's "from people you follow" (F55): what they made public lately. Today that's the spaces
- * they listed on their page; their articles join this once publishing lands (S20).
+ * Home's "from people you follow" (F55): what they made public lately, newest first: the
+ * articles they published and the spaces they listed on their page.
  */
 export async function followingFeed(viewerId: string): Promise<FeedItem[]> {
+  const [spaces, published] = await Promise.all([
+    followedSpaces(viewerId),
+    followedArticles(viewerId),
+  ])
+  return [...spaces, ...published].sort((a, b) => b.at.localeCompare(a.at)).slice(0, FEED_MAX)
+}
+
+const FEED_MAX = 12
+
+/** Articles by people the viewer follows, still published (catch me up reads these too). */
+export async function followedArticles(viewerId: string, since?: Date): Promise<FeedItem[]> {
+  const rows = await db
+    .select({
+      ...personColumns,
+      title: articles.title,
+      slug: articles.slug,
+      at: articles.publishedAt,
+    })
+    .from(follows)
+    .innerJoin(user, eq(user.id, follows.followeeId))
+    .innerJoin(profiles, eq(profiles.userId, user.id))
+    .innerJoin(articles, eq(articles.authorId, user.id))
+    .where(
+      and(
+        eq(follows.followerId, viewerId),
+        isNull(articles.unpublishedAt),
+        isNotNull(profiles.handle),
+        since ? gt(articles.publishedAt, since) : undefined,
+      ),
+    )
+    .orderBy(desc(articles.publishedAt))
+    .limit(FEED_MAX)
+  return rows.map((r) => {
+    const face = faceOf(r, r)
+    return {
+      person: { handle: r.handle ?? "", name: r.name, face },
+      verb: "published",
+      object: { name: r.title, href: `/a/${r.slug}`, color: face.color, symbol: null },
+      at: r.at.toISOString(),
+    }
+  })
+}
+
+async function followedSpaces(viewerId: string): Promise<FeedItem[]> {
   const rows = await db
     .select({
       ...personColumns,
@@ -243,7 +287,7 @@ export async function followingFeed(viewerId: string): Promise<FeedItem[]> {
       ),
     )
     .orderBy(desc(folderShares.updatedAt))
-    .limit(12)
+    .limit(FEED_MAX)
   return rows.map((r) => ({
     person: { handle: r.handle ?? "", name: r.name, face: faceOf(r, r) },
     verb: "shared",

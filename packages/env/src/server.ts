@@ -55,6 +55,8 @@ export const env = createEnv({
 
     /** The public folder the landing page's live demo asks (`pnpm konkyo seed` prints it). */
     DEMO_SHARE_SLUG: z.string().min(1).optional(),
+    /** Who reads reports of articles (comma-separated user ids): each lands in their Inbox. */
+    ADMIN_USER_IDS: z.string().min(1).optional(),
   },
   runtimeEnv: process.env,
   emptyStringAsUndefined: true,

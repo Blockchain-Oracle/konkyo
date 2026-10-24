@@ -1,4 +1,5 @@
 import "server-only"
+import { createHash } from "node:crypto"
 import { NOTES } from "@konkyo/config"
 import { db, schema } from "@konkyo/db"
 import { fileAccess } from "@konkyo/db/access"
@@ -215,6 +216,13 @@ export async function restoreVersion(ownerId: string, fileId: string, versionId:
 }
 
 /** One AI action on the draft, for the process record (F25). */
+/**
+ * What a "Check my draft" checked, as a hash of its words (spacing ignored): publishing counts a
+ * check only when it matches the note as saved.
+ */
+export const textHash = (text: string) =>
+  createHash("sha256").update(text.replace(/\s+/g, " ").trim()).digest("hex")
+
 export async function logNoteEvent(
   ownerId: string,
   fileId: string,

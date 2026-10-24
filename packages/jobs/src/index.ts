@@ -53,6 +53,20 @@ export const QUEUES = {
     options: { retryLimit: 0, expireInSeconds: 15 * 60 },
     send: { heartbeatSeconds: 30 },
   },
+  /**
+   * An article's pictures (plan F57): its cover, copied from a cited source's page one, and the
+   * cited pages of openly licensed sources (or every source, when the author allowed it).
+   */
+  articleAssets: {
+    name: "article-assets",
+    payload: z.object({
+      articleId: z.uuid(),
+      version: z.number().int(),
+      coverFileId: z.uuid().optional(),
+    }),
+    options: { retryLimit: 2, retryDelay: 30, retryBackoff: true, expireInSeconds: 10 * 60 },
+    send: {},
+  },
   /** A source's polaroid (plan §16.4): page one, its og:image, or its video thumbnail, as WebP. */
   thumb: {
     name: "thumb",
@@ -74,6 +88,8 @@ export const QUEUES = {
       ownerId: z.string().optional(),
       /** Spaces deleted for good: their shared World Models go too. */
       spaceIds: z.array(z.uuid()).optional(),
+      /** A deleted author's articles: every picture stored for them goes too. */
+      articleIds: z.array(z.uuid()).optional(),
     }),
     options: { retryLimit: 5, retryDelay: 60, retryBackoff: true, expireInSeconds: 10 * 60 },
     send: {},
