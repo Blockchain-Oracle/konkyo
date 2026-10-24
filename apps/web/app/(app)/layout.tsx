@@ -5,10 +5,11 @@ import { Suspense } from "react"
 import { FileDetailsSheet } from "@/components/library/file-details"
 import { UploadsProvider } from "@/components/library/uploads-provider"
 import { AppDialogs } from "@/components/shell/app-dialogs"
-import { BottomBar } from "@/components/shell/bottom-bar"
 import { CommandPalette } from "@/components/shell/command-palette"
+import { PlacesBar } from "@/components/shell/places-bar"
 import { Rail } from "@/components/shell/rail"
 import { StatusPill } from "@/components/shell/status-pill"
+import { WallBackground } from "@/components/shell/wall"
 import { Workspace } from "@/components/source/workspace"
 import { getSession } from "@/lib/session"
 
@@ -23,15 +24,19 @@ async function Shell({ children }: { children: React.ReactNode }) {
     isGuest: Boolean(user.isAnonymous),
   }
 
-  // The floating chrome (plan §16.6): the rail on the left (desktop), the bottom bar (phones),
-  // the dock inside the workspace, the live pill bottom left.
+  // OurSpaces' floating chrome (plan §16.6): the rail of spaces (a bottom bar on phones), the
+  // places as words top right, the dock with the orb, the live pill bottom left.
   return (
     <UploadsProvider>
       <Rail user={shellUser} />
-      <div className="min-w-0 md:pl-[104px]">
-        <Workspace>{children}</Workspace>
-      </div>
-      <BottomBar user={shellUser} />
+      <PlacesBar />
+      {/* Room for the rail on the left (OurSpaces' header starts at 118px), and on phones for
+          the rail as a bottom bar with the dock above it. */}
+      <WallBackground>
+        <div className="min-w-0 min-[801px]:pl-[112px] max-[800px]:pt-16 max-[800px]:pb-[190px]">
+          <Workspace>{children}</Workspace>
+        </div>
+      </WallBackground>
       <StatusPill />
       <CommandPalette />
       <AppDialogs />

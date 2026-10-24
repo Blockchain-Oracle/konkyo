@@ -2,18 +2,11 @@
   "extends": "@konkyo/typescript-config/react-library.json",
   "compilerOptions": {
     "paths": {
-      "@konkyo/ui/*": [
-        "./src/*"
-      ]
+      "@konkyo/ui/*": ["./src/*"]
     },
     "module": "ESNext",
     "moduleResolution": "Bundler"
   },
-  "include": [
-    "."
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+  "include": ["."],
+  "exclude": ["node_modules", "dist"]
 }

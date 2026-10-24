@@ -15,6 +15,9 @@ export const whereIs = (c: { page: number | null; tStart: number | null }) =>
 /** The answer a chip belongs to, so the passage it opens can ask "Right passage?". */
 export const CitedIn = createContext<string | null>(null)
 
+/** Lights a source on the chat's wall while its chip is pointed at (OurSpaces' cited ring). */
+export const LitSource = createContext<((fileId: string | null) => void) | null>(null)
+
 /** The verified tick, drawn in once (plan §7.4 #1). */
 function Tick({ className }: { className?: string }) {
   return (
@@ -40,6 +43,7 @@ function Tick({ className }: { className?: string }) {
  */
 export function CitationChip({ n, citation }: { n: number; citation?: Citation }) {
   const messageId = useContext(CitedIn)
+  const light = useContext(LitSource)
   if (!citation) {
     return (
       <span
@@ -68,8 +72,12 @@ export function CitationChip({ n, citation }: { n: number; citation?: Citation }
           <button
             type="button"
             onClick={open}
+            onPointerEnter={() => light?.(citation.fileId)}
+            onPointerLeave={() => light?.(null)}
+            onFocus={() => light?.(citation.fileId)}
+            onBlur={() => light?.(null)}
             aria-label={`Citation ${n}: ${citation.title}${whereIs(citation) ? `, ${whereIs(citation)}` : ""}. Verified.`}
-            className="mx-0.5 inline-flex h-[1.3em] min-w-[1.5em] translate-y-[-0.08em] items-center justify-center gap-0.5 rounded-[6px] border border-white/14 bg-raised px-1 align-middle text-[0.72em] text-silver-mist tabular-nums transition-colors duration-(--duration-press) hover:border-supports/60 hover:bg-overlay hover:text-bone-white focus-visible:ring-1 focus-visible:ring-silver-mist focus-visible:outline-none"
+            className="mx-0.5 inline-flex h-[1.35em] min-w-[1.6em] translate-y-[-0.08em] items-center justify-center gap-0.5 rounded-[7px] border border-border bg-raised px-1 align-middle text-[0.72em] font-bold text-silver-mist tabular-nums transition-colors duration-(--duration-press) hover:border-transparent hover:bg-lime hover:text-ink focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           />
         }
       >

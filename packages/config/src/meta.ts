@@ -28,4 +28,6 @@ export type FileMeta = {
    * attribution its publisher asks for, shown on the file and printed on each page of its copy.
    */
   licence?: { name: string; url: string; attribution: string }
+  /** The image a web page chose for itself (og:image): its polaroid on a space's wall. */
+  ogImage?: string
 }

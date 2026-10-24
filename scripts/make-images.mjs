@@ -162,14 +162,15 @@ async function stickers() {
   mkdirSync(join(PUBLIC, "stickers"), { recursive: true })
   await pool(STICKERS, 4, async ([name, what]) => {
     const png = join(RAW, `sticker-${name}.png`)
-    if (!existsSync(png)) writeFileSync(
-      png,
-      await generate(`${STICKER_STYLE} The sticker shows ${what}.`, {
-        size: "1024x1024",
-        background: "transparent",
-        model: "gpt-image-1",
-      }),
-    )
+    if (!existsSync(png))
+      writeFileSync(
+        png,
+        await generate(`${STICKER_STYLE} The sticker shows ${what}.`, {
+          size: "1024x1024",
+          background: "transparent",
+          model: "gpt-image-1",
+        }),
+      )
     toWebp(png, join(PUBLIC, "stickers", `${name}.webp`), 320)
     console.log("sticker", name)
   })
@@ -179,7 +180,8 @@ async function landing() {
   mkdirSync(join(PUBLIC, "landing"), { recursive: true })
   await pool(PHOTOS, 3, async ([name, what]) => {
     const png = join(RAW, `photo-${name}.png`)
-    if (!existsSync(png)) writeFileSync(png, await generate(`${PHOTO_STYLE} Scene: ${what}.`, { size: "1536x1024" }))
+    if (!existsSync(png))
+      writeFileSync(png, await generate(`${PHOTO_STYLE} Scene: ${what}.`, { size: "1536x1024" }))
     toWebp(png, join(PUBLIC, "landing", `${name}.webp`), 960)
     console.log("photo", name)
   })

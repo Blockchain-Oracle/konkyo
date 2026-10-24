@@ -31,6 +31,7 @@ import {
   type Word,
   wordsToPassages,
 } from "@konkyo/ingest"
+import { enqueue } from "@konkyo/jobs"
 import { getBytes, objectKey, putBytes } from "@konkyo/storage"
 import {
   confirmPublished,
@@ -90,6 +91,8 @@ type DocResult = {
   fromScan?: boolean
   title?: string
   duration?: number
+  /** The source's own picture: a web page's og:image (its polaroid on the wall). */
+  image?: string
 }
 
 const sha256 = (bytes: Uint8Array) => createHash("sha256").update(bytes).digest("hex")
@@ -288,7 +291,7 @@ async function readSource(file: FileRow): Promise<DocResult> {
         footer: licence ? `${licence.attribution} · ${licence.name}` : undefined,
       })
       const result = await fromPdf(file, article.pdf, PDF_HYPHENS.converted)
-      return { ...result, title: article.title }
+      return { ...result, title: article.title, image: article.ogImage }
     }
     case "youtube": {
       if (!file.sourceUrl || !isYouTube(file.sourceUrl)) throw new Error("Not a YouTube link")
@@ -493,7 +496,7 @@ export async function ingestFile(fileId: string, { lastAttempt = true } = {}): P
       progress: 1,
       title: details.title ?? (placeholderTitle(file) ? result.title : undefined) ?? file.title,
       kind: result.kind ?? file.kind,
-      meta: details.meta,
+      meta: result.image ? { ...details.meta, ogImage: result.image } : details.meta,
       renditionKey: result.rendition ? objectKey("renditions", `${fileId}.pdf`) : null,
       pages: result.pages ?? null,
       pageCount: result.pages?.length ?? null,
@@ -501,6 +504,8 @@ export async function ingestFile(fileId: string, { lastAttempt = true } = {}): P
       fromScan: result.fromScan ?? false,
       publishedAt: new Date(),
     })
+    // Its polaroid for the wall, made off the critical path (a failed thumb never fails a file).
+    await enqueue("thumb", { fileId }, fileId).catch(() => undefined)
   } catch (error) {
     const problem =
       error instanceof ProblemError

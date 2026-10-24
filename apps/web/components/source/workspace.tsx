@@ -25,13 +25,14 @@ export function Workspace({ children }: { children: React.ReactNode }) {
     <>
       {/* The group sets an inline height of 100%, so the screen height lives on this wrapper. */}
       <div className="lg:h-svh">
-        <ResizablePanelGroup orientation="horizontal">
-          <ResizablePanel id="centre" minSize={360} className="lg:overflow-y-auto!">
-            {/* The page, then the dock pinned to the bottom of the centre column (plan §16.6). */}
-            <div className="flex min-h-svh flex-col lg:min-h-full">
-              <div className="min-w-0 flex-1">{children}</div>
-              <DockArea />
-            </div>
+        <ResizablePanelGroup orientation="horizontal" className="max-lg:overflow-visible!">
+          {/* Below lg the page scrolls itself: the panel's own overflow:hidden would break sticky. */}
+          <ResizablePanel
+            id="centre"
+            minSize={360}
+            className="max-lg:overflow-visible! lg:overflow-y-auto!"
+          >
+            {children}
           </ResizablePanel>
           {docked && (
             <>
@@ -49,6 +50,7 @@ export function Workspace({ children }: { children: React.ReactNode }) {
           )}
         </ResizablePanelGroup>
       </div>
+      <DockArea />
       {!wide && (
         <Sheet open={Boolean(active)} onOpenChange={(open) => !open && closeAllSources()}>
           <SheetContent

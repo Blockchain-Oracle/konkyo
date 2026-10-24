@@ -4,6 +4,7 @@ import { useChat } from "@ai-sdk/react"
 import type { KonkyoMessage } from "@konkyo/agents"
 import { Button } from "@konkyo/ui/components/button"
 import { Textarea } from "@konkyo/ui/components/textarea"
+import { cn } from "@konkyo/ui/lib/utils"
 import { useQueryClient } from "@tanstack/react-query"
 import { DefaultChatTransport } from "ai"
 import { PencilIcon, RotateCcwIcon } from "lucide-react"
@@ -15,8 +16,11 @@ import { CitationTour } from "@/components/onboarding/citation-tour"
 import { api } from "@/lib/fetcher"
 import { type Focus, focusFromSearch, focusOf } from "@/lib/focus"
 import { peekQuestion, releaseQuestion } from "@/lib/pending-question"
+import { usePreview } from "@/lib/preview"
 import { AssistantMessage } from "./assistant-message"
 import { ChatStart } from "./chat-start"
+import { ChatWall } from "./chat-wall"
+import { LitSource } from "./citation-chip"
 
 type ChatScope = { fileIds?: string[]; folderIds?: string[] }
 
@@ -90,9 +94,10 @@ function UserMessage({
           <PencilIcon />
         </Button>
       )}
-      <div className="max-w-[85%] rounded-2xl bg-raised px-4 py-2.5">
+      {/* Your words: OurSpaces' own-message bubble, lime with black text, its corner clipped. */}
+      <div className="max-w-[85%] rounded-[20px_6px_20px_20px] bg-lime px-4.5 py-3 text-ink shadow-[0_4px_0_rgb(17_17_20/0.14)]">
         {quote?.type === "data-quote" && (
-          <blockquote className="mb-2 border-l-2 border-partly/70 pl-3 text-snippet text-ash-gray">
+          <blockquote className="mb-2 border-l-2 border-ink/40 pl-3 text-snippet text-ink/80">
             <span className="line-clamp-3">“{quote.data.text}”</span>
             <span className="mt-1 block text-meta">
               {quote.data.title}
@@ -100,7 +105,7 @@ function UserMessage({
             </span>
           </blockquote>
         )}
-        <p className="text-reading whitespace-pre-wrap text-bone-white">{text}</p>
+        <p className="text-reading font-semibold whitespace-pre-wrap text-ink">{text}</p>
       </div>
     </div>
   )
@@ -123,11 +128,16 @@ export function ChatView({
   id,
   initialMessages,
   scope,
+  header,
 }: {
   id: string
   initialMessages: KonkyoMessage[]
   scope?: ChatScope
+  /** The room header (the chat's name and menu), set over the conversation. */
+  header?: React.ReactNode
 }) {
+  const [lit, setLit] = useState<string | null>(null)
+  const { active: sourceOpen } = usePreview()
   const queryClient = useQueryClient()
   const params = useSearchParams()
   // A saved chat keeps its focus; a new one takes it from Home or a "Chat with" link.
@@ -238,90 +248,113 @@ export function ChatView({
   }, [messages.length, last?.parts.length])
 
   return (
-    <div className="flex min-h-[calc(100svh-3.5rem)] flex-col md:min-h-[calc(100svh-3rem)]">
-      <CitationTour />
-      <div className="mx-auto w-full max-w-[46rem] flex-1 space-y-8 px-6 pt-8 pb-10">
-        {!messages.length && !peekQuestion(id) && (
-          <ChatStart focus={focus} onAsk={(text) => void ask({ text })} />
+    <LitSource.Provider value={setLit}>
+      {/* The conversation on paper; beside it, while there's room, the wall of what it quotes. */}
+      <div
+        className={cn(
+          "mx-auto grid w-full max-w-[1400px] gap-x-9 px-4 pt-4 md:px-8 md:pt-[92px]",
+          !sourceOpen && "xl:grid-cols-[minmax(0,1fr)_minmax(270px,330px)]",
         )}
-        {messages.map((message, i) =>
-          message.role === "user" ? (
-            <UserMessage
-              key={message.id}
-              message={message}
-              onEdit={
-                running
-                  ? undefined
-                  : (text) =>
-                      void sendMessage({
-                        messageId: message.id,
-                        role: "user",
-                        parts: [
-                          ...message.parts.filter((p) => p.type === "data-quote"),
-                          { type: "text" as const, text },
-                        ],
-                      })
-              }
-            />
-          ) : (
-            <AssistantMessage
-              key={message.id}
-              message={message}
-              running={running && i === messages.length - 1}
-              onRegenerate={
-                i === messages.length - 1 && !running
-                  ? () => void regenerate({ messageId: message.id })
-                  : undefined
-              }
-              onFindSources={
-                i === messages.length - 1 && !running
-                  ? () => {
-                      const notFound = message.parts.find((p) => p.type === "data-notFound")
-                      const asked = messages[i - 1]?.parts.flatMap((p) =>
-                        p.type === "text" ? [p.text] : [],
-                      )
-                      void startDeep(
-                        notFound?.type === "data-notFound"
-                          ? notFound.data.question
-                          : (asked?.join(" ") ?? ""),
-                      )
+      >
+        <div className="min-w-0">
+          <CitationTour />
+          {header}
+          <section
+            aria-label="Conversation"
+            className="surface-paper paper-sheet flex min-h-[calc(100svh-260px)] flex-col p-0!"
+          >
+            <div className="flex-1 space-y-9 px-[clamp(18px,3.2vw,52px)] pt-[clamp(22px,3vw,44px)] pb-10">
+              {!messages.length && !peekQuestion(id) && (
+                <ChatStart focus={focus} onAsk={(text) => void ask({ text })} />
+              )}
+              {messages.map((message, i) =>
+                message.role === "user" ? (
+                  <UserMessage
+                    key={message.id}
+                    message={message}
+                    onEdit={
+                      running
+                        ? undefined
+                        : (text) =>
+                            void sendMessage({
+                              messageId: message.id,
+                              role: "user",
+                              parts: [
+                                ...message.parts.filter((p) => p.type === "data-quote"),
+                                { type: "text" as const, text },
+                              ],
+                            })
                     }
-                  : undefined
-              }
-              question={messages[i - 1]?.parts
-                .flatMap((p) => (p.type === "text" ? [p.text] : []))
-                .join(" ")}
-              onDeepSettled={deepSettled}
-              onDeepRetry={(question) => void startDeep(question)}
-            />
-          ),
-        )}
-        {status === "submitted" && last?.role === "user" && (
-          <p className="animate-checking text-snippet text-ash-gray">Starting…</p>
-        )}
-        {/* An answer that started says so itself; this is for one that never started. */}
-        {error && last?.role === "user" && (
-          <div className="flex items-center gap-3 rounded-xl border border-contradicts/30 bg-contradicts/5 px-4 py-3">
-            <p className="flex-1 text-snippet text-silver-mist">{errorText(error)}</p>
-            <Button variant="secondary" size="sm" onClick={() => regenerate()}>
-              <RotateCcwIcon strokeWidth={1.75} />
-              Try again
-            </Button>
+                  />
+                ) : (
+                  <AssistantMessage
+                    key={message.id}
+                    message={message}
+                    running={running && i === messages.length - 1}
+                    onRegenerate={
+                      i === messages.length - 1 && !running
+                        ? () => void regenerate({ messageId: message.id })
+                        : undefined
+                    }
+                    onFindSources={
+                      i === messages.length - 1 && !running
+                        ? () => {
+                            const notFound = message.parts.find((p) => p.type === "data-notFound")
+                            const asked = messages[i - 1]?.parts.flatMap((p) =>
+                              p.type === "text" ? [p.text] : [],
+                            )
+                            void startDeep(
+                              notFound?.type === "data-notFound"
+                                ? notFound.data.question
+                                : (asked?.join(" ") ?? ""),
+                            )
+                          }
+                        : undefined
+                    }
+                    question={messages[i - 1]?.parts
+                      .flatMap((p) => (p.type === "text" ? [p.text] : []))
+                      .join(" ")}
+                    onDeepSettled={deepSettled}
+                    onDeepRetry={(question) => void startDeep(question)}
+                  />
+                ),
+              )}
+              {status === "submitted" && last?.role === "user" && (
+                <p className="animate-checking text-snippet text-ash-gray">Starting…</p>
+              )}
+              {/* An answer that started says so itself; this is for one that never started. */}
+              {error && last?.role === "user" && (
+                <div className="flex items-center gap-3 rounded-xl border border-contradicts/30 bg-contradicts/5 px-4 py-3">
+                  <p className="flex-1 text-snippet text-silver-mist">{errorText(error)}</p>
+                  <Button variant="secondary" size="sm" onClick={() => regenerate()}>
+                    <RotateCcwIcon strokeWidth={1.75} />
+                    Try again
+                  </Button>
+                </div>
+              )}
+              <div ref={end} />
+            </div>
+            {/* The ask box rides the bottom of the sheet; on phones it clears the bottom bar. */}
+            <div className="sticky bottom-[calc(92px+env(safe-area-inset-bottom))] z-10 rounded-b-[inherit] bg-gradient-to-t from-paper-card from-65% to-transparent px-[clamp(14px,2.6vw,44px)] pt-8 pb-5 min-[801px]:bottom-0">
+              <Composer
+                placeholder={messages.length ? "Ask a follow-up…" : "Ask your library…"}
+                focus={focus}
+                onFocusChange={setFocus}
+                running={running}
+                onStop={stopRun}
+                onSubmit={ask}
+              />
+            </div>
+          </section>
+        </div>
+        {!sourceOpen && (
+          <div className="hidden xl:block">
+            <div className="sticky top-[92px] max-h-[calc(100svh-120px)] overflow-y-auto px-3 pt-2 pb-28 [scrollbar-width:none]">
+              <ChatWall messages={messages} running={running} lit={lit} />
+            </div>
           </div>
         )}
-        <div ref={end} />
       </div>
-      <div className="sticky bottom-[calc(3.5rem+env(safe-area-inset-bottom))] z-10 bg-gradient-to-t from-black from-60% to-transparent px-6 pt-6 pb-4 md:bottom-0 md:pb-6">
-        <Composer
-          className="mx-auto max-w-[46rem]"
-          placeholder={messages.length ? "Ask a follow-up…" : "Ask your library…"}
-          focus={focus}
-          onFocusChange={setFocus}
-          running={running}
-          onStop={stopRun}
-          onSubmit={ask}
-        />
-      </div>
-    </div>
+    </LitSource.Provider>
   )
 }

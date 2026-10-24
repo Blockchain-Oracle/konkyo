@@ -12,6 +12,7 @@ import { ingestFile } from "./pipeline"
 import { purgeAbandonedGuests, purgeExpired, purgeFiles } from "./purge"
 import { sendReminders } from "./reminders"
 import { makeSet } from "./study"
+import { backfillThumbs, makeThumb } from "./thumb"
 
 /** Files processed at once in this worker (OCR, conversion and transcription are heavy). */
 const INGEST_CONCURRENCY = 2
@@ -34,6 +35,12 @@ await queues.work(
     console.info(`[ingest] ${fileId} done in ${Math.round(performance.now() - started)} ms`)
   },
 )
+
+// Polaroids for the wall (plan §16.4): light work, a few at a time; older sources get theirs once.
+await queues.work(QUEUES.thumb.name, { localConcurrency: 3 }, async ([job]) => {
+  if (job) await makeThumb(QUEUES.thumb.payload.parse(job.data).fileId)
+})
+void backfillThumbs().then((n) => n && console.info(`[thumb] queued ${n} older sources`))
 
 // Deep searches wait on ingest jobs, so they run beside them, a few at a time.
 await queues.work(QUEUES.deep.name, { localConcurrency: 3 }, async ([job]) => {

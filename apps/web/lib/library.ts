@@ -10,7 +10,7 @@ import {
 import { db, schema } from "@konkyo/db"
 import { enqueue } from "@konkyo/jobs"
 import { headObject, objectKey, presignOperation, type S3Operation } from "@konkyo/storage"
-import { and, asc, desc, eq, inArray, isNull } from "drizzle-orm"
+import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm"
 import { allowanceLeft } from "./usage"
 
 const { files, folders, fileFolders, passages } = schema
@@ -54,6 +54,8 @@ export async function listFiles(ownerId: string, folderId?: string) {
       durationSeconds: files.durationSeconds,
       sizeBytes: files.sizeBytes,
       sourceUrl: files.sourceUrl,
+      // page one / og:image / video still, made by the worker's thumb job (/api/files/:id/thumb)
+      hasThumb: sql<boolean>`${files.thumbKey} is not null`,
       createdAt: files.createdAt,
       updatedAt: files.updatedAt,
       folderId: firstFolder.folderId,

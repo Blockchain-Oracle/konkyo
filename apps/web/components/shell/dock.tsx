@@ -1,22 +1,17 @@
 "use client"
 
-import { Popover, PopoverContent, PopoverTrigger } from "@konkyo/ui/components/popover"
-import { Switch } from "@konkyo/ui/components/switch"
-import { Toolbar } from "@konkyo/ui/components/toolbar"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@konkyo/ui/components/tooltip"
-import { cn } from "@konkyo/ui/lib/utils"
-import { ArrowUpIcon, MessagesSquareIcon, Music2Icon, SparklesIcon, XIcon } from "lucide-react"
 import type { Route } from "next"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
+import { VoiceOrb, type VoiceState } from "@/components/voice/voice-orb"
 import { type Focus, WHOLE_LIBRARY } from "@/lib/focus"
 import { holdQuestion } from "@/lib/pending-question"
 import { interfaceSoundsOn, setInterfaceSounds, sound } from "@/lib/sounds"
 import { useUnread } from "@/lib/use-inbox"
 import { useCurrentSpaceId } from "./rail"
 
-/** Pages with their own composer or no content to ask about don't show the dock (R2). */
+/** Pages with their own composer or nothing to ask about don't show the dock (R2). */
 const NO_DOCK = [
   /^\/chats\/[^/]+/,
   /^\/write\/[^/]+/,
@@ -31,196 +26,149 @@ export function useDockVisible() {
 }
 
 /**
- * The orb's seat (plan §16.5). Until the voice stage lands (S16) the orb is a still: tapping it
- * opens the ask strip, the same as the pill. It breaks the dock's top edge, as in OurSpaces.
- */
-function OrbSeat({ onPress, open }: { onPress: () => void; open: boolean }) {
-  return (
-    <Toolbar.Button
-      onClick={onPress}
-      aria-label="Ask"
-      className={cn(
-        "relative -my-2 grid size-14 shrink-0 -translate-y-1.5 place-items-center rounded-full transition-[translate,scale] duration-(--dur-arrive) ease-(--ease-pop) hover:-translate-y-2.5",
-        open && "scale-90",
-      )}
-    >
-      {/* The orb's colours (violet → pink → orange through a glass highlight): the one place a
-          gradient is allowed, as in OurSpaces. */}
-      <span
-        aria-hidden
-        className="size-12 rounded-full shadow-[0_6px_18px_-6px_rgb(233_54_157/0.7)]"
-        style={{
-          background:
-            "radial-gradient(circle at 32% 28%, rgb(255 255 255 / 0.85) 0 7%, transparent 18%), radial-gradient(circle at 70% 75%, #ff7c42 0, transparent 55%), radial-gradient(circle at 25% 70%, #7853ff 0, transparent 60%), #e9369d",
-        }}
-      />
-    </Toolbar.Button>
-  )
-}
-
-/**
- * The dock (plan §16.6, OurSpaces ActionDock): floats at the bottom of the page. The orb, "ask
- * anything", ✦ what moved, chats, and sounds. Asking from a space's page asks that space.
+ * The dock: OurSpaces' ActionDock, ported (its markup and CSS, house.css). The orb leads, with a
+ * quiet prompt beside it; tap either and the orb lifts and swells, the utilities step out and the
+ * say strip takes the bar. Until the voice stage (S16) the strip takes typed words: each key
+ * stirs the orb. ✦ is what moved; the bubble is your chats; ♪ turns interface sounds on or off.
  */
 export function Dock() {
   const router = useRouter()
   const spaceId = useCurrentSpaceId()
   const { data: unread } = useUnread()
-  const [asking, setAsking] = useState(false)
+  const [mood, setMood] = useState<VoiceState>("idle")
   const [text, setText] = useState("")
-  const [soundsOn, setSoundsOn] = useState(true)
+  const [soundOn, setSoundOn] = useState(true)
+  const level = useRef(0)
   const input = useRef<HTMLInputElement>(null)
 
-  useEffect(() => setSoundsOn(interfaceSoundsOn()), [])
+  useEffect(() => setSoundOn(interfaceSoundsOn()), [])
   useEffect(() => {
-    if (asking) input.current?.focus()
-  }, [asking])
+    if (mood === "listening") input.current?.focus()
+  }, [mood])
+  // Each key stirs the orb, then it settles (a fast attack and slow release, as for a voice).
+  useEffect(() => {
+    let raf = 0
+    const settle = () => {
+      level.current *= 0.9
+      raf = requestAnimationFrame(settle)
+    }
+    raf = requestAnimationFrame(settle)
+    return () => cancelAnimationFrame(raf)
+  }, [])
 
   const open = () => {
-    sound("tap")
-    setAsking(true)
-  }
-  const close = () => {
-    setAsking(false)
-    setText("")
+    sound(mood === "idle" ? "promote" : "tap")
+    setMood(mood === "idle" ? "listening" : "idle")
+    if (mood !== "idle") setText("")
   }
   const ask = () => {
     const question = text.trim()
     if (!question) return
+    setMood("working")
     const focus: Focus = spaceId ? { fileIds: [], folderIds: [spaceId] } : WHOLE_LIBRARY
     const chatId = crypto.randomUUID()
     holdQuestion(chatId, { text: question, focus })
     sound("place")
-    close()
     router.push(`/chats/${chatId}` as Route)
+    setText("")
+    setMood("idle")
   }
 
   return (
-    <Toolbar.Root
-      aria-label="Dock"
-      className="pointer-events-auto flex h-14 items-center gap-1 rounded-full bg-sticker py-1 pr-1.5 pl-1 text-white shadow-dark ring-1 ring-white/6"
-    >
-      <OrbSeat onPress={open} open={asking} />
-
-      {asking ? (
-        <form
-          className="flex min-w-0 animate-pill-in items-center gap-1.5"
-          onSubmit={(event) => {
-            event.preventDefault()
-            ask()
-          }}
+    <nav className="action-dock" aria-label="Ask and catch up">
+      <div className={`dock-voice is-${mood}`}>
+        <button
+          type="button"
+          className="dock-voice-orb"
+          onClick={open}
+          title={mood === "idle" ? "Ask" : "Close"}
+          aria-label={mood === "idle" ? "Ask" : "Close"}
         >
-          <Toolbar.Input
-            ref={input}
-            value={text}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setText(event.target.value)}
-            onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) =>
-              event.key === "Escape" && close()
-            }
-            placeholder={spaceId ? "ask this space anything…" : "ask your library anything…"}
-            aria-label="Your question"
-            className="h-10 w-[min(56vw,420px)] bg-transparent px-2 text-reading text-white caret-lime outline-none placeholder:text-room-muted"
-          />
-          <Toolbar.Button
-            type="submit"
-            aria-label="Ask"
-            disabled={!text.trim()}
-            className="grid size-10 shrink-0 place-items-center rounded-full bg-lime text-ink transition-opacity disabled:opacity-35"
-          >
-            <ArrowUpIcon className="size-4.5" strokeWidth={2.5} />
-          </Toolbar.Button>
-          <Toolbar.Button
-            type="button"
-            onClick={close}
-            aria-label="Close"
-            className="grid size-10 shrink-0 place-items-center rounded-full text-room-muted hover:bg-white/8 hover:text-white"
-          >
-            <XIcon className="size-4.5" />
-          </Toolbar.Button>
-        </form>
-      ) : (
-        <>
-          <Toolbar.Button
-            onClick={open}
-            className="h-10 rounded-full px-3 text-left text-ui font-semibold whitespace-nowrap text-white/90 hover:bg-white/8"
-          >
+          <span className="voice-orb-host">
+            <VoiceOrb state={mood} level={level} />
+          </span>
+        </button>
+        {mood === "idle" && (
+          <button type="button" className="dock-voice-ask" onClick={open}>
             {spaceId ? "ask this space" : "ask anything"}
-          </Toolbar.Button>
-          <Toolbar.Separator className="mx-1 h-6 w-px bg-white/14" />
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Toolbar.Link
-                  render={<Link href="/inbox" onClick={() => sound("tap")} />}
-                  className="relative grid size-10 place-items-center rounded-full text-lime hover:bg-white/8"
-                />
-              }
-            >
-              <SparklesIcon className="size-4.5" strokeWidth={2} />
-              <span className="sr-only">What moved</span>
-              {unread ? (
-                <span className="absolute -top-1 -right-1 grid size-5 place-items-center rounded-full bg-white text-[10px] font-bold text-ink tabular-nums">
-                  {unread > 9 ? "9+" : unread}
-                </span>
-              ) : null}
-            </TooltipTrigger>
-            <TooltipContent>what moved</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Toolbar.Link
-                  render={<Link href="/chats" onClick={() => sound("tap")} />}
-                  className="grid size-10 place-items-center rounded-full text-white/90 hover:bg-white/8"
-                />
-              }
-            >
-              <MessagesSquareIcon className="size-4.5" strokeWidth={1.75} />
-              <span className="sr-only">Chats</span>
-            </TooltipTrigger>
-            <TooltipContent>chats</TooltipContent>
-          </Tooltip>
-          <Popover>
-            <PopoverTrigger
-              render={
-                <Toolbar.Button
-                  aria-label="Sounds"
-                  className="grid size-10 place-items-center rounded-full text-white/90 hover:bg-white/8 data-popup-open:bg-white/8"
-                />
-              }
-            >
-              <Music2Icon className="size-4.5" strokeWidth={1.75} />
-            </PopoverTrigger>
-            <PopoverContent side="top" align="end" sideOffset={14} className="w-64">
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-ui font-semibold">interface sounds</span>
-                <Switch
-                  aria-label="Interface sounds"
-                  checked={soundsOn}
-                  onCheckedChange={(on) => {
-                    setSoundsOn(on)
-                    setInterfaceSounds(on)
-                  }}
-                />
-              </div>
-              <p className="mt-1.5 text-meta text-room-muted">
-                soft clicks when you tap, add and check.
-              </p>
-            </PopoverContent>
-          </Popover>
-        </>
-      )}
-    </Toolbar.Root>
+          </button>
+        )}
+        <div className="dock-voice-say" aria-live="polite">
+          <form
+            className="dock-voice-say-inner"
+            onSubmit={(event) => {
+              event.preventDefault()
+              ask()
+            }}
+          >
+            {mood !== "idle" && (
+              <input
+                ref={input}
+                value={text}
+                onChange={(event) => {
+                  setText(event.target.value)
+                  level.current = Math.min(1, level.current + 0.45)
+                }}
+                onKeyDown={(event) => event.key === "Escape" && open()}
+                placeholder={spaceId ? "ask this space…" : "ask your library…"}
+                aria-label="Your question"
+                className="dock-voice-text w-[min(52vw,420px)] bg-transparent caret-lime outline-none placeholder:text-white/45"
+              />
+            )}
+            {mood === "listening" && (
+              <button type="submit" className="dock-voice-done" disabled={!text.trim()}>
+                ask
+              </button>
+            )}
+          </form>
+        </div>
+      </div>
+      <span className="action-dock-divider" aria-hidden="true" />
+      <Link
+        href={"/inbox" as Route}
+        onClick={() => sound("tap")}
+        className="action-dock-ai relative inline-flex min-h-[42px] items-center rounded-full"
+        title="What moved"
+      >
+        <span aria-hidden="true">✦</span>
+        <b className="action-dock-label">catch me up</b>
+        {unread ? (
+          <span className="absolute -top-1 -right-1 grid size-5 place-items-center rounded-full bg-white text-[10px] font-extrabold text-ink tabular-nums">
+            {unread > 9 ? "9+" : unread}
+          </span>
+        ) : null}
+      </Link>
+      <Link
+        href={"/chats" as Route}
+        onClick={() => sound("tap")}
+        className="action-dock-chat inline-flex min-h-[42px] items-center rounded-full"
+        title="Chats"
+      >
+        <svg viewBox="0 0 20 20" aria-hidden="true">
+          <path d="M3.5 5.5a2.5 2.5 0 0 1 2.5-2.5h8a2.5 2.5 0 0 1 2.5 2.5v5a2.5 2.5 0 0 1-2.5 2.5H9.2L5.6 16.4V13A2.5 2.5 0 0 1 3.5 10.5z" />
+        </svg>
+        <b className="action-dock-label">chats</b>
+      </Link>
+      <button
+        type="button"
+        className={`action-dock-sound${soundOn ? "" : " is-muted"}`}
+        onClick={() => {
+          const next = !soundOn
+          setSoundOn(next)
+          setInterfaceSounds(next)
+        }}
+        aria-pressed={soundOn}
+        aria-label={soundOn ? "Mute interface sounds" : "Turn on interface sounds"}
+        title={soundOn ? "Mute sounds" : "Turn on sounds"}
+      >
+        <span aria-hidden="true">♪</span>
+      </button>
+    </nav>
   )
 }
 
-/** Where the dock sits: the bottom of the centre column, above the phone bar. */
+/** The dock lives on every page with something to ask about. */
 export function DockArea() {
   const visible = useDockVisible()
-  if (!visible) return null
-  return (
-    <div className="pointer-events-none sticky bottom-0 z-30 flex justify-center px-3 pt-6 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-5">
-      <Dock />
-    </div>
-  )
+  return visible ? <Dock /> : null
 }

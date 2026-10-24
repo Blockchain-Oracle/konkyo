@@ -1,14 +1,64 @@
-import { MobileHeader } from "./page-header"
+import { cn } from "@konkyo/ui/lib/utils"
 
-/** The standard page frame: mobile header + a centred column on the void. */
-export function PageShell({ title, children }: { title: string; children: React.ReactNode }) {
+/**
+ * A page is a room (OurSpaces' .space-header over a wall): a black kicker pill, the name huge and
+ * lowercase in the wall's measured ink, sticker actions on the right; then the body on a sheet of
+ * cream paper, where every word reads at 4.5:1 or better (tokens.css, "visibility").
+ */
+export function RoomHeader({
+  title,
+  kicker,
+  actions,
+}: {
+  title: string
+  kicker?: React.ReactNode
+  actions?: React.ReactNode
+}) {
   return (
-    <>
-      <MobileHeader title={title} />
-      <div className="mx-auto w-full max-w-5xl px-6 pt-12 pb-24 md:pt-15">
-        <h1 className="hidden text-heading-2xs font-normal md:block">{title}</h1>
-        <div className="md:mt-15">{children}</div>
+    <header className="room-header">
+      <div className="space-title-block">
+        {kicker ? <span className="room-pill">{kicker}</span> : null}
+        <div className="space-title-row">
+          <h1>
+            <span className="space-title-text">{title}</span>
+          </h1>
+        </div>
       </div>
-    </>
+      {actions ? (
+        <div className="space-header-side">
+          <div className="header-actions">{actions}</div>
+        </div>
+      ) : null}
+    </header>
+  )
+}
+
+export function PageShell({
+  title,
+  kicker,
+  actions,
+  wide,
+  bare,
+  children,
+}: {
+  title: string
+  kicker?: React.ReactNode
+  actions?: React.ReactNode
+  /** Wider sheet for boards and tables. */
+  wide?: boolean
+  /** No sheet: the page lays its own paper and stickers on the wall. */
+  bare?: boolean
+  children: React.ReactNode
+}) {
+  return (
+    <div
+      className={cn(
+        "mx-auto w-full px-4 pt-4 pb-28 md:px-8 md:pt-[92px]",
+        wide ? "max-w-[1240px]" : "max-w-[1040px]",
+      )}
+    >
+      <RoomHeader title={title} kicker={kicker} actions={actions} />
+      {bare ? children : <section className="surface-paper paper-sheet">{children}</section>}
+    </div>
   )
 }

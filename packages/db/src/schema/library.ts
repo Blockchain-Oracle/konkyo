@@ -1,4 +1,4 @@
-import type { FileMeta } from "@konkyo/config"
+import type { FileMeta, SpaceColor, SpaceWall } from "@konkyo/config"
 import { sql } from "drizzle-orm"
 import {
   type AnyPgColumn,
@@ -40,6 +40,11 @@ export const timestamps = {
   trashBatch: uuid(),
 }
 
+/**
+ * A folder. A top-level folder is a **space** (plan §16.6, F45): it owns an identity colour, a wall,
+ * a symbol and a cover; folders inside a space are plain folders. `spaceId` (the top-level id of
+ * every folder) is maintained by a database trigger (migration 0019), so access checks are a join.
+ */
 export const folders = pgTable(
   "folders",
   {
@@ -47,9 +52,27 @@ export const folders = pgTable(
     ownerId: owner(),
     parentId: uuid().references((): AnyPgColumn => folders.id, { onDelete: "cascade" }),
     name: text().notNull(),
+    /** Set only by the folders_set_space trigger: the space this folder belongs to. */
+    spaceId: uuid(),
+    /** A space's identity (read only where parent_id is null). Null colour: hashed from the id. */
+    color: text().$type<SpaceColor>(),
+    symbol: text(),
+    wall: text().$type<SpaceWall>(),
+    coverKind: text().$type<"none" | "file" | "image">().default("none").notNull(),
+    coverFileId: uuid().references((): AnyPgColumn => files.id, { onDelete: "set null" }),
+    /** covers/<spaceId>/<rand>.webp, an uploaded image resized by the worker. */
+    coverKey: text(),
+    templateId: text(),
+    /** One line under the space's title (≤140 characters). */
+    description: text(),
+    /** Email a space (F59): <token>@in.konkyo.xyz. */
+    inboundToken: text().unique(),
     ...timestamps,
   },
-  (t) => [index("folders_owner_parent_idx").on(t.ownerId, t.parentId)],
+  (t) => [
+    index("folders_owner_parent_idx").on(t.ownerId, t.parentId),
+    index("folders_space_idx").on(t.spaceId),
+  ],
 )
 
 export const fileKind = pgEnum("file_kind", [
@@ -124,6 +147,8 @@ export const files = pgTable(
     originalKey: text(),
     /** S3 key of the PDF every document is shown as (DOCX/PPTX/web are converted). */
     renditionKey: text(),
+    /** pages/<fileId>/1.webp: page one, a web page's og:image or a video thumbnail (the polaroid). */
+    thumbKey: text(),
     status: fileStatus().default("queued").notNull(),
     /** What the worker is doing right now, in plain words ("Reading pages"). */
     stage: text(),

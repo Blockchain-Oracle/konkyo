@@ -2,6 +2,7 @@ import { INGEST } from "@konkyo/config"
 import { Readability } from "@mozilla/readability"
 import { JSDOM } from "jsdom"
 import { documentHtml, escapeHtml, htmlToPdf } from "./convert"
+import { ogImageOf } from "./thumb"
 
 export class UnreachableError extends Error {
   constructor(message: string) {
@@ -44,6 +45,8 @@ export type Article = {
   byline?: string
   site?: string
   published?: string
+  /** The image the page chose for itself (og:image): its polaroid on the wall. */
+  ogImage?: string
   pdf: Uint8Array
 }
 
@@ -54,6 +57,8 @@ export async function articleToPdf(
   options: { footer?: string } = {},
 ): Promise<Article> {
   const dom = new JSDOM(html, { url })
+  // Read before Readability, which rewrites the document.
+  const ogImage = ogImageOf(dom.window.document, url)
   const article = new Readability(dom.window.document).parse()
   if (!article?.content || (article.textContent ?? "").trim().length < 200) {
     throw new UnreachableError("This page has no readable article text")
@@ -70,6 +75,7 @@ export async function articleToPdf(
     byline: article.byline ?? undefined,
     site: article.siteName ?? undefined,
     published: article.publishedTime ?? undefined,
+    ogImage,
     pdf,
   }
 }

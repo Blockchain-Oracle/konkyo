@@ -11,6 +11,8 @@ const nextConfig: NextConfig = {
   // Dev only: a second session (a test guest) runs on 127.0.0.1 beside the signed-in localhost
   // one; each origin keeps its own cookie.
   allowedDevOrigins: ["127.0.0.1"],
+  // No Next.js badge over the rail and the live pill in development.
+  devIndicators: false,
   // Workspace packages ship TypeScript source; Next compiles them with the app.
   transpilePackages: [
     "@konkyo/agents",

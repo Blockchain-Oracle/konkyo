@@ -45,6 +45,7 @@ export function useFolderPath(folderId: string) {
     queryKey: qk.folders.path(folderId),
     queryFn: () =>
       api<{ path: { id: string; name: string }[] }>(`/api/folders/${folderId}`).then((r) => r.path),
+    enabled: Boolean(folderId),
   })
 }
 

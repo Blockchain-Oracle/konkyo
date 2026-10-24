@@ -53,6 +53,13 @@ export const QUEUES = {
     options: { retryLimit: 0, expireInSeconds: 15 * 60 },
     send: { heartbeatSeconds: 30 },
   },
+  /** A source's polaroid (plan §16.4): page one, its og:image, or its video thumbnail, as WebP. */
+  thumb: {
+    name: "thumb",
+    payload: z.object({ fileId: z.uuid() }),
+    options: { retryLimit: 2, retryDelay: 30, retryBackoff: true, expireInSeconds: 5 * 60 },
+    send: {},
+  },
   /**
    * Removes a deleted file's stored bytes and Zetaris evidence (the rows are already gone). For a
    * deleted account it also drops its watch tables and its memory and World Model files.

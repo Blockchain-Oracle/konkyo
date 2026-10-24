@@ -1,27 +1,17 @@
 "use client"
 
 import { SPACES } from "@konkyo/config"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@konkyo/ui/components/tooltip"
-import { colorFor, readableInk } from "@konkyo/ui/lib/space"
-import { cn } from "@konkyo/ui/lib/utils"
-import { PlusIcon } from "lucide-react"
+import { readableInk } from "@konkyo/ui/lib/space"
 import type { Route } from "next"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useMemo } from "react"
-import { isActive, MAIN_NAV, type NavItem } from "@/lib/navigation"
+import { type CSSProperties, useMemo } from "react"
 import { sound } from "@/lib/sounds"
-import { type FolderRow, useFolders } from "@/lib/use-folders"
-import { useUnread } from "@/lib/use-inbox"
+import { useFolders } from "@/lib/use-folders"
+import { type SpaceRow, useSpaceList } from "@/lib/use-spaces"
 import { BrandMark } from "../brand-mark"
 import { AccountMenu, type ShellUser } from "./account-menu"
 import { openNewFolder } from "./app-dialogs"
-
-/** Top-level folders are spaces; the rail shows them as colour tiles (plan §16.6). */
-export function useSpaces() {
-  const { data } = useFolders()
-  return useMemo(() => (data ?? []).filter((f) => !f.parentId), [data])
-}
 
 /** The space a page belongs to: the top of the folder it shows (`/library/folders/:id`). */
 export function useCurrentSpaceId() {
@@ -37,142 +27,86 @@ export function useCurrentSpaceId() {
   }, [pathname, data])
 }
 
-const spaceHref = (id: string) => `/library/folders/${id}` as Route
-
-/** One space as a tile: its colour, its first letter, a white ring when you're in it. */
-export function SpaceTile({
-  space,
-  active,
-  size = "md",
-}: {
-  space: Pick<FolderRow, "id" | "name">
-  active: boolean
-  size?: "sm" | "md"
-}) {
-  const hex = SPACES.colors[colorFor(space.id)].hex
-  return (
-    <Link
-      href={spaceHref(space.id)}
-      onClick={() => sound("tap")}
-      aria-current={active ? "page" : undefined}
-      className={cn(
-        "grid shrink-0 place-items-center rounded-tile font-display font-extrabold transition-[translate,box-shadow] duration-(--dur-quick) ease-(--ease-glide) hover:-translate-y-0.5 focus-visible:outline-3 focus-visible:outline-lime",
-        size === "md" ? "size-12 text-xl" : "size-10 text-base",
-        active && "ring-[3px] ring-white ring-offset-2 ring-offset-rail",
-      )}
-      style={{ background: hex, color: readableInk(hex) }}
-    >
-      {space.name.trim().charAt(0).toLowerCase() || "·"}
-      <span className="sr-only">{space.name}</span>
-    </Link>
-  )
+/** Kept for callers that only need the list of spaces. */
+export function useSpaces() {
+  return useSpaceList().data ?? []
 }
 
-function NavButton({ item, active, badge }: { item: NavItem; active: boolean; badge?: number }) {
+const spaceHref = (id: string) => `/library/folders/${id}` as Route
+
+/** One space on the rail: its cover photo (a real page one) or its colour and glyph. */
+function SpaceLink({ space, active, index }: { space: SpaceRow; active: boolean; index: number }) {
+  const hex = SPACES.colors[space.color].hex
   return (
-    <Tooltip>
-      <TooltipTrigger
-        render={
-          <Link
-            href={item.href}
-            onClick={() => sound("tap")}
-            aria-current={active ? "page" : undefined}
-            className={cn(
-              "relative grid size-11 place-items-center rounded-full text-room-muted transition-[translate,background-color,color] duration-(--dur-quick) ease-(--ease-glide) hover:-translate-y-0.5 hover:bg-white/8 hover:text-white",
-              active && "bg-white text-ink hover:bg-white hover:text-ink",
-            )}
-          />
+    <div className="space-link-wrap" style={{ "--i": index } as CSSProperties}>
+      <Link
+        href={spaceHref(space.id)}
+        onClick={() => sound("tap")}
+        className={`space-link ${active ? "is-active" : ""} ${space.cover ? "has-photo" : ""}`}
+        style={
+          {
+            backgroundColor: hex,
+            backgroundImage: space.cover ? `url('${space.cover}')` : undefined,
+            color: readableInk(hex),
+            "--space-accent": hex,
+          } as CSSProperties
         }
+        aria-label={space.name}
+        aria-current={active ? "page" : undefined}
       >
-        <item.icon className="size-5" strokeWidth={active ? 2.25 : 1.75} />
-        <span className="sr-only">{item.label}</span>
-        {badge ? (
-          <span className="absolute -top-0.5 -right-0.5 min-w-4.5 rounded-full bg-lime px-1 text-center text-[10px] leading-4.5 font-bold text-ink tabular-nums">
-            {badge > 99 ? "99+" : badge}
-          </span>
-        ) : null}
-      </TooltipTrigger>
-      <TooltipContent side="right" sideOffset={10}>
-        {item.label.toLowerCase()}
-      </TooltipContent>
-    </Tooltip>
+        {!space.cover && <span>{`${space.symbol}︎`}</span>}
+      </Link>
+      <span className="space-tooltip">
+        {space.name.toLowerCase()} · {space.sources} source{space.sources === 1 ? "" : "s"}
+      </span>
+    </div>
   )
 }
 
 /**
- * The floating rail (plan §16.6, OurSpaces Rail): a dark rounded panel inset from the left edge.
- * The mark goes home; then the places; then your spaces as colour tiles; a dashed lime + makes a
- * new space; your look opens the account menu. Desktop only; phones get the bottom bar.
+ * The rail: OurSpaces' Rail, ported (markup and CSS in house.css). The mark goes home; your spaces
+ * are sticker tiles with their cover photos, tilted like they were stuck on; the dashed + makes a
+ * new space; your face opens your account. Nothing else lives here, as in OurSpaces.
  */
 export function Rail({ user }: { user: ShellUser }) {
-  const pathname = usePathname()
-  const { data: unread } = useUnread()
   const spaces = useSpaces()
   const current = useCurrentSpaceId()
 
   return (
-    <nav
-      aria-label="Main"
-      className="fixed inset-y-4 left-4 z-40 hidden w-[72px] flex-col items-center gap-1.5 rounded-card bg-rail py-3 shadow-dark md:flex"
-    >
+    <aside className="space-rail" aria-label="Your spaces">
       <Link
+        className="rail-brand"
         href="/home"
         aria-label="Konkyo home"
+        title="home"
         onClick={() => sound("tap")}
-        className="mb-1 grid size-12 place-items-center rounded-tile transition-transform duration-(--dur-quick) hover:-rotate-6"
       >
-        <BrandMark small className="size-7" />
+        <BrandMark small className="size-8" />
       </Link>
 
-      {MAIN_NAV.map((item) => (
-        <NavButton
-          key={item.href}
-          item={item}
-          // Inside a space the space's tile is "you are here", not Library.
-          active={item.href === "/library" && current ? false : isActive(pathname, item.href)}
-          badge={item.href === "/inbox" ? unread : undefined}
-        />
-      ))}
-
-      <span aria-hidden className="my-2 h-px w-8 shrink-0 bg-white/12" />
-
-      <div className="flex min-h-0 w-full flex-1 flex-col items-center gap-2.5 overflow-y-auto px-3 py-1 [scrollbar-width:none]">
-        {spaces.map((space) => (
-          <Tooltip key={space.id}>
-            <TooltipTrigger render={<span className="inline-flex" />}>
-              <SpaceTile space={space} active={current === space.id} />
-            </TooltipTrigger>
-            <TooltipContent side="right" sideOffset={10}>
-              {space.name}
-            </TooltipContent>
-          </Tooltip>
+      <div className="space-list">
+        {spaces.map((space, i) => (
+          <SpaceLink key={space.id} space={space} active={current === space.id} index={i} />
         ))}
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <button
-                type="button"
-                onClick={() => {
-                  sound("tap")
-                  openNewFolder(null)
-                }}
-                className="group grid size-12 shrink-0 place-items-center rounded-tile border-2 border-dashed border-lime/70 text-lime transition-colors duration-(--dur-quick) hover:border-lime hover:bg-lime hover:text-ink"
-              />
-            }
+        <div className="space-link-wrap" style={{ "--i": spaces.length } as CSSProperties}>
+          <button
+            type="button"
+            className="create-space-button"
+            onClick={() => {
+              sound("tap")
+              openNewFolder(null)
+            }}
+            aria-label="Make a space"
           >
-            <PlusIcon
-              className="size-5 transition-transform duration-(--dur-base) ease-(--ease-pop) group-hover:rotate-90"
-              strokeWidth={2.5}
-            />
-            <span className="sr-only">New space</span>
-          </TooltipTrigger>
-          <TooltipContent side="right" sideOffset={10}>
-            new space
-          </TooltipContent>
-        </Tooltip>
+            <span>+</span>
+          </button>
+          <span className="space-tooltip">make a space</span>
+        </div>
       </div>
 
-      <AccountMenu user={user} />
-    </nav>
+      <div className="rail-you-wrap">
+        <AccountMenu user={user} />
+      </div>
+    </aside>
   )
 }

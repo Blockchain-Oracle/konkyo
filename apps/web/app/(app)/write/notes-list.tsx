@@ -69,7 +69,7 @@ export function NotesList() {
         {notes.map((n) => (
           <li
             key={n.id}
-            className="relative flex min-h-16 items-center gap-3 border-b border-border px-2 py-3 transition-colors duration-(--duration-press) hover:bg-panel"
+            className="relative flex min-h-16 items-center gap-3 border-b border-border px-2 py-3 transition-colors duration-(--duration-press) hover:bg-accent"
           >
             <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-panel">
               <NotebookPenIcon className="size-4 text-ash-gray" strokeWidth={1.5} aria-hidden />

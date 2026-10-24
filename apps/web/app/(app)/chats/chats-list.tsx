@@ -77,7 +77,7 @@ export function ChatsList() {
         {shown.map((chat) => (
           <li
             key={chat.id}
-            className="relative flex min-h-14 items-center gap-3 border-b border-border px-2 py-2.5 transition-colors duration-(--duration-press) hover:bg-panel"
+            className="relative flex min-h-14 items-center gap-3 border-b border-border px-2 py-2.5 transition-colors duration-(--duration-press) hover:bg-accent"
           >
             <MessageSquareIcon
               className="size-4 shrink-0 text-ash-gray"

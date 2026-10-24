@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { StarterTasks } from "@/components/onboarding/starter-tasks"
+import { PageShell } from "@/components/page-shell"
 import { api } from "@/lib/fetcher"
 import { useFiles } from "@/lib/use-library"
 import { useSettings } from "@/lib/use-settings"
@@ -23,24 +24,22 @@ export function HomeStart({ children }: { children: React.ReactNode }) {
   const firstRun = settings && files && !settings.onboarded && files.length === 0
   if (!firstRun) return children
   return (
-    <section aria-labelledby="first-run">
-      <p className="text-micro text-saffron-spark uppercase">Welcome to Konkyo</p>
-      <h1 id="first-run" className="mt-3 text-subheading font-normal sm:text-heading-sm">
-        What are you here for?
-      </h1>
-      <p className="mt-4 text-reading text-pretty text-silver-mist">
-        Pick one and Konkyo runs it for real on open material, so you can see every answer point to
-        the passage it came from.
-      </p>
-      <StarterTasks className="mt-9" />
-      <button
-        type="button"
-        onClick={() => skip.mutate()}
-        disabled={skip.isPending}
-        className="mt-6 text-snippet text-ash-gray underline decoration-white/20 underline-offset-4 hover:text-bone-white"
-      >
-        Skip. I'll add my own files.
-      </button>
-    </section>
+    <PageShell title="what are you here for?" kicker="welcome to konkyo">
+      <section aria-label="Start">
+        <p className="max-w-2xl text-reading text-pretty text-silver-mist">
+          Pick one and Konkyo runs it for real on open material, so you can see every answer point
+          to the passage it came from.
+        </p>
+        <StarterTasks className="mt-9" />
+        <button
+          type="button"
+          onClick={() => skip.mutate()}
+          disabled={skip.isPending}
+          className="mt-6 text-snippet text-ash-gray underline decoration-current/30 underline-offset-4 hover:text-bone-white"
+        >
+          Skip. I'll add my own files.
+        </button>
+      </section>
+    </PageShell>
   )
 }

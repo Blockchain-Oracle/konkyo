@@ -175,7 +175,8 @@ export function Games() {
                 tabIndex={n ? undefined : -1}
                 className={cn(
                   "group flex items-center gap-4 py-4 pr-1 transition-colors duration-(--duration-press)",
-                  n ? "hover:bg-panel" : "pointer-events-none opacity-50",
+                  // Unavailable games stay readable (what it is, why it's waiting); only the arrow goes.
+                  n ? "hover:bg-accent" : "pointer-events-none",
                 )}
               >
                 <span className="w-6 shrink-0 pl-1 text-snippet text-ash-gray tabular-nums">
@@ -193,7 +194,10 @@ export function Games() {
                       : "No items yet"}
                 </span>
                 <ArrowRightIcon
-                  className="size-4 shrink-0 text-ash-gray transition-transform duration-(--duration-press) group-hover:translate-x-0.5 group-hover:text-bone-white"
+                  className={cn(
+                    "size-4 shrink-0 text-ash-gray transition-transform duration-(--duration-press) group-hover:translate-x-0.5 group-hover:text-bone-white",
+                    !n && "invisible",
+                  )}
                   strokeWidth={1.5}
                 />
               </Link>

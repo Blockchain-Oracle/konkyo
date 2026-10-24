@@ -1,13 +1,31 @@
 import { MOTION, SPACES, type SpaceColor, type SpaceWall } from "@konkyo/config"
 import type { CSSProperties } from "react"
 
-/** Black or white text on a colour (OurSpaces readableInk: YIQ luminance cutoff). */
-export function readableInk(hex: string): "#111114" | "#ffffff" {
+const linear = (v: number) => {
+  const c = v / 255
+  return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
+}
+
+/** WCAG relative luminance of a #rrggbb colour. */
+export function luminance(hex: string) {
   const h = hex.replace("#", "")
-  if (!/^[0-9a-f]{6}$/i.test(h)) return "#111114"
-  const channel = (i: number) => Number.parseInt(h.slice(i, i + 2), 16)
-  const luminance = (0.299 * channel(0) + 0.587 * channel(2) + 0.114 * channel(4)) / 255
-  return luminance > SPACES.inkCutoff ? "#111114" : "#ffffff"
+  if (!/^[0-9a-f]{6}$/i.test(h)) return 0
+  const [r, g, b] = [0, 2, 4].map((i) => linear(Number.parseInt(h.slice(i, i + 2), 16)))
+  return 0.2126 * (r ?? 0) + 0.7152 * (g ?? 0) + 0.0722 * (b ?? 0)
+}
+
+/** WCAG contrast ratio between two #rrggbb colours (1–21). */
+export function contrast(a: string, b: string) {
+  const [x, y] = [luminance(a), luminance(b)]
+  return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05)
+}
+
+/**
+ * Black or white text on a colour, whichever measures higher. OurSpaces used a YIQ cutoff, which
+ * puts white on cobalt (4.2:1) and pink (3.8:1); measuring picks ink there (4.7 and 4.9).
+ */
+export function readableInk(hex: string): "#0b0b0e" | "#ffffff" {
+  return contrast(hex, "#0b0b0e") >= contrast(hex, "#ffffff") ? "#0b0b0e" : "#ffffff"
 }
 
 /** A stable colour for anything without one yet (hashed from its id). */

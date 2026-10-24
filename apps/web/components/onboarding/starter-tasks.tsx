@@ -82,7 +82,7 @@ export function StarterTasks({ className }: { className?: string }) {
               onClick={() => start.mutate(task.path)}
               disabled={start.isPending}
               aria-busy={starting}
-              className="group flex w-full items-start gap-4 rounded-card border border-border bg-panel p-4.5 text-left transition-colors duration-(--duration-press) hover:border-line-strong hover:bg-raised disabled:opacity-60 disabled:hover:bg-panel"
+              className="group flex w-full items-start gap-4 rounded-card border border-border bg-panel p-4.5 text-left transition-colors duration-(--duration-press) hover:border-line-strong hover:bg-raised disabled:opacity-60 disabled:hover:bg-accent"
             >
               <span className="grid size-9 shrink-0 place-items-center rounded-full border border-border bg-raised">
                 <Icon className="size-4 text-silver-mist" strokeWidth={1.5} aria-hidden />

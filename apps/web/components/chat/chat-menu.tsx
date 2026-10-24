@@ -27,10 +27,13 @@ import { useChatActions } from "@/lib/use-chats"
 export function ChatMenu({
   chat,
   leaveOnDelete = false,
+  sticker = false,
 }: {
   chat: { id: string; title: string; pinnedAt: string | null }
   /** In the chat itself: deleting it goes back to the Chats list. */
   leaveOnDelete?: boolean
+  /** On a wall: a black sticker, readable on any colour. */
+  sticker?: boolean
 }) {
   const { rename, pin, trash } = useChatActions()
   const router = useRouter()
@@ -42,15 +45,25 @@ export function ChatMenu({
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              aria-label={`More for ${chat.title}`}
-              className="relative z-10 shrink-0 text-ash-gray hover:text-bone-white"
-            />
+            sticker ? (
+              <Button variant="sticker" size="icon" aria-label={`More for ${chat.title}`} />
+            ) : (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={`More for ${chat.title}`}
+                className="relative z-10 shrink-0 text-ash-gray hover:text-bone-white"
+              />
+            )
           }
         >
-          <EllipsisIcon strokeWidth={1.5} />
+          {sticker ? (
+            <span aria-hidden className="text-[15px] leading-none tracking-[0.08em]">
+              •••
+            </span>
+          ) : (
+            <EllipsisIcon strokeWidth={1.5} />
+          )}
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-44">
           <DropdownMenuItem

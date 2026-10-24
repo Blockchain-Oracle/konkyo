@@ -2,6 +2,8 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "./tokens.css";
+@import "./house.css";
+@import "./board.css";
 
 /* The app is dark only: <html class="dark"> is permanent, so copied components' dark: variants apply. */
 @custom-variant dark (&:is(.dark *));

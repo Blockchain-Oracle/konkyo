@@ -1,6 +1,5 @@
 "use client"
 
-import { Avatar, AvatarFallback, AvatarImage } from "@konkyo/ui/components/avatar"
 import { Button } from "@konkyo/ui/components/button"
 import {
   Dialog,
@@ -85,19 +84,30 @@ export function AccountMenu({
       <DropdownMenu>
         <DropdownMenuTrigger
           aria-label={`${displayName}: account`}
-          className={cn(
-            "relative grid size-11 shrink-0 place-items-center rounded-full outline-none transition-[translate] duration-(--dur-quick) ease-(--ease-glide) hover:-translate-y-0.5 focus-visible:ring-3 focus-visible:ring-lime",
-            className,
-          )}
+          title="you · settings"
+          className={cn("rail-you", className)}
         >
-          <Avatar className="size-10 ring-2 ring-white/15">
-            {user.image && <AvatarImage src={user.image} alt="" />}
-            <AvatarFallback className="bg-violet font-display text-snippet font-extrabold text-white">
-              {initials(displayName)}
-            </AvatarFallback>
-          </Avatar>
-          {/* The live dot: you're here (OurSpaces' presence dot on the rail). */}
-          <span className="absolute right-0.5 bottom-0.5 size-3 rounded-full bg-lime ring-[2.5px] ring-rail" />
+          {/* OurSpaces' rail face: your photo (or your initials on violet) and the lime gear. */}
+          <span className="member-face" style={{ width: 30, height: 30 }}>
+            {user.image ? (
+              // biome-ignore lint/performance/noImgElement: a small avatar from the auth provider
+              <img
+                className="member-face-img"
+                src={user.image}
+                alt=""
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <span className="grid size-full place-items-center rounded-full bg-violet font-display text-[11px] font-extrabold text-white">
+                {initials(displayName)}
+              </span>
+            )}
+          </span>
+          <span className="rail-you-gear" aria-hidden>
+            <svg viewBox="0 0 16 16" width="10" height="10" fill="currentColor" aria-hidden="true">
+              <path d="M8 5.2a2.8 2.8 0 1 0 0 5.6 2.8 2.8 0 0 0 0-5.6Zm6.1 3.6-.1-1.6 1.4-1.1-1.5-2.6-1.7.6-1.3-.9L10.6 1H7.6l-.3 1.8-1.4.8-1.6-.6-1.5 2.6L4.2 7.2 4 8.8l-1.3 1.1 1.5 2.6 1.7-.6 1.3.9.3 1.8h3l.3-1.8 1.4-.8 1.6.6 1.5-2.6Z" />
+            </svg>
+          </span>
         </DropdownMenuTrigger>
         <DropdownMenuContent side={side} align="end" sideOffset={10} className="w-64">
           {user.isGuest && (

@@ -31,7 +31,16 @@ function whenNext(at: string) {
  * Today's review (plan F29, Home and Study): what's due, from how many files, one button; when
  * nothing's due, when the next review is. A broken streak's repair is a neutral line here.
  */
-export function TodayCard({ variant = "home" }: { variant?: "home" | "study" }) {
+export function TodayCard({
+  variant = "home",
+  className,
+  pinned,
+}: {
+  variant?: "home" | "study"
+  className?: string
+  /** On a board: a push pin at the top (OurSpaces' pinned card). */
+  pinned?: boolean
+}) {
   const mounted = useSyncExternalStore(
     noop,
     () => true,
@@ -62,10 +71,12 @@ export function TodayCard({ variant = "home" }: { variant?: "home" | "study" }) 
     <section
       aria-labelledby={`today-${variant}`}
       className={cn(
-        "rounded-2xl border border-border bg-panel p-5 sm:p-6",
-        variant === "home" && "mt-12",
+        "relative rounded-2xl border border-border bg-panel p-5 sm:p-6",
+        variant === "home" && !className && "mt-12",
+        className,
       )}
     >
+      {pinned && <span className="board-pin" aria-hidden />}
       <div className="flex items-start justify-between gap-4">
         <h2 id={`today-${variant}`} className="text-micro text-saffron-spark uppercase">
           Today's review

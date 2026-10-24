@@ -301,9 +301,9 @@ export const SPACES = {
   },
   walls: {
     night: { bg: "#211922", ink: "#ffffff" },
-    lagoon: { bg: "#12a594", ink: "#ffffff" },
+    lagoon: { bg: "#12a594", ink: "#111114" }, // measured 6.1:1; OurSpaces' white is 3.1:1
     spruce: { bg: "#0f5c50", ink: "#ffffff" },
-    cobalt: { bg: "#3f70ff", ink: "#ffffff" },
+    cobalt: { bg: "#3f70ff", ink: "#0b0b0e" }, // 4.65:1; white is 4.22
     midnight: { bg: "#1f1b2d", ink: "#ffffff" },
     violet: { bg: "#b7a7ff", ink: "#1b1532" },
     blush: { bg: "#ffdad6", ink: "#111114" },
@@ -320,23 +320,11 @@ export const SPACES = {
     teal: "lagoon",
     butter: "mint",
   },
-  /** Symbols are lucide icon names, picked for reading, studying and writing. */
-  symbols: [
-    "book-open",
-    "graduation-cap",
-    "flask-conical",
-    "pen-line",
-    "brain",
-    "globe",
-    "landmark",
-    "heart-pulse",
-    "scale",
-    "music",
-    "code",
-    "sparkles",
-  ],
-  /** Above this YIQ luminance a colour takes ink, below it white (OurSpaces readableInk). */
-  inkCutoff: 0.58,
+  /**
+   * Symbols are typographic glyphs on the tile, as OurSpaces does (✦ ♥ ☺ ◎ …), never an icon set:
+   * a space without a cover shows its glyph.
+   */
+  symbols: ["✦", "✎", "◎", "☾", "∑", "♪", "✿", "❖", "☀", "⚑", "◐", "✺"],
 } as const
 
 export type SpaceColor = keyof typeof SPACES.colors

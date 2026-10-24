@@ -127,6 +127,20 @@
       "when": 1792844700000,
       "tag": "0017_api_keys",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1792850400000,
+      "tag": "0018_spaces",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1792856100000,
+      "tag": "0019_space_root",
+      "breakpoints": true
     }
   ]
 }

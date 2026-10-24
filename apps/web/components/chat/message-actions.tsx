@@ -4,18 +4,8 @@ import type { Citation, KonkyoMessage } from "@konkyo/agents"
 import { Button } from "@konkyo/ui/components/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@konkyo/ui/components/popover"
 import { Textarea } from "@konkyo/ui/components/textarea"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@konkyo/ui/components/tooltip"
 import { cn } from "@konkyo/ui/lib/utils"
 import { useQuery } from "@tanstack/react-query"
-import {
-  CheckIcon,
-  CopyIcon,
-  NotebookPenIcon,
-  PlusIcon,
-  RotateCcwIcon,
-  ThumbsDownIcon,
-  ThumbsUpIcon,
-} from "lucide-react"
 import { useRouter } from "next/navigation"
 import { type ReactElement, useState } from "react"
 import { toast } from "sonner"
@@ -43,39 +33,36 @@ function asText(body: string, caveat: string | undefined, citations: Citation[])
     .join("\n\n")
 }
 
+/** An answer's action as a word on a pill (no icons): pressed turns it into a black sticker. */
 function Action({
   label,
+  word,
   onClick,
   pressed,
-  children,
   render,
 }: {
   label: string
+  word: string
   onClick?: () => void
   pressed?: boolean
-  children: React.ReactNode
-  /** When the button is also another trigger (the 👎 popover). */
+  /** When the button is also another trigger (the "not right" popover). */
   render?: (button: ReactElement) => ReactElement
 }) {
   const button = (
-    <Button
-      variant="ghost"
-      size="icon-sm"
+    <button
+      type="button"
       aria-label={label}
       aria-pressed={pressed}
       onClick={onClick}
       className={cn(
-        "text-ash-gray hover:text-bone-white [&_svg]:stroke-[1.5]",
-        pressed && "text-bone-white",
+        "inline-flex h-8 items-center rounded-full border border-border px-3 text-[12.5px] font-semibold text-silver-mist transition-[background-color,color,translate] duration-(--dur-quick) ease-(--ease-glide) hover:-translate-y-px hover:bg-accent hover:text-bone-white",
+        pressed && "border-transparent bg-sticker text-white hover:bg-sticker hover:text-white",
       )}
-    />
+    >
+      {word}
+    </button>
   )
-  return (
-    <Tooltip>
-      <TooltipTrigger render={render ? render(button) : button}>{children}</TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
-  )
+  return render ? render(button) : button
 }
 
 /**
@@ -170,17 +157,18 @@ export function MessageActions({
   }
 
   return (
-    <div className="mt-3 -ml-2 flex items-center gap-0.5">
-      <Action label={copied ? "Copied" : "Copy with sources"} onClick={copy}>
-        {copied ? <CheckIcon className="text-supports" /> : <CopyIcon />}
-      </Action>
+    <div className="mt-4 flex flex-wrap items-center gap-1.5">
+      <Action
+        label={copied ? "Copied" : "Copy with sources"}
+        word={copied ? "copied ✓" : "copy"}
+        onClick={copy}
+      />
       <Action
         label={rating === "up" ? "Remove rating" : "Good answer"}
+        word={rating === "up" ? "good ✓" : "good"}
         pressed={rating === "up"}
         onClick={() => void rate(rating === "up" ? null : "up")}
-      >
-        <ThumbsUpIcon className={cn(rating === "up" && "fill-current")} />
-      </Action>
+      />
       <Popover
         open={asking}
         onOpenChange={(open) => {
@@ -195,11 +183,10 @@ export function MessageActions({
       >
         <Action
           label={rating === "down" ? "Remove rating" : "Something's wrong"}
+          word={rating === "down" ? "not right ✓" : "not right"}
           pressed={rating === "down"}
           render={(button) => <PopoverTrigger render={button} />}
-        >
-          <ThumbsDownIcon className={cn(rating === "down" && "fill-current")} />
-        </Action>
+        />
         <PopoverContent className="w-80">
           <form
             onSubmit={(e) => {
@@ -254,16 +241,20 @@ export function MessageActions({
         </PopoverContent>
       </Popover>
       <Popover open={saving} onOpenChange={setSaving}>
-        <Action label="Save to note" render={(button) => <PopoverTrigger render={button} />}>
-          <NotebookPenIcon />
-        </Action>
+        <Action
+          label="Save to note"
+          word="to a note"
+          render={(button) => <PopoverTrigger render={button} />}
+        />
         <PopoverContent className="w-64 p-1">
           <button
             type="button"
             onClick={() => void saveTo(null)}
             className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-snippet text-bone-white hover:bg-white/6"
           >
-            <PlusIcon className="size-3.5 text-ash-gray" strokeWidth={1.75} />
+            <span aria-hidden className="w-3.5 text-center font-bold text-lime">
+              +
+            </span>
             New note
           </button>
           {notes?.slice(0, 5).map((n) => (
@@ -273,17 +264,12 @@ export function MessageActions({
               onClick={() => void saveTo(n.id)}
               className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-snippet text-silver-mist hover:bg-white/6"
             >
-              <NotebookPenIcon className="size-3.5 shrink-0 text-ash-gray" strokeWidth={1.5} />
               <span className="truncate">{n.title}</span>
             </button>
           ))}
         </PopoverContent>
       </Popover>
-      {onRegenerate && (
-        <Action label="Ask again" onClick={onRegenerate}>
-          <RotateCcwIcon />
-        </Action>
-      )}
+      {onRegenerate && <Action label="Ask again" word="ask again" onClick={onRegenerate} />}
     </div>
   )
 }

@@ -32,7 +32,8 @@ import { useStudyActions } from "@/lib/use-study"
 import type { UploadState } from "@/lib/use-uploader"
 import { openDetails } from "./file-details"
 import { FileStatus } from "./file-status"
-import { KIND_LABEL, KindIcon } from "./kind-icon"
+import { KIND_LABEL } from "./kind-icon"
+import { SourceFace } from "./source-face"
 
 /** The drag payload for library rows (a JSON array of file ids). */
 export const FILE_DRAG_TYPE = "application/x-konkyo-files"
@@ -176,8 +177,8 @@ export function FileRow({
       }}
       className={cn(
         // Off-screen rows skip layout and paint, so a library of thousands scrolls smoothly.
-        "group relative flex min-h-16 items-center gap-3 border-b border-border px-2 py-3 transition-colors duration-(--duration-press) [contain-intrinsic-size:auto_4rem] [content-visibility:auto] hover:bg-panel",
-        selected && "bg-panel",
+        "group relative flex min-h-16 items-center gap-3 border-b border-border px-2 py-3 transition-colors duration-(--duration-press) [contain-intrinsic-size:auto_4rem] [content-visibility:auto] hover:bg-accent",
+        selected && "bg-lime/30",
       )}
     >
       {onSelect && (
@@ -198,9 +199,7 @@ export function FileRow({
           />
         </span>
       )}
-      <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-panel group-hover:bg-raised">
-        <KindIcon kind={file.kind} />
-      </span>
+      <SourceFace file={file} />
       <div className="min-w-0 flex-1">
         {file.status === "ready" ? (
           // The whole row reads as one target: the title button stretches over it (::after).
