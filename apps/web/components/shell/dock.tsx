@@ -206,7 +206,19 @@ export function Dock() {
       keytermsFrom([...(space?.recent.map((r) => r.title) ?? []), ...spaces.map((s) => s.name)]),
     [space, spaces],
   )
-  const voice = useVoice(build.hooks, { keyterms })
+  // a follow-up (or your voice over its reading) starts a new ask with no tap: the stage comes up
+  const openStage = useRef<() => void>(() => {})
+  const hooks = useMemo(
+    () => ({
+      ...build.hooks,
+      start: () => {
+        build.hooks.start?.()
+        openStage.current()
+      },
+    }),
+    [build.hooks],
+  )
+  const voice = useVoice(hooks, { keyterms })
   voiceRef.current = voice
   const [examplesWanted, setExamplesWanted] = useState(false)
   const examples = useStageExamples(spaceId, spaceName, examplesWanted)
@@ -235,6 +247,7 @@ export function Dock() {
         ? "working"
         : undefined,
   })
+  openStage.current = stage.open
   const mood: VoiceState = stage.up ? "idle" : typing ? "listening" : voice.state
 
   const talk = () => {

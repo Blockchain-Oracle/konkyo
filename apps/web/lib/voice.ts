@@ -383,11 +383,14 @@ export function useVoice(hooks: VoiceHooks = {}, options: { keyterms?: string[] 
         // moment, are a barge-in
         const own = new Set(spoken.toLowerCase().match(/[\p{L}\p{N}']+/gu) ?? [])
         const mine = (text.toLowerCase().match(/[\p{L}\p{N}']+/gu) ?? []).filter((w) => !own.has(w))
-        if (mine.length < 2 || level.current < 0.18) return
+        // partials trail the audio, so "loud just now", not "loud at this instant"
+        if (mine.length < 2 || performance.now() - lastLoudAt.current > 900) return
       }
       const fresh = base.current ? newWords(base.current, text) : text
       if (base.current && !fresh) return
-      hear(`${base.current} ${fresh}`.trim())
+      // a follow-up is a new ask: its words alone, never the last ask's in front of them
+      const followUp = !listening.current && !late.current
+      hear(followUp ? fresh : `${base.current} ${fresh}`.trim())
     },
     [hear],
   )
@@ -426,6 +429,7 @@ export function useVoice(hooks: VoiceHooks = {}, options: { keyterms?: string[] 
           }
         },
         error: (message) => {
+          console.warn("[voice] scribe:", message)
           setProblem(
             /token|auth|quota|limit/i.test(message) ? "voice is resting for today" : message,
           )

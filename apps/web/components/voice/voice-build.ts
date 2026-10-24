@@ -657,6 +657,8 @@ export function useVoiceBuild(room: VoiceRoom): {
         run.messageId,
       )
     void readAloud(run.messageId as string, said).then(() => {
+      // you talked over it: the new ask has the floor, nothing more happens for this one
+      if (current.current !== run) return
       voice?.listenOn(beat("followUpListen"), null)
       // then the passage it stands on opens on paper, with the highlighter
       if (onWall && strongest)
@@ -935,6 +937,9 @@ export function useVoiceBuild(room: VoiceRoom): {
           default:
             if (thisRun.started && intent.kind !== "ask") return
             thisRun.started = true
+            // a question is a conversation: the mic stays open through the answer and its reading,
+            // so a follow-up (or your voice over it) is heard; afterAnswer narrows it after
+            if (intent.kind === "ask") r.voice()?.listenOn(180_000, null)
             await runPipeline(thisRun)
         }
       })()
