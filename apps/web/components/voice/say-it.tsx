@@ -46,7 +46,7 @@ export function SayIt({
       type="button"
       className={`say-it${listening ? " is-listening" : ""}`}
       disabled={disabled}
-      onPointerDown={primeVoice}
+      onPointerDown={() => !listening && primeVoice()}
       onClick={() => {
         if (listening) {
           sound("tap")

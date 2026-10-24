@@ -24,6 +24,8 @@ export type ScribeSession = {
   commit: () => void
   close: () => void
   readonly open: boolean
+  /** Closed, refused or dropped: it will never hear again. */
+  readonly ended: boolean
 }
 
 /** Words Scribe should lean towards: at most 50, each at most 20 characters (its limits). */
@@ -47,6 +49,7 @@ export function connectScribe(
 ): ScribeSession {
   let socket: WebSocket | null = null
   let closed = false
+  let ended = false
   const held: string[] = []
   const message = (audio: string, commit = false) =>
     JSON.stringify({
@@ -88,11 +91,14 @@ export function connectScribe(
           on.error(data.error ?? data.message_type)
       })
       ws.addEventListener("close", (event) => {
-        if (!closed && event.code !== 1000 && event.code !== 1005)
-          on.error(`closed ${event.code}${event.reason ? `: ${event.reason}` : ""}`)
+        ended = true
+        if (!closed) on.error(`closed ${event.code}${event.reason ? `: ${event.reason}` : ""}`)
       })
     })
-    .catch((error: Error) => on.error(error.message))
+    .catch((error: Error) => {
+      ended = true
+      on.error(error.message)
+    })
 
   return {
     send(base64) {
@@ -110,12 +116,16 @@ export function connectScribe(
     },
     close() {
       closed = true
+      ended = true
       held.length = 0
       socket?.close(1000)
       socket = null
     },
     get open() {
       return !closed && socket?.readyState === WebSocket.OPEN
+    },
+    get ended() {
+      return closed || ended
     },
   }
 }

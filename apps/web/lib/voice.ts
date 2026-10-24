@@ -265,16 +265,12 @@ export function useVoice(hooks: VoiceHooks = {}, options: { keyterms?: string[] 
       window.clearTimeout(lateTimer.current)
       late.current = how === "pause"
       endedWords.current = how === "pause" ? wordCount(said.current) : -1
-      if (how === "pause")
-        lateTimer.current = window.setTimeout(() => {
-          late.current = false
-          // nobody asked to keep listening: the mic goes off
-          if (!listening.current && followUntil.current < Date.now()) closeSession()
-        }, LATE_MS)
-      else if (followUntil.current < Date.now()) {
-        stopScript.current()
-        stopScript.current = () => {}
-      }
+      // however it ended (a pause or a tap), the mic goes off after the late window unless
+      // something asked to keep listening (a question's follow-up)
+      lateTimer.current = window.setTimeout(() => {
+        late.current = false
+        if (!listening.current && followUntil.current < Date.now()) closeSession()
+      }, LATE_MS)
       setState("working")
       window.clearTimeout(workTimer.current)
       const seq = ++askSeq.current
@@ -337,7 +333,8 @@ export function useVoice(hooks: VoiceHooks = {}, options: { keyterms?: string[] 
             ? READY_MS
             : PAUSE_MS) * slow
       const hushed = !capture.current || now - lastLoudAt.current > QUIET_AUDIO_MS * slow
-      if ((quiet > wait && level.current < 0.2 && hushed) || quiet > MAX_QUIET_MS * slow) finish("pause")
+      if ((quiet > wait && level.current < 0.2 && hushed) || quiet > MAX_QUIET_MS * slow)
+        finish("pause")
     }, 25)
   }, [finish])
   const listenRef = useRef(listenForPause)
@@ -432,6 +429,8 @@ export function useVoice(hooks: VoiceHooks = {}, options: { keyterms?: string[] 
         },
         error: (message) => {
           console.warn("[voice] scribe:", message)
+          // the socket is gone (a refused token, a closed session): nothing is listening any more
+          if (session.ended && scribe.current === session) closeSession()
           setProblem(
             /token|auth|quota|limit/i.test(message) ? "voice is resting for today" : message,
           )
@@ -441,16 +440,22 @@ export function useVoice(hooks: VoiceHooks = {}, options: { keyterms?: string[] 
     )
     scribe.current = session
     try {
-      capture.current = await openCapture(source, (chunk) => scribe.current?.send(chunk))
+      const opened = await openCapture(source, (chunk) => scribe.current?.send(chunk))
+      // cancelled (Escape, unmount) while the mic was opening: let this one go
+      if (scribe.current !== session) {
+        opened.stop()
+        return
+      }
+      capture.current = opened
       levelLoop()
     } catch (error) {
       session.close()
-      scribe.current = null
+      if (scribe.current === session) scribe.current = null
       setProblem(
         error instanceof MicError ? "the mic is off for this site" : (error as Error).message,
       )
     }
-  }, [heardPartial, levelLoop])
+  }, [closeSession, heardPartial, levelLoop])
 
   const start = useCallback(async () => {
     window.clearTimeout(workTimer.current)
@@ -479,11 +484,12 @@ export function useVoice(hooks: VoiceHooks = {}, options: { keyterms?: string[] 
       stopScript.current = runScript(script, level, hear, hold ? () => {} : () => finish("pause"))
       return
     }
-    // a follow-up keeps the session it had
-    if (capture.current) {
+    // a follow-up keeps the session it had, while Scribe still has it open
+    if (capture.current && scribe.current && !scribe.current.ended) {
       if (committing.current) committing.current("")
       return
     }
+    closeSession()
     await openSession()
   }, [closeSession, finish, hear, listenForPause, openSession])
 

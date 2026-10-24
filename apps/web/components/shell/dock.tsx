@@ -333,7 +333,8 @@ export function Dock() {
           className="dock-voice-orb"
           onClick={talk}
           // a token is minted (and counted) only when a tap is on its way, never on a hover
-          onPointerDown={primeVoice}
+          // a tap that ends an ask, or one while it answers, needs no new token
+          onPointerDown={() => voice.state === "idle" && primeVoice()}
           title={voice.state === "listening" ? "Done talking" : "Talk to Konkyo"}
           aria-label={voice.state === "listening" ? "Done talking" : "Talk to Konkyo"}
         />

@@ -277,6 +277,15 @@ export function useVoiceBuild(room: VoiceRoom): {
   const inFlight = useRef(0)
   const steady = useRef(0)
   const quiet = useRef(0)
+  /** Deep-search event streams still open: closed when they end, fail, or the dock goes away. */
+  const streams = useRef(new Set<EventSource>())
+  useEffect(
+    () => () => {
+      for (const s of streams.current) s.close()
+      streams.current.clear()
+    },
+    [],
+  )
   /** The pipeline, for a chained ask that starts from inside another's events. */
   const pipeline = useRef<(run: Run) => Promise<void>>(async () => {})
 
@@ -369,7 +378,8 @@ export function useVoiceBuild(room: VoiceRoom): {
         return {
           ask: "which space?",
           field: "scope",
-          offers: r.spaces
+          // two spaces of the same name would be two identical pills: one each
+          offers: [...new Map(r.spaces.map((s) => [s.name.toLowerCase(), s])).values()]
             .slice(0, 3)
             .map((s) => ({ label: s.name.toLowerCase(), say: s.name, from: "your spaces" })),
         }
@@ -466,8 +476,14 @@ export function useVoiceBuild(room: VoiceRoom): {
     const run = current.current
     if (run?.card?.kind !== "ask" || run.messageFrom === undefined || run.complete) return
     const message = chat.messages.slice(run.messageFrom).findLast((m) => m.role === "assistant")
-    if (chat.error && !message) {
-      run.failed = reasonOf(chat.error)
+    const ended = message ? partsOf(message) : null
+    // it failed, or the stream stopped with no answer, no receipt and no "not found": the stage
+    // says so instead of waiting on a run that will never finish
+    if (
+      chat.error ||
+      (message && !chat.running && !ended?.final && !ended?.receipt && !ended?.notFound)
+    ) {
+      run.failed = chat.error ? reasonOf(chat.error) : "the answer stopped before it was checked"
       run.settle?.()
       emit()
       return
@@ -540,6 +556,7 @@ export function useVoiceBuild(room: VoiceRoom): {
         const card = run.card
         if (card?.kind !== "find") return resolve()
         const source = new EventSource(`/api/runs/${runId}/events`)
+        streams.current.add(source)
         const imported = new Map<string, { fileId: string; status: string }>()
         let approvedKeys: string[] = []
         let landed = false
@@ -588,6 +605,8 @@ export function useVoiceBuild(room: VoiceRoom): {
                   folderName: list.folderName,
                 },
               }).catch(() => {
+                source.close()
+                streams.current.delete(source)
                 run.failed = "found sources but couldn't add them"
                 emit()
                 resolve()
@@ -615,6 +634,7 @@ export function useVoiceBuild(room: VoiceRoom): {
             }
           } else if (event.type === "end") {
             source.close()
+            streams.current.delete(source)
             const status = (event as { status?: string }).status
             if (!landed) {
               run.failed =
@@ -705,11 +725,13 @@ export function useVoiceBuild(room: VoiceRoom): {
             if (card?.kind !== "ask") return
             // a late word reopened an ask whose answer had started: that one is stopped and this
             // one replaces it, never answered twice
-            if (run.messageFrom !== undefined && !run.complete) {
-              const earlier = r.chat.messages
-                .slice(run.messageFrom)
-                .findLast((m) => m.role === "assistant")
+            // ...and so is a previous answer still streaming (a follow-up asked over it)
+            if (r.chat.running || (run.messageFrom !== undefined && !run.complete)) {
+              const earlier = r.chat.messages.findLast((m) => m.role === "assistant")
               const runId = earlier?.metadata?.runId
+              // detach first: a stopped stream must not read as this answer failing
+              run.messageFrom = undefined
+              run.failed = null
               await r.chat.stop()
               if (runId) void api(`/api/runs/${runId}/stop`, { method: "POST" }).catch(() => {})
               Object.assign(card, {
@@ -868,6 +890,8 @@ export function useVoiceBuild(room: VoiceRoom): {
       window.clearTimeout(quiet.current)
       window.clearTimeout(steady.current)
       stopReading()
+      // the run this replaces stops waiting (its pipeline may still finish in the panel)
+      current.current?.settle?.()
       current.current = fresh()
       emit()
     },
@@ -888,11 +912,15 @@ export function useVoiceBuild(room: VoiceRoom): {
       return (async () => {
         let intent = guessIntent(said)
         if (!intent && thisRun.intent) intent = thisRun.intent
-        if (!intent)
+        if (!intent) {
+          // the mic stays open while the model reads it, in case it's a question (follow-ups)
+          r.voice()?.listenOn(15_000, null)
           intent = await api<Intent>("/api/voice/intent", {
             method: "POST",
             json: { said, spaceName: r.spaceName },
           }).catch(() => ({ kind: "ask" as const, topic: said }))
+          if (intent.kind !== "ask") r.voice()?.listenOn(0)
+        }
         apply(thisRun, intent)
         // walked away from a question: let it go, never guess
         const missing = need(thisRun)
@@ -915,6 +943,8 @@ export function useVoiceBuild(room: VoiceRoom): {
             emit()
             return
           case "show": {
+            // part of the conversation: the usual few seconds for one more, then the mic goes off
+            r.voice()?.listenOn(beat("followUpListen"), null)
             const last = r.chat.messages.findLast((m) => m.role === "assistant")
             const cite = last ? partsOf(last).final?.citations[0] : undefined
             if (!cite || !last) {
@@ -953,6 +983,8 @@ export function useVoiceBuild(room: VoiceRoom): {
             // so a follow-up (or your voice over it) is heard; afterAnswer narrows it after
             if (intent.kind === "ask") r.voice()?.listenOn(180_000, null)
             await runPipeline(thisRun)
+            // nothing to follow up on
+            if (thisRun.failed) r.voice()?.listenOn(0)
         }
       })()
     },

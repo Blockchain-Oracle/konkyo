@@ -392,10 +392,10 @@ function StageReplySlip({
       {reply.source && <p className="voice-two-reply-source">{reply.source}</p>}
       {reply.offers?.length ? (
         <div className="voice-two-offers">
-          {reply.offers.map((offer, i) => (
+          {reply.offers.map((offer) => (
             <button
               type="button"
-              key={`${i}-${offer.label}`}
+              key={offer.label}
               className="voice-two-offer"
               onClick={() => {
                 sound("tap")
@@ -522,7 +522,7 @@ function StageCard({
           {question.offers.map((offer, i) => (
             <button
               type="button"
-              key={`${i}-${offer.label}`}
+              key={offer.label}
               style={{ "--i": i } as CSSProperties}
               onClick={() => {
                 sound("tap")

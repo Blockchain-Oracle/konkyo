@@ -103,21 +103,29 @@ export async function openCapture(
   const samples = new Float32Array(analyser.fftSize)
 
   if (onChunk && (source.kind === "mic" || source.transcribe)) {
-    await ctx.audioWorklet.addModule(WORKLET)
-    const pcm = new AudioWorkletNode(ctx, "scribeAudioProcessor")
-    if (ctx.sampleRate !== SCRIBE_RATE)
-      pcm.port.postMessage({
-        type: "configure",
-        inputSampleRate: ctx.sampleRate,
-        outputSampleRate: SCRIBE_RATE,
+    try {
+      await ctx.audioWorklet.addModule(WORKLET)
+      const pcm = new AudioWorkletNode(ctx, "scribeAudioProcessor")
+      if (ctx.sampleRate !== SCRIBE_RATE)
+        pcm.port.postMessage({
+          type: "configure",
+          inputSampleRate: ctx.sampleRate,
+          outputSampleRate: SCRIBE_RATE,
+        })
+      pcm.port.onmessage = (event: MessageEvent<{ audioData: ArrayBuffer }>) =>
+        onChunk(base64(event.data.audioData))
+      node.connect(pcm)
+      cleanups.push(() => {
+        pcm.port.onmessage = null
+        pcm.disconnect()
       })
-    pcm.port.onmessage = (event: MessageEvent<{ audioData: ArrayBuffer }>) =>
-      onChunk(base64(event.data.audioData))
-    node.connect(pcm)
-    cleanups.push(() => {
-      pcm.port.onmessage = null
-      pcm.disconnect()
-    })
+    } catch (error) {
+      // the mic is open but can't be heard: let it go rather than leave it on
+      for (const cleanup of cleanups.splice(0)) cleanup()
+      analyser.disconnect()
+      node.disconnect()
+      throw error
+    }
   }
 
   let muted = false

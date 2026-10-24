@@ -4,26 +4,65 @@ import { VOICE } from "@konkyo/config"
 import { db, schema } from "@konkyo/db"
 import { env } from "@konkyo/env/server"
 import { getBytes, headObject, objectKey, putBytes } from "@konkyo/storage"
+import { and, eq, gte } from "drizzle-orm"
 import { LibraryError } from "./library"
 import { allowanceLeft } from "./usage"
 
 const API = "https://api.elevenlabs.io/v1"
 
+const { voiceUsage } = schema
+
+/**
+ * Charge first, then count: requests made in parallel each see the others' rows, so a burst can't
+ * slip past the cap. Over it, the charge is taken back. Returns the row to refund on failure.
+ */
+async function charge(
+  ownerId: string,
+  kind: "listen" | "speak",
+  amount: number,
+  allowance: "voiceSessions" | "readAloud",
+) {
+  const [row] = await db
+    .insert(voiceUsage)
+    .values({ ownerId, kind, amount })
+    .returning({ id: voiceUsage.id })
+  const refund = () => db.delete(voiceUsage).where(eq(voiceUsage.id, row?.id ?? ""))
+  const reason = await allowanceLeft(ownerId, allowance, 0)
+  if (reason) {
+    await refund()
+    throw new LibraryError(reason, 429)
+  }
+  return refund
+}
+
 /** A single-use Scribe realtime token (15 minutes), counted as one voice session. */
 export async function scribeToken(ownerId: string): Promise<string> {
-  const reason = await allowanceLeft(ownerId, "voiceSessions")
-  if (reason) throw new LibraryError(reason, 429)
+  const refund = await charge(ownerId, "listen", 1, "voiceSessions")
   const res = await fetch(`${API}/single-use-token/realtime_scribe`, {
     method: "POST",
     headers: { "xi-api-key": env.ELEVENLABS_API_KEY },
   })
   const body = (await res.json().catch(() => ({}))) as { token?: string }
   if (!res.ok || !body.token) {
+    await refund()
     console.error("[voice] token", res.status)
     throw new LibraryError("Voice isn't available right now. Type instead.", 503)
   }
-  await db.insert(schema.voiceUsage).values({ ownerId, kind: "listen", amount: 1 })
   return body.token
+}
+
+/** The intent model only reads words said in a voice session started in the last 15 minutes. */
+export async function inVoiceSession(ownerId: string) {
+  const since = new Date(Date.now() - 16 * 60_000)
+  const row = await db.query.voiceUsage.findFirst({
+    where: and(
+      eq(voiceUsage.ownerId, ownerId),
+      eq(voiceUsage.kind, "listen"),
+      gte(voiceUsage.createdAt, since),
+    ),
+    columns: { id: true },
+  })
+  return Boolean(row)
 }
 
 export type SpokenWord = { word: string; start: number; end: number }
@@ -75,8 +114,7 @@ export async function speak(
     const words = JSON.parse(new TextDecoder().decode(await getBytes(timing))) as SpokenWord[]
     return { hash, words }
   }
-  const reason = await allowanceLeft(ownerId, "readAloud", said.length)
-  if (reason) throw new LibraryError(reason, 429)
+  const refund = await charge(ownerId, "speak", said.length, "readAloud")
   const res = await fetch(
     `${API}/text-to-speech/${voice.id}/with-timestamps?output_format=${VOICE.outputFormat}`,
     {
@@ -86,6 +124,7 @@ export async function speak(
     },
   )
   if (!res.ok) {
+    await refund()
     console.error("[voice] speak", res.status, (await res.text()).slice(0, 200))
     throw new LibraryError("Couldn't read that aloud right now.", 503)
   }
@@ -100,7 +139,6 @@ export async function speak(
     "audio/mpeg",
   )
   await putBytes(timing, new TextEncoder().encode(JSON.stringify(words)), "application/json")
-  await db.insert(schema.voiceUsage).values({ ownerId, kind: "speak", amount: said.length })
   return { hash, words }
 }
 
