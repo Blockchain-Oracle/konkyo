@@ -1,6 +1,8 @@
 {
   "name": "Konkyo",
   "tagline": "A research library whose agents answer only from your sources, and prove every quote.",
+  "url": "https://konkyo.xyz",
+  "docs": "https://docs.konkyo.xyz",
   "event": "Open Agent Hackathon 2026",
   "track": {
     "id": "02",
@@ -30,7 +32,10 @@
       "path": "examples/02-agree-disagree",
       "shows": "The Analyst's agree/disagree matrix, checked in Zetaris and kept in the World Model"
     },
-    { "path": "examples/03-wrong-premise", "shows": "A false premise corrected from the source" },
+    {
+      "path": "examples/03-wrong-premise",
+      "shows": "A false premise corrected from the source"
+    },
     {
       "path": "examples/04-lecture-and-textbook",
       "shows": "A textbook and a lecture transcript together; the Verifier sends a sentence back and it is rewritten"

@@ -8,6 +8,9 @@ quote word for word in Zetaris, sends unsupported sentences back to be rewritten
 where your sources agree and where they don't. Every answer comes with its receipt: the passages,
 the checks, and the SQL that ran them.
 
+**Live:** [konkyo.xyz](https://konkyo.xyz) (ask the shared sample folder on the home page) ·
+**Docs:** [docs.konkyo.xyz](https://docs.konkyo.xyz)
+
 Open Agent Hackathon 2026, **Track 02: The Agent That Can Explain Why**:
 *"Build agents that investigate complex questions across multiple data sources, connect findings,
 and produce evidence-backed answers or recommendations."*
