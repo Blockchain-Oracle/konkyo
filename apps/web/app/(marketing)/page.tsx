@@ -323,6 +323,11 @@ export default function LandingPage() {
           </span>
           <span>Built for the Open Agent Hackathon 2026</span>
           <nav aria-label="Footer" className="ml-auto flex gap-5">
+            {APP.docs && (
+              <a href={APP.docs} className="hover:text-silver-mist">
+                Docs
+              </a>
+            )}
             {APP.repository && (
               <a href={APP.repository} className="hover:text-silver-mist">
                 GitHub

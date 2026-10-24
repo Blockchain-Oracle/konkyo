@@ -1,0 +1,44 @@
+---
+title: How an answer is checked
+description: The path from a question to an answer where every quote was found in its source.
+---
+
+<AnswerFlow />
+
+## Step by step
+
+1. **Planner.** Reads the corrections you've given Konkyo before (its H-MEM memory), rewrites
+   the question so it stands alone, plans one to three searches, and decides whether the question
+   weighs several sources against each other.
+2. **Retriever.** Searches your passages two ways for each query, by meaning (pgvector) and by
+   words (Postgres full text), and fuses the lists. If nothing is close enough, the answer is
+   "Not in your library", never a guess.
+3. **Zetaris pre-check.** Confirms the documents behind those passages are in the evidence store.
+4. **Writer.** Writes one finding per sentence. Each sentence carries a citation, and each
+   citation an exact quote copied from its passage.
+5. **Verifier.** Checks each quote in code (normalised words, verbatim), then checks all of them
+   in **one** Zetaris statement against Zetaris's own reading of the source PDF, a second
+   extraction independent of Konkyo's. A model then judges whether each sentence's quotes support
+   it. Rejected sentences go back to the Writer with reasons, at most twice; whatever still fails
+   is dropped.
+6. **Answer.** Only what passed. The receipt shows the steps, sources, memories used and the SQL;
+   the full trace is written to `logs/<runId>.jsonl`.
+
+When a question compares sources, the **Analyst** runs beside the Writer: three to six specific
+claims, each source's stance (agrees, disagrees, partly) with a quote, every quote checked in
+Zetaris, and the result recorded in the person's World Model.
+
+## The check, as it runs
+
+```sql
+SELECT q.qid
+FROM VALUES
+    ('1', '<document>', '<passage>', 'spindlesarecharacteristicwaxingandwaningoscillations…'),
+    ('2', '<document>', '<passage>', 'howevertopographicalsleepspindleanalysisrevealed…')
+  AS q(qid, doc, pid, qkey)
+JOIN konkyo.konkyo_pdf_text t ON t.doc_id = q.doc
+WHERE instr(t.p, q.qkey) > 0
+```
+
+A quote counts only if its normalised words appear in Zetaris's text of the document. Recordings
+are checked against their stored transcript passages instead.

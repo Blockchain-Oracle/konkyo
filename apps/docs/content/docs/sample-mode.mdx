@@ -1,0 +1,37 @@
+---
+title: Sample mode
+description: Run Konkyo's real agent logic with no keys and no services.
+---
+
+```bash
+git clone <the repository> konkyo && cd konkyo
+corepack enable && pnpm install
+pnpm konkyo ask --sample        # the first recorded question
+pnpm konkyo samples             # all of them
+pnpm konkyo ask --sample 2      # by number, name, or the exact question
+```
+
+## What it does
+
+A recorded run kept, for each outside boundary, what came back: OpenAI's HTTP replies, the rows
+of each Zetaris statement, the library search, and the H-MEM recall. Sample mode hands those back
+in place of the services, and **every step of Konkyo's own logic runs again** on them: planning,
+citation parsing, the code check of each quote, the Verifier's verdicts and rewrites, the matrix,
+the World Model (written to a scratch folder), and a new trace in `logs/`.
+
+Replies are matched by what was asked (the request body, the SQL), never by order, so concurrent
+agents replay correctly, and never by account, so a run recorded on one account replays anywhere.
+A question that wasn't recorded is refused rather than invented.
+
+## The examples
+
+`examples/` holds five recorded runs, each with its question, the answer as Markdown, the
+trace, and the replies:
+
+1. A cited answer across three papers.
+2. The agree/disagree matrix.
+3. A false premise, corrected from the source.
+4. A textbook and a lecture transcript together, with a Verifier rewrite.
+5. Nothing in the library covers it, so Konkyo says so.
+
+The sources are openly licensed (CC BY papers; OpenStax and MIT OpenCourseWare under CC BY-NC-SA).

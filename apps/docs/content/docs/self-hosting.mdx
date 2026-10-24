@@ -1,0 +1,39 @@
+---
+title: Self-hosting
+description: Run the whole stack on your own machine.
+---
+
+You need Node 22.18+, pnpm (`corepack enable`), Docker, a Zetaris instance and an OpenAI key.
+
+```bash
+cp .env.example .env            # every variable is described there
+pnpm install
+pnpm services:up                # Postgres + pgvector, RustFS (S3), Gotenberg, in Docker
+pnpm services:check
+pnpm db:migrate
+pnpm dev                        # the web app on :3210, the worker, and these docs on :3211
+```
+
+## Zetaris
+
+Use the hackathon's instance (`ZETARIS_REST_URL`, `ZETARIS_API_KEY`) or a local bundle
+(`ZETARIS_LOGIN_URL`, `ZETARIS_USERNAME`, `ZETARIS_PASSWORD`, `ZETARIS_ORG_ID`). `EVIDENCE_DIR`
+is where the worker writes evidence files, and `ZETARIS_EVIDENCE_URI` is the same folder as
+Zetaris sees it.
+
+## Other services
+
+| Variable | For | Needed |
+|---|---|---|
+| `OPENAI_API_KEY` | Every model and embedding | Yes |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Sign-in with Google (guests work without) | Yes |
+| `ELEVENLABS_API_KEY` | Transcribing recordings, audio briefs | Yes |
+| `OPENALEX_API_KEY` | Higher OpenAlex limits | No |
+| `COMPOSIO_*` | Gmail, Drive and Notion connectors | No |
+| `VAPID_*` | Web Push notifications | No |
+| `DEMO_SHARE_SLUG` | The landing page's live demo folder | No |
+
+## These docs
+
+`pnpm --filter @konkyo/docs build` writes a static site to `apps/docs/out`, which any static
+file server can serve.

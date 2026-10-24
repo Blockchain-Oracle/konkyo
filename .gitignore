@@ -26,3 +26,6 @@ next-env.d.ts
 
 # Agent traces (one JSONL per run); recorded examples with their traces live in examples/
 logs/*.jsonl
+
+# Fumadocs generated sources (rebuilt on dev/build)
+.source/

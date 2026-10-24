@@ -1,0 +1,33 @@
+---
+title: Zetaris and Meterless
+description: Where the sponsor technology sits, and why Konkyo doesn't work without it.
+---
+
+## Zetaris: the evidence store every claim is checked against
+
+Remove Zetaris and nothing can be marked verified.
+
+- **Evidence store.** When a file is read, the worker publishes its passages as JSON to a Zetaris
+  `FILESTORE` table, hands Zetaris the file's PDF rendition, and keeps Zetaris's own PDFBox reading
+  of it: a second extraction, independent of Konkyo's. A file is marked Ready only after Zetaris
+  answers for it. (`packages/zetaris/src/evidence.ts`)
+- **Pre-check** that retrieved documents are present. (`checks.ts`)
+- **Quote verification**: every quote of an answer in one Spark SQL statement, a `VALUES` list
+  joined to Zetaris's text. The same check covers the Analyst's matrix, study items, lecture notes
+  and audio briefs.
+- **Topic watches**: each is a Lightning `REST` table over OpenAlex; new papers are found with one
+  `LEFT ANTI JOIN` against the DOIs already seen. (`watch.ts`)
+
+## Meterless: memory, world state and long tasks
+
+The engines are vendored unchanged (Apache-2.0) in `packages/meterless` and driven from
+`packages/agents`.
+
+- **H-MEM** (`memory.ts`): a 👎 with a reason, "wrong passage", or "this item is wrong" becomes a
+  correction in your memory, with where it came from. The Planner reads relevant corrections
+  before every answer; 👍/👎 adjust the confidence of the memories an answer used. Settings →
+  Memory shows, edits and forgets them.
+- **World Model** (`analyst.ts`): each comparison is recorded as sources, claims and
+  `supports` / `contradicts` / `qualifies` relations, each with the passage it was read from.
+- **Markovian** (`scout.ts`): deep search screens what it found in bounded steps that carry only
+  the shortlist forward; its estimate of tokens saved is shown and logged.

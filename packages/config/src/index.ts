@@ -10,6 +10,8 @@ export const APP = {
   tagline: "Every answer shows its grounds.",
   /** The public repository, once it exists (S11); links to it are hidden until then. */
   repository: null as string | null,
+  /** The docs site (apps/docs), once deployed (S11). */
+  docs: null as string | null,
 } as const
 
 /**

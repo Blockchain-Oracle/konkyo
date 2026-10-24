@@ -1,0 +1,34 @@
+---
+title: The agents and their trace
+description: Who does what, with which model, and how to read the trace.
+---
+
+| Agent | Does | Model |
+|---|---|---|
+| Planner | Stand-alone question, 1–3 searches, comparison flag; reads H-MEM corrections first | `gpt-6-luna` (low reasoning) |
+| Retriever | Hybrid search: pgvector and Postgres full text, fused by Reciprocal Rank Fusion | `text-embedding-3-small` |
+| Writer | Cited draft, one finding per sentence; rewrites rejected sentences | `gpt-6-luna` |
+| Verifier | Code check, one Zetaris statement, support judgement; at most two rewrite rounds | `gpt-6-luna` (low) |
+| Analyst | Claims × sources with stances, quotes checked in Zetaris, World Model | `gpt-6-luna` (low) |
+| Scout | Deep search over OpenAlex and the web, screened in Markovian steps | `gpt-5-nano` |
+| Tutor | Practice items; every answer key checked by the Verifier, every quote in Zetaris | `gpt-6-luna` |
+
+Every role has a fallback model for outages and malformed replies; the switch is logged as
+`escalated_to_fallback`. The models were chosen by a measured cost and quality benchmark per role.
+
+## Reading a trace
+
+Every run writes `logs/<runId>.jsonl`, one JSON line per step:
+
+```json
+{"ts":"2026-10-17T12:31:04.118Z","runId":"…","agent":"verifier","step":"verify_0","action":"queried_zetaris","sqlHash":"0cc394679bad","rowsReturned":2,"verdict":"2/2 quotes found","latencyMs":3317}
+```
+
+| Field | Meaning |
+|---|---|
+| `agent`, `step`, `action` | Who did what: `planned`, `hybrid_search`, `queried_zetaris`, `drafted_answer`, `rejected_to_writer`, `revised_sentences`, `approved`, `asserted_world_model`, `read_hmem` |
+| `model`, `tokens`, `latencyMs` | Which model, at what cost and speed |
+| `sqlHash`, `rowsReturned` | Which Zetaris statement (by hash) and what came back |
+| `verdict`, `detail` | The decision, and its reasons |
+
+The app shows the same run as the answer's receipt.

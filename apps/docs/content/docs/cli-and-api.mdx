@@ -1,0 +1,57 @@
+---
+title: CLI and HTTP API
+description: Ask your library from a terminal or a script.
+---
+
+## CLI
+
+```bash
+pnpm konkyo ask "How does sleep help memory?"
+pnpm konkyo ask "Do these papers agree?" --folder "Essay starter: Sleep and learning" --compare
+pnpm konkyo ask "…" --json
+```
+
+| Option | |
+|---|---|
+| `--user <email>` | Whose library, when the database has several accounts |
+| `--folder <name>` | Only this folder |
+| `--compare` | Weigh the sources against each other (the matrix) |
+| `--json` | JSON instead of text |
+| `--record <name>` | Save the run into `examples/<name>/` for sample mode |
+
+The CLI runs the same pipeline as the app, in-process, with your `.env`. Steps print as they
+settle; the answer, its sources, the matrix, the checks and the trace path follow.
+
+`pnpm konkyo seed --user <email>` makes a sample library of openly licensed sources and publishes
+its essay folder (the landing page's live demo).
+
+## HTTP
+
+Make a key in **Settings → API keys** (shown once; only its hash is kept). Then:
+
+```bash
+curl -X POST https://<your-konkyo>/api/v1/ask \
+  -H "Authorization: Bearer $KONKYO_API_KEY" \
+  -H "content-type: application/json" \
+  -d '{"question": "How does sleep help memory?", "folderIds": ["<folder id>"]}'
+```
+
+The reply, when the answer is checked:
+
+```json
+{
+  "status": "answered",
+  "runId": "…",
+  "chatId": "…",
+  "url": "https://<your-konkyo>/chats/…",
+  "answer": { "body": "… [1].", "caveat": "…", "citations": [{ "n": 1, "title": "…", "page": 4, "quote": "…", "state": "verified" }] },
+  "matrix": null,
+  "receipt": { "quotes": 2, "sources": 1, "rewritten": 0, "dropped": 0, "sql": "SELECT …" },
+  "trace": [{ "agent": "planner", "action": "planned" }]
+}
+```
+
+With `Accept: application/x-ndjson`, every event streams as a line as it happens (steps, the
+draft, revisions, the final answer, the receipt), then a `done` line with the summary above.
+Pass `chatId` to continue a conversation. The question lands in Chats like any other, and counts
+toward the same fair-use limits.

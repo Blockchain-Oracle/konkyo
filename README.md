@@ -185,7 +185,7 @@ pnpm install
 pnpm services:up                # Postgres + pgvector, RustFS (S3), Gotenberg
 pnpm services:check
 pnpm db:migrate
-pnpm dev                        # web app on :3210 and the worker
+pnpm dev                        # web app on :3210, the worker, docs on :3211
 ```
 
 **Zetaris:** the hackathon's instance (set `ZETARIS_REST_URL` and `ZETARIS_API_KEY`), or the local
@@ -203,6 +203,7 @@ A sample library for the CLI: `pnpm konkyo seed --user you@example.com`, then
 apps/web          Next.js 16 app: UI, API routes, the chat's answer stream, /api/v1/ask
 apps/worker       pg-boss worker: ingest pipeline, deep search, study sets, agents, briefs, sync
 apps/cli          pnpm konkyo: ask, samples, seed
+apps/docs         the docs site (Fumadocs, static export)
 packages/agents   Planner, Retriever, Writer, Verifier, Analyst, Scout, Tutor; models; tracer
 packages/zetaris  Zetaris REST client, evidence store, quote checks, watch tables
 packages/meterless  H-MEM, World Model, Markovian (vendored, Apache-2.0)

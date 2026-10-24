@@ -1,0 +1,13 @@
+{
+  "title": "Konkyo",
+  "pages": [
+    "index",
+    "how-answers-are-checked",
+    "agents-and-traces",
+    "sponsor-tech",
+    "cli-and-api",
+    "sample-mode",
+    "self-hosting",
+    "limits"
+  ]
+}
