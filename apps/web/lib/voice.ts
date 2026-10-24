@@ -179,6 +179,8 @@ async function mintToken(): Promise<string> {
 let primed: { at: number; token: Promise<string> } | null = null
 export function primeVoice() {
   if (primed && Date.now() - primed.at < 10 * 60_000) return
+  // a scripted ask (`?voice=`) never opens the mic
+  if (new URLSearchParams(window.location.search).has("voice")) return
   const token = mintToken()
   token.catch(() => {
     primed = null
