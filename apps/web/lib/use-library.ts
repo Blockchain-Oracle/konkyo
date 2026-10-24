@@ -23,6 +23,16 @@ export function useFiles(folderId?: string) {
   })
 }
 
+/** Everything filed anywhere in a space (its folders included), newest first. */
+export function useSpaceFiles(spaceId: string) {
+  return useQuery({
+    queryKey: qk.files.list(`space:${spaceId}`),
+    queryFn: () =>
+      api<{ files: LibraryFile[] }>(`/api/files?space=${spaceId}`).then((r) => r.files),
+    refetchInterval: (query) => (query.state.data?.some(isWorking) ? LIBRARY.pollMs : false),
+  })
+}
+
 /** Fix-it and remove actions; every one refreshes the list, and "Remove" disappears at once. */
 export function useFileActions() {
   const queryClient = useQueryClient()

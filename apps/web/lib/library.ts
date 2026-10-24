@@ -28,7 +28,7 @@ export class LibraryError extends Error {
  * What the library list shows for each file (no internal storage keys), optionally only the files
  * filed in one folder. Each file carries its folder (the first one, if it is filed in several).
  */
-export async function listFiles(ownerId: string, folderId?: string) {
+export async function listFiles(ownerId: string, folderId?: string, spaceId?: string) {
   const firstFolder = db
     .selectDistinctOn([fileFolders.fileId], {
       fileId: fileFolders.fileId,
@@ -74,6 +74,17 @@ export async function listFiles(ownerId: string, folderId?: string) {
                 .select({ id: fileFolders.fileId })
                 .from(fileFolders)
                 .where(eq(fileFolders.folderId, folderId)),
+            )
+          : undefined,
+        // A space: everything filed anywhere inside it (folders.space_id, kept by a trigger).
+        spaceId
+          ? inArray(
+              files.id,
+              db
+                .select({ id: fileFolders.fileId })
+                .from(fileFolders)
+                .innerJoin(folders, eq(folders.id, fileFolders.folderId))
+                .where(and(eq(folders.spaceId, spaceId), isNull(folders.deletedAt))),
             )
           : undefined,
       ),

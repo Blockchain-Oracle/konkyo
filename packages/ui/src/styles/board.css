@@ -454,7 +454,7 @@ button.board-object:hover,
 }
 .room-header.is-compact .space-title-block h1 {
   font-size: clamp(1.85rem, 1.2rem + 1.7vw, 3rem);
-  line-height: 0.98;
+  line-height: 1.04;
 }
 
 /* A quoted source on the chat's wall: a small taped print of its first page. */
@@ -558,4 +558,230 @@ button.board-object:hover,
       0 0 0 4px var(--color-lime),
       0 7px 0 rgb(17 17 20 / 0.18);
   }
+}
+
+/* ------------------------------------------------------------------ a space's wall */
+.space-board {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 300px);
+  align-items: start;
+  gap: 44px;
+}
+@media (max-width: 1100px) {
+  .space-board {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+/* Arranged by itself: columns that fill top to bottom, newest first (R5). */
+.space-masonry {
+  columns: 230px;
+  column-gap: 30px;
+  padding-top: 12px;
+}
+.space-masonry > li {
+  display: inline-block;
+  width: 100%;
+  margin-bottom: 34px;
+  break-inside: avoid;
+}
+
+/* A taped print of a paper's first page (OurSpaces' polaroid, full column width). */
+.board-print {
+  position: relative;
+  display: block;
+  width: 100%;
+  border: 8px solid #fffaf7;
+  border-bottom-width: 0;
+  border-radius: 5px;
+  background: #fffaf7;
+  box-shadow: 0 8px 0 rgb(17 17 20 / 0.2);
+  color: var(--color-ink);
+  text-align: left;
+}
+.board-print img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 3.4;
+  object-fit: cover;
+  object-position: center top;
+  background: #ffffff;
+}
+.board-print .photo-tape {
+  position: absolute;
+  z-index: 2;
+  top: -18px;
+  width: 56px;
+  height: 23px;
+  background: rgb(245 222 173 / 0.84);
+  box-shadow: 0 2px 0 rgb(90 65 40 / 0.12);
+}
+.board-print .photo-tape-left {
+  left: 18px;
+  rotate: -8deg;
+}
+.board-print .photo-tape-right {
+  right: 16px;
+  rotate: 6deg;
+}
+.board-print-caption {
+  display: grid;
+  gap: 4px;
+  padding: 11px 4px 13px;
+}
+.board-print-caption strong,
+.board-clip-text strong,
+.board-sticky strong,
+.board-envelope strong {
+  display: -webkit-box;
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+.board-print-caption span {
+  color: var(--color-ink-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* A web clipping: the page's own picture over its name, cut out and taped. */
+.board-clip {
+  position: relative;
+  display: block;
+  width: 100%;
+  overflow: visible;
+  border-radius: 4px;
+  background: #ffffff;
+  box-shadow: 0 8px 0 rgb(17 17 20 / 0.2);
+  color: var(--color-ink);
+  text-align: left;
+}
+.board-clip img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: 4px 4px 0 0;
+  object-fit: cover;
+}
+.board-clip .photo-tape {
+  position: absolute;
+  z-index: 2;
+  top: -12px;
+  right: 18px;
+  width: 58px;
+  height: 22px;
+  background: rgb(245 222 173 / 0.86);
+  rotate: 7deg;
+}
+.board-clip-text {
+  display: grid;
+  gap: 5px;
+  padding: 12px 14px 15px;
+}
+.board-clip-domain {
+  color: #0b7a6d; /* teal, 5.2:1 on white */
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* A sticky note (butter paper, curled corner shadow). */
+.board-sticky {
+  position: relative;
+  display: grid;
+  width: 100%;
+  min-height: 150px;
+  align-content: start;
+  gap: 10px;
+  background:
+    linear-gradient(rgb(255 233 168 / 0.82), rgb(255 233 168 / 0.82)),
+    url("/os/note-paper.jpg") center / 300px;
+  box-shadow:
+    0 1px 0 rgb(17 17 20 / 0.06),
+    0 8px 0 rgb(17 17 20 / 0.16);
+  color: var(--color-ink);
+  padding: 20px 18px;
+  text-align: left;
+}
+.board-sticky::before {
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  width: 70px;
+  height: 20px;
+  background: rgb(255 255 255 / 0.55);
+  content: "";
+  rotate: -3deg;
+  translate: -50% 0;
+}
+.board-sticky-kicker,
+.board-envelope-kicker {
+  color: #6b4a00; /* 6.7:1 on butter */
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* An email as its envelope (kraft, OurSpaces' mail arrival). */
+.board-envelope {
+  position: relative;
+  display: grid;
+  width: 100%;
+  min-height: 140px;
+  align-content: end;
+  gap: 8px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: #e8d5b9;
+  box-shadow: 0 8px 0 rgb(17 17 20 / 0.18);
+  color: var(--color-ink);
+  padding: 58px 18px 18px;
+  text-align: left;
+}
+.board-envelope-flap {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 54px;
+  background: #ddc8ac;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  filter: drop-shadow(0 2px 0 rgb(17 17 20 / 0.08));
+}
+.board-envelope-kicker {
+  color: #5c3d14; /* 6.9:1 on kraft */
+}
+
+/* A folder inside the space: a manila folder with its tab. */
+.board-manila {
+  position: relative;
+  display: grid;
+  gap: 4px;
+  border-radius: 4px 12px 12px 12px;
+  background: #f0c987;
+  box-shadow: 0 7px 0 rgb(17 17 20 / 0.18);
+  color: var(--color-ink);
+  padding: 22px 18px 16px;
+}
+.board-manila-tab {
+  position: absolute;
+  top: -12px;
+  left: 0;
+  width: 42%;
+  height: 16px;
+  border-radius: 8px 8px 0 0;
+  background: #f0c987;
+}
+.board-manila strong {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+}
+.board-manila span:last-child {
+  color: #4a3410; /* 7.5:1 on manila */
+  font-size: 12px;
+  font-weight: 700;
 }

@@ -29,7 +29,7 @@ import {
 } from "lucide-react"
 import type { Route } from "next"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { type DragEvent, useEffect, useMemo, useRef, useState } from "react"
 import { FolderBriefs } from "@/components/briefs/folder-briefs"
 import { EmptyState } from "@/components/empty-state"
@@ -44,13 +44,16 @@ import {
 } from "@/components/shell/app-dialogs"
 import { chatWithHref } from "@/lib/focus"
 import { holdQuestion } from "@/lib/pending-question"
+import { sound } from "@/lib/sounds"
 import { useMakeBrief } from "@/lib/use-briefs"
 import { useFolderActions, useFolderPath, useFolderTree } from "@/lib/use-folders"
 import { type LibraryFile, useFiles } from "@/lib/use-library"
+import { useSpaceList } from "@/lib/use-spaces"
 import { useStudyActions } from "@/lib/use-study"
 import { filesFromDrop } from "@/lib/use-uploader"
 import { BulkBar } from "./bulk-bar"
 import { FileRow } from "./file-row"
+import { SpaceWall } from "./space-wall"
 import { useUploads } from "./uploads-provider"
 
 type Filter = "all" | "working" | "ready" | "needs_you"
@@ -70,8 +73,13 @@ const FILTERS: { value: Filter; label: string; match: (f: LibraryFile) => boolea
  * Library (plan F01–F05): the whole library, or one folder with its subfolders. Drop anything
  * anywhere, watch each file get read, fix what needs you, file things into folders.
  */
-export function LibraryView({ folderId }: { folderId?: string }) {
+export function LibraryView({ folderId, space = false }: { folderId?: string; space?: boolean }) {
   const { data: files, isPending } = useFiles(folderId)
+  const router = useRouter()
+  const params = useSearchParams()
+  // A space opens as its wall; "list" is the same files as rows (plan F46 wall · list).
+  const view: "wall" | "list" = space && params.get("view") !== "list" ? "wall" : "list"
+  const spaceRow = useSpaceList().data?.find((s) => s.id === folderId)
   const { pickFiles, pickFolder, upload, uploads, retryUpload } = useUploads()
   const { folders } = useFolderTree()
   const [filter, setFilter] = useState<Filter>("all")
@@ -152,6 +160,10 @@ export function LibraryView({ folderId }: { folderId?: string }) {
 
   const path = useFolderPath(folderId ?? "").data
   const here = folderId ? path?.at(-1) : undefined
+  // A top-level folder is a space: its old folder address opens the space.
+  useEffect(() => {
+    if (!space && folderId && path?.length === 1) router.replace(`/spaces/${folderId}` as Route)
+  }, [space, folderId, path, router])
 
   return (
     <section
@@ -164,9 +176,14 @@ export function LibraryView({ folderId }: { folderId?: string }) {
       onDrop={onDrop}
     >
       <RoomHeader
-        title={folderId ? (here?.name ?? "…") : "library"}
+        title={folderId ? (here?.name ?? spaceRow?.name ?? "…").toLowerCase() : "library"}
         kicker={
-          folderId ? (
+          space ? (
+            <>
+              <span aria-hidden>{`${spaceRow?.symbol ?? "✦"}\uFE0E`}</span> space ·{" "}
+              <b>{spaceRow?.sources ?? counts.all}</b> sources
+            </>
+          ) : folderId ? (
             <FolderPath folderId={folderId} />
           ) : (
             <>
@@ -177,7 +194,31 @@ export function LibraryView({ folderId }: { folderId?: string }) {
         }
         actions={
           <>
-            {(files?.length ?? 0) > 0 && (
+            {space && (
+              <nav aria-label="View" className="flex rounded-full bg-sticker p-1">
+                {(["wall", "list"] as const).map((v) => (
+                  <Link
+                    key={v}
+                    href={
+                      (v === "wall"
+                        ? `/spaces/${folderId}`
+                        : `/spaces/${folderId}?view=list`) as Route
+                    }
+                    replace
+                    scroll={false}
+                    onClick={() => sound("tap")}
+                    aria-current={view === v ? "page" : undefined}
+                    className={cn(
+                      "inline-flex h-8 items-center rounded-full px-3.5 text-[12.5px] font-extrabold text-white/75 hover:text-white",
+                      view === v && "bg-white text-ink hover:text-ink",
+                    )}
+                  >
+                    {v}
+                  </Link>
+                ))}
+              </nav>
+            )}
+            {(files?.length ?? 0) > 0 && view === "list" && (
               <Button
                 variant="sticker"
                 className="md:hidden"
@@ -235,98 +276,102 @@ export function LibraryView({ folderId }: { folderId?: string }) {
         }
       />
 
-      <div className="surface-paper paper-sheet min-h-[50vh]">
-        {isPending ? (
-          <ul aria-hidden>
-            {Array.from({ length: 6 }, (_, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton rows
-              <li key={i} className="flex h-16 items-center gap-3 border-b border-border px-2">
-                <Skeleton className="size-8 rounded-lg" />
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="h-3.5 w-2/5" />
-                  <Skeleton className="h-3 w-1/4" />
-                </div>
-              </li>
-            ))}
-          </ul>
-        ) : isEmpty ? (
-          <div className="py-6">
-            <EmptyState
-              label={folderId ? "This folder" : "Your library"}
-              title={folderId ? "This folder is empty" : "Drop files or a folder anywhere"}
-              description={
-                folderId
-                  ? "Drop files here, or move files in from the library. Chat with this folder once it has a few."
-                  : "PDFs, Word, slides, Markdown, recordings, web pages and YouTube links. Every file is read, checked into Zetaris and ready to cite."
-              }
-            >
-              <div className="flex flex-wrap gap-2">
-                <Button variant="secondary" onClick={() => pickFiles(folderId)}>
-                  <UploadIcon strokeWidth={1.5} />
-                  Upload files
-                </Button>
-                <Button variant="ghost" onClick={() => pickFolder(folderId)}>
-                  <FolderUpIcon strokeWidth={1.5} />
-                  Upload a folder
-                </Button>
-                <Button variant="ghost" onClick={() => openImport(folderId)}>
-                  <LinkIcon strokeWidth={1.5} />
-                  Import by URL
-                </Button>
-              </div>
-            </EmptyState>
-          </div>
-        ) : (
-          <>
-            {folderId && <FolderBriefs folderId={folderId} />}
-            {folderId && (
-              <StudyStarter
-                folderId={folderId}
-                title={folders?.find((f) => f.id === folderId)?.name ?? "Sample course"}
-              />
-            )}
-            {(files?.length ?? 0) > 0 && (
-              <ToggleGroup
-                value={[filter]}
-                onValueChange={(value: string[]) => setFilter((value[0] as Filter) ?? "all")}
-                // On phones the pills scroll sideways, edge to edge, instead of being cut off.
-                className="-mx-5 max-w-[calc(100%+2.5rem)] overflow-x-auto px-5 [scrollbar-width:none] sm:mx-0 sm:max-w-full sm:px-0"
-                aria-label="Show"
-              >
-                {FILTERS.map((f) => (
-                  <ToggleGroupItem
-                    key={f.value}
-                    value={f.value}
-                    className="h-8 shrink-0 rounded-full px-3 text-snippet"
-                  >
-                    {f.label}
-                    <span className="ml-1.5 text-ash-gray tabular-nums">{counts[f.value]}</span>
-                  </ToggleGroupItem>
-                ))}
-              </ToggleGroup>
-            )}
-            <ul className={cn("border-t border-border", files?.length ? "mt-4.5" : "")}>
-              {filter === "all" &&
-                subfolders.map((folder) => <SubfolderRow key={folder.id} folder={folder} />)}
-              {visible.map((file) => (
-                <FileRow
-                  key={file.id}
-                  file={file}
-                  upload={uploads[file.id]}
-                  onRetryUpload={() => retryUpload(file.id)}
-                  onPickReplacement={() => pickFiles(folderId)}
-                  selected={selected.has(file.id)}
-                  selecting={selecting}
-                  onSelect={({ shiftKey }) => toggle(file.id, shiftKey)}
-                />
+      {view === "wall" && folderId ? (
+        <SpaceWall spaceId={folderId} subfolders={subfolders} />
+      ) : (
+        <div className="surface-paper paper-sheet min-h-[50vh]">
+          {isPending ? (
+            <ul aria-hidden>
+              {Array.from({ length: 6 }, (_, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton rows
+                <li key={i} className="flex h-16 items-center gap-3 border-b border-border px-2">
+                  <Skeleton className="size-8 rounded-lg" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-3.5 w-2/5" />
+                    <Skeleton className="h-3 w-1/4" />
+                  </div>
+                </li>
               ))}
             </ul>
-            {visible.length === 0 && filter !== "all" && (
-              <p className="mt-9 text-ui text-ash-gray">Nothing here.</p>
-            )}
-          </>
-        )}
-      </div>
+          ) : isEmpty ? (
+            <div className="py-6">
+              <EmptyState
+                label={folderId ? "This folder" : "Your library"}
+                title={folderId ? "This folder is empty" : "Drop files or a folder anywhere"}
+                description={
+                  folderId
+                    ? "Drop files here, or move files in from the library. Chat with this folder once it has a few."
+                    : "PDFs, Word, slides, Markdown, recordings, web pages and YouTube links. Every file is read, checked into Zetaris and ready to cite."
+                }
+              >
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="secondary" onClick={() => pickFiles(folderId)}>
+                    <UploadIcon strokeWidth={1.5} />
+                    Upload files
+                  </Button>
+                  <Button variant="ghost" onClick={() => pickFolder(folderId)}>
+                    <FolderUpIcon strokeWidth={1.5} />
+                    Upload a folder
+                  </Button>
+                  <Button variant="ghost" onClick={() => openImport(folderId)}>
+                    <LinkIcon strokeWidth={1.5} />
+                    Import by URL
+                  </Button>
+                </div>
+              </EmptyState>
+            </div>
+          ) : (
+            <>
+              {folderId && <FolderBriefs folderId={folderId} />}
+              {folderId && (
+                <StudyStarter
+                  folderId={folderId}
+                  title={folders?.find((f) => f.id === folderId)?.name ?? "Sample course"}
+                />
+              )}
+              {(files?.length ?? 0) > 0 && (
+                <ToggleGroup
+                  value={[filter]}
+                  onValueChange={(value: string[]) => setFilter((value[0] as Filter) ?? "all")}
+                  // On phones the pills scroll sideways, edge to edge, instead of being cut off.
+                  className="-mx-5 max-w-[calc(100%+2.5rem)] overflow-x-auto px-5 [scrollbar-width:none] sm:mx-0 sm:max-w-full sm:px-0"
+                  aria-label="Show"
+                >
+                  {FILTERS.map((f) => (
+                    <ToggleGroupItem
+                      key={f.value}
+                      value={f.value}
+                      className="h-8 shrink-0 rounded-full px-3 text-snippet"
+                    >
+                      {f.label}
+                      <span className="ml-1.5 text-ash-gray tabular-nums">{counts[f.value]}</span>
+                    </ToggleGroupItem>
+                  ))}
+                </ToggleGroup>
+              )}
+              <ul className={cn("border-t border-border", files?.length ? "mt-4.5" : "")}>
+                {filter === "all" &&
+                  subfolders.map((folder) => <SubfolderRow key={folder.id} folder={folder} />)}
+                {visible.map((file) => (
+                  <FileRow
+                    key={file.id}
+                    file={file}
+                    upload={uploads[file.id]}
+                    onRetryUpload={() => retryUpload(file.id)}
+                    onPickReplacement={() => pickFiles(folderId)}
+                    selected={selected.has(file.id)}
+                    selecting={selecting}
+                    onSelect={({ shiftKey }) => toggle(file.id, shiftKey)}
+                  />
+                ))}
+              </ul>
+              {visible.length === 0 && filter !== "all" && (
+                <p className="mt-9 text-ui text-ash-gray">Nothing here.</p>
+              )}
+            </>
+          )}
+        </div>
+      )}
 
       {selected.size > 0 && <BulkBar ids={[...selected]} onClear={clearSelection} />}
 

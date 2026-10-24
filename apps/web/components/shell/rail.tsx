@@ -13,11 +13,13 @@ import { BrandMark } from "../brand-mark"
 import { AccountMenu, type ShellUser } from "./account-menu"
 import { openNewFolder } from "./app-dialogs"
 
-/** The space a page belongs to: the top of the folder it shows (`/library/folders/:id`). */
+/** The space a page belongs to: `/spaces/:id`, or the top of the folder it shows. */
 export function useCurrentSpaceId() {
   const pathname = usePathname()
   const { data } = useFolders()
   return useMemo(() => {
+    const space = /^\/spaces\/([^/]+)/.exec(pathname)
+    if (space) return space[1] ?? null
     const match = /^\/library\/folders\/([^/]+)/.exec(pathname)
     if (!match) return null
     const byId = new Map((data ?? []).map((f) => [f.id, f]))
@@ -32,7 +34,7 @@ export function useSpaces() {
   return useSpaceList().data ?? []
 }
 
-const spaceHref = (id: string) => `/library/folders/${id}` as Route
+export const spaceHref = (id: string) => `/spaces/${id}` as Route
 
 /** One space on the rail: its cover photo (a real page one) or its colour and glyph. */
 function SpaceLink({ space, active, index }: { space: SpaceRow; active: boolean; index: number }) {

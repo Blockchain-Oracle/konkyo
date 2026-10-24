@@ -1,6 +1,5 @@
 "use client"
 
-import { HeadphonesIcon } from "lucide-react"
 import type { Route } from "next"
 import Link from "next/link"
 import { useFolderBriefs } from "@/lib/use-briefs"
@@ -20,7 +19,9 @@ export function FolderBriefs({ folderId }: { folderId: string }) {
             href={`/briefs/${b.id}` as Route}
             className="inline-flex h-9 max-w-80 items-center gap-2 rounded-full border border-border bg-panel pr-3.5 pl-3 text-snippet text-silver-mist transition-colors duration-(--duration-press) hover:border-line-strong hover:text-bone-white"
           >
-            <HeadphonesIcon className="size-3.5 shrink-0 text-voice-a" strokeWidth={1.75} />
+            <span aria-hidden className="shrink-0 text-[11px] text-lime">
+              ▶
+            </span>
             <span className="truncate">{b.title}</span>
             <span className="shrink-0 text-ash-gray tabular-nums">
               {b.status === "making"

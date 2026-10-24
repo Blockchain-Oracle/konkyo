@@ -845,10 +845,7 @@ html[data-wall-tone="dark"] .status-pill {
 .room-header .space-title-block h1 {
   margin: 10px 0 0;
   font-size: clamp(2.75rem, 2rem + 3.4vw, 5.25rem);
-  line-height: 0.9;
-}
-.room-header .space-title-text {
-  padding-bottom: 0.06em; /* descenders clear the clamp */
+  line-height: 1.02; /* descenders clear the two-line clamp, and no third line peeks */
 }
 /* The kicker and counts: black stickers, readable on every wall. */
 .room-pill {

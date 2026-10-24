@@ -3,10 +3,18 @@ import { z } from "zod"
 import { route } from "@/lib/api"
 import { listFiles, registerUpload } from "@/lib/library"
 
-/** `?folder=<id>` lists one folder's files. */
+/** `?folder=<id>` lists one folder's files; `?space=<id>` everything filed anywhere in a space. */
 export const GET = route(async ({ userId, request }) => {
-  const folder = new URL(request.url).searchParams.get("folder")
-  return { files: await listFiles(userId, folder ? z.uuid().parse(folder) : undefined) }
+  const params = new URL(request.url).searchParams
+  const folder = params.get("folder")
+  const space = params.get("space")
+  return {
+    files: await listFiles(
+      userId,
+      folder ? z.uuid().parse(folder) : undefined,
+      space ? z.uuid().parse(space) : undefined,
+    ),
+  }
 })
 
 export const POST = route(

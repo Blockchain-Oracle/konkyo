@@ -13,6 +13,7 @@ import { SourceFace } from "@/components/library/source-face"
 import { useUploads } from "@/components/library/uploads-provider"
 import { RoomHeader } from "@/components/page-shell"
 import { openNewFolder } from "@/components/shell/app-dialogs"
+import { spaceHref } from "@/components/shell/rail"
 import { TodayCard } from "@/components/study/today-card"
 import { authClient } from "@/lib/auth-client"
 import { WHOLE_LIBRARY } from "@/lib/focus"
@@ -111,7 +112,7 @@ function Spaces({ spaces }: { spaces: SpaceRow[] | undefined }) {
           return (
             <Link
               key={space.id}
-              href={`/library/folders/${space.id}` as Route}
+              href={spaceHref(space.id)}
               onClick={() => sound("tap")}
               className="board-polaroid board-object"
               style={{ rotate: tiltFor(space.id, 200) } as CSSProperties}

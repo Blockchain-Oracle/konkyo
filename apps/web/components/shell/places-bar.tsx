@@ -26,7 +26,7 @@ export function PlacesBar() {
       aria-label="Places"
       className={cn(
         sourceOpen && "lg:hidden",
-        "places-bar fixed top-5 right-6 z-[45] flex max-w-[calc(100vw-140px)] items-center gap-0.5 overflow-x-auto rounded-full bg-sticker p-1.5 shadow-[0_7px_0_rgba(45,22,31,0.22)] [scrollbar-width:none] max-[800px]:top-3 max-[800px]:right-3 max-[800px]:left-3 max-[800px]:max-w-none",
+        "places-bar fixed top-5 right-6 z-[45] flex max-w-[calc(100vw-140px)] items-center gap-0.5 overflow-x-auto rounded-full bg-sticker p-1.5 shadow-[0_7px_0_rgba(45,22,31,0.22)] [scrollbar-width:none] max-[800px]:top-3 max-[800px]:right-3 max-[800px]:left-3 max-[800px]:max-w-none max-[800px]:mask-[linear-gradient(to_right,black_82%,transparent)] max-[800px]:pr-8",
       )}
     >
       {MAIN_NAV.map((item) => {
