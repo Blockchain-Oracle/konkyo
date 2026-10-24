@@ -1,5 +1,6 @@
 import "@konkyo/ui/globals.css"
 import { APP } from "@konkyo/config"
+import { env } from "@konkyo/env/server"
 import { cn } from "@konkyo/ui/lib/utils"
 import type { Metadata, Viewport } from "next"
 import { Geist_Mono, Inter } from "next/font/google"
@@ -11,6 +12,8 @@ const inter = Inter({ subsets: ["latin"], axes: ["opsz"], variable: "--font-sans
 const mono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" })
 
 export const metadata: Metadata = {
+  // Absolute URLs for link previews (Open Graph images) come from the app's public address.
+  metadataBase: new URL(env.BETTER_AUTH_URL),
   title: { default: APP.name, template: `%s · ${APP.name}` },
   description: APP.tagline,
   applicationName: APP.name,

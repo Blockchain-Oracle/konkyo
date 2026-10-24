@@ -133,7 +133,10 @@ export function ConnectorImportDialog({
               <Button variant="ghost" onClick={onClose}>
                 Cancel
               </Button>
-              <Button render={<Link href="/settings#connectors" onClick={onClose} />}>
+              <Button
+                nativeButton={false}
+                render={<Link href="/settings#connectors" onClick={onClose} />}
+              >
                 Open Settings
               </Button>
             </DialogFooter>

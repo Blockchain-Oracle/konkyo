@@ -52,6 +52,9 @@ export const env = createEnv({
     VAPID_PUBLIC_KEY: z.string().min(1).optional(),
     VAPID_PRIVATE_KEY: z.string().min(1).optional(),
     VAPID_SUBJECT: z.string().min(1).default("https://konkyo.xyz"),
+
+    /** The public folder the landing page's live demo asks (`pnpm konkyo seed` prints it). */
+    DEMO_SHARE_SLUG: z.string().min(1).optional(),
   },
   runtimeEnv: process.env,
   emptyStringAsUndefined: true,

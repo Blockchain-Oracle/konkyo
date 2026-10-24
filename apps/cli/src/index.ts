@@ -151,7 +151,11 @@ if (command === "seed") {
   const { seed } = await import("./seed")
   const result = await seed(values.user as string)
   process.stdout.write(
-    `Queued ${result.queued} sources for ${values.user} in "${result.folders.join('" and "')}".\nThe worker reads them (pnpm dev runs it); then ask, e.g.:\n  pnpm konkyo ask "Does a nap help motor learning?" --user ${values.user} --folder "${result.folders[0]}"\n`,
+    `Queued ${result.queued} sources for ${values.user} in "${result.folders.join('" and "')}".\nThe worker reads them (pnpm dev runs it); then ask, e.g.:\n  pnpm konkyo ask "Does a nap help motor learning?" --user ${values.user} --folder "${result.folders[0]}"\n${
+      result.demoSlug
+        ? `\n"${result.folders[0]}" is shared at /s/${result.demoSlug}. For the landing page's live demo, set\n  DEMO_SHARE_SLUG=${result.demoSlug}\n`
+        : ""
+    }`,
   )
   process.exit(0)
 }

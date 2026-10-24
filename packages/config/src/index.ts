@@ -8,6 +8,17 @@ export * from "./starters"
 export const APP = {
   name: "Konkyo",
   tagline: "Every answer shows its grounds.",
+  /** The public repository, once it exists (S11); links to it are hidden until then. */
+  repository: null as string | null,
+} as const
+
+/**
+ * The landing's particle field (plan §8): how many outlined triangles by device class (phones get
+ * fewer: the field sits behind text there and costs battery), and the pixel ratio cap.
+ */
+export const LANDING = {
+  particles: { phone: 2400, desktop: 6400 },
+  maxPixelRatio: { phone: 1.5, desktop: 2 },
 } as const
 
 /** Local development ports, chosen to avoid the Zetaris bundle (3001, 8888) and other projects. */

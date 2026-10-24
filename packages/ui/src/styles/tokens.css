@@ -142,6 +142,13 @@
       opacity: 0;
     }
   }
+  /* The landing's headlines rise into view line by line from behind a mask (plan §8, Dala). */
+  --animate-line-up: line-up 1s var(--ease-out) both;
+  @keyframes line-up {
+    from {
+      transform: translateY(110%);
+    }
+  }
 }
 
 /* Reduced motion: the highlight fades in and panes appear in place. */
@@ -156,7 +163,8 @@
   .animate-checking {
     animation-duration: 3s;
   }
-  .animate-rewrite {
+  .animate-rewrite,
+  .animate-line-up {
     animation-name: fade-in;
   }
 }

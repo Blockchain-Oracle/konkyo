@@ -43,8 +43,21 @@ export default function PrivacyPage() {
         <li>ElevenLabs, to transcribe recordings you upload and to make audio briefs.</li>
         <li>Zetaris, which stores the source text used to check every quote.</li>
         <li>Composio, only if you connect Gmail, Google Drive or Notion.</li>
+        <li>OpenAlex, which receives the search terms of deep searches and topic watches.</li>
         <li>Google, for sign-in, and for Google Docs export if you use it.</li>
       </ul>
+
+      <h2>Shared folders and API keys</h2>
+      <p>
+        If you share a folder, anyone with its link can read its files and ask about them. Their
+        questions are checked by OpenAI's moderation and answered like yours; we keep only a keyed
+        hash of their network address, to limit how many questions one visitor can ask. Turning
+        sharing off stops the link at once.
+      </p>
+      <p>
+        API keys are shown once when you make them; we keep only a hash. Questions asked with a key
+        are saved in your chats like any other.
+      </p>
 
       <h2>Your control</h2>
       <p>

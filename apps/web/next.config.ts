@@ -27,10 +27,6 @@ const nextConfig: NextConfig = {
     "@konkyo/ui",
     "@konkyo/zetaris",
   ],
-  async redirects() {
-    // The Dala landing page takes "/" in S10; until then the root opens the app.
-    return [{ source: "/", destination: "/home", permanent: false }]
-  },
 }
 
 export default nextConfig
