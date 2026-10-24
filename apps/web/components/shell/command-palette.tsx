@@ -9,13 +9,19 @@ import {
   CommandItem,
   CommandList,
 } from "@konkyo/ui/components/command"
+import { useQuery } from "@tanstack/react-query"
 import {
+  BotIcon,
   DownloadCloudIcon,
+  FileTextIcon,
   FolderIcon,
   FolderPlusIcon,
   FolderUpIcon,
   LinkIcon,
+  MessageSquareIcon,
+  NotebookPenIcon,
   PlugIcon,
+  SettingsIcon,
   UploadIcon,
 } from "lucide-react"
 import type { Route } from "next"
@@ -24,13 +30,24 @@ import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { KindIcon } from "@/components/library/kind-icon"
 import { useUploads } from "@/components/library/uploads-provider"
+import { api } from "@/lib/fetcher"
 import { FOOTER_NAV, MAIN_NAV } from "@/lib/navigation"
 import { openFile } from "@/lib/preview"
+import { sortChats, useChats } from "@/lib/use-chats"
 import { useFolders } from "@/lib/use-folders"
 import { useFileActions, useFiles } from "@/lib/use-library"
 import { openConnectorImport, openImport, openNewFolder } from "./app-dialogs"
 
 const GO_TO = [...MAIN_NAV, ...FOOTER_NAV]
+
+/** Settings sections ⌘K can jump to (their anchors on the Settings page). */
+const SETTINGS: { label: string; href: Route }[] = [
+  { label: "Connectors: Gmail, Drive, Notion", href: "/settings#connectors" as Route },
+  { label: "Notifications and reminders", href: "/settings#notifications" as Route },
+  { label: "API keys", href: "/settings#api-keys" as Route },
+  { label: "Usage and limits", href: "/settings#usage" as Route },
+  { label: "What Konkyo remembers (memory)", href: "/settings/memory" as Route },
+]
 const DOI = /^(?:doi:\s*|https?:\/\/(?:dx\.)?doi\.org\/)?(10\.\d{4,9}\/\S+)$/i
 const RECENT = 5
 const MATCHES = 20
@@ -51,8 +68,9 @@ const matches = (title: string, words: string[]) => {
 }
 
 /**
- * ⌘K / Ctrl+K anywhere (plan F09): find a file or folder, run an action, or paste a URL or DOI to
- * import it. It opens with no animation: it's used many times a day.
+ * ⌘K / Ctrl+K anywhere (plan F09, §16.6): find a file, space, chat or note, jump to a setting, run
+ * an action, or paste a URL or DOI to import it. It opens with no animation: it's used many times a
+ * day.
  */
 export function CommandPalette() {
   const router = useRouter()
@@ -60,6 +78,14 @@ export function CommandPalette() {
   const [search, setSearch] = useState("")
   const { data: files } = useFiles()
   const { data: folders } = useFolders()
+  const { data: chats } = useChats()
+  // Notes come from the same list Write shows (fetched only once the palette has been opened).
+  const { data: notes } = useQuery({
+    queryKey: ["notes"],
+    queryFn: () =>
+      api<{ notes: { id: string; title: string }[] }>("/api/notes").then((r) => r.notes),
+    enabled: open,
+  })
   const { importUrl } = useFileActions()
   const { pickFiles, pickFolder } = useUploads()
 
@@ -86,6 +112,17 @@ export function CommandPalette() {
     () => (words.length ? (folders ?? []).filter((f) => matches(f.name, words)).slice(0, 8) : []),
     [folders, words],
   )
+  const chatHits = useMemo(() => {
+    const all = sortChats(chats ?? [])
+    return words.length ? all.filter((c) => matches(c.title, words)).slice(0, 8) : all.slice(0, 3)
+  }, [chats, words])
+  const noteHits = useMemo(
+    () =>
+      words.length
+        ? (notes ?? []).filter((n) => matches(n.title || "Untitled", words)).slice(0, 6)
+        : [],
+    [notes, words],
+  )
   const say = (label: string) => !words.length || matches(label, words)
 
   const close = () => {
@@ -101,7 +138,9 @@ export function CommandPalette() {
   const actions = [
     { label: "Upload files", icon: UploadIcon, onSelect: run(() => pickFiles()) },
     { label: "Upload a folder", icon: FolderUpIcon, onSelect: run(() => pickFolder()) },
-    { label: "New folder", icon: FolderPlusIcon, onSelect: run(() => openNewFolder(null)) },
+    { label: "New space", icon: FolderPlusIcon, onSelect: run(() => openNewFolder(null)) },
+    { label: "New note", icon: NotebookPenIcon, onSelect: go("/write" as Route) },
+    { label: "New agent", icon: BotIcon, onSelect: go("/agents?new=1" as Route) },
     { label: "Import by URL", icon: LinkIcon, onSelect: run(() => openImport()) },
     {
       label: "Import from Gmail, Drive or Notion",
@@ -115,12 +154,12 @@ export function CommandPalette() {
       open={open}
       onOpenChange={(next) => (next ? setOpen(true) : close())}
       title="Search and go"
-      description="Find a file or folder, run an action, or paste a link to import"
+      description="Find a file, space, chat or note, run an action, or paste a link to import"
     >
       {/* Our own filtering: a big library must not render thousands of hidden rows. */}
       <Command shouldFilter={false}>
         <CommandInput
-          placeholder="Search files, or paste a link or DOI…"
+          placeholder="Search files, spaces, chats, notes… or paste a link or DOI"
           value={search}
           onValueChange={setSearch}
         />
@@ -157,7 +196,7 @@ export function CommandPalette() {
             </CommandGroup>
           )}
           {!pasted && folderHits.length > 0 && (
-            <CommandGroup heading="Folders">
+            <CommandGroup heading="Spaces and folders">
               {folderHits.map((folder) => (
                 <CommandItem
                   key={folder.id}
@@ -166,6 +205,48 @@ export function CommandPalette() {
                 >
                   <FolderIcon strokeWidth={1.5} />
                   <span className="truncate">{folder.name}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
+          {!pasted && chatHits.length > 0 && (
+            <CommandGroup heading={words.length ? "Chats" : "Recent chats"}>
+              {chatHits.map((chat) => (
+                <CommandItem
+                  key={chat.id}
+                  value={`chat:${chat.id}`}
+                  onSelect={go(`/chats/${chat.id}` as Route)}
+                >
+                  <MessageSquareIcon strokeWidth={1.5} />
+                  <span className="truncate">{chat.title}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
+          {!pasted && noteHits.length > 0 && (
+            <CommandGroup heading="Notes">
+              {noteHits.map((note) => (
+                <CommandItem
+                  key={note.id}
+                  value={`note:${note.id}`}
+                  onSelect={go(`/write/${note.id}` as Route)}
+                >
+                  <FileTextIcon strokeWidth={1.5} />
+                  <span className="truncate">{note.title || "Untitled"}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
+          {!pasted && words.length > 0 && SETTINGS.some((item) => say(item.label)) && (
+            <CommandGroup heading="Settings">
+              {SETTINGS.filter((item) => say(item.label)).map((item) => (
+                <CommandItem
+                  key={item.href}
+                  value={`settings:${item.href}`}
+                  onSelect={go(item.href)}
+                >
+                  <SettingsIcon strokeWidth={1.5} />
+                  {item.label}
                 </CommandItem>
               ))}
             </CommandGroup>

@@ -3,7 +3,6 @@
 import type { CitationMatch, ClaimResult } from "@konkyo/agents"
 import { Button } from "@konkyo/ui/components/button"
 import { Sheet, SheetContent, SheetTitle } from "@konkyo/ui/components/sheet"
-import { SidebarTrigger } from "@konkyo/ui/components/sidebar"
 import { ToggleGroup, ToggleGroupItem } from "@konkyo/ui/components/toggle-group"
 import { cn } from "@konkyo/ui/lib/utils"
 import type { Editor } from "@tiptap/core"
@@ -281,7 +280,6 @@ export function NoteEditor({ note }: { note: NoteDetail }) {
     <div className="flex h-svh min-h-0 max-md:h-[calc(100svh-3.5rem)]">
       <div className="min-w-0 flex-1 overflow-y-auto">
         <header className="sticky top-0 z-20 flex h-12 items-center gap-1 bg-background/95 px-3 md:px-4">
-          <SidebarTrigger className="text-ash-gray md:hidden" />
           <Button
             variant="ghost"
             size="sm"

@@ -8,6 +8,7 @@ import {
 import { Sheet, SheetContent, SheetTitle } from "@konkyo/ui/components/sheet"
 import { closeAllSources, usePreview } from "@/lib/preview"
 import { useMediaQuery } from "@/lib/use-source"
+import { DockArea } from "../shell/dock"
 import { SourcePane } from "./source-pane"
 
 /**
@@ -26,11 +27,15 @@ export function Workspace({ children }: { children: React.ReactNode }) {
       <div className="lg:h-svh">
         <ResizablePanelGroup orientation="horizontal">
           <ResizablePanel id="centre" minSize={360} className="lg:overflow-y-auto!">
-            {children}
+            {/* The page, then the dock pinned to the bottom of the centre column (plan §16.6). */}
+            <div className="flex min-h-svh flex-col lg:min-h-full">
+              <div className="min-w-0 flex-1">{children}</div>
+              <DockArea />
+            </div>
           </ResizablePanel>
           {docked && (
             <>
-              <ResizableHandle className="bg-border hover:bg-line-strong" />
+              <ResizableHandle className="bg-white/10 hover:bg-lime/60" />
               <ResizablePanel
                 id="source"
                 defaultSize="44%"

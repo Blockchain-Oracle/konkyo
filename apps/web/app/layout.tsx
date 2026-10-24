@@ -23,11 +23,15 @@ export const metadata: Metadata = {
   title: { default: APP.name, template: `%s · ${APP.name}` },
   description: APP.tagline,
   applicationName: APP.name,
+  // Added to an iPhone's home screen it opens full screen, its status bar over the room.
+  appleWebApp: { capable: true, title: APP.name, statusBarStyle: "black-translucent" },
 }
 
 export const viewport: Viewport = {
   themeColor: "#0b0b0e",
   colorScheme: "dark",
+  // Draw under the notch and home indicator; the bottom bar and dock pad for the safe areas.
+  viewportFit: "cover",
 }
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

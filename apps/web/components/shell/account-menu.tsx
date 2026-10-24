@@ -18,8 +18,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@konkyo/ui/components/dropdown-menu"
-import { SidebarMenuButton } from "@konkyo/ui/components/sidebar"
-import { ChevronsUpDownIcon, LogOutIcon, SettingsIcon } from "lucide-react"
+import { cn } from "@konkyo/ui/lib/utils"
+import { LogOutIcon, SettingsIcon, Trash2Icon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -40,7 +40,19 @@ function initials(name: string): string {
   ).toUpperCase()
 }
 
-export function AccountMenu({ user }: { user: ShellUser }) {
+/**
+ * Your look at the bottom of the rail (or the phone bar), opening the account menu: keep a guest's
+ * work with Google, Settings, Trash, sign out. (S17 turns this into the OurSpaces settings card.)
+ */
+export function AccountMenu({
+  user,
+  side = "right",
+  className,
+}: {
+  user: ShellUser
+  side?: "right" | "top"
+  className?: string
+}) {
   const router = useRouter()
   const [confirmGuestSignOut, setConfirmGuestSignOut] = useState(false)
   const displayName = user.isGuest ? "Guest" : user.name
@@ -72,27 +84,22 @@ export function AccountMenu({ user }: { user: ShellUser }) {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger
-          render={
-            <SidebarMenuButton
-              size="lg"
-              tooltip={displayName}
-              className="data-popup-open:bg-sidebar-accent"
-            />
-          }
+          aria-label={`${displayName}: account`}
+          className={cn(
+            "relative grid size-11 shrink-0 place-items-center rounded-full outline-none transition-[translate] duration-(--dur-quick) ease-(--ease-glide) hover:-translate-y-0.5 focus-visible:ring-3 focus-visible:ring-lime",
+            className,
+          )}
         >
-          <Avatar className="size-7">
+          <Avatar className="size-10 ring-2 ring-white/15">
             {user.image && <AvatarImage src={user.image} alt="" />}
-            <AvatarFallback className="bg-raised text-meta">{initials(displayName)}</AvatarFallback>
+            <AvatarFallback className="bg-violet font-display text-snippet font-extrabold text-white">
+              {initials(displayName)}
+            </AvatarFallback>
           </Avatar>
-          <span className="flex min-w-0 flex-1 flex-col text-left">
-            <span className="truncate text-ui text-bone-white">{displayName}</span>
-            {!user.isGuest && (
-              <span className="truncate text-meta text-ash-gray">{user.email}</span>
-            )}
-          </span>
-          <ChevronsUpDownIcon className="ml-auto text-ash-gray" strokeWidth={1.5} />
+          {/* The live dot: you're here (OurSpaces' presence dot on the rail). */}
+          <span className="absolute right-0.5 bottom-0.5 size-3 rounded-full bg-lime ring-[2.5px] ring-rail" />
         </DropdownMenuTrigger>
-        <DropdownMenuContent side="top" align="start" className="w-64">
+        <DropdownMenuContent side={side} align="end" sideOffset={10} className="w-64">
           {user.isGuest && (
             <>
               <DropdownMenuGroup>
@@ -108,9 +115,16 @@ export function AccountMenu({ user }: { user: ShellUser }) {
               <DropdownMenuSeparator />
             </>
           )}
+          <DropdownMenuLabel className="text-snippet font-normal text-room-muted">
+            {user.isGuest ? "you're a guest" : user.email}
+          </DropdownMenuLabel>
           <DropdownMenuItem onClick={() => router.push("/settings")}>
             <SettingsIcon strokeWidth={1.5} />
             Settings
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => router.push("/trash")}>
+            <Trash2Icon strokeWidth={1.5} />
+            Trash
           </DropdownMenuItem>
           <DropdownMenuItem onClick={user.isGuest ? () => setConfirmGuestSignOut(true) : signOut}>
             <LogOutIcon strokeWidth={1.5} />

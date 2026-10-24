@@ -1,62 +1,56 @@
 import { ROUTES } from "@konkyo/config"
-import { SidebarInset, SidebarProvider } from "@konkyo/ui/components/sidebar"
 import { Skeleton } from "@konkyo/ui/components/skeleton"
-import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { Suspense } from "react"
 import { FileDetailsSheet } from "@/components/library/file-details"
 import { UploadsProvider } from "@/components/library/uploads-provider"
 import { AppDialogs } from "@/components/shell/app-dialogs"
-import { AppSidebar } from "@/components/shell/app-sidebar"
+import { BottomBar } from "@/components/shell/bottom-bar"
 import { CommandPalette } from "@/components/shell/command-palette"
-import { MobileTabBar } from "@/components/shell/mobile-tab-bar"
+import { Rail } from "@/components/shell/rail"
+import { StatusPill } from "@/components/shell/status-pill"
 import { Workspace } from "@/components/source/workspace"
 import { getSession } from "@/lib/session"
 
-/** shadcn's sidebar remembers its open/closed state in this cookie. */
-const SIDEBAR_COOKIE = "sidebar_state"
-
 async function Shell({ children }: { children: React.ReactNode }) {
-  const [session, cookieStore] = await Promise.all([getSession(), cookies()])
+  const session = await getSession()
   if (!session) redirect(ROUTES.signIn)
   const { user } = session
+  const shellUser = {
+    name: user.name,
+    email: user.email,
+    image: user.image ?? null,
+    isGuest: Boolean(user.isAnonymous),
+  }
 
+  // The floating chrome (plan §16.6): the rail on the left (desktop), the bottom bar (phones),
+  // the dock inside the workspace, the live pill bottom left.
   return (
-    <SidebarProvider defaultOpen={cookieStore.get(SIDEBAR_COOKIE)?.value !== "false"}>
-      <UploadsProvider>
-        <AppSidebar
-          user={{
-            name: user.name,
-            email: user.email,
-            image: user.image ?? null,
-            isGuest: Boolean(user.isAnonymous),
-          }}
-        />
-        <SidebarInset className="min-w-0 pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0">
-          <Workspace>{children}</Workspace>
-        </SidebarInset>
-        <MobileTabBar />
-        <CommandPalette />
-        <AppDialogs />
-        <FileDetailsSheet />
-      </UploadsProvider>
-    </SidebarProvider>
+    <UploadsProvider>
+      <Rail user={shellUser} />
+      <div className="min-w-0 md:pl-[104px]">
+        <Workspace>{children}</Workspace>
+      </div>
+      <BottomBar user={shellUser} />
+      <StatusPill />
+      <CommandPalette />
+      <AppDialogs />
+      <FileDetailsSheet />
+    </UploadsProvider>
   )
 }
 
 /** Painted instantly (prerendered) while the session is checked. */
 function ShellSkeleton() {
   return (
-    <div className="flex min-h-svh">
-      <div className="hidden w-64 flex-col gap-3 border-r border-border p-3 md:flex">
-        <Skeleton className="h-8 w-24" />
-        <Skeleton className="h-9 w-full rounded-full" />
+    <div className="min-h-svh">
+      <div className="fixed inset-y-4 left-4 hidden w-[72px] flex-col items-center gap-2 rounded-card bg-rail py-3 md:flex">
+        <Skeleton className="size-12 rounded-tile" />
         {Array.from({ length: 7 }, (_, index) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: static decorative skeleton rows
-          <Skeleton key={index} className="h-8 w-full" />
+          // biome-ignore lint/suspicious/noArrayIndexKey: static decorative skeleton tiles
+          <Skeleton key={index} className="size-11 rounded-full" />
         ))}
       </div>
-      <div className="flex-1" />
     </div>
   )
 }
