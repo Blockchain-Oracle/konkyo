@@ -4,6 +4,7 @@ import { Button } from "@konkyo/ui/components/button"
 import { Spinner } from "@konkyo/ui/components/spinner"
 import { cn } from "@konkyo/ui/lib/utils"
 import { useEffect, useRef } from "react"
+import { SayIt } from "@/components/voice/say-it"
 import type { CompareSide, RoundItem } from "@/lib/study"
 import { SourceChip, whereIs } from "./feedback"
 
@@ -101,7 +102,8 @@ export function TypedAnswer({
           {after}
         </p>
         {!settled(look) && (
-          <div className="mt-6 flex justify-end">
+          <div className="mt-6 flex items-center justify-end gap-3">
+            <SayIt onWords={onChange} onDone={onCheck} disabled={locked} />
             <CheckButton disabled={!value.trim()} checking={look === "checking"} />
           </div>
         )}
@@ -124,6 +126,7 @@ export function TypedAnswer({
           autoComplete="off"
           className={cn("game-input", state)}
         />
+        {!settled(look) && <SayIt onWords={onChange} onDone={onCheck} disabled={locked} />}
         {!settled(look) && <CheckButton disabled={!value.trim()} checking={look === "checking"} />}
       </div>
     </form>

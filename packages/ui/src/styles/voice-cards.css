@@ -749,3 +749,50 @@ body.voice-stage-up .orb-hint {
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
+
+/* say it (components/voice/say-it.tsx): answer a study round out loud */
+.say-it {
+  display: inline-flex;
+  height: 64px;
+  align-items: center;
+  gap: 10px;
+  border-radius: 999px;
+  background: var(--color-sticker);
+  color: white;
+  padding: 0 20px 0 8px;
+  font-size: 16px;
+  font-weight: 700;
+  box-shadow: var(--shadow-sticker);
+  transition:
+    translate var(--dur-quick) var(--ease-glide),
+    box-shadow var(--dur-quick) var(--ease-glide);
+}
+
+.say-it:hover:not(:disabled) {
+  translate: 0 -2px;
+  box-shadow: var(--shadow-sticker-lift);
+}
+
+.say-it:disabled {
+  opacity: 0.5;
+}
+
+.say-it.is-listening {
+  box-shadow:
+    0 0 0 3px var(--color-lime),
+    var(--shadow-sticker);
+}
+
+.say-it-orb {
+  position: relative;
+  display: block;
+  width: 48px;
+  height: 48px;
+}
+
+.say-it-orb .voice-orb {
+  position: absolute;
+  inset: -30%;
+  width: 160%;
+  height: 160%;
+}
