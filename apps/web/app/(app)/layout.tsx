@@ -1,3 +1,4 @@
+import "@konkyo/ui/globals.css"
 import { ROUTES } from "@konkyo/config"
 import { Skeleton } from "@konkyo/ui/components/skeleton"
 import { redirect } from "next/navigation"

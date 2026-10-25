@@ -1,4 +1,3 @@
-import "@konkyo/ui/globals.css"
 import { APP } from "@konkyo/config"
 import { env } from "@konkyo/env/server"
 import { cn } from "@konkyo/ui/lib/utils"
@@ -34,6 +33,9 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 }
 
+// No stylesheet here: each route group brings its own (the app's in (app), (auth), (public),
+// (legal) and dev; the light marketing one in (marketing)), so the landing doesn't block on CSS
+// it never uses.
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={cn("dark", display.variable, sans.variable, mono.variable)}>

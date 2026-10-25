@@ -1,3 +1,4 @@
+import "@konkyo/ui/globals.css"
 import { APP } from "@konkyo/config"
 import Link from "next/link"
 import { BrandMark } from "@/components/brand-mark"

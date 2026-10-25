@@ -1,5 +1,8 @@
 "use client"
 
+// The answer, its citations and the source sheet are drawn with the app's sheets; the landing's own
+// stylesheet leaves them out, so they come with this (lazily loaded) module.
+import "@konkyo/ui/globals.css"
 import { useChat } from "@ai-sdk/react"
 import type { KonkyoMessage } from "@konkyo/agents"
 import { Button } from "@konkyo/ui/components/button"
