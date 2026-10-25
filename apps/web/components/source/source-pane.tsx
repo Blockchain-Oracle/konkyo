@@ -19,7 +19,7 @@ import {
 } from "lucide-react"
 import dynamic from "next/dynamic"
 import { useRouter } from "next/navigation"
-import { useMemo } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import { openDetails } from "@/components/library/file-details"
 import { KindIcon } from "@/components/library/kind-icon"
 import { closeAllSources, closeSource, type SourceTab, showSource, usePreview } from "@/lib/preview"
@@ -39,23 +39,36 @@ const PdfViewer = dynamic(() => import("./pdf-viewer").then((m) => m.PdfViewer),
 export function SourcePane({ className }: { className?: string }) {
   const { tabs, active } = usePreview()
   const { owner } = useSourceAccess()
+  // Opening a source takes focus into it, so the keyboard reads on where the eye went; Escape
+  // closes it and focus goes back to whatever opened it (preview.ts).
+  const pane = useRef<HTMLElement>(null)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: once per source opened, or per citation
+  useEffect(() => {
+    if (active) pane.current?.focus({ preventScroll: true })
+  }, [active?.fileId, active?.target?.nonce])
   if (!active) return null
   return (
     // Reading happens on paper (R4): the pane is a cream card floating beside the room (R1).
     <section
-      aria-label="Source"
-      className={cn("surface-paper source-sheet flex min-h-0 flex-col", className)}
+      ref={pane}
+      tabIndex={-1}
+      aria-label={`Source: ${active.title}`}
+      onKeyDown={(event) => {
+        if (event.key === "Escape" && !event.defaultPrevented) closeAllSources()
+      }}
+      className={cn("surface-paper source-sheet flex min-h-0 flex-col outline-none", className)}
     >
       <header className="flex h-12 shrink-0 items-center gap-1 border-b border-border pr-2 pl-2">
-        <div
-          role="tablist"
+        <ul
           aria-label="Open sources"
           className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [scrollbar-width:none]"
         >
           {tabs.map((tab) => (
-            <SourceTabButton key={tab.fileId} tab={tab} active={tab.fileId === active.fileId} />
+            <li key={tab.fileId} className="shrink-0">
+              <SourceTabButton tab={tab} active={tab.fileId === active.fileId} />
+            </li>
           ))}
-        </div>
+        </ul>
         {owner && active.kind !== "note" && <StudyMenu tab={active} />}
         {!owner && <VisitorDownload fileId={active.fileId} />}
         {owner && (
@@ -120,8 +133,7 @@ function SourceTabButton({ tab, active }: { tab: SourceTab; active: boolean }) {
     >
       <button
         type="button"
-        role="tab"
-        aria-selected={active}
+        aria-current={active ? "true" : undefined}
         onClick={() => showSource(tab.fileId)}
         className="flex min-w-0 items-center gap-2 rounded-full text-snippet outline-none focus-visible:ring-1 focus-visible:ring-silver-mist focus-visible:ring-offset-4 focus-visible:ring-offset-raised"
         title={tab.title}
@@ -133,7 +145,7 @@ function SourceTabButton({ tab, active }: { tab: SourceTab; active: boolean }) {
         type="button"
         aria-label={`Close ${tab.title}`}
         onClick={() => closeSource(tab.fileId)}
-        className="ml-1 grid size-6 shrink-0 place-items-center rounded-full text-ash-gray opacity-0 transition-opacity duration-(--duration-press) group-hover:opacity-100 hover:bg-black/8 hover:text-bone-white focus-visible:opacity-100 group-has-[[aria-selected=true]]:opacity-100"
+        className="ml-1 grid size-6 shrink-0 place-items-center rounded-full text-ash-gray opacity-0 transition-opacity duration-(--duration-press) group-hover:opacity-100 hover:bg-black/8 hover:text-bone-white focus-visible:opacity-100 group-has-[[aria-current=true]]:opacity-100"
       >
         <XIcon className="size-3.5" strokeWidth={1.75} />
       </button>

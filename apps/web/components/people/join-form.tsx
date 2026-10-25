@@ -134,6 +134,7 @@ export function JoinForm({
 
       {onCode ? (
         <OTPField
+          label="Six-digit code from your email"
           length={EMAIL.codeLength}
           value={code}
           onValueChange={setCode}

@@ -61,6 +61,7 @@ export function SpaceEdit({ space }: { space: SpaceRow }) {
         <span className="space-edit-label">edit</span>
       </PopoverTrigger>
       <PopoverContent
+        aria-label={`Edit ${space.name}`}
         align="start"
         className="space-maker w-[min(440px,calc(100vw-24px))] rounded-[20px] border-0 bg-rail p-5"
       >

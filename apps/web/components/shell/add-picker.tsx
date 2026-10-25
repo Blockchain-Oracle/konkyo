@@ -4,7 +4,7 @@ import { Button } from "@konkyo/ui/components/button"
 import { useQueryClient } from "@tanstack/react-query"
 import type { Route } from "next"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 import { useUploads } from "@/components/library/uploads-provider"
 import { api } from "@/lib/fetcher"
@@ -48,11 +48,29 @@ export function AddPicker({ folderId, name }: { folderId?: string; name?: string
   const study = useStudyActions()
   const makeBrief = useMakeBrief()
 
+  // A dialog: focus goes to the first way in, Escape closes it, and focus returns to "add".
+  const trigger = useRef<HTMLButtonElement>(null)
+  const tray = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (!open) return
-    const onKey = (event: KeyboardEvent) => event.key === "Escape" && setOpen(false)
+    tray.current?.querySelector<HTMLButtonElement>(".widget-picker-grid button")?.focus()
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") return setOpen(false)
+      // Tab goes round the tray, never behind it
+      if (event.key !== "Tab" || !tray.current) return
+      const stops = [...tray.current.querySelectorAll<HTMLElement>("button")]
+      const [first, last] = [stops[0], stops.at(-1)]
+      if (event.shiftKey ? document.activeElement === first : document.activeElement === last) {
+        event.preventDefault()
+        ;(event.shiftKey ? last : first)?.focus()
+      }
+    }
     window.addEventListener("keydown", onKey)
-    return () => window.removeEventListener("keydown", onKey)
+    const back = trigger.current
+    return () => {
+      window.removeEventListener("keydown", onKey)
+      back?.focus()
+    }
   }, [open])
 
   const scope = { fileIds: [], folderIds: folderId ? [folderId] : [] }
@@ -263,6 +281,7 @@ export function AddPicker({ folderId, name }: { folderId?: string; name?: string
   return (
     <>
       <Button
+        ref={trigger}
         onClick={() => {
           sound(open ? "tap" : "promote")
           setOpen(!open)
@@ -278,15 +297,16 @@ export function AddPicker({ folderId, name }: { folderId?: string; name?: string
         // biome-ignore lint/a11y/noStaticElementInteractions: the backdrop closes on a press outside
         <div
           className="widget-picker-backdrop widget-picker-backdrop-popover"
-          onClick={() => setOpen(false)}
+          // a press on the backdrop itself, not one inside the tray
+          onClick={(event) => event.target === event.currentTarget && setOpen(false)}
           onKeyDown={undefined}
           role="presentation"
         >
           <div
             className="widget-picker widget-picker-popover widget-picker-tray is-browsing"
-            onClick={(event) => event.stopPropagation()}
-            onKeyDown={(event) => event.stopPropagation()}
+            ref={tray}
             role="dialog"
+            aria-modal="true"
             aria-label={folderId ? "Add to this space" : "Add to your library"}
           >
             <header>

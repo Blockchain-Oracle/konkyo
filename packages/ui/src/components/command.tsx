@@ -42,10 +42,6 @@ function CommandDialog({
 }) {
   return (
     <Dialog {...props}>
-      <DialogHeader className="sr-only">
-        <DialogTitle>{title}</DialogTitle>
-        <DialogDescription>{description}</DialogDescription>
-      </DialogHeader>
       {/* Opened from the keyboard many times a day, so it appears instantly (no animation). */}
       <DialogContent
         className={cn(
@@ -55,6 +51,11 @@ function CommandDialog({
         overlayClassName="data-open:animate-none data-closed:animate-none"
         showCloseButton={showCloseButton}
       >
+        {/* named inside the dialog, so nothing of it sits in the page while it's closed */}
+        <DialogHeader className="sr-only">
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
+        </DialogHeader>
         {children}
       </DialogContent>
     </Dialog>

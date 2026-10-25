@@ -1689,7 +1689,8 @@
   color: white;
 }
 
-.action-dock-ai > span {
+/* the ✦ glyph only: the unread badge beside it keeps its own ink on white */
+.action-dock-ai > span[aria-hidden] {
   font-family: var(--font-display);
   font-size: 18px;
   line-height: 1;
@@ -1701,7 +1702,7 @@
   color: var(--color-sticker);
 }
 
-.action-dock-ai.is-active > span {
+.action-dock-ai.is-active > span[aria-hidden] {
   color: var(--color-sticker);
 }
 

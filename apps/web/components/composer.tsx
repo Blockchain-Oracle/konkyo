@@ -157,6 +157,11 @@ export function Composer({
     if (quote) inputRef.current?.focus()
   }, [quote])
 
+  const prompt = quote
+    ? "Ask about this passage…"
+    : chosen.length
+      ? `Ask about ${chosen.length === 1 ? chosen[0]?.name || "this" : `these ${chosen.length}`}…`
+      : placeholder
   return (
     <form
       ref={formRef}
@@ -259,14 +264,9 @@ export function Composer({
               formRef.current?.requestSubmit()
             }
           }}
-          placeholder={
-            quote
-              ? "Ask about this passage…"
-              : chosen.length
-                ? `Ask about ${chosen.length === 1 ? chosen[0]?.name || "this" : `these ${chosen.length}`}…`
-                : placeholder
-          }
-          aria-label="Message"
+          placeholder={prompt}
+          // its name is what it shows, so a voice command can say it
+          aria-label={prompt.replace(/…$/, "")}
           rows={2}
           className="max-h-[40vh] min-h-16 px-4.5 pt-4 text-reading placeholder:text-ash-gray"
         />

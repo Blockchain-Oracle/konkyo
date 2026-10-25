@@ -1823,6 +1823,7 @@ label.setting-text {
 }
 
 .people-tabs {
+  flex-wrap: wrap;
   padding: 0;
 }
 

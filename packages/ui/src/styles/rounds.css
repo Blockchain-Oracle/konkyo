@@ -541,10 +541,18 @@
   .otp-field {
     gap: 6px;
   }
+  /* six boxes share the row on the narrowest phones (320px) instead of pushing it wider */
   .otp-slot {
-    width: 40px;
+    width: auto;
+    min-width: 0;
+    max-width: 40px;
+    flex: 1 1 0;
     height: 52px;
     font-size: 22px;
+  }
+  .together-join {
+    max-width: 100%;
+    min-width: 0;
   }
 }
 .round-gone .round-join-label {

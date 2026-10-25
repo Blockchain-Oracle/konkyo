@@ -653,6 +653,7 @@ export function JoinWithCode({ className }: { className?: string }) {
     <div className={cn("round-join", className)}>
       <span className="round-join-label">got a code?</span>
       <OTPField
+        label="Round code"
         length={ROUNDS.codeLength}
         validationType="alphanumeric"
         inputMode="text"

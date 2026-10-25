@@ -723,6 +723,33 @@ html[data-wall-tone="dark"] .status-pill {
   outline-offset: 0;
 }
 
+/* On a pale wall the lime focus ring all but vanishes (1.1:1 on pink): whatever sits on the wall
+   itself takes the ink ring, since the ring is drawn outside it, on the wall. Inside the black
+   stickers (rail, dock, cards, menus) the ring lands on black and stays lime. */
+html[data-wall-tone="light"]
+:where(a, button, [role="button"], input, textarea, select, [tabindex]):focus-visible:not(
+  :is(
+      .surface-sticker,
+      .bg-panel,
+      .bg-sticker,
+      .bg-rail,
+      .bg-overlay,
+      .space-rail,
+      .action-dock,
+      .places-bar,
+      .status-pill,
+      .claim-card,
+      .invite-popover,
+      .widget-picker,
+      .orb-hint,
+      .recap-panel,
+      .dock-sound-menu
+    )
+    *
+) {
+  outline-color: #111114;
+}
+
 @layer components {
   /* Cream paper: the reading surface (R4). Every token flips to ink-on-cream. */
   .surface-paper {
@@ -759,6 +786,7 @@ html[data-wall-tone="dark"] .status-pill {
     --color-contradicts: #c2185b; /* 5.7:1 */
     --color-not-found: #5f5055;
     --color-error: #a72027; /* 7.0:1 */
+    --destructive: #a72027; /* Delete on paper reads as clearly as on black */
     --color-pink-text: #c2185b;
     --color-violet-text: #5b3df0; /* 6.0:1 */
     --color-cobalt-text: #2453e0; /* 6.0:1 */
@@ -776,6 +804,7 @@ html[data-wall-tone="dark"] .status-pill {
   .bg-overlay {
     --background: #111114;
     --foreground: #ffffff;
+    --destructive: #ff5c74;
     --card: #111114;
     --card-foreground: #ffffff;
     --muted: #1f1c22;

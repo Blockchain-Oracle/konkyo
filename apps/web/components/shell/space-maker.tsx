@@ -148,10 +148,17 @@ export function SpaceMaker({
   const [name, setName] = useState("")
   const [busy, setBusy] = useState(false)
 
+  // A modal: focus goes to the first starting point, and back to what opened it on close.
   useEffect(() => {
     const dialog = dialogRef.current
-    if (open && dialog && !dialog.open) dialog.showModal()
-    if (!open && dialog?.open) dialog.close()
+    if (!open || !dialog) return
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    if (!dialog.open) dialog.showModal()
+    dialog.querySelector<HTMLElement>(".space-maker-shapes button")?.focus()
+    return () => {
+      if (dialog.open) dialog.close()
+      if (opener?.isConnected) opener.focus({ preventScroll: true })
+    }
   }, [open])
 
   const pick = (template: Template) => {
@@ -273,16 +280,15 @@ export function SpaceMaker({
       onCancel={onClose}
       onClick={(event) => event.target === event.currentTarget && onClose()}
       onKeyDown={(event) => event.key === "Escape" && onClose()}
+      aria-labelledby="space-maker-title"
     >
       <div
         className="widget-picker space-maker is-build"
         style={{ "--maker-color": hex, "--maker-ink": readableInk(hex) } as CSSProperties}
-        role="document"
-        aria-label="Make a space"
       >
         <header>
           <div>
-            <h2>a space for one question</h2>
+            <h2 id="space-maker-title">a space for one question</h2>
             <p>pick a starting point. change anything later.</p>
           </div>
           <button

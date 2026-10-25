@@ -40,6 +40,9 @@ export function SoundsMenu() {
 
   useEffect(() => {
     if (!open) return
+    // focus goes into the menu and back to its button when it closes
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    root.current?.querySelector<HTMLElement>(".sounds-menu button")?.focus()
     const away = (event: PointerEvent) =>
       root.current && !root.current.contains(event.target as Node) && setOpen(false)
     const esc = (event: KeyboardEvent) => event.key === "Escape" && setOpen(false)
@@ -48,6 +51,8 @@ export function SoundsMenu() {
     return () => {
       window.removeEventListener("pointerdown", away)
       window.removeEventListener("keydown", esc)
+      const lost = !document.activeElement || document.activeElement === document.body
+      if (lost && opener?.isConnected) opener.focus({ preventScroll: true })
     }
   }, [open])
 

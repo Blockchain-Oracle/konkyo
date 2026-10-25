@@ -294,6 +294,8 @@ export function Dock() {
       setLitSources([])
       if (!composerMounted()) quoteInComposer(null)
       sound("tap")
+      // focus goes back to the button that opened it, not to the top of the page
+      document.querySelector<HTMLElement>(".action-dock-ai")?.focus({ preventScroll: true })
       // What was shown is caught up: the next catch me up starts from now.
       if (seen)
         void fetch("/api/catchup", { method: "POST" }).then(() =>

@@ -17,6 +17,7 @@ import { api } from "@/lib/fetcher"
 import { type Focus, focusFromSearch, focusOf } from "@/lib/focus"
 import { errorText } from "@/lib/format"
 import { isSendKey } from "@/lib/keys"
+import { partsOf } from "@/lib/message-parts"
 import { peekQuestion, releaseQuestion } from "@/lib/pending-question"
 import { usePreview } from "@/lib/preview"
 import { AssistantMessage } from "./assistant-message"
@@ -269,6 +270,7 @@ export function ChatView({
             aria-label="Conversation"
             className="surface-paper paper-sheet flex min-h-[calc(100svh-260px)] flex-col p-0!"
           >
+            <AnswerStatus messages={messages} running={running} />
             <div className="flex-1 space-y-9 px-[clamp(18px,3.2vw,52px)] pt-[clamp(22px,3vw,44px)] pb-10">
               {!messages.length && !peekQuestion(id) && (
                 <ChatStart focus={focus} onAsk={(text) => void ask({ text })} />
@@ -362,5 +364,27 @@ export function ChatView({
         )}
       </div>
     </LitSource.Provider>
+  )
+}
+
+/**
+ * What a screen reader hears of an answer: that it started, and once it's checked, that it's
+ * ready (and how many quotes held), never each streamed word.
+ */
+function AnswerStatus({ messages, running }: { messages: KonkyoMessage[]; running: boolean }) {
+  const last = messages.at(-1)
+  let said = ""
+  if (last?.role === "user" && running) said = "Answering…"
+  else if (last?.role === "assistant") {
+    const { final, receipt, notFound } = partsOf(last)
+    if (notFound) said = "Not in your library. Find sources can search for it."
+    else if (final && receipt)
+      said = `Answer ready. ${receipt.quotes} ${receipt.quotes === 1 ? "quote" : "quotes"} checked.`
+    else if (running) said = "Answering…"
+  }
+  return (
+    <p className="sr-only" role="status">
+      {said}
+    </p>
   )
 }

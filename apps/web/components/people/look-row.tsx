@@ -96,7 +96,8 @@ export function LookRow({
 
 function YouBadge() {
   return (
-    <span className="claim-look-selected">
+    // seen, not read: the button's pressed state already says it's the chosen look
+    <span className="claim-look-selected" aria-hidden="true">
       <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
         <path
           d="m2 6 2.5 2.5L10 3"

@@ -29,6 +29,8 @@ type State = { tabs: SourceTab[]; activeId: string | null }
 const MAX_TABS = 6
 
 let state: State = { tabs: [], activeId: null }
+/** What had focus when the first source opened: focus goes back there when the pane closes. */
+let opener: HTMLElement | null = null
 const listeners = new Set<() => void>()
 let nonce = 0
 
@@ -45,6 +47,9 @@ export function openSource(
   source: Omit<SourceTab, "target"> & Omit<Partial<SourceTarget>, "nonce">,
 ) {
   const { fileId, title, kind, page, passageId, seconds, quote, cited } = source
+  const focused = typeof document === "undefined" ? null : document.activeElement
+  if (!state.tabs.length && focused instanceof HTMLElement && focused !== document.body)
+    opener = focused
   const target =
     page != null || passageId || seconds != null
       ? { page, passageId, seconds, quote, cited, nonce: ++nonce }
@@ -62,6 +67,7 @@ export function closeSource(fileId: string) {
   const index = state.tabs.findIndex((tab) => tab.fileId === fileId)
   if (index === -1) return
   const tabs = state.tabs.filter((tab) => tab.fileId !== fileId)
+  if (!tabs.length) return closeAllSources()
   const activeId =
     state.activeId === fileId
       ? (tabs[Math.min(index, tabs.length - 1)]?.fileId ?? null)
@@ -70,7 +76,12 @@ export function closeSource(fileId: string) {
 }
 
 export const showSource = (fileId: string) => set({ ...state, activeId: fileId })
-export const closeAllSources = () => set({ tabs: [], activeId: null })
+export function closeAllSources() {
+  set({ tabs: [], activeId: null })
+  const back = opener
+  opener = null
+  if (back?.isConnected) back.focus({ preventScroll: true })
+}
 
 const subscribe = (listener: () => void) => {
   listeners.add(listener)
