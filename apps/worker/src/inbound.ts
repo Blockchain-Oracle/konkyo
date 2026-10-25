@@ -52,6 +52,9 @@ const paragraphs = (text: string) =>
     .map((p) => `<p>${escapeHtml(p).replaceAll("\n", "<br>")}</p>`)
     .join("")
 
+/** Mail still waiting or half-done after this long is picked up by the daily sweep. */
+const STUCK_MS = 60 * 60_000
+
 /** A body this long is worth reading as a source; a line saying "see attached" isn't. */
 const WORTH_READING_WORDS = 40
 
@@ -139,20 +142,19 @@ async function addSources(mail: Received, spaceId: string, ownerId: string) {
       file = made
     }
     if (!file) return
+    // The stored key is written last: until it's there, a retry redoes every step (filing
+    // ignores a duplicate, and reading again replaces the same passages).
     if (!file.originalKey) {
       const bytes = await load()
       const key = objectKey("originals", ownerId, file.id, safeName(name))
       await putBytes(key, bytes, mime)
       await db
-        .update(files)
-        .set({ originalKey: key, sizeBytes: bytes.length })
-        .where(eq(files.id, file.id))
-      await db
         .insert(fileFolders)
         .values({ fileId: file.id, folderId: spaceId })
         .onConflictDoNothing()
+      await db.update(files).set({ sizeBytes: bytes.length }).where(eq(files.id, file.id))
       await fileSpaceEvents(db, file.id, "source_added", ownerId)
-      // reading is idempotent: a retry that queues it again replaces the same passages
+      await db.update(files).set({ originalKey: key }).where(eq(files.id, file.id))
       await enqueue("ingest", { fileId: file.id }, file.id)
     }
     ids.push(file.id)
@@ -210,11 +212,12 @@ async function claim(inboundId: string, from: InboundStatus, jobId: string) {
   return row ?? null
 }
 
-/** Held-mail notices this space's owner got in the last day (past the cap, mail waits quietly). */
+/** Held-mail cards this space's owner got in the last day (past the cap they come without a push). */
 async function heldNoticesToday(spaceId: string) {
   const [row] = await db.execute<{ n: number }>(sql`
-    select count(*)::int as n from inbound_emails
-    where space_id = ${spaceId} and status = 'held' and received_at > now() - interval '24 hours'`)
+    select count(*)::int as n from inbox_items
+    where kind = 'held-mail' and data->>'spaceId' = ${spaceId}
+      and created_at > now() - interval '24 hours'`)
   return row?.n ?? 0
 }
 
@@ -253,11 +256,13 @@ export async function handleInbound(inboundId: string, jobId: string, approvedBy
       : !adder
         ? "The sender isn't in this space"
         : "The sender's domain didn't confirm this email came from them"
+    // Every held email gets its Inbox card (the only way to say yes); past the day's notices it
+    // arrives quietly, without a push. The card comes first: if it can't be made, the retry
+    // tries again, where a row already marked held would stop it.
     const quiet = (await heldNoticesToday(space.id)) >= EMAIL.heldNoticesPerDay
-    await set({ spaceId: space.id, status: "held", reason })
-    if (quiet) return
     const count = mail.attachments.filter((a) => kindForName(a.filename)).length
     await notify(space.ownerId, {
+      push: !quiet,
       kind: "held-mail",
       title: `Mail for ${space.name} from ${from ?? "an unreadable address"}`,
       body: `“${mail.subject.trim().slice(0, 140) || "(no subject)"}”${count ? ` · ${count} attachment${count === 1 ? "" : "s"}` : ""}. ${reason}: add it?`,
@@ -265,6 +270,7 @@ export async function handleInbound(inboundId: string, jobId: string, approvedBy
       tag: `held-${inboundId}`,
       data: { inboundId, spaceId: space.id },
     })
+    await set({ spaceId: space.id, status: "held", reason })
     await spaceEvent(db, {
       spaceId: space.id,
       actorId: null,
@@ -300,13 +306,13 @@ export async function handleInbound(inboundId: string, jobId: string, approvedBy
  * space's owner told, so nothing sits half-done without anyone knowing. Returns whether the queue
  * should try again.
  */
-export async function inboundFailed(inboundId: string, error: Error) {
+export async function inboundFailed(inboundId: string, error: Error, final = false) {
   const [row] = await db
     .update(inboundEmails)
     .set({ attempts: sql`${inboundEmails.attempts} + 1` })
     .where(eq(inboundEmails.id, inboundId))
     .returning()
-  if (!row || row.attempts <= QUEUES.inbound.options.retryLimit) return true
+  if (!row || (!final && row.attempts <= QUEUES.inbound.options.retryLimit)) return true
   await db
     .update(inboundEmails)
     .set({ status: "failed", reason: error.message.slice(0, 300) })
@@ -324,8 +330,33 @@ export async function inboundFailed(inboundId: string, error: Error) {
   return false
 }
 
-/** The daily sweep: held mail nobody said yes to in EMAIL.heldDays goes, with its Inbox card. */
+/**
+ * The daily sweep: mail Resend stopped re-delivering before a job took it is queued again; mail a
+ * job died on without failing (a timeout) is marked failed and its owner told; held mail nobody
+ * said yes to in EMAIL.heldDays goes, with its Inbox card.
+ */
 export async function expireHeldMail() {
+  const waiting = await db
+    .select({ id: inboundEmails.id })
+    .from(inboundEmails)
+    .where(
+      and(
+        eq(inboundEmails.status, "received"),
+        lt(inboundEmails.receivedAt, new Date(Date.now() - STUCK_MS)),
+      ),
+    )
+  for (const w of waiting) await enqueue("inbound", { inboundId: w.id })
+  const stuck = await db
+    .select({ id: inboundEmails.id })
+    .from(inboundEmails)
+    .where(
+      and(
+        or(eq(inboundEmails.status, "importing"), eq(inboundEmails.status, "approved")),
+        lt(inboundEmails.receivedAt, new Date(Date.now() - STUCK_MS)),
+      ),
+    )
+  for (const s of stuck) await inboundFailed(s.id, new Error("It stopped part-way"), true)
+
   const gone = await db
     .update(inboundEmails)
     .set({ status: "discarded", reason: `Nobody said yes in ${EMAIL.heldDays} days` })

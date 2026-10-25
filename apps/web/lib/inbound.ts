@@ -97,7 +97,15 @@ export async function decideHeld(userId: string, inboundId: string, add: boolean
     .where(and(eq(inboundEmails.id, inboundId), eq(inboundEmails.status, "held")))
     .returning({ id: inboundEmails.id })
   if (!decided) throw new LibraryError("That email was already dealt with", 409)
-  if (add) await enqueue("inbound", { inboundId, approvedBy: userId })
+  if (add)
+    await enqueue("inbound", { inboundId, approvedBy: userId }).catch(async (error) => {
+      // not queued: back to held, so the owner can say yes again
+      await db
+        .update(inboundEmails)
+        .set({ status: "held", decidedBy: null, decidedAt: null })
+        .where(and(eq(inboundEmails.id, inboundId), eq(inboundEmails.status, "approved")))
+      throw error
+    })
   await db
     .update(inboxItems)
     .set({ dismissedAt: new Date() })
