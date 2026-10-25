@@ -78,7 +78,8 @@ function Thread({ spaceId, messages }: { spaceId: string; messages: SpaceMessage
   const input = useRef<HTMLInputElement>(null)
   const refresh = () => void queryClient.invalidateQueries({ queryKey: spaceMessagesKey(spaceId) })
 
-  // newest at the bottom, in view
+  // newest at the bottom, in view: when one arrives or the last one's answer moves on
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the count and last status are the triggers
   useEffect(() => {
     const el = list.current
     if (el) el.scrollTop = el.scrollHeight

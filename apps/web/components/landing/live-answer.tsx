@@ -11,6 +11,7 @@ import Link from "next/link"
 import { useEffect, useEffectEvent, useMemo, useState } from "react"
 import { PublicAnswer } from "@/components/public/public-answer"
 import type { PublicShare } from "@/components/public/public-folder"
+import { errorText } from "@/lib/format"
 import { closeAllSources, usePreview } from "@/lib/preview"
 import { SourceAccessProvider } from "@/lib/source-access"
 import { ASK_EVENT } from "./ask-event"
@@ -27,14 +28,6 @@ const SUGGESTED = [
   "What role do sleep spindles play in memory?",
   "Does sleep help memory the same way in older adults?",
 ]
-
-function errorText(error: Error) {
-  try {
-    return (JSON.parse(error.message) as { error?: string }).error ?? error.message
-  } catch {
-    return error.message
-  }
-}
 
 /**
  * The landing's live answer (plan §8 section 3): a real public folder (F36) asked from the page,

@@ -2,9 +2,8 @@
 
 import type { Route } from "next"
 import Link from "next/link"
+import { clock } from "@/lib/format"
 import { useFolderBriefs } from "@/lib/use-briefs"
-
-const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`
 
 /** A folder's audio briefs as a row above its files (plan F37), so they're found where they're about. */
 export function FolderBriefs({ folderId }: { folderId: string }) {

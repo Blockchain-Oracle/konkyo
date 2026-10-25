@@ -1,9 +1,9 @@
 import "server-only"
 import type { Citation, KonkyoMessage, Matrix } from "@konkyo/agents"
+import { clock } from "@/lib/format"
 import { getChat } from "./chats"
 import { LibraryError } from "./library"
 
-const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`
 const where = (c: { page: number | null; tStart: number | null }) =>
   c.page != null ? `p. ${c.page}` : c.tStart != null ? clock(c.tStart) : ""
 /** Table cells can't hold pipes or line breaks. */

@@ -12,6 +12,7 @@ import { BrandMark } from "@/components/brand-mark"
 import { KindIcon } from "@/components/library/kind-icon"
 import { RoomHeader } from "@/components/page-shell"
 import { Workspace } from "@/components/source/workspace"
+import { errorText } from "@/lib/format"
 import { openSource } from "@/lib/preview"
 import type { openShare } from "@/lib/shares"
 import { SourceAccessProvider } from "@/lib/source-access"
@@ -26,14 +27,6 @@ function textOf(message: KonkyoMessage) {
     return message.parts.flatMap((p) => (p.type === "text" ? [p.text] : [])).join("\n")
   const final = message.parts.find((p) => p.type === "data-final")
   return final?.type === "data-final" ? final.data.body : ""
-}
-
-function errorText(error: Error) {
-  try {
-    return (JSON.parse(error.message) as { error?: string }).error ?? error.message
-  } catch {
-    return error.message
-  }
 }
 
 const sizeOf = (f: PublicFile) =>

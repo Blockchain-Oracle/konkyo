@@ -24,9 +24,9 @@ import { RoomHeader } from "@/components/page-shell"
 import { useRoomWall } from "@/components/shell/wall"
 import type { Brief } from "@/lib/briefs"
 import { api } from "@/lib/fetcher"
+import { clock } from "@/lib/format"
 import { useQuery } from "@/lib/use-query"
 
-const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`
 const SPEEDS = [0.75, 1, 1.25, 1.5, 2] as const
 const VOICE = {
   A: { name: BRIEF.voices.A.name, dot: "bg-voice-a", bar: "bg-voice-a", text: "text-voice-a" },

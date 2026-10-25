@@ -5,14 +5,11 @@ import { Button } from "@konkyo/ui/components/button"
 import { cn } from "@konkyo/ui/lib/utils"
 import { m } from "motion/react"
 import { useEffect, useRef } from "react"
+import { whereIs } from "@/lib/format"
 import { openSource } from "@/lib/preview"
 import type { RoundGround, RoundItem } from "@/lib/study"
 
-const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`
-
 /** Where a passage is: "p. 11", "at 2:31". */
-export const whereIs = (g: Pick<RoundGround, "page" | "tStart">) =>
-  g.tStart != null ? `at ${clock(g.tStart)}` : g.page != null ? `p. ${g.page}` : ""
 
 /** Opens the passage in the source pane, with the quoted words marked. */
 export function openGround(g: RoundGround) {

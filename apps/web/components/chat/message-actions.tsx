@@ -13,11 +13,11 @@ import { toast } from "sonner"
 import { ListenButton } from "@/components/voice/listen-button"
 import { answerToNote } from "@/lib/answer-to-note"
 import { api } from "@/lib/fetcher"
+import { whereIs } from "@/lib/format"
 import { qk } from "@/lib/query-keys"
 import { sound } from "@/lib/sounds"
 import { useQuery } from "@/lib/use-query"
 import { useSpaceList } from "@/lib/use-spaces"
-import { whereIs } from "./citation-chip"
 
 /** What a 👎 can say (plan F17); the reason is what H-MEM remembers. */
 const REASONS = ["Not in the source", "Wrong source", "Missed something", "Not what I asked"]

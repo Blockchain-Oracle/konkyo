@@ -23,13 +23,12 @@ import Link from "next/link"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "sonner"
 import { api } from "@/lib/fetcher"
+import { clock } from "@/lib/format"
 import { useDeepRun } from "@/lib/use-deep-run"
 import { LiveSteps } from "./run-receipt"
 
-const clock = (ms: number) => {
-  const s = Math.max(0, Math.round(ms / 1000))
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`
-}
+/** How long, from milliseconds. */
+const took = (ms: number) => clock(Math.max(0, Math.round(ms / 1000)))
 
 /**
  * How long the run has taken: ticking while it runs, fixed at its last event once it ends.
@@ -377,7 +376,7 @@ export function DeepRun({
         <TelescopeIcon className="size-4 shrink-0 text-ash-gray" strokeWidth={1.5} aria-hidden />
         <span className="text-micro text-saffron-spark uppercase">Deep search</span>
         <span className="text-meta text-ash-gray tabular-nums">
-          {elapsed == null ? "" : clock(elapsed)}
+          {elapsed == null ? "" : took(elapsed)}
           {state.found.length > 0 &&
             ` · ${papers} paper${papers === 1 ? "" : "s"}, ${state.found.length - papers} page${state.found.length - papers === 1 ? "" : "s"}`}
         </span>

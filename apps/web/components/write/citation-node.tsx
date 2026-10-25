@@ -6,6 +6,7 @@ import { mergeAttributes, Node } from "@tiptap/core"
 import { NodeViewWrapper, type ReactNodeViewProps, ReactNodeViewRenderer } from "@tiptap/react"
 import { ArrowUpRightIcon, CheckIcon, XIcon } from "lucide-react"
 import { KindIcon } from "@/components/library/kind-icon"
+import { whereIs } from "@/lib/format"
 import { openSource } from "@/lib/preview"
 
 /** What a citation in a note points at: a passage of a source, and the words it cites. */
@@ -20,16 +21,11 @@ export type CitationAttrs = {
   quote: string
 }
 
-const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`
-
-const whereOf = (a: Pick<CitationAttrs, "page" | "tStart">) =>
-  a.page != null ? `p. ${a.page}` : a.tStart != null ? clock(a.tStart) : ""
-
 /** "Lo et al., 2014" in the editor; the export formats it in the chosen style. */
 export function citationLabel(a: CitationAttrs) {
   const who =
     a.byline?.replace(" · ", ", ") ?? (a.title.length > 28 ? `${a.title.slice(0, 26)}…` : a.title)
-  const where = whereOf(a)
+  const where = whereIs(a)
   return where ? `${who}, ${where}` : who
 }
 
@@ -69,7 +65,7 @@ function CitationView({ node, deleteNode, selected }: ReactNodeViewProps) {
             <div className="min-w-0">
               <p className="line-clamp-2 text-snippet text-bone-white">{a.title}</p>
               <p className="mt-0.5 text-meta text-ash-gray">
-                {[a.byline, whereOf(a)].filter(Boolean).join(" · ")}
+                {[a.byline, whereIs(a)].filter(Boolean).join(" · ")}
               </p>
             </div>
           </div>

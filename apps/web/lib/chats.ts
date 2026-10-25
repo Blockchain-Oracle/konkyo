@@ -10,6 +10,7 @@ import { LIMITS } from "@konkyo/config"
 import { db, schema } from "@konkyo/db"
 import type { ChatScope } from "@konkyo/db/schema"
 import { and, asc, count, desc, eq, gt, gte, isNull, lt } from "drizzle-orm"
+import { clock } from "@/lib/format"
 import { LibraryError } from "./library"
 import { allowanceLeft } from "./usage"
 
@@ -266,8 +267,6 @@ export async function rateMessage(ownerId: string, messageId: string, input: Rat
   }
   return { remembered: false }
 }
-
-const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`
 
 /**
  * "Right passage?" on a cited passage (plan F11, F33). A 👎 becomes a correction the Writer reads

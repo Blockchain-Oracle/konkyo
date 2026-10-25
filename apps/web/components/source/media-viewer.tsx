@@ -6,9 +6,8 @@ import { Slider } from "@konkyo/ui/components/slider"
 import { cn } from "@konkyo/ui/lib/utils"
 import { PauseIcon, PlayIcon } from "lucide-react"
 import { type RefObject, useEffect, useMemo, useRef, useState } from "react"
+import { clock } from "@/lib/format"
 import { type FileDetail, type SourcePassage, usePassages } from "@/lib/use-source"
-
-const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`
 
 /** The bits of YouTube's IFrame Player API this viewer uses. */
 type YouTubePlayer = {

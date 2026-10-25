@@ -5,8 +5,8 @@ import { Button } from "@konkyo/ui/components/button"
 import { cn } from "@konkyo/ui/lib/utils"
 import { CheckIcon, CopyIcon, MinusIcon, XIcon } from "lucide-react"
 import { useState } from "react"
+import { whereIs } from "@/lib/format"
 import { openSource } from "@/lib/preview"
-import { whereIs } from "./citation-chip"
 
 const STANCE: Record<Stance, { word: string; className: string; glyph: React.ReactNode }> = {
   agrees: {

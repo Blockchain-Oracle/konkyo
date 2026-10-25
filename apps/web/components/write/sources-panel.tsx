@@ -11,11 +11,8 @@ import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { KindIcon } from "@/components/library/kind-icon"
 import { api } from "@/lib/fetcher"
+import { whereIs } from "@/lib/format"
 import { openSource } from "@/lib/preview"
-
-const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`
-const whereOf = (m: { page: number | null; tStart: number | null }) =>
-  m.page != null ? `p. ${m.page}` : m.tStart != null ? clock(m.tStart) : ""
 
 /**
  * Search citation (plan F22): the selected words (or any words) against the library's sources.
@@ -128,7 +125,7 @@ export function SourcesPanel({
                     <div className="min-w-0 flex-1">
                       <p className="line-clamp-2 text-snippet text-bone-white">{m.title}</p>
                       <p className="mt-0.5 text-meta text-ash-gray">
-                        {[m.byline, whereOf(m)].filter(Boolean).join(" · ")}
+                        {[m.byline, whereIs(m)].filter(Boolean).join(" · ")}
                       </p>
                     </div>
                     <span

@@ -8,8 +8,8 @@ import { cn } from "@konkyo/ui/lib/utils"
 import { BrainIcon, CheckIcon, ChevronDownIcon, CopyIcon, DatabaseIcon, XIcon } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
+import { whereIs } from "@/lib/format"
 import { openSource } from "@/lib/preview"
-import { whereIs } from "./citation-chip"
 
 const seconds = (ms: number) => `${(ms / 1000).toFixed(ms < 10_000 ? 1 : 0)} s`
 

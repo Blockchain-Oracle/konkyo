@@ -5,8 +5,9 @@ import { Spinner } from "@konkyo/ui/components/spinner"
 import { cn } from "@konkyo/ui/lib/utils"
 import { useEffect, useRef } from "react"
 import { SayIt } from "@/components/voice/say-it"
+import { whereIs } from "@/lib/format"
 import type { CompareSide, RoundItem } from "@/lib/study"
-import { SourceChip, whereIs } from "./feedback"
+import { SourceChip } from "./feedback"
 
 /*
  * How each kind of item is played, in OurSpaces' game language (styles in study.css): the prompt

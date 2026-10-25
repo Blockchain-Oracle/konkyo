@@ -26,6 +26,7 @@ import type { Route } from "next"
 import { useRouter } from "next/navigation"
 import { openMoveFiles } from "@/components/shell/app-dialogs"
 import { chatWithHref } from "@/lib/focus"
+import { clock } from "@/lib/format"
 import { openFile } from "@/lib/preview"
 import { type LibraryFile, useFileActions } from "@/lib/use-library"
 import { useStudyActions } from "@/lib/use-study"
@@ -38,13 +39,10 @@ import { SourceFace } from "./source-face"
 /** The drag payload for library rows (a JSON array of file ids). */
 export const FILE_DRAG_TYPE = "application/x-konkyo-files"
 
-const duration = (s: number) =>
-  `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`
-
 function details(file: LibraryFile): string {
   const parts = [KIND_LABEL[file.kind]]
   if (file.pageCount) parts.push(`${file.pageCount} page${file.pageCount > 1 ? "s" : ""}`)
-  if (file.durationSeconds) parts.push(duration(file.durationSeconds))
+  if (file.durationSeconds) parts.push(clock(file.durationSeconds))
   parts.push(
     new Date(file.createdAt).toLocaleDateString(undefined, { day: "numeric", month: "short" }),
   )

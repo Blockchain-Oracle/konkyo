@@ -23,6 +23,7 @@ import { toast } from "sonner"
 import { MemberFace } from "@/components/people/member-face"
 import { useRoomWall } from "@/components/shell/wall"
 import { api } from "@/lib/fetcher"
+import { clock } from "@/lib/format"
 import type { Face } from "@/lib/profiles"
 import type { RoundView } from "@/lib/rounds"
 import { sound } from "@/lib/sounds"
@@ -543,7 +544,7 @@ function RoundPassage({ ground }: { ground: RoundGround }) {
     ground.page != null
       ? `page ${ground.page}`
       : ground.tStart != null
-        ? `at ${Math.floor(ground.tStart / 60)}:${String(Math.floor(ground.tStart % 60)).padStart(2, "0")}`
+        ? `at ${clock(ground.tStart)}`
         : null
   return (
     <figure className="round-passage">

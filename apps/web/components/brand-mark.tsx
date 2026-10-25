@@ -19,6 +19,11 @@ const LARGE = (
   </>
 )
 
+/** The mark's shapes alone, for any SVG that draws it (the OG images too). */
+export function MarkShapes({ small = false }: { small?: boolean }) {
+  return small ? SMALL : LARGE
+}
+
 /**
  * The Konkyo mark: 木, the "tree/root" radical of 根 (the first character of 根拠, "grounds").
  * Lime by default (plan §16.4: lime is the brand pop); it takes `currentColor`, so a class can
@@ -58,7 +63,3 @@ export function BrandLockup({
     </span>
   )
 }
-
-/** The mark as raw SVG markup (favicon, OG images, the offline page). */
-export const MARK_SVG = (fill = "#c9ff3d") =>
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="${APP.name}"><g fill="${fill}"><rect x="4" y="15" width="56" height="9"/><rect x="27.5" y="3" width="9" height="57"/><polygon points="24,29 24,36 10,60 0,60"/><polygon points="40,29 40,36 54,60 64,60"/></g></svg>`

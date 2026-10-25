@@ -8,6 +8,7 @@ import Link from "next/link"
 import type { CSSProperties } from "react"
 import { RoomHeader } from "@/components/page-shell"
 import { api } from "@/lib/fetcher"
+import { clock } from "@/lib/format"
 import { useQuery } from "@/lib/use-query"
 
 type BriefRow = {
@@ -22,8 +23,6 @@ type BriefRow = {
 }
 
 const day = new Intl.DateTimeFormat("en", { day: "numeric", month: "short" })
-const minutes = (s: number) =>
-  `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`
 
 /**
  * The briefs index (gap #3): every brief as a radio card in its space's colour, newest first,
@@ -82,7 +81,7 @@ export function BriefsIndex() {
                       : b.status === "failed"
                         ? "couldn't be made"
                         : b.durationSeconds
-                          ? minutes(b.durationSeconds)
+                          ? clock(b.durationSeconds)
                           : "ready"}{" "}
                     · {day.format(new Date(b.createdAt)).toLowerCase()}
                   </small>

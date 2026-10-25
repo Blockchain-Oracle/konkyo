@@ -15,6 +15,7 @@ import { Composer, type ComposerSubmit } from "@/components/composer"
 import { CitationTour } from "@/components/onboarding/citation-tour"
 import { api } from "@/lib/fetcher"
 import { type Focus, focusFromSearch, focusOf } from "@/lib/focus"
+import { errorText } from "@/lib/format"
 import { peekQuestion, releaseQuestion } from "@/lib/pending-question"
 import { usePreview } from "@/lib/preview"
 import { AssistantMessage } from "./assistant-message"
@@ -109,15 +110,6 @@ function UserMessage({
       </div>
     </div>
   )
-}
-
-/** The server's own words for a failed request (it answers `{ error }`), not the raw body. */
-function errorText(error: Error) {
-  try {
-    return (JSON.parse(error.message) as { error?: string }).error ?? error.message
-  } catch {
-    return error.message
-  }
 }
 
 /**
