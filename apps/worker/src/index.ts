@@ -1,3 +1,4 @@
+import { revealRound } from "@konkyo/db/live"
 import { migrateDatabase } from "@konkyo/db/migrate"
 import { boss, QUEUES } from "@konkyo/jobs"
 import { ensureBucket } from "@konkyo/storage"
@@ -42,6 +43,13 @@ await queues.work(QUEUES.thumb.name, { localConcurrency: 3 }, async ([job]) => {
   if (job) await makeThumb(QUEUES.thumb.payload.parse(job.data).fileId)
 })
 void backfillThumbs().then((n) => n && console.info(`[thumb] queued ${n} older sources`))
+
+// A live round's question timer ran out (plan F58): turn it face up.
+await queues.work(QUEUES.roundTick.name, { localConcurrency: 4 }, async ([job]) => {
+  if (!job) return
+  const { roundId, version } = QUEUES.roundTick.payload.parse(job.data)
+  await revealRound(roundId, version)
+})
 
 // An article's cover and cited pages (plan F57), drawn after it's published.
 await queues.work(QUEUES.articleAssets.name, { localConcurrency: 2 }, async ([job]) => {
@@ -127,7 +135,7 @@ await queues.work(REMINDERS, async () => {
 })
 
 console.info(
-  `[worker] listening on "${QUEUES.ingest.name}" (×${INGEST_CONCURRENCY}), "deep" (×3), "study" (×3), "purge", "article-assets" (×2), daily sweep, hourly reminders, agents every 5 min, connectors every 15 min`,
+  `[worker] listening on "${QUEUES.ingest.name}" (×${INGEST_CONCURRENCY}), "deep" (×3), "study" (×3), "purge", "article-assets" (×2), "round-tick" (×4), daily sweep, hourly reminders, agents every 5 min, connectors every 15 min`,
 )
 
 // On shutdown stop taking jobs and exit promptly: a job cut off here stops sending heartbeats and

@@ -1,4 +1,5 @@
 import "server-only"
+import { ROUNDS } from "@konkyo/config"
 import { db, schema } from "@konkyo/db"
 import { readableFileSql } from "@konkyo/db/access"
 import { and, desc, eq, gt, inArray, isNull, ne, sql } from "drizzle-orm"
@@ -49,7 +50,7 @@ export async function catchup(ownerId: string, here?: string | null): Promise<Ca
   })
   const since = prefs?.catchupFrom ?? new Date(Date.now() - FIRST_LOOK_DAYS * 86_400_000)
 
-  const [today, stuck, landed, inbox, awaiting, answered, published] = await Promise.all([
+  const [today, stuck, landed, inbox, awaiting, answered, published, rounds] = await Promise.all([
     todaySummary(ownerId),
     // Files that need the person (a fix-it each), whenever they arrived.
     db
@@ -128,6 +129,16 @@ export async function catchup(ownerId: string, here?: string | null): Promise<Ca
       .limit(3),
     // What people you follow published since (F55, F57).
     followedArticles(ownerId, since),
+    // Live rounds going on in your spaces that you haven't joined (F58).
+    db.execute<{ code: string; title: string; space_id: string; at: string }>(sql`
+      select r.code, r.title, r.space_id, r.created_at as at from live_rounds r
+      join folders on folders.id = r.space_id
+      where r.phase <> 'done' and r.host_id <> ${ownerId}
+        and r.updated_at > now() - make_interval(mins => ${ROUNDS.idleMinutes})
+        and folders.deleted_at is null and ${readableFolderSql(ownerId)}
+        and not exists (select 1 from live_round_players p
+          where p.round_id = r.id and p.user_id = ${ownerId})
+      order by r.created_at desc limit 3`),
   ])
 
   const lines: Omit<CatchupLine, "fresh">[] = []
@@ -157,6 +168,16 @@ export async function catchup(ownerId: string, here?: string | null): Promise<Ca
       })),
       spaceId: stuckFiles[0]?.spaceId ?? null,
       at: stuckFiles.reduce((a, f) => (f.at > a ? f.at : a), new Date(0)).toISOString(),
+    })
+
+  for (const round of rounds)
+    lines.push({
+      id: `round-${round.code}`,
+      waiting: true,
+      text: `A live round is on in ${round.title.toLowerCase()}`,
+      chips: [{ label: "join", href: `/study/live/${round.code}` }],
+      spaceId: round.space_id,
+      at: new Date(round.at).toISOString(),
     })
 
   for (const run of awaiting)

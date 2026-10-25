@@ -1,5 +1,5 @@
 import { deleteMemoryOf, deleteSpaceWorld, deleteWorldOf } from "@konkyo/agents"
-import { TRASH } from "@konkyo/config"
+import { ROUNDS, TRASH } from "@konkyo/config"
 import { removeAccount } from "@konkyo/connectors"
 import { db, schema } from "@konkyo/db"
 import { deleteUserRows } from "@konkyo/db/owned"
@@ -8,7 +8,7 @@ import { deleteObject, listKeys, objectKey } from "@konkyo/storage"
 import { dropWatchTable, unpublish } from "@konkyo/zetaris"
 import { lt, sql } from "drizzle-orm"
 
-const { files, folders, chats } = schema
+const { files, folders, chats, liveRounds } = schema
 
 /**
  * Removes deleted files' stored bytes and Zetaris evidence; for a deleted account, also its
@@ -35,7 +35,10 @@ export async function purgeFiles({
   await Promise.all(spaceIds.map((id) => deleteSpaceWorld(id)))
 }
 
-/** The daily sweep: anything in Trash longer than the keep period is deleted for good. */
+/**
+ * The daily sweep: anything in Trash longer than the keep period is deleted for good, and live
+ * rounds left hanging are closed.
+ */
 export async function purgeExpired() {
   const cutoff = new Date(Date.now() - TRASH.keepDays * 86_400_000)
   const gone = await db
@@ -49,6 +52,11 @@ export async function purgeExpired() {
   // a space gone for good takes its shared World Model with it
   await Promise.all(spaces.filter((f) => !f.parentId).map((f) => deleteSpaceWorld(f.id)))
   await db.delete(chats).where(lt(chats.deletedAt, cutoff))
+  // Live rounds (F58): one nobody moved for a while is over; finished ones go after the keep period.
+  await db.execute(sql`
+    update live_rounds set phase = 'done', ended_at = now(), ends_at = null
+    where phase <> 'done' and updated_at < now() - make_interval(mins => ${ROUNDS.idleMinutes})`)
+  await db.delete(liveRounds).where(lt(liveRounds.createdAt, cutoff))
   await purgeFiles({
     fileIds: gone.map((f) => f.id),
     keys: gone.flatMap((f) => [f.originalKey, f.renditionKey].filter((k): k is string => !!k)),

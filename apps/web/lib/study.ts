@@ -576,7 +576,8 @@ function groundOf(r: Row): RoundGround {
   }
 }
 
-async function toRoundItem(r: Row, asEvidence: boolean): Promise<RoundItem> {
+/** One item for a round, or null when it can't be shown (a comparison whose second source closed). */
+async function toRoundItem(r: Row, asEvidence: boolean): Promise<RoundItem | null> {
   const now = new Date()
   const card = cardOf(r.card)
   const next = preview(card, now)
@@ -639,7 +640,18 @@ async function toRoundItem(r: Row, asEvidence: boolean): Promise<RoundItem> {
     return { ...base, steps, shuffled }
   }
   if (r.item.kind === "compare" && data.other) {
-    const otherFile = await db.query.files.findFirst({ where: eq(files.id, data.other.fileId) })
+    // the second source, only while its reader can open it (a copy, or a space they've left)
+    const [otherFile] = await db
+      .select()
+      .from(files)
+      .where(
+        and(
+          eq(files.id, data.other.fileId),
+          isNull(files.deletedAt),
+          readableFileSql(r.item.ownerId, "files"),
+        ),
+      )
+    if (!otherFile) return null
     const a = sidesOf(texts.get(r.item.passageId)?.text ?? r.item.quote, r.item.quote)
     const b = sidesOf(texts.get(data.other.passageId)?.text ?? data.other.quote, data.other.quote)
     return {
@@ -649,13 +661,13 @@ async function toRoundItem(r: Row, asEvidence: boolean): Promise<RoundItem> {
         a: { ...ground, ...a },
         b: {
           fileId: data.other.fileId,
-          title: otherFile?.title ?? "Another source",
-          kind: (otherFile?.kind ?? "pdf") as FileKind,
+          title: otherFile.title,
+          kind: otherFile.kind as FileKind,
           passageId: data.other.passageId,
           page: data.other.page,
           tStart: data.other.tStart,
           quote: data.other.quote,
-          byline: bylineOf((otherFile?.meta ?? null) as never),
+          byline: bylineOf(otherFile.meta as never),
           ...b,
         },
       },
@@ -774,7 +786,9 @@ export async function buildRound(
       evidence: mode === "evidence",
     }))
   }
-  const items = await Promise.all(picked.map((p) => toRoundItem(p.row, p.evidence)))
+  const items = (await Promise.all(picked.map((p) => toRoundItem(p.row, p.evidence)))).filter(
+    (i): i is RoundItem => i !== null,
+  )
   return {
     roundId: crypto.randomUUID(),
     mode,

@@ -3,11 +3,13 @@
 import { RoomHeader } from "@/components/page-shell"
 import { useToday } from "@/lib/use-study"
 import { Games, MakePractice, SetList } from "./study-overview"
+import { StudyTogether } from "./study-together"
 import { TodayCard } from "./today-card"
 
 /**
  * Study is a room (on the mint wall): today's review as a black scoreboard beside the quiz-me
- * sheet, the five games as tiles in their own colours, and your practice sets on paper.
+ * sheet, study together (a live round to start or join), the five games as tiles in their own
+ * colours, and your practice sets on paper.
  */
 export function StudyRoom() {
   const { data } = useToday(true)
@@ -32,6 +34,9 @@ export function StudyRoom() {
         </div>
         <div className="study-area-quiz">
           <MakePractice />
+        </div>
+        <div className="study-area-together">
+          <StudyTogether />
         </div>
         <div className="study-area-games">
           <Games />

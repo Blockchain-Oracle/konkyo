@@ -794,6 +794,7 @@ a.game-tile:hover {
   grid-template-columns: repeat(12, minmax(0, 1fr));
   grid-template-areas:
     "today today today today today today quiz quiz quiz quiz quiz quiz"
+    "together together together together together together together together together together together together"
     "games games games games games games games games games games games games"
     "sets sets sets sets sets sets sets sets sets sets sets sets";
   align-items: start;
@@ -808,6 +809,9 @@ a.game-tile:hover {
 .study-area-quiz {
   grid-area: quiz;
 }
+.study-area-together {
+  grid-area: together;
+}
 .study-area-games {
   grid-area: games;
 }
@@ -817,7 +821,7 @@ a.game-tile:hover {
 @media (max-width: 1100px) {
   .study-board {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: "today" "quiz" "games" "sets";
+    grid-template-areas: "today" "quiz" "together" "games" "sets";
     gap: 34px;
   }
 }

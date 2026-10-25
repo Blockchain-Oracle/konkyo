@@ -11,6 +11,7 @@
 @import "./people.css";
 @import "./knows.css";
 @import "./voice-cards.css";
+@import "./rounds.css";
 
 /* The app is dark only: <html class="dark"> is permanent, so copied components' dark: variants apply. */
 @custom-variant dark (&:is(.dark *));

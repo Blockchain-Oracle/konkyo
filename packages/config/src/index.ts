@@ -298,6 +298,27 @@ export const STUDY = {
   setsPerDay: 40,
 } as const
 
+/**
+ * Study together (plan F58): a live round of checked questions, played at once by everyone in its
+ * lobby. Codes skip look-alike characters (0/O, 1/I/L) so they can be read out loud.
+ */
+export const ROUNDS = {
+  codeLength: 6,
+  codeAlphabet: "ABCDEFGHJKMNPQRSTUVWXYZ23456789",
+  questions: 8,
+  /** The soft timer: answers stay face down until everyone answers or it runs out. */
+  secondsPerQuestion: 30,
+  /** Options for a recall question, drawn from other answers in the same practice set. */
+  choices: 4,
+  maxPlayers: 30,
+  /** A round with no join, answer or move for this long is over (a lobby nobody started). */
+  idleMinutes: 30,
+  /** Wrong codes allowed per person and per address in a window, against guessing. */
+  joinMisses: 12,
+  joinMissWindowMinutes: 10,
+  perDay: 20,
+} as const
+
 /** Trash keeps files, folders, chats and notes this long before deleting them for good (F04). */
 export const TRASH = { keepDays: 30 } as const
 

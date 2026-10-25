@@ -84,3 +84,23 @@ export async function notifyLive(
   // NOTIFY payloads are capped at 8000 bytes; signals carry ids and small numbers only.
   await db.execute(sql`select pg_notify(${LIVE_CHANNEL}, ${JSON.stringify(message)})`)
 }
+
+/**
+ * A live round's question turns face up (F58): when its timer ran out, or when everyone has
+ * answered (`everyone`). Compare-and-set on the version, so the last answer, a player's timer and
+ * the worker's tick racing each other turn it once. Returns the new version, or null.
+ */
+export async function revealRound(
+  roundId: string,
+  version: number,
+  everyone = false,
+): Promise<number | null> {
+  const rows = await db.execute<{ version: number }>(sql`
+    update live_rounds set phase = 'reveal', version = version + 1, updated_at = now()
+    where id = ${roundId}::uuid and version = ${version} and phase = 'question'
+      and (${everyone} or ends_at <= now())
+    returning version`)
+  const next = rows[0]?.version ?? null
+  if (next !== null) await notifyLive(`round:${roundId}`, "round", { v: next })
+  return next
+}

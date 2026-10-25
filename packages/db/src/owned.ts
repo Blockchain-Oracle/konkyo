@@ -17,6 +17,9 @@ import {
   follows,
   highlights,
   inboxItems,
+  liveRoundAnswers,
+  liveRoundPlayers,
+  liveRounds,
   messages,
   noteEvents,
   notes,
@@ -188,6 +191,22 @@ const movers: Array<
       where followee_id = ${from} and follower_id <> ${to}
       on conflict do nothing`)
     await tx.delete(follows).where(or(eq(follows.followerId, from), eq(follows.followeeId, from)))
+  },
+  // Live rounds (F58): guests host and play them; a round both accounts played keeps one seat and
+  // the first answer to each question.
+  (tx, from, to) => tx.update(liveRounds).set({ hostId: to }).where(eq(liveRounds.hostId, from)),
+  async (tx, from, to) => {
+    await tx.execute(sql`
+      insert into live_round_players (round_id, user_id, joined_at)
+      select round_id, ${to}, joined_at from live_round_players where user_id = ${from}
+      on conflict do nothing`)
+    await tx.delete(liveRoundPlayers).where(eq(liveRoundPlayers.userId, from))
+    await tx.execute(sql`
+      insert into live_round_answers (round_id, at, user_id, choice, "right", ms, created_at)
+      select round_id, at, ${to}, choice, "right", ms, created_at from live_round_answers
+      where user_id = ${from}
+      on conflict do nothing`)
+    await tx.delete(liveRoundAnswers).where(eq(liveRoundAnswers.userId, from))
   },
   // The account signed into keeps its own settings if it has them.
   async (tx, from, to) => {

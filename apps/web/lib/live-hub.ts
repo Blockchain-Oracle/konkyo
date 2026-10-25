@@ -1,7 +1,8 @@
 import "server-only"
-import { pg } from "@konkyo/db"
+import { db, pg, schema } from "@konkyo/db"
 import { mySpaces } from "@konkyo/db/access"
 import { LIVE_CHANNEL, type LiveMessage } from "@konkyo/db/live"
+import { and, eq, ne } from "drizzle-orm"
 import type { Face } from "./profiles"
 
 /*
@@ -18,6 +19,8 @@ type Sub = {
   userId: string
   face: Face
   spaces: Set<string>
+  /** Live rounds this person is playing (F58): their signals reach players only. */
+  rounds: Set<string>
   /** The space this tab is looking at (presence), or null. */
   here: string | null
   send: (event: string, data: unknown, id?: number) => void
@@ -57,8 +60,10 @@ function listen() {
         return
       }
       const space = message.topic.startsWith("space:") ? message.topic.slice(6) : null
+      const round = message.topic.startsWith("round:") ? message.topic.slice(6) : null
       for (const sub of hub.subs.values())
-        if (!space || sub.spaces.has(space)) sub.send("signal", message)
+        if (round ? sub.rounds.has(round) : !space || sub.spaces.has(space))
+          sub.send("signal", message)
     })
     .catch((error) => {
       hub.listening = null
@@ -100,12 +105,36 @@ function announcePresence(spaceId: string) {
     if (sub.spaces.has(spaceId)) sub.send("presence", { spaceId, people })
 }
 
+/** Rounds a person is in that haven't finished. */
+async function myRounds(userId: string) {
+  const rows = await db
+    .select({ id: schema.liveRounds.id })
+    .from(schema.liveRoundPlayers)
+    .innerJoin(schema.liveRounds, eq(schema.liveRounds.id, schema.liveRoundPlayers.roundId))
+    .where(and(eq(schema.liveRoundPlayers.userId, userId), ne(schema.liveRounds.phase, "done")))
+  return new Set(rows.map((r) => r.id))
+}
+
+/** Someone joined a round: their open tabs start hearing it at once. */
+export function hearRound(userId: string, roundId: string) {
+  for (const sub of hub.subs.values()) if (sub.userId === userId) sub.rounds.add(roundId)
+}
+
 /** A tab's stream opened: it hears its spaces, and counts as here in the one it's looking at. */
-export async function join(sub: Omit<Sub, "spaces">): Promise<Set<string>> {
+export async function join(sub: Omit<Sub, "spaces" | "rounds">): Promise<Set<string>> {
   await listen()
-  const spaces = new Set((await mySpaces(sub.userId)).map((s) => s.spaceId))
+  // In the hub before the reads, so a round joined meanwhile (hearRound) isn't missed; what the
+  // reads find is added to it.
+  const entry: Sub = { ...sub, here: null, spaces: new Set(), rounds: new Set() }
+  hub.subs.set(sub.id, entry)
+  const [spaces, rounds] = await Promise.all([
+    mySpaces(sub.userId).then((list) => new Set(list.map((s) => s.spaceId))),
+    myRounds(sub.userId),
+  ])
+  for (const id of rounds) entry.rounds.add(id)
+  entry.spaces = spaces
   const here = sub.here && spaces.has(sub.here) ? sub.here : null
-  hub.subs.set(sub.id, { ...sub, here, spaces })
+  entry.here = here
   if (here) announcePresence(here)
   // what everyone is doing in my spaces right now, so a fresh tab starts with the faces
   for (const spaceId of spaces) sub.send("presence", { spaceId, people: presentIn(spaceId) })

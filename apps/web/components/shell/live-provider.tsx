@@ -6,6 +6,7 @@ import type { Route } from "next"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useRef, useSyncExternalStore } from "react"
 import { toast } from "sonner"
+import { api } from "@/lib/fetcher"
 import type { Present } from "@/lib/live-hub"
 import { qk } from "@/lib/query-keys"
 import { sound } from "@/lib/sounds"
@@ -18,7 +19,16 @@ import { useCurrentSpaceId } from "./rail"
  * space now; someone new walking in gets a toast.
  */
 
-type SpaceMessage = { spaceId: string; id: number; kind: SpaceEventKind; subjectId: string | null }
+/** Round signals arrive in bursts (answers); one refetch per burst, quickly. */
+const ROUND_COALESCE_MS = 120
+
+type SpaceMessage = {
+  spaceId: string
+  id: number
+  kind: SpaceEventKind
+  subjectId: string | null
+  actorId: string | null
+}
 
 let present: Record<string, Present[]> = {}
 const listeners = new Set<() => void>()
@@ -66,6 +76,9 @@ function staleFor(event: SpaceMessage): QueryKey[] {
     case "take_added":
     case "take_removed":
       return [["takes", event.spaceId]]
+    case "round_started":
+    case "round_ended":
+      return [["space-round", event.spaceId], ["catchup"]]
     case "message_added":
     case "message_updated":
     case "message_removed":
@@ -114,10 +127,37 @@ export function LiveProvider({ children }: { children: React.ReactNode }) {
       }
       if (event.subjectId === meId && event.kind === "role_changed")
         toast("Your role in a space changed")
+      // someone started a live round in one of your spaces: a seat is one tap away
+      if (event.kind === "round_started" && event.actorId !== meId) {
+        sound("place")
+        toast("A live round just started in one of your spaces", {
+          action: {
+            label: "join",
+            // the round this event named, not whichever is newest
+            onClick: () =>
+              void api<{ round: { code: string } | null }>(
+                `/api/spaces/${event.spaceId}/round?round=${event.subjectId ?? ""}`,
+              )
+                .then(({ round }) =>
+                  round
+                    ? router.push(`/study/live/${round.code}` as Route)
+                    : toast("That round has already finished"),
+                )
+                .catch(() => toast("That round isn't open to you any more")),
+          },
+        })
+      }
     })
     // Konkyo's answer in a space chat moved a step: its thread refetches
     source.addEventListener("signal", (e) => {
       const signal = JSON.parse((e as MessageEvent).data) as { topic: string; kind: string }
+      // a live round moved (a phase, a player, an answer): its players refetch, a burst at once
+      if (signal.topic.startsWith("round:")) {
+        const key = ["round", signal.topic.slice(6)]
+        stale.current.set(JSON.stringify(key), key)
+        flush.current ??= setTimeout(refresh, ROUND_COALESCE_MS)
+        return
+      }
       if (signal.kind === "answer_progress" && signal.topic.startsWith("space:")) {
         const key = ["space-messages", signal.topic.slice(6)]
         stale.current.set(JSON.stringify(key), key)

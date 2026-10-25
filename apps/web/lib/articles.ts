@@ -236,8 +236,8 @@ const tail = () =>
     .toLowerCase()
     .slice(0, ARTICLES.slugRandom)
 
-/** The text around a quote, at most this long, for the citation card. */
-function around(text: string, quote: string) {
+/** The text around a quote, at most this long, for a citation card (articles, live rounds). */
+export function around(text: string, quote: string) {
   const max = ARTICLES.contextChars
   if (text.length <= max) return text
   const at = Math.max(0, text.indexOf(quote))

@@ -42,6 +42,7 @@ import {
   openShareFolder,
 } from "@/components/shell/app-dialogs"
 import { SpaceChat } from "@/components/spaces/space-chat"
+import { LiveRoundButton } from "@/components/study/live-round-button"
 import { chatWithHref } from "@/lib/focus"
 import { holdQuestion } from "@/lib/pending-question"
 import { sound } from "@/lib/sounds"
@@ -245,6 +246,7 @@ export function LibraryView({ folderId, space = false }: { folderId?: string; sp
                 {selectMode ? "done" : "select"}
               </Button>
             )}
+            {space && spaceRow && <LiveRoundButton spaceId={spaceRow.id} />}
             {space && spaceRow && (
               <InviteButton spaceId={spaceRow.id} name={spaceRow.name} role={spaceRow.role} />
             )}

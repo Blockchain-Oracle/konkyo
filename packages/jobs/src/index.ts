@@ -67,6 +67,16 @@ export const QUEUES = {
     options: { retryLimit: 2, retryDelay: 30, retryBackoff: true, expireInSeconds: 10 * 60 },
     send: {},
   },
+  /**
+   * A live round's question timer (plan F58): at its end the question turns face up, even if no
+   * player's page is open to do it. A stale tick (the round moved on) changes nothing.
+   */
+  roundTick: {
+    name: "round-tick",
+    payload: z.object({ roundId: z.uuid(), version: z.number().int() }),
+    options: { retryLimit: 2, retryDelay: 5, expireInSeconds: 60 },
+    send: {},
+  },
   /** A source's polaroid (plan §16.4): page one, its og:image, or its video thumbnail, as WebP. */
   thumb: {
     name: "thumb",
@@ -132,6 +142,12 @@ export async function enqueue<Q extends QueueName>(
 ) {
   const parsed = QUEUES[queue].payload.parse(data)
   return (await boss()).send(QUEUES[queue].name, parsed, { ...QUEUES[queue].send, singletonKey })
+}
+
+/** Enqueues a job to start at a set time (a live round's timer). */
+export async function enqueueAt<Q extends QueueName>(queue: Q, data: Payload<Q>, at: Date) {
+  const parsed = QUEUES[queue].payload.parse(data)
+  return (await boss()).send(QUEUES[queue].name, parsed, { ...QUEUES[queue].send, startAfter: at })
 }
 
 /**

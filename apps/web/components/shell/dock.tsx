@@ -162,6 +162,7 @@ function useStageExamples(spaceId: string | null, spaceName: string | null, want
  * chats; ♪ opens the sounds menu (interface sounds, reading answers aloud, the voice).
  */
 export function Dock() {
+  const pathname = usePathname()
   const spaceId = useCurrentSpaceId()
   const spaces = useSpaces()
   const space = spaces.find((s) => s.id === spaceId) ?? null
@@ -317,7 +318,8 @@ export function Dock() {
           onClose={closePanel}
         />
       )}
-      {hint && !stage.up && (
+      {/* not over a round being played (a live round, a practice session): it waits for later */}
+      {hint && !stage.up && !/^\/study\/(live|session)/.test(pathname) && (
         <OrbHint
           spaceName={spaceName}
           starters={examples.slice(0, 3).map((e) => e.say)}
