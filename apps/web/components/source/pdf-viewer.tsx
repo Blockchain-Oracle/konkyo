@@ -39,7 +39,7 @@ import { MinusIcon, MoonIcon, PlusIcon, ScanIcon } from "lucide-react"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useSourceAccess } from "@/lib/source-access"
 import { useHighlights } from "@/lib/use-highlights"
-import type { SourcePassage } from "@/lib/use-source"
+import { type SourcePassage, usePassages } from "@/lib/use-source"
 import { boxesFor, CitationLayer, MarkLayer } from "./citation-layer"
 import { SelectionToolbar } from "./selection-toolbar"
 
@@ -115,16 +115,27 @@ export function PdfViewer({
     createPluginRegistration(RotatePluginPackage),
   ])
 
+  // A failed open can be tried again: a new loader asks for the document afresh.
+  const [attempt, setAttempt] = useState(0)
+
   if (failed) return <ViewerMessage>The PDF viewer couldn't start. Reload the page.</ViewerMessage>
-  if (!engine) return <ViewerLoading />
+  if (!engine) return <ViewerLoading target={target} />
   return (
     <EmbedPDF engine={engine} plugins={plugins}>
-      <DocumentLoader url={url} fileId={fileId} title={title} target={target} />
+      <DocumentLoader
+        key={attempt}
+        url={url}
+        fileId={fileId}
+        title={title}
+        target={target}
+        onRetry={() => setAttempt((n) => n + 1)}
+      />
     </EmbedPDF>
   )
 }
 
 function DocumentLoader({
+  onRetry,
   url,
   fileId,
   title,
@@ -134,6 +145,7 @@ function DocumentLoader({
   fileId: string
   title: string
   target?: PdfTarget
+  onRetry: () => void
 }) {
   const { provides: manager } = useDocumentManagerCapability()
   const { provides: scroll } = useScrollCapability()
@@ -163,7 +175,9 @@ function DocumentLoader({
     <DocumentContent documentId={activeDocumentId}>
       {({ isLoaded, isError }) =>
         isError ? (
-          <ViewerMessage>This PDF couldn't be opened.</ViewerMessage>
+          <ViewerMessage action={{ label: "Try again", run: onRetry }}>
+            This PDF couldn't be opened.
+          </ViewerMessage>
         ) : isLoaded && activeDocumentId ? (
           <LoadedDocument
             documentId={activeDocumentId}
@@ -173,7 +187,7 @@ function DocumentLoader({
             layoutReady={layoutReady}
           />
         ) : (
-          <ViewerLoading />
+          <ViewerLoading target={target} />
         )
       }
     </DocumentContent>
@@ -239,8 +253,11 @@ function LoadedDocument({
             className="relative select-none"
             data-page={page.pageNumber}
           >
+            {/* What a screen reader reads: the page's text, from the passages Konkyo read. */}
+            <PageText fileId={fileId} page={page.pageNumber} />
             {/* PDFs keep their own colours; "Dim" lowers the glare of white pages at night. */}
             <div
+              aria-hidden="true"
               className={cn(
                 "absolute inset-0 bg-white transition-[filter] duration-(--duration-menu)",
                 dim && "brightness-[0.78]",
@@ -323,7 +340,13 @@ function LoadedDocument({
           </ToolbarButton>
         </div>
       </div>
-      <Viewport documentId={documentId} className="min-h-0 flex-1 bg-muted">
+      <Viewport
+        documentId={documentId}
+        className="min-h-0 flex-1 bg-muted"
+        role="region"
+        aria-label={title}
+        tabIndex={0}
+      >
         <GlobalPointerProvider documentId={documentId}>
           <Scroller documentId={documentId} renderPage={renderPage} />
         </GlobalPointerProvider>
@@ -367,19 +390,73 @@ function ToolbarButton({
   )
 }
 
-function ViewerLoading() {
+/** Past this, a first open says it's still coming (a large PDF and the viewer both load once). */
+const SLOW_OPEN_MS = 8_000
+
+/**
+ * While the document opens: the cited words come first, so a slow first open still shows what
+ * the citation points at, and after a while it says it's still opening.
+ */
+function ViewerLoading({ target }: { target?: PdfTarget }) {
+  const [slow, setSlow] = useState(false)
+  useEffect(() => {
+    const timer = window.setTimeout(() => setSlow(true), SLOW_OPEN_MS)
+    return () => window.clearTimeout(timer)
+  }, [])
+  const words = target?.quote ?? target?.passage?.text
   return (
-    <div className="grid flex-1 place-items-center bg-muted" role="status">
-      <Spinner className="size-5 text-ash-gray" />
-      <span className="sr-only">Opening the document</span>
+    <div className="grid flex-1 place-items-center bg-muted p-6" role="status">
+      <div className="flex max-w-md flex-col items-center gap-4 text-center">
+        <Spinner className="size-5 text-ash-gray" />
+        {words && (
+          <blockquote className="text-pretty text-snippet text-silver-mist">
+            “{words.length > 400 ? `${words.slice(0, 400)}…` : words}”
+            {target?.page != null && (
+              <span className="mt-1 block text-meta text-ash-gray">page {target.page}</span>
+            )}
+          </blockquote>
+        )}
+        <span className={cn("text-meta text-ash-gray", !slow && "sr-only")}>
+          {slow
+            ? "Still opening: a large document takes a moment the first time."
+            : "Opening the document"}
+        </span>
+      </div>
     </div>
   )
 }
 
-function ViewerMessage({ children }: { children: React.ReactNode }) {
+/** One page's words, for screen readers (the page itself is drawn as images). */
+function PageText({ fileId, page }: { fileId: string; page: number }) {
+  const { data } = usePassages(fileId, { page })
+  if (!data?.length) return null
+  return (
+    <div className="sr-only">
+      <h3>Page {page}</h3>
+      {data.map((p) => (
+        <p key={p.id}>{p.text}</p>
+      ))}
+    </div>
+  )
+}
+
+function ViewerMessage({
+  children,
+  action,
+}: {
+  children: React.ReactNode
+  action?: { label: string; run: () => void }
+}) {
   return (
     <div className="grid flex-1 place-items-center bg-muted p-6 text-center text-ui text-ash-gray">
-      {children}
+      <div className="flex flex-col items-center gap-3">
+        <p>{children}</p>
+        {action && (
+          <Button variant="secondary" size="sm" onClick={action.run}>
+            {action.label}
+          </Button>
+        )}
+      </div>
     </div>
   )
 }

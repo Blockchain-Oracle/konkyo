@@ -128,3 +128,20 @@
     color: #fff;
   }
 }
+
+/* Skip to content: out of sight until a keyboard user tabs to it, then a sticker at the top. */
+.skip-link {
+  position: fixed;
+  z-index: 100;
+  top: 12px;
+  left: 12px;
+  border-radius: 999px;
+  background: var(--color-sticker);
+  color: #fff;
+  padding: 10px 16px;
+  font-weight: 700;
+  translate: 0 -200%;
+}
+.skip-link:focus-visible {
+  translate: 0 0;
+}

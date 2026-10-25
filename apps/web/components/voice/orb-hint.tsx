@@ -101,18 +101,24 @@ export function OrbHint({
         leave()
     }
     check()
+    const onKey = (event: KeyboardEvent) => event.key === "Escape" && leave()
+    window.addEventListener("keydown", onKey)
     const watch = new MutationObserver(check)
     watch.observe(document.body, { attributes: true, attributeFilter: ["class"] })
     if (dock) watch.observe(dock, { attributes: true, attributeFilter: ["class"] })
-    return () => watch.disconnect()
+    return () => {
+      watch.disconnect()
+      window.removeEventListener("keydown", onKey)
+    }
   }, [leave])
 
   // on the body: the dock is transformed, which would make `position: fixed` relative to it
   return createPortal(
-    <div
+    <section
       ref={node}
       className={`orb-hint${leaving ? " is-leaving" : ""}`}
       data-leaving={leaving ? "1" : "0"}
+      aria-label="Tip: talk to Konkyo"
     >
       <p className="orb-hint-kicker">
         <i aria-hidden="true" />
@@ -138,10 +144,16 @@ export function OrbHint({
           </li>
         ))}
       </ul>
-      <button type="button" className="orb-hint-dismiss" title="later" onClick={leave}>
-        ×
+      <button
+        type="button"
+        className="orb-hint-dismiss"
+        title="later"
+        aria-label="Dismiss the tip"
+        onClick={leave}
+      >
+        <span aria-hidden="true">×</span>
       </button>
-    </div>,
+    </section>,
     document.body,
   )
 }

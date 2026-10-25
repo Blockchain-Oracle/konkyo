@@ -24,6 +24,7 @@ import { setLitSources } from "@/lib/lit-sources"
 import { speakingLevel, useReading } from "@/lib/read-aloud"
 import { keytermsFrom } from "@/lib/scribe"
 import { sound } from "@/lib/sounds"
+import { useFiles } from "@/lib/use-library"
 import { useQuery } from "@/lib/use-query"
 import {
   primeVoice,
@@ -265,6 +266,10 @@ export function Dock() {
     stage.open()
   }
   const [hint, setHint] = useState(false)
+  // The tip waits for something to ask about: on a first visit the first choice (a space, a
+  // source) comes first, and the tip never covers it.
+  const { data: files } = useFiles()
+  const hasSource = files?.some((f) => f.kind !== "note" && f.status === "ready") ?? false
   useEffect(() => {
     const wanted = orbHintWanted()
     setHint(wanted)
@@ -321,7 +326,7 @@ export function Dock() {
         />
       )}
       {/* not over a round being played (a live round, a practice session): it waits for later */}
-      {hint && !stage.up && !/^\/study\/(live|session)/.test(pathname) && (
+      {hint && hasSource && !stage.up && !/^\/study\/(live|session)/.test(pathname) && (
         <OrbHint
           spaceName={spaceName}
           starters={examples.slice(0, 3).map((e) => e.say)}

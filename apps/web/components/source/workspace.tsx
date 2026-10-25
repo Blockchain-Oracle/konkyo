@@ -6,6 +6,8 @@ import {
   ResizablePanelGroup,
 } from "@konkyo/ui/components/resizable"
 import { Sheet, SheetContent, SheetTitle } from "@konkyo/ui/components/sheet"
+import { usePathname } from "next/navigation"
+import { useEffect, useRef } from "react"
 import { closeAllSources, usePreview } from "@/lib/preview"
 import { useMediaQuery } from "@/lib/use-source"
 import { DockArea } from "../shell/dock"
@@ -21,6 +23,21 @@ export function Workspace({ children }: { children: React.ReactNode }) {
   const wide = useMediaQuery("(min-width: 1024px)")
   const docked = Boolean(active) && wide
 
+  // After a move to another page, keyboard focus lands on the page's content instead of falling
+  // back to the top of the document. A page that focused a field of its own keeps that focus.
+  const main = useRef<HTMLElement>(null)
+  const pathname = usePathname()
+  const moved = useRef(false)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs on each change of page
+  useEffect(() => {
+    if (!moved.current) {
+      moved.current = true
+      return
+    }
+    const lost = !document.activeElement || document.activeElement === document.body
+    if (lost) main.current?.focus({ preventScroll: true })
+  }, [pathname])
+
   return (
     <>
       {/* The group sets an inline height of 100%, so the screen height lives on this wrapper. */}
@@ -32,7 +49,9 @@ export function Workspace({ children }: { children: React.ReactNode }) {
             minSize={360}
             className="max-lg:overflow-visible! lg:overflow-y-auto!"
           >
-            {children}
+            <main id="main" ref={main} tabIndex={-1} className="outline-none">
+              {children}
+            </main>
           </ResizablePanel>
           {docked && (
             <>

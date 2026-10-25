@@ -181,6 +181,9 @@ function Brand() {
 export default function LandingPage() {
   return (
     <div className="about-page">
+      <a href="#main" className="skip-link">
+        Skip to content
+      </a>
       <header className="about-wrap about-bar">
         <Brand />
         <nav aria-label="Account" className="about-bar-links">
@@ -193,7 +196,7 @@ export default function LandingPage() {
         </nav>
       </header>
 
-      <main>
+      <main id="main">
         <section className="about-wrap about-hero">
           <div className="about-hero-copy">
             <p className="about-intro">a library that checks itself.</p>

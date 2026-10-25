@@ -29,6 +29,9 @@ async function Shell({ children }: { children: React.ReactNode }) {
   return (
     <UploadsProvider>
       <LiveProvider>
+        <a href="#main" className="skip-link">
+          Skip to content
+        </a>
         <Rail user={shellUser} />
         <PlacesBar />
         {/* Room for the rail on the left (OurSpaces' header starts at 118px), and on phones for

@@ -691,6 +691,14 @@ body.voice-stage-up .orb-hint {
   }
 }
 
+/* Phones: the tip says the one move and leaves the starters to the stage, so it stays small. */
+@media (max-width: 480px) {
+  .orb-hint ul,
+  .orb-hint-sub {
+    display: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .orb-hint,
   .orb-hint li,

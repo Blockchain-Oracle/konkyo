@@ -119,8 +119,8 @@ export function AgreeMatrix({ matrix }: { matrix: Matrix }) {
     .join(" · ")
 
   return (
-    // Wider than the reading column where the screen allows, so more sources fit side by side.
-    <section aria-label="Where the sources agree and disagree" className="mt-6 xl:-mx-28">
+    // In the reading column: more sources than fit scroll sideways inside the table's own frame.
+    <section aria-label="Where the sources agree and disagree" className="mt-6">
       <div className="flex items-center gap-2">
         <h3 className="text-micro text-saffron-spark uppercase">Agree / disagree</h3>
         <span className="flex-1 text-meta text-ash-gray">

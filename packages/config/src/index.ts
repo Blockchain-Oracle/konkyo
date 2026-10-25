@@ -181,6 +181,8 @@ export const INGEST = {
 export const QUERY = {
   /** Server data is fresh for a minute before TanStack Query refetches in the background. */
   staleTimeMs: 60_000,
+  /** A failed request is tried this many more times, unless the server refused it (4xx). */
+  retries: 3,
 } as const
 
 export type ModelEffort = "none" | "minimal" | "low" | "medium"
