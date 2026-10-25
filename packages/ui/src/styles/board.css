@@ -1823,3 +1823,69 @@ button.board-object:hover,
   font-size: 11.5px;
   font-weight: 900;
 }
+
+/* Chats grouped by space: the group's name as a black sticker with its colour. */
+.chats-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  border-radius: 999px;
+  background: var(--color-sticker);
+  color: white;
+  padding: 5px 12px;
+  font-size: 12.5px;
+  font-weight: 800;
+}
+.chats-group i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+.chats-group small {
+  color: var(--color-lime);
+  font-size: 12px;
+}
+
+/* Privacy and terms on paper. */
+.legal-sheet {
+  color: #3a3036;
+  padding: clamp(24px, 5vw, 56px);
+  font-size: 16px;
+  line-height: 1.65;
+}
+.legal-sheet h1 {
+  margin: 0;
+  color: var(--color-ink);
+  font-family: var(--font-display);
+  font-size: clamp(40px, 6vw, 64px);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  text-transform: lowercase;
+}
+.legal-sheet h2 {
+  margin: 36px 0 0;
+  color: var(--color-ink);
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.legal-sheet p,
+.legal-sheet ul {
+  margin: 12px 0 0;
+}
+.legal-sheet ul {
+  padding-left: 1.25em;
+  list-style: disc;
+}
+.legal-sheet li + li {
+  margin-top: 6px;
+}
+.legal-sheet a {
+  color: var(--color-ink);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

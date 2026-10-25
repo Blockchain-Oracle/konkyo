@@ -9,7 +9,7 @@ import {
 import { LIMITS } from "@konkyo/config"
 import { db, schema } from "@konkyo/db"
 import type { ChatScope } from "@konkyo/db/schema"
-import { and, asc, count, desc, eq, gt, gte, isNull, lt } from "drizzle-orm"
+import { and, asc, count, desc, eq, gt, gte, isNull, lt, sql } from "drizzle-orm"
 import { clock } from "@/lib/format"
 import { LibraryError } from "./library"
 import { allowanceLeft } from "./usage"
@@ -157,6 +157,11 @@ export async function listChats(ownerId: string) {
       title: chats.title,
       pinnedAt: chats.pinnedAt,
       updatedAt: chats.updatedAt,
+      // the space its first folder belongs to: the list groups chats by space
+      space: sql<{ id: string; name: string; color: string | null } | null>`(
+        select json_build_object('id', s.id, 'name', s.name, 'color', s.color)
+        from folders fo join folders s on s.id = fo.space_id
+        where fo.id = (${chats.scope}->'folderIds'->>0)::uuid and s.deleted_at is null)`,
     })
     .from(chats)
     .where(and(eq(chats.ownerId, ownerId), isNull(chats.deletedAt)))

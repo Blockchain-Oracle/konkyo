@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@konkyo/ui/components/dialog"
 import { Input } from "@konkyo/ui/components/input"
+import { NativeSelect } from "@konkyo/ui/components/native-select"
 import { Spinner } from "@konkyo/ui/components/spinner"
 import { cn } from "@konkyo/ui/lib/utils"
 import { useQueryClient } from "@tanstack/react-query"
@@ -56,9 +57,6 @@ const KINDS: { kind: AgentKind; label: string; about: string; icon: typeof Teles
 const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 const hourLabel = (h: number) => `${String(h).padStart(2, "0")}:00`
 const HOURS = Array.from({ length: 24 }, (_, h) => h)
-
-const selectClass =
-  "h-9 rounded-lg border border-border bg-raised px-2.5 text-ui text-bone-white outline-none focus-visible:ring-2 focus-visible:ring-ring"
 
 /** Create → Agent (plan F34, Perplexity's scheduled task): four fields, the schedule in one row. */
 export function AgentDialog({
@@ -244,7 +242,7 @@ export function AgentDialog({
           <div className="space-y-1.5">
             <p className="text-snippet text-silver-mist">When</p>
             <div className="flex flex-wrap items-center gap-2">
-              <select
+              <NativeSelect
                 aria-label="How often"
                 value={draft.schedule.every}
                 onChange={(e) =>
@@ -257,41 +255,38 @@ export function AgentDialog({
                     },
                   })
                 }
-                className={selectClass}
               >
                 <option value="day">Every day</option>
                 <option value="week">Every week</option>
-              </select>
+              </NativeSelect>
               {draft.schedule.every === "week" && (
-                <select
+                <NativeSelect
                   aria-label="Day"
                   value={draft.schedule.weekday ?? 1}
                   onChange={(e) =>
                     patch({ schedule: { ...draft.schedule, weekday: Number(e.target.value) } })
                   }
-                  className={selectClass}
                 >
                   {WEEKDAYS.map((d, i) => (
                     <option key={d} value={i}>
                       on {d}
                     </option>
                   ))}
-                </select>
+                </NativeSelect>
               )}
-              <select
+              <NativeSelect
                 aria-label="Time"
                 value={draft.schedule.hour}
                 onChange={(e) =>
                   patch({ schedule: { ...draft.schedule, hour: Number(e.target.value) } })
                 }
-                className={selectClass}
               >
                 {HOURS.map((h) => (
                   <option key={h} value={h}>
                     at {hourLabel(h)}
                   </option>
                 ))}
-              </select>
+              </NativeSelect>
             </div>
             <p className="text-meta text-ash-gray">
               Next run {nextText}

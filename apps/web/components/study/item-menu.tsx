@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@konkyo/ui/components/dropdown-menu"
 import { Input } from "@konkyo/ui/components/input"
+import { NativeSelect } from "@konkyo/ui/components/native-select"
 import { Spinner } from "@konkyo/ui/components/spinner"
 import { Textarea } from "@konkyo/ui/components/textarea"
 import { EllipsisIcon, FlagIcon, PencilIcon, Trash2Icon } from "lucide-react"
@@ -156,15 +157,15 @@ function EditDialog({
           {item.kind === "truefalse" && (
             <Field label="True or false">
               {(id) => (
-                <select
+                <NativeSelect
                   id={id}
                   value={answer}
                   onChange={(e) => setAnswer(e.target.value)}
-                  className="h-9 w-full rounded-lg border border-input bg-transparent px-2.5 text-ui"
+                  className="w-full"
                 >
                   <option value="true">True</option>
                   <option value="false">False</option>
-                </select>
+                </NativeSelect>
               )}
             </Field>
           )}

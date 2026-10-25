@@ -5,7 +5,14 @@ import { toast } from "sonner"
 import { useQuery } from "@/lib/use-query"
 import { api } from "./fetcher"
 
-export type ChatListItem = { id: string; title: string; pinnedAt: string | null; updatedAt: string }
+export type ChatListItem = {
+  id: string
+  title: string
+  pinnedAt: string | null
+  updatedAt: string
+  /** The space its scope is in, if any (the list groups by it). */
+  space?: { id: string; name: string; color: string | null } | null
+}
 
 export const chatsKey = ["chats"] as const
 

@@ -9,6 +9,7 @@ import {
   DialogTitle,
 } from "@konkyo/ui/components/dialog"
 import { Input } from "@konkyo/ui/components/input"
+import { NativeSelect } from "@konkyo/ui/components/native-select"
 import { Skeleton } from "@konkyo/ui/components/skeleton"
 import { Spinner } from "@konkyo/ui/components/spinner"
 import { HardDriveIcon, MailIcon, NotebookTextIcon } from "lucide-react"
@@ -41,9 +42,6 @@ const ROWS: { toolkit: Toolkit; icon: typeof MailIcon; about: string }[] = [
     about: "Pages you share with Konkyo, kept current when they change.",
   },
 ]
-
-const selectClass =
-  "h-9 rounded-lg border border-border bg-raised px-2.5 text-ui text-bone-white outline-none focus-visible:ring-2 focus-visible:ring-ring"
 
 function ago(iso: string | null) {
   if (!iso) return null
@@ -195,11 +193,10 @@ function GmailWatch({ row }: { row: ConnectionRow }) {
         aria-label="Gmail search to watch"
         className="h-9 min-w-56 flex-1 rounded-lg"
       />
-      <select
+      <NativeSelect
         aria-label="Folder for new matches"
         value={folderId}
         onChange={(e) => setFolderId(e.target.value)}
-        className={selectClass}
       >
         <option value="">Into the library</option>
         {folders.map((f) => (
@@ -207,7 +204,7 @@ function GmailWatch({ row }: { row: ConnectionRow }) {
             {`${"  ".repeat(f.depth)}${f.name}`}
           </option>
         ))}
-      </select>
+      </NativeSelect>
       <Button type="submit" variant="secondary" size="sm" disabled={!changed || watch.isPending}>
         {watching && !query.trim() ? "Stop watching" : watching ? "Save" : "Watch"}
       </Button>
