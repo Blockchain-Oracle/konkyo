@@ -31,6 +31,7 @@ const KIND_BY_EXT: Record<string, (typeof schema.fileKind.enumValues)[number]> =
   ".mp3": "audio",
   ".m4a": "audio",
   ".wav": "audio",
+  ".weba": "audio",
   ".mp4": "video",
 }
 

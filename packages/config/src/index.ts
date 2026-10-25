@@ -100,6 +100,8 @@ export const FILE_TYPES = {
   ".mp3": "audio",
   ".m4a": "audio",
   ".wav": "audio",
+  /** WebM audio: what Chrome and Firefox record (Record a lecture). */
+  ".weba": "audio",
   ".mp4": "video",
   ".mov": "video",
   ".webm": "video",
@@ -126,6 +128,7 @@ export const FILE_MIME: Record<keyof typeof FILE_TYPES, string> = {
   ".mp3": "audio/mpeg",
   ".m4a": "audio/mp4",
   ".wav": "audio/wav",
+  ".weba": "audio/webm",
   ".mp4": "video/mp4",
   ".mov": "video/quicktime",
   ".webm": "video/webm",

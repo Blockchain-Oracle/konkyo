@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation"
 import { useMemo, useState, useSyncExternalStore } from "react"
 import { toast } from "sonner"
 import { ConnectorImportDialog } from "@/components/library/connector-import-dialog"
+import { LectureRecorder } from "@/components/library/lecture-recorder"
 import { ShareDialog } from "@/components/library/share-dialog"
 import { flattenTree, useFolderActions, useFolderTree } from "@/lib/use-folders"
 import { useFileActions } from "@/lib/use-library"
@@ -28,6 +29,7 @@ type DialogState =
   | { type: "move-files"; ids: string[] }
   | { type: "share-folder"; id: string; name: string }
   | { type: "connector-import"; connectionId?: string; folderId?: string }
+  | { type: "record"; folderId?: string }
   | null
 
 let current: DialogState = null
@@ -48,6 +50,7 @@ export const openMoveFiles = (ids: string[]) => set({ type: "move-files", ids })
 export const openShareFolder = (id: string, name: string) => set({ type: "share-folder", id, name })
 export const openConnectorImport = (at: { connectionId?: string; folderId?: string } = {}) =>
   set({ type: "connector-import", ...at })
+export const openRecorder = (folderId?: string) => set({ type: "record", folderId })
 
 function useDialog() {
   return useSyncExternalStore(
@@ -103,6 +106,11 @@ export function AppDialogs() {
         open={dialog?.type === "connector-import"}
         connectionId={dialog?.type === "connector-import" ? dialog.connectionId : undefined}
         folderId={dialog?.type === "connector-import" ? dialog.folderId : undefined}
+        onClose={close}
+      />
+      <LectureRecorder
+        open={dialog?.type === "record"}
+        folderId={dialog?.type === "record" ? dialog.folderId : undefined}
         onClose={close}
       />
     </>

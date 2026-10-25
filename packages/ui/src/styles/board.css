@@ -891,6 +891,52 @@ button.board-object:hover,
 .add-art-wave i:nth-child(even) {
   background: var(--color-orange);
 }
+/* a recorder's "rec" light, on a paper tag */
+.add-art-rec {
+  display: flex;
+  width: auto;
+  height: auto;
+  align-items: center;
+  gap: 5px;
+  border-radius: 4px;
+  background: #fffaf7;
+  color: #111114;
+  padding: 5px 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  rotate: -3deg;
+  text-transform: uppercase;
+}
+.add-art-rec i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #e5484d;
+}
+/* an envelope */
+.add-art-mail i {
+  position: relative;
+  width: 44px;
+  height: 30px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: #fffaf7;
+  rotate: 4deg;
+}
+.add-art-mail i::before {
+  position: absolute;
+  top: -22px;
+  left: 50%;
+  width: 34px;
+  height: 34px;
+  border: 1.5px solid rgb(17 17 20 / 0.3);
+  background: #f3ebe4;
+  content: "";
+  rotate: 45deg;
+  translate: -50% 0;
+}
 /* a count (something new found) */
 .add-art-count {
   display: grid;

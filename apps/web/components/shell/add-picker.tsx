@@ -12,14 +12,15 @@ import { holdQuestion } from "@/lib/pending-question"
 import { sound } from "@/lib/sounds"
 import { useMakeBrief } from "@/lib/use-briefs"
 import { useStudyActions } from "@/lib/use-study"
-import { openConnectorImport, openImport } from "./app-dialogs"
+import { openConnectorImport, openImport, openRecorder } from "./app-dialogs"
 
 /*
  * "Add to this space" (plan F60): OurSpaces' widget picker tray (MIT; markup and CSS in house.css),
  * with one tile per way something gets into Konkyo. Each tile is drawn as the thing it makes, or
  * the service's own logo, never an icon, and each runs the real thing: the file picker, the URL
- * import, a deep search filed here, a note filed here, the Gmail/Drive/Notion import, practice,
- * an audio brief, a weekly watch. Without a space it adds to the whole library.
+ * import, a recording made here, a deep search filed here, a note filed here, the Gmail/Drive/
+ * Notion import, the space's email address, practice, an audio brief, a weekly watch. Without a
+ * space it adds to the whole library.
  */
 
 type Tile = {
@@ -105,6 +106,18 @@ export function AddPicker({ folderId, name }: { folderId?: string; name?: string
       run: () => openImport(folderId),
     },
     {
+      id: "record",
+      label: "record a lecture",
+      line: "transcribed, every moment citable",
+      art: (
+        <span className="add-art add-art-rec">
+          <i />
+          rec
+        </span>
+      ),
+      run: () => openRecorder(folderId),
+    },
+    {
       id: "find",
       label: "find sources",
       line: `open papers on ${topic}, filed here`,
@@ -163,6 +176,25 @@ export function AddPicker({ folderId, name }: { folderId?: string; name?: string
       line: "pages, as they are",
       art: logo("/logos/notion.svg"),
       run: () => openConnectorImport({ folderId }),
+    },
+    {
+      id: "email",
+      label: "email this space",
+      line: "forward papers to its own address",
+      spaceOnly: true,
+      art: (
+        <span className="add-art add-art-mail">
+          <i />
+        </span>
+      ),
+      run: async () => {
+        const { address } = await api<{ address: string }>(`/api/spaces/${folderId}/address`)
+        await navigator.clipboard.writeText(address).catch(() => {})
+        toast(`Forward papers to ${address}`, {
+          description:
+            "Copied. Attachments from you or anyone who can add land on the wall; mail from others waits in your inbox.",
+        })
+      },
     },
     {
       id: "practice",
