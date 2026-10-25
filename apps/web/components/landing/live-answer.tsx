@@ -5,6 +5,7 @@
 import "@konkyo/ui/globals.css"
 import { useChat } from "@ai-sdk/react"
 import type { KonkyoMessage } from "@konkyo/agents"
+import { normalise } from "@konkyo/agents/citations"
 import { Button } from "@konkyo/ui/components/button"
 import { Sheet, SheetContent, SheetTitle } from "@konkyo/ui/components/sheet"
 import { DefaultChatTransport } from "ai"
@@ -14,9 +15,9 @@ import { useEffect, useEffectEvent, useMemo, useState } from "react"
 import { PublicAnswer } from "@/components/public/public-answer"
 import type { PublicShare } from "@/components/public/public-folder"
 import { errorText } from "@/lib/format"
-import { closeAllSources, usePreview } from "@/lib/preview"
+import { closeAllSources, openSource, usePreview } from "@/lib/preview"
 import { SourceAccessProvider } from "@/lib/source-access"
-import { ASK_EVENT } from "./ask-event"
+import { ASK_EVENT, CITE_EVENT, type LandingCite } from "./ask-event"
 import { AskForm } from "./live-answer-parts"
 
 // The viewer (PDFium in a worker) loads only when a citation is opened.
@@ -34,6 +35,32 @@ const SourcePane = dynamic(
  */
 export function LiveAnswer({ slug, share, draft = "" }: LiveProps) {
   const access = useMemo(() => ({ api: `/api/public/${slug}`, owner: false }), [slug])
+  // The board's citation (hero-board.tsx): its paper opens here, at the passage with the cited
+  // words marked, the way an answer's citation opens.
+  const onCite = useEffectEvent(async (e: Event) => {
+    const cite = (e as CustomEvent<LandingCite>).detail
+    const file = share.files.find((f) => f.title.toLowerCase().startsWith(cite.title.toLowerCase()))
+    if (!file) return
+    const passages: { id: string; text: string }[] = await fetch(
+      `/api/public/${slug}/files/${file.id}/passages?page=${cite.page}`,
+    )
+      .then((r) => (r.ok ? r.json() : []))
+      .catch(() => [])
+    const words = normalise(cite.quote)
+    const passage = passages.find((p) => normalise(p.text).includes(words))
+    openSource({
+      fileId: file.id,
+      title: file.title,
+      kind: file.kind,
+      page: cite.page,
+      passageId: passage?.id,
+      quote: cite.quote,
+    })
+  })
+  useEffect(() => {
+    window.addEventListener(CITE_EVENT, onCite)
+    return () => window.removeEventListener(CITE_EVENT, onCite)
+  }, [])
   return (
     <SourceAccessProvider value={access}>
       <LiveChat slug={slug} share={share} draft={draft} />

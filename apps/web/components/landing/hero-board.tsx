@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { askOnLanding } from "./ask-event"
+import { askOnLanding, citeOnLanding } from "./ask-event"
 
 /** The passage the answer cites, word for word from page one of Nishida & Walker (2007). */
 const QUOTE =
@@ -65,7 +65,10 @@ export function HeroBoard() {
                     type="button"
                     className="about-cite"
                     aria-label="Open citation 1: the passage on page 1"
-                    onClick={() => setOpen(true)}
+                    onClick={() => {
+                      setOpen(true)
+                      citeOnLanding({ title: "Daytime Naps", page: 1, quote: QUOTE })
+                    }}
                   >
                     1
                   </button>

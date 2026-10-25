@@ -2,7 +2,7 @@
 
 import { type ComponentType, useEffect, useEffectEvent, useRef, useState } from "react"
 import type { PublicShare } from "@/components/public/public-folder"
-import { ASK_EVENT } from "./ask-event"
+import { ASK_EVENT, CITE_EVENT, type LandingCite } from "./ask-event"
 import type { LiveAnswer } from "./live-answer"
 import { AskForm } from "./live-answer-parts"
 
@@ -27,6 +27,7 @@ export function LazyLiveAnswer({ slug, share }: { slug: string; share: PublicSha
   const [Live, setLive] = useState<Live | null>(null)
   const [text, setText] = useState("")
   const [first, setFirst] = useState<string | null>(null)
+  const [cite, setCite] = useState<LandingCite | null>(null)
   const box = useRef<HTMLDivElement>(null)
   const load = useEffectEvent(() => {
     void loadLive().then((C) => setLive(() => C))
@@ -41,8 +42,14 @@ export function LazyLiveAnswer({ slug, share }: { slug: string; share: PublicSha
   const onAsk = useEffectEvent((e: Event) => {
     if (!Live) ask((e as CustomEvent<string>).detail)
   })
+  const onCite = useEffectEvent((e: Event) => {
+    if (Live) return
+    setCite((e as CustomEvent<LandingCite>).detail)
+    load()
+  })
   useEffect(() => {
     window.addEventListener(ASK_EVENT, onAsk)
+    window.addEventListener(CITE_EVENT, onCite)
     const seen = new IntersectionObserver(
       (entries) => {
         if (entries.some((e) => e.isIntersecting)) {
@@ -55,6 +62,7 @@ export function LazyLiveAnswer({ slug, share }: { slug: string; share: PublicSha
     if (box.current) seen.observe(box.current)
     return () => {
       window.removeEventListener(ASK_EVENT, onAsk)
+      window.removeEventListener(CITE_EVENT, onCite)
       seen.disconnect()
     }
   }, [])
@@ -68,6 +76,16 @@ export function LazyLiveAnswer({ slug, share }: { slug: string; share: PublicSha
     )
     return () => clearTimeout(hand)
   }, [Live, first])
+
+  // A citation clicked on the board before the chat arrived is handed over the same way.
+  useEffect(() => {
+    if (!Live || !cite) return
+    const hand = setTimeout(() => {
+      window.dispatchEvent(new CustomEvent(CITE_EVENT, { detail: cite }))
+      setCite(null)
+    })
+    return () => clearTimeout(hand)
+  }, [Live, cite])
 
   if (Live) return <Live slug={slug} share={share} draft={first ? "" : text} />
   return (
