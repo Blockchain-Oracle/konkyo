@@ -1,6 +1,8 @@
+import { randomUUID } from "node:crypto"
 import { Tracer } from "@konkyo/agents"
-import { INGEST } from "@konkyo/config"
+import { BRIEF, INGEST } from "@konkyo/config"
 import { db, schema } from "@konkyo/db"
+import { resolveReach } from "@konkyo/db/access"
 import { env } from "@konkyo/env/server"
 import { enqueue } from "@konkyo/jobs"
 import { describeSchedule, nextRunAt } from "@konkyo/jobs/schedule"
@@ -13,10 +15,15 @@ import {
   type WatchedWork,
   watchEndpoint,
 } from "@konkyo/zetaris"
-import { and, eq, lte, sql } from "drizzle-orm"
+import { and, desc, eq, isNull, lte, sql } from "drizzle-orm"
+import { makeBrief } from "./brief"
 import { makeSet } from "./study"
 
-const { agents, agentRuns, agentSeen, studySets, userSettings } = schema
+const { agents, agentRuns, agentSeen, briefs, folders, inboxItems, studySets, user, userSettings } =
+  schema
+
+/** What a run reports: `notified` when it already put something in the Inbox. */
+type RunResult = { found: number; summary: string; via: string; notified: boolean }
 
 type Agent = typeof agents.$inferSelect
 
@@ -76,7 +83,7 @@ async function directWorks(topic: string, known: Set<string>): Promise<WatchedWo
 /** Announced per run at most; the rest are kept as seen (a watch never floods the Inbox). */
 const PER_RUN = 5
 
-async function runWatch(agent: Agent, tracer: Tracer) {
+async function runWatch(agent: Agent, tracer: Tracer): Promise<RunResult> {
   const known = await knownDois(agent)
   const [seenBefore] = await db
     .select({ n: sql<number>`count(*)::int` })
@@ -141,10 +148,10 @@ async function runWatch(agent: Agent, tracer: Tracer) {
       href: "/inbox",
       tag: `agent-${agent.id}`,
     })
-  return { found: found.length, summary, via }
+  return { found: found.length, summary, via, notified: announce.length > 0 }
 }
 
-async function runQuiz(agent: Agent, tracer: Tracer) {
+async function runQuiz(agent: Agent, tracer: Tracer): Promise<RunResult> {
   const id = crypto.randomUUID()
   const title = `${agent.name} · ${new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`
   await db.insert(studySets).values({
@@ -166,9 +173,129 @@ async function runQuiz(agent: Agent, tracer: Tracer) {
       data: { setId: id, agentId: agent.id },
       tag: `agent-${agent.id}`,
     })
-    return { found: set.made, summary: `Made ${set.made} practice items.`, via: "tutor" }
+    return {
+      found: set.made,
+      summary: `Made ${set.made} practice items.`,
+      via: "tutor",
+      notified: true,
+    }
   }
   throw new Error(set?.problem ?? "No practice could be made this time.")
+}
+
+/**
+ * A brief agent's run: a new two-voice brief of its space, made only when sources were added
+ * since the last one (an unchanged space would give the same talk) and within the person's daily
+ * allowance of briefs. The finished brief reaches the Inbox from makeBrief, with Listen.
+ */
+async function runBrief(agent: Agent, tracer: Tracer): Promise<RunResult> {
+  const reach = await resolveReach(agent.ownerId, agent.scope)
+  const ids = reach.fileIds ?? []
+  const folderId = agent.scope.folderIds.length === 1 ? agent.scope.folderIds[0] : undefined
+  const folder = folderId
+    ? await db.query.folders.findFirst({
+        where: and(eq(folders.id, folderId), isNull(folders.deletedAt)),
+      })
+    : undefined
+  if (folderId && !folder) throw new Error("Its space is gone.")
+  const about = folder?.name ?? agent.name
+  const quiet = (summary: string) => ({ found: 0, summary, via: "brief", notified: false })
+
+  const last = await db.query.briefs.findFirst({
+    where: and(
+      eq(briefs.ownerId, agent.ownerId),
+      eq(briefs.status, "ready"),
+      sql`${briefs.scope} = ${JSON.stringify(agent.scope)}::jsonb`,
+    ),
+    orderBy: desc(briefs.createdAt),
+  })
+  const since = last?.createdAt.toISOString() ?? "epoch"
+  // A source counts as new from when it was added here, not when it was first uploaded.
+  const [counts] = ids.length
+    ? await db.execute<{ ready: number; added: number }>(sql`
+        select count(*)::int as ready,
+          count(*) filter (where greatest(f.created_at,
+            coalesce((select max(ff.added_at) from file_folders ff where ff.file_id = f.id), f.created_at)
+          ) > ${since}::timestamptz)::int as added
+        from files f
+        where f.id in (${sql.join(
+          ids.map((id) => sql`${id}`),
+          sql`, `,
+        )}) and f.status = 'ready' and f.deleted_at is null and f.kind <> 'note'
+      `)
+    : [{ ready: 0, added: 0 }]
+  tracer.log({
+    agent: "system",
+    step: "brief",
+    action: "checked_space",
+    rowsReturned: counts?.ready ?? 0,
+    detail: { added: counts?.added ?? 0, lastBrief: last?.id ?? null },
+  })
+  if (!counts?.ready) return quiet(`Nothing in ${about} to talk about yet.`)
+  if (!counts.added) return quiet(`Nothing new in ${about} since the last brief.`)
+
+  const [account] = await db
+    .select({ guest: user.isAnonymous })
+    .from(user)
+    .where(eq(user.id, agent.ownerId))
+  const [made] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(briefs)
+    .where(
+      and(eq(briefs.ownerId, agent.ownerId), sql`${briefs.createdAt} > now() - interval '1 day'`),
+    )
+  if ((made?.n ?? 0) >= (account?.guest ? BRIEF.guestPerDay : BRIEF.perDay))
+    return quiet(`Today's audio briefs are used up; the next run will make this one.`)
+
+  const id = randomUUID()
+  await db.insert(briefs).values({
+    id,
+    ownerId: agent.ownerId,
+    folderId: folder?.id ?? null,
+    scope: agent.scope,
+    title: about,
+    runId: `brief-${id}`,
+  })
+  tracer.log({ agent: "system", step: "brief", action: "making_brief", detail: { briefId: id } })
+  await makeBrief(id)
+  const brief = await db.query.briefs.findFirst({ where: eq(briefs.id, id) })
+  if (brief?.status !== "ready") throw new Error(brief?.problem ?? "The brief couldn't be made.")
+  const minutes = Math.max(1, Math.round((brief.durationSeconds ?? 0) / 60))
+  return {
+    found: counts.added,
+    summary: `A ${minutes}-minute brief on ${about}, with ${counts.added} new ${counts.added === 1 ? "source" : "sources"}.`,
+    via: "elevenlabs",
+    notified: true,
+  }
+}
+
+/**
+ * A run with nothing to report still says so in the Inbox (plan F34: every run lands there), as
+ * one quiet slip per agent: each run clears the last one, so a weekly "nothing new" never piles
+ * up and never outlives a run that did find something.
+ */
+async function noteRun(agent: Agent, runId: string, result: RunResult) {
+  await db
+    .update(inboxItems)
+    .set({ dismissedAt: new Date() })
+    .where(
+      and(
+        eq(inboxItems.ownerId, agent.ownerId),
+        eq(inboxItems.kind, "agent-run"),
+        isNull(inboxItems.dismissedAt),
+        sql`${inboxItems.data}->>'agentId' = ${agent.id}`,
+        sql`${inboxItems.data}->>'quiet' = 'true'`,
+      ),
+    )
+  if (result.notified) return
+  await notify(agent.ownerId, {
+    kind: "agent-run",
+    title: agent.name,
+    body: result.summary,
+    href: "/agents",
+    data: { agentId: agent.id, runId, quiet: true },
+    push: false,
+  })
 }
 
 /** One run (F34): its record, its trace, the Inbox, and when it runs next. */
@@ -182,8 +309,12 @@ export async function runAgent(agentId: string, trigger: "schedule" | "manual") 
   if (!run) return
   const tracer = new Tracer(`agent-${run.id}`)
   try {
-    const result =
-      agent.kind === "watch" ? await runWatch(agent, tracer) : await runQuiz(agent, tracer)
+    const result: RunResult =
+      agent.kind === "watch"
+        ? await runWatch(agent, tracer)
+        : agent.kind === "quiz"
+          ? await runQuiz(agent, tracer)
+          : await runBrief(agent, tracer)
     await db
       .update(agentRuns)
       .set({
@@ -195,6 +326,7 @@ export async function runAgent(agentId: string, trigger: "schedule" | "manual") 
         endedAt: new Date(),
       })
       .where(eq(agentRuns.id, run.id))
+    await noteRun(agent, run.id, result)
   } catch (error) {
     const message = (error as Error).message
     await db

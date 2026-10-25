@@ -12,9 +12,10 @@ import { owner } from "./library"
 
 /**
  * An agent (plan F34): a saved standing task. "watch" looks for new open-access papers on a
- * topic (an OpenAlex REST table in Zetaris); "quiz" makes practice from a folder on a schedule.
+ * topic (an OpenAlex REST table in Zetaris); "quiz" makes practice from a folder on a schedule;
+ * "brief" remakes a space's audio brief when its sources have changed since the last one.
  */
-export type AgentKind = "watch" | "quiz"
+export type AgentKind = "watch" | "quiz" | "brief"
 export type AgentSchedule = { every: "day" | "week"; weekday?: number; hour: number }
 export type AgentScope = { fileIds: string[]; folderIds: string[] }
 
@@ -25,7 +26,7 @@ export const agents = pgTable(
     ownerId: owner(),
     name: text().notNull(),
     kind: text().$type<AgentKind>().notNull(),
-    /** watch: the topic searched for; quiz: an optional note. */
+    /** watch: the topic searched for; quiz and brief: an optional note. */
     instructions: text().default("").notNull(),
     scope: jsonb().$type<AgentScope>().default({ fileIds: [], folderIds: [] }).notNull(),
     schedule: jsonb().$type<AgentSchedule>().notNull(),

@@ -26,8 +26,11 @@ function validate(input: AgentInput) {
   if (!input.name.trim()) throw new LibraryError("Give the agent a name", 400)
   if (input.kind === "watch" && input.instructions.trim().length < 3)
     throw new LibraryError("Say what to watch for", 400)
-  if (input.kind === "quiz" && !input.scope.fileIds.length && !input.scope.folderIds.length)
-    throw new LibraryError("Choose a folder or files to quiz you on", 400)
+  if (input.kind !== "watch" && !input.scope.fileIds.length && !input.scope.folderIds.length)
+    throw new LibraryError(
+      input.kind === "quiz" ? "Choose a folder or files to quiz you on" : "Choose a space to brief",
+      400,
+    )
 }
 
 export async function listAgents(ownerId: string) {

@@ -14,12 +14,12 @@ const Scope = z.object({
 
 export const GET = route(async ({ userId }) => ({ agents: await listAgents(userId) }))
 
-/** Create → Agent (F34): a watch or a scheduled quiz; it runs once straight away. */
+/** Create → Agent (F34): a watch, a scheduled quiz or a weekly brief; it runs once straight away. */
 export const POST = route<Record<string, never>, AgentInput>(
   async ({ userId, body }) => createAgent(userId, body),
   z.object({
     name: z.string().min(1).max(120),
-    kind: z.enum(["watch", "quiz"]),
+    kind: z.enum(["watch", "quiz", "brief"]),
     instructions: z.string().max(300),
     scope: Scope,
     schedule: Schedule,

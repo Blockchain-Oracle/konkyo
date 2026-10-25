@@ -16,7 +16,7 @@ import { NativeSelect } from "@konkyo/ui/components/native-select"
 import { Spinner } from "@konkyo/ui/components/spinner"
 import { cn } from "@konkyo/ui/lib/utils"
 import { useQueryClient } from "@tanstack/react-query"
-import { GraduationCapIcon, PlusIcon, TelescopeIcon, XIcon } from "lucide-react"
+import { GraduationCapIcon, HeadphonesIcon, PlusIcon, TelescopeIcon, XIcon } from "lucide-react"
 import { useId, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { FocusIcon, FocusPicker } from "@/components/chat/focus-picker"
@@ -52,6 +52,12 @@ const KINDS: { kind: AgentKind; label: string; about: string; icon: typeof Teles
     label: "Quiz me on a schedule",
     about: "Fresh practice from a folder, checked against your sources.",
     icon: GraduationCapIcon,
+  },
+  {
+    kind: "brief",
+    label: "Brief me on what changed",
+    about: "A new two-voice audio brief of a space, when its sources have changed.",
+    icon: HeadphonesIcon,
   },
 ]
 const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
@@ -147,7 +153,13 @@ export function AgentDialog({
               id={nameId}
               value={draft.name}
               onChange={(e) => patch({ name: e.target.value })}
-              placeholder={draft.kind === "watch" ? "Sleep research watch" : "Monday quiz"}
+              placeholder={
+                draft.kind === "watch"
+                  ? "Sleep research watch"
+                  : draft.kind === "quiz"
+                    ? "Monday quiz"
+                    : "Friday brief"
+              }
               maxLength={120}
             />
           </div>
@@ -202,7 +214,9 @@ export function AgentDialog({
             </div>
           ) : (
             <div className="space-y-1.5">
-              <p className="text-snippet text-silver-mist">Quiz me on</p>
+              <p className="text-snippet text-silver-mist">
+                {draft.kind === "quiz" ? "Quiz me on" : "Brief me on"}
+              </p>
               <div className="flex flex-wrap items-center gap-2">
                 {chosen.map((item) => (
                   <span

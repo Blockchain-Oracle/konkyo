@@ -15,10 +15,11 @@ import { sound } from "@/lib/sounds"
  * Make a space (plan F45): OurSpaces' SpaceMaker (MIT), ported. Pick a starting point, name it on
  * the little board, change its colour, wall and symbol under "customize", and choose the pieces
  * it starts with. Every piece is real: finding sources runs a deep search that files what it finds
- * into the new space, a watch is a weekly agent, a quiz is a Monday agent. Styles: house.css.
+ * into the new space, a watch is a weekly agent, a quiz is a Monday agent, a brief is a Friday
+ * agent that remakes the space's audio brief when sources were added. Styles: house.css.
  */
 
-type Piece = "find" | "watch" | "quiz"
+type Piece = "find" | "watch" | "quiz" | "brief"
 
 const PIECES: Record<Piece, { label: string; mini: React.ReactNode }> = {
   find: {
@@ -37,6 +38,17 @@ const PIECES: Record<Piece, { label: string; mini: React.ReactNode }> = {
       <span className="mini-count">
         <strong>+3</strong>
         <span>this week</span>
+      </span>
+    ),
+  },
+  brief: {
+    label: "a brief every friday",
+    mini: (
+      <span className="add-art-wave">
+        {[8, 16, 22, 12, 18, 7].map((h, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: a static drawing
+          <i key={i} style={{ height: h }} />
+        ))}
       </span>
     ),
   },
@@ -93,7 +105,7 @@ export const TEMPLATES: Template[] = [
     name: "reading group",
     color: "pink",
     symbol: "☾",
-    pieces: [],
+    pieces: ["brief"],
     line: "one book or paper a week, read together",
   },
 ]
@@ -196,6 +208,17 @@ export function SpaceMaker({
             schedule: { every: "week", weekday: 1, hour: 8 },
           },
         }).then(() => started.push("a Monday quiz"))
+      if (pieces.includes("brief"))
+        await api("/api/agents", {
+          method: "POST",
+          json: {
+            name: `Friday brief on ${spaceName}`,
+            kind: "brief",
+            instructions: "",
+            scope,
+            schedule: { every: "week", weekday: 5, hour: 17 },
+          },
+        }).then(() => started.push("a Friday brief"))
       if (pieces.includes("find")) {
         const chatId = crypto.randomUUID()
         const question = `Find sources on ${spaceName}`

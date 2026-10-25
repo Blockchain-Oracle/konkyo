@@ -18,6 +18,7 @@ import {
   ChevronDownIcon,
   EllipsisIcon,
   GraduationCapIcon,
+  HeadphonesIcon,
   PauseIcon,
   PencilIcon,
   PlayIcon,
@@ -44,6 +45,26 @@ const when = (iso: string) =>
     minute: "2-digit",
   })
 
+/** Who did a run's work, as its line says ("brief": a run that had nothing to make says none). */
+const VIA: Record<string, string> = {
+  zetaris: "Zetaris",
+  openalex: "OpenAlex",
+  tutor: "Tutor",
+  elevenlabs: "ElevenLabs",
+}
+
+/** Each kind's picture and colour on its card. */
+const LOOK = {
+  watch: { icon: TelescopeIcon, color: "cobalt" },
+  quiz: { icon: GraduationCapIcon, color: "orange" },
+  brief: { icon: HeadphonesIcon, color: "teal" },
+} as const
+
+function KindIcon({ kind }: { kind: AgentDraft["kind"] }) {
+  const Icon = LOOK[kind].icon
+  return <Icon strokeWidth={1.5} />
+}
+
 /** Ready-made agents for an empty page: the plan's own examples. */
 const STARTERS: { label: string; draft: AgentDraft }[] = [
   {
@@ -59,6 +80,15 @@ const STARTERS: { label: string; draft: AgentDraft }[] = [
       schedule: { every: "week", weekday: 1, hour: 18 },
     },
   },
+  {
+    label: "Brief me every Friday",
+    draft: {
+      ...BLANK,
+      name: "Friday brief",
+      kind: "brief",
+      schedule: { every: "week", weekday: 5, hour: 17 },
+    },
+  },
 ]
 
 function AgentRow({ agent, onEdit }: { agent: AgentView; onEdit: () => void }) {
@@ -67,7 +97,7 @@ function AgentRow({ agent, onEdit }: { agent: AgentView; onEdit: () => void }) {
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["agents"] })
   const running = agent.runs[0]?.status === "running"
   const last = agent.runs.find((r) => r.status !== "running")
-  const Icon = agent.kind === "watch" ? TelescopeIcon : GraduationCapIcon
+  const Icon = LOOK[agent.kind].icon
   const act = async (path: string, init: Parameters<typeof api>[1], done: string) => {
     try {
       await api(path, init)
@@ -77,7 +107,7 @@ function AgentRow({ agent, onEdit }: { agent: AgentView; onEdit: () => void }) {
       toast.error((error as Error).message)
     }
   }
-  const color = SPACES.colors[agent.kind === "watch" ? "cobalt" : "orange"].hex
+  const color = SPACES.colors[LOOK[agent.kind].color].hex
   return (
     <li
       className={cn("agent-card", agent.status === "paused" && "is-paused")}
@@ -92,7 +122,9 @@ function AgentRow({ agent, onEdit }: { agent: AgentView; onEdit: () => void }) {
           <p className="agent-what">
             {agent.kind === "watch"
               ? `watching “${agent.instructions}”`
-              : "a quiz from your sources"}
+              : agent.kind === "quiz"
+                ? "a quiz from your sources"
+                : "a new audio brief when the sources change"}
           </p>
         </div>
         <DropdownMenu>
@@ -151,17 +183,7 @@ function AgentRow({ agent, onEdit }: { agent: AgentView; onEdit: () => void }) {
         ) : last ? (
           <>
             <span className={cn(last.status === "failed" && "text-[#b8401a]")}>{last.summary}</span>
-            {last.via && (
-              <small>
-                {" "}
-                · via{" "}
-                {last.via === "zetaris"
-                  ? "Zetaris"
-                  : last.via === "openalex"
-                    ? "OpenAlex"
-                    : "Tutor"}
-              </small>
-            )}
+            {last.via && VIA[last.via] && <small> · via {VIA[last.via]}</small>}
           </>
         ) : (
           "no runs yet"
@@ -253,16 +275,12 @@ export function AgentsView() {
         <EmptyState
           label="Agents"
           title="No agents yet"
-          description="Agents run standing tasks for you and report to your Inbox: watching for new papers on a topic, or quizzing you every Monday."
+          description="Agents run standing tasks for you and report to your Inbox: watching for new papers on a topic, quizzing you every Monday, or briefing you on what changed in a space."
         >
           <div className="flex flex-wrap gap-2">
             {STARTERS.map((s) => (
               <Button key={s.label} variant="secondary" onClick={() => openNew(s.draft)}>
-                {s.draft.kind === "watch" ? (
-                  <TelescopeIcon strokeWidth={1.5} />
-                ) : (
-                  <GraduationCapIcon strokeWidth={1.5} />
-                )}
+                <KindIcon kind={s.draft.kind} />
                 {s.label}
               </Button>
             ))}

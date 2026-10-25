@@ -22,6 +22,8 @@ export type InboxData = {
   /** The agent and run it came from. */
   agentId?: string
   runId?: string
+  /** A run that found nothing to report: only the newest one per agent stays in the Inbox. */
+  quiet?: boolean
   /** practice: the set to open. */
   setId?: string
   /** "Author et al. · 2021 · Journal" for a found source. */

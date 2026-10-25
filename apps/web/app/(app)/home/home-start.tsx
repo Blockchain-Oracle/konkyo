@@ -17,7 +17,12 @@ import { useSettings } from "@/lib/use-settings"
 import { FromPeople } from "./home-room"
 
 /** What each starting piece of a template turns into, said plainly. */
-const PIECES = { find: "a search for sources", watch: "a weekly watch", quiz: "a monday quiz" }
+const PIECES = {
+  find: "a search for sources",
+  watch: "a weekly watch",
+  quiz: "a monday quiz",
+  brief: "a friday brief",
+}
 
 /**
  * First run (plan F39 → F53): "what are you here for?" is the chooser for your first space. A
