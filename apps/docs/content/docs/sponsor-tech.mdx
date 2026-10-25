@@ -3,6 +3,13 @@ title: What Konkyo is built on
 description: Where Zetaris, Meterless, OpenAI, ElevenLabs, Composio and OpenAlex sit, and what each one does.
 ---
 
+Each partner also has a page on Konkyo that follows one action into the code, with a live
+example: [made with Zetaris](https://konkyo.xyz/made-with/zetaris),
+[Meterless](https://konkyo.xyz/made-with/meterless), [OpenAI](https://konkyo.xyz/made-with/openai),
+[ElevenLabs](https://konkyo.xyz/made-with/elevenlabs),
+[Composio](https://konkyo.xyz/made-with/composio) and
+[OpenAlex](https://konkyo.xyz/made-with/openalex).
+
 ## Zetaris: the evidence store every claim is checked against
 
 Remove Zetaris and nothing can be marked verified.
@@ -25,8 +32,8 @@ The engines are vendored unchanged (Apache-2.0) in `packages/meterless` and driv
 
 - **H-MEM** (`memory.ts`): a 👎 with a reason, "wrong passage", or "this item is wrong" becomes a
   correction in your memory, with where it came from. The Planner reads relevant corrections
-  before every answer; 👍/👎 adjust the confidence of the memories an answer used. Settings →
-  Memory shows, edits and forgets them.
+  before every answer; 👍/👎 adjust the confidence of the memories an answer used. The knows
+  page shows them; cross one out and it's forgotten.
 - **World Model** (`analyst.ts`): each comparison is recorded as sources, claims and
   `supports` / `contradicts` / `qualifies` relations, each with the passage it was read from.
 - **Markovian** (`scout.ts`): deep search screens what it found in bounded steps that carry only

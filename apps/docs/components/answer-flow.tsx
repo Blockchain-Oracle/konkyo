@@ -1,6 +1,7 @@
 /**
- * How one answer is made and checked (plan §3), drawn in Dala's colours: amber for Zetaris (the
- * evidence store), verdant for what passed, and the Verifier's rewrite loop on the right.
+ * How one answer is made and checked (plan §3), in the app's colours: each step a paper slip,
+ * teal where Zetaris checks (its colour on the made-with pages), lime for what reaches you, and
+ * the Verifier's rewrite loop on the right.
  */
 
 type Box = { y: number; title: string; lines: string[]; tone?: "zetaris" | "verified" }
@@ -19,7 +20,7 @@ const BOXES: Box[] = [
   {
     y: 216,
     title: "Zetaris pre-check",
-    lines: ["Are these documents in the evidence store?"],
+    lines: ["While the Writer writes: are these", "documents in the evidence store?"],
     tone: "zetaris",
   },
   {
@@ -53,7 +54,13 @@ const X = 150
 const W = 340
 const H = 76
 
-const stroke = { zetaris: "#ffb829", verified: "#15846e" } as const
+const TEAL = "#13b8a6"
+const LIME = "#c9ff3d"
+const PAPER = "#fffaf7"
+const INK = "#111114"
+const INK_SOFT = "#5f5055"
+const LINE = "#a7a4a3"
+const display = { fontFamily: "var(--font-display)", fontWeight: 800 }
 
 export function AnswerFlow() {
   return (
@@ -74,10 +81,10 @@ export function AnswerFlow() {
             markerHeight="7"
             orient="auto"
           >
-            <path d="M0,0 L10,5 L0,10 z" fill="#bdbdbd" />
+            <path d="M0,0 L10,5 L0,10 z" fill={LINE} />
           </marker>
           <marker
-            id="arrow-amber"
+            id="arrow-teal"
             viewBox="0 0 10 10"
             refX="9"
             refY="5"
@@ -85,7 +92,7 @@ export function AnswerFlow() {
             markerHeight="7"
             orient="auto"
           >
-            <path d="M0,0 L10,5 L0,10 z" fill="#ffb829" />
+            <path d="M0,0 L10,5 L0,10 z" fill={TEAL} />
           </marker>
         </defs>
 
@@ -98,7 +105,7 @@ export function AnswerFlow() {
               y1={box.y + H}
               x2={X + W / 2}
               y2={next.y - 4}
-              stroke="#bdbdbd"
+              stroke={LINE}
               strokeWidth="1.5"
               markerEnd="url(#arrow)"
             />
@@ -113,15 +120,21 @@ export function AnswerFlow() {
               width={W}
               height={H}
               rx="14"
-              fill="#0b0b0c"
-              stroke={box.tone ? stroke[box.tone] : "rgba(255,255,255,0.22)"}
-              strokeWidth="1.5"
+              fill={box.tone === "verified" ? LIME : PAPER}
+              stroke={box.tone === "zetaris" ? TEAL : "none"}
+              strokeWidth="4"
             />
-            <text x={X + 18} y={box.y + 26} fill="#ffffff" fontSize="16" fontWeight="500">
+            <text x={X + 18} y={box.y + 27} fill={INK} fontSize="17" style={display}>
               {box.title}
             </text>
             {box.lines.map((line, j) => (
-              <text key={line} x={X + 18} y={box.y + 47 + j * 17} fill="#9a9a9a" fontSize="13">
+              <text
+                key={line}
+                x={X + 18}
+                y={box.y + 48 + j * 17}
+                fill={box.tone === "verified" ? INK : INK_SOFT}
+                fontSize="13"
+              >
                 {line}
               </text>
             ))}
@@ -132,11 +145,11 @@ export function AnswerFlow() {
         <path
           d={`M ${X + W} ${416 + 38} C ${X + W + 90} ${416 + 38}, ${X + W + 90} ${316 + 38}, ${X + W + 6} ${316 + 38}`}
           fill="none"
-          stroke="#ffb829"
+          stroke={TEAL}
           strokeWidth="1.5"
-          markerEnd="url(#arrow-amber)"
+          markerEnd="url(#arrow-teal)"
         />
-        <text x={X + W + 70} y="392" fill="#ffb829" fontSize="12">
+        <text x={X + W + 70} y="392" fill={TEAL} fontSize="12">
           <tspan x={X + W + 74} dy="0">
             unsupported,
           </tspan>
@@ -152,7 +165,7 @@ export function AnswerFlow() {
         <path
           d={`M ${X} ${116 + 38} C ${X - 70} ${116 + 38}, ${X - 70} 300, ${X - 70} 330`}
           fill="none"
-          stroke="#bdbdbd"
+          stroke={LINE}
           strokeWidth="1.5"
           markerEnd="url(#arrow)"
         />
@@ -162,11 +175,11 @@ export function AnswerFlow() {
           width="128"
           height="124"
           rx="14"
-          fill="#0b0b0c"
-          stroke="#ffb829"
-          strokeWidth="1.5"
+          fill={PAPER}
+          stroke={TEAL}
+          strokeWidth="4"
         />
-        <text x="22" y="358" fill="#ffffff" fontSize="15" fontWeight="500">
+        <text x="22" y="359" fill={INK} fontSize="16" style={display}>
           Analyst
         </text>
         {[
@@ -176,13 +189,13 @@ export function AnswerFlow() {
           "kept in the",
           "World Model",
         ].map((line, j) => (
-          <text key={line} x="22" y={378 + j * 16} fill="#9a9a9a" fontSize="12">
+          <text key={line} x="22" y={379 + j * 16} fill={INK_SOFT} fontSize="12">
             {line}
           </text>
         ))}
       </svg>
       <figcaption className="mt-2 text-center text-sm text-fd-muted-foreground">
-        Amber: checked against Zetaris. Green: only what passed reaches you.
+        Teal: checked in Zetaris. Lime: only what passed reaches you.
       </figcaption>
     </figure>
   )

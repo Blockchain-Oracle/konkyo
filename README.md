@@ -101,6 +101,14 @@ Models were chosen by a measured cost and quality benchmark per role.
 
 ## Sponsor technology
 
+Each partner has a page on konkyo.xyz that follows one action into the code, with a live
+example: [Zetaris](https://konkyo.xyz/made-with/zetaris) (three quotes checked in one statement
+as you watch), [Meterless](https://konkyo.xyz/made-with/meterless),
+[OpenAI](https://konkyo.xyz/made-with/openai), [ElevenLabs](https://konkyo.xyz/made-with/elevenlabs)
+(a real two-voice brief), [Composio](https://konkyo.xyz/made-with/composio) and
+[OpenAlex](https://konkyo.xyz/made-with/openalex) (a live search). Their "follow it in the code"
+excerpts are copied from this repository by `pnpm made-with:code`.
+
 ### Zetaris: the evidence store every claim is checked against
 
 Konkyo's answers are only as good as the check, and the check is Zetaris. Remove it and nothing
@@ -131,8 +139,8 @@ and driven from [`packages/agents`](packages/agents/src).
 - **H-MEM** ([`memory.ts`](packages/agents/src/memory.ts)): a 👎 with a reason, "wrong passage",
   or "this item is wrong" becomes a correction in the person's memory, with provenance. The
   Planner reads relevant corrections before every answer (H-MEM's hybrid ranking, then an
-  embedding gate); 👍/👎 on an answer adjusts the confidence of the memories it used. Settings →
-  Memory shows, edits and forgets them.
+  embedding gate); 👍/👎 on an answer adjusts the confidence of the memories it used. The knows
+  page shows them; cross one out and it's forgotten.
 - **World Model** ([`analyst.ts`](packages/agents/src/analyst.ts)): the Analyst records each
   comparison as sources, claims and `supports` / `contradicts` / `qualifies` relations, each with
   the passage it was read from, in one event-sourced model per person.
@@ -247,7 +255,17 @@ Zetaris statement (by hash), rows returned, verdicts (`approved`, `rejected_to_w
 - Scanned PDFs are read with OCRmyPDF (installed, or its Docker image); handwriting and complex
   tables can come out imperfect.
 
-## Licences
+## Licences and credits
 
-The Meterless engines are Apache-2.0 ([NOTICE](packages/meterless/NOTICE)). The sample sources
-are openly licensed (CC BY and CC BY-NC-SA); see [examples/](examples/README.md#sources-and-licences).
+- **OurSpaces** ([thomasnguyen/ourspaces-app](https://github.com/thomasnguyen/ourspaces-app), MIT,
+  © 2026 Thomas Nguyen): Konkyo's look is ported from it: the design system's tokens and walls,
+  the landing and made-with pages (its About and vendor pages), the voice stage's choreography,
+  and the voice orb's WebGL shader ([`orb-shader.ts`](apps/web/lib/orb-shader.ts)).
+- **Interface sounds** (tap, place, check, promote) are from [Mixkit](https://mixkit.co/free-sound-effects/)
+  under the [Mixkit Sound Effects Free License](https://mixkit.co/license/#sfxFree), trimmed as
+  OurSpaces' sound notes describe. The five study sounds were made once with ElevenLabs' sound
+  effects model ([`make-sounds.ts`](packages/ingest/scripts/make-sounds.ts)).
+- **Fonts:** Bricolage Grotesque and IBM Plex (SIL Open Font License).
+- **Code highlighting** on the made-with pages: [Shiki](https://shiki.style) (MIT), run at build.
+- The Meterless engines are Apache-2.0 ([NOTICE](packages/meterless/NOTICE)). The sample sources
+  are openly licensed (CC BY and CC BY-NC-SA); see [examples/](examples/README.md#sources-and-licences).
