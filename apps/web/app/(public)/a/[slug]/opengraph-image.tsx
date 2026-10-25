@@ -1,8 +1,9 @@
 import { APP } from "@konkyo/config"
 import { env } from "@konkyo/env/server"
 import { ImageResponse } from "next/og"
-import { Mark } from "@/components/og-mark"
+import { Mark, Tick } from "@/components/og-mark"
 import { publicArticle } from "@/lib/articles"
+import { ogFonts } from "@/lib/og"
 
 export const alt = "An article on Konkyo, every quote checked"
 export const size = { width: 1200, height: 630 }
@@ -22,6 +23,7 @@ export default async function ArticleImage({ params }: { params: Promise<{ slug:
   return new ImageResponse(
     <div
       style={{
+        fontFamily: "Bricolage",
         width: "100%",
         height: "100%",
         display: "flex",
@@ -81,13 +83,16 @@ export default async function ArticleImage({ params }: { params: Promise<{ slug:
               color: "#c9ff3d",
               padding: "12px 24px",
               fontSize: 26,
+              alignItems: "center",
+              gap: 10,
             }}
           >
-            {`✓ ${check.supported} of ${check.total} claims supported`}
+            <Tick size={24} color="#c9ff3d" />
+            {`${check.supported} of ${check.total} claims supported`}
           </div>
         ) : null}
       </div>
     </div>,
-    size,
+    { ...size, fonts: await ogFonts() },
   )
 }

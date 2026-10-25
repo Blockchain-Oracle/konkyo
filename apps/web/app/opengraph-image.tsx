@@ -1,44 +1,102 @@
 import { APP } from "@konkyo/config"
 import { ImageResponse } from "next/og"
-import { Mark } from "@/components/og-mark"
+import { Mark, Tick } from "@/components/og-mark"
+import { OG, ogFonts } from "@/lib/og"
 
 export const alt = `${APP.name}: ${APP.tagline}`
 export const size = { width: 1200, height: 630 }
 export const contentType = "image/png"
 
-/** The link preview (plan §8): black, the mark, the line, and what Konkyo does. */
-export default function OpenGraphImage() {
+/**
+ * The link preview (plan §16.8): the landing's black, its three lines (the last in pink), and a
+ * tilted violet card with a quote on paper and its lime check.
+ */
+export default async function OpenGraphImage() {
   return new ImageResponse(
     <div
       style={{
         width: "100%",
         height: "100%",
         display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-        background: "#000",
-        color: "#fff",
-        padding: 72,
+        background: OG.sticker,
+        color: OG.paper,
+        padding: 64,
+        fontFamily: "Bricolage",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
-        <Mark size={52} />
-        <div style={{ fontSize: 30, letterSpacing: 1, textTransform: "uppercase" }}>{APP.name}</div>
+      <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <Mark size={44} />
+          <div style={{ fontSize: 34, fontWeight: 800 }}>konkyo</div>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", fontWeight: 800 }}>
+          {["your sources.", "your questions.", "your grounds."].map((line, i) => (
+            <div
+              key={line}
+              style={{
+                fontSize: 92,
+                lineHeight: 1,
+                letterSpacing: -4,
+                color: i === 2 ? OG.pink : OG.paper,
+              }}
+            >
+              {line}
+            </div>
+          ))}
+        </div>
+        <div style={{ fontSize: 24, fontWeight: 600, color: "#b4a9b1" }}>
+          every answer quotes the passage it came from · konkyo.xyz
+        </div>
       </div>
-      <div style={{ display: "flex", flexDirection: "column" }}>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "flex-end",
+          gap: 18,
+          width: 330,
+          height: 380,
+          marginLeft: "auto",
+          marginTop: 60,
+          borderRadius: 32,
+          background: OG.violet,
+          padding: 26,
+          transform: "rotate(4deg)",
+        }}
+      >
         <div
-          style={{ fontSize: 20, color: "#ffb829", letterSpacing: 2, textTransform: "uppercase" }}
+          style={{
+            display: "flex",
+            borderRadius: 18,
+            background: OG.paper,
+            color: OG.sticker,
+            padding: "18px 20px",
+            fontSize: 24,
+            fontWeight: 600,
+            lineHeight: 1.3,
+          }}
         >
-          A research library that checks itself
+          “caffeine consumption did not improve the consolidation of face recognition memory”
         </div>
-        <div style={{ fontSize: 92, lineHeight: 1.05, letterSpacing: -3, marginTop: 20 }}>
-          Every answer shows its grounds.
-        </div>
-        <div style={{ fontSize: 28, color: "#bdbdbd", marginTop: 28, maxWidth: 900 }}>
-          Answers only from your sources, every quote checked word for word.
+        <div
+          style={{
+            display: "flex",
+            alignSelf: "flex-start",
+            borderRadius: 999,
+            background: OG.lime,
+            color: OG.sticker,
+            padding: "8px 16px",
+            fontSize: 22,
+            fontWeight: 800,
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          <Tick size={22} color={OG.sticker} />
+          found in the source
         </div>
       </div>
     </div>,
-    size,
+    { ...size, fonts: await ogFonts() },
   )
 }

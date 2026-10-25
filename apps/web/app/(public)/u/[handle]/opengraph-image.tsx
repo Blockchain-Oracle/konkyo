@@ -2,6 +2,7 @@ import { APP } from "@konkyo/config"
 import { env } from "@konkyo/env/server"
 import { ImageResponse } from "next/og"
 import { Mark } from "@/components/og-mark"
+import { ogFonts } from "@/lib/og"
 import { publicProfile } from "@/lib/profiles"
 
 export const alt = "A person's page on Konkyo"
@@ -24,6 +25,7 @@ export default async function ProfileImage({ params }: { params: Promise<{ handl
   return new ImageResponse(
     <div
       style={{
+        fontFamily: "Bricolage",
         width: "100%",
         height: "100%",
         display: "flex",
@@ -81,6 +83,6 @@ export default async function ProfileImage({ params }: { params: Promise<{ handl
         </div>
       </div>
     </div>,
-    size,
+    { ...size, fonts: await ogFonts() },
   )
 }
