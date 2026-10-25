@@ -46,6 +46,16 @@ Zetaris sees it.
 | `COMPOSIO_*` | Gmail, Drive and Notion connectors | No |
 | `VAPID_*` | Web Push notifications | No |
 | `DEMO_SHARE_SLUG` | The landing page's live demo folder | No |
+| `RESEND_API_KEY` | Email: sign-in codes, invites, the digest (a full-access key: receiving needs it) | No |
+| `RESEND_WEBHOOK_SECRET` | Mail to a space's address: the signing secret of Resend's `email.received` webhook, pointed at `/api/inbound/email` | No |
+| `EMAIL_FROM`, `INBOUND_EMAIL_DOMAIN` | Your own sending address and inbound host, when not konkyo.xyz's | No |
+
+## Email
+
+Add your domain in Resend for sending and a subdomain for receiving (Konkyo uses `in.`), put the
+DNS records Resend gives you at your registrar (the receiving one is an MX on the subdomain, so
+the root domain's mail is untouched), and point an `email.received` webhook at
+`https://<your domain>/api/inbound/email`. Without the keys every email feature is hidden.
 
 ## These docs
 
