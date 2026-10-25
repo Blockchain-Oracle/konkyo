@@ -4,6 +4,7 @@ import { generateText, Output, streamText } from "ai"
 import { z } from "zod"
 import { type Analysis, analyse, type Matrix } from "./analyst"
 import {
+  bodyEnd,
   citesOf,
   NOT_IN_LIBRARY,
   normalise,
@@ -360,11 +361,19 @@ async function write(
       prompt,
       abortSignal: input.abortSignal,
     })
+    // Only the answer streams: the caveat and the sources are read once the draft is done.
     let text = ""
+    let sent = 0
     for await (const delta of stream.textStream) {
       text += delta
-      onDelta(delta)
+      const end = bodyEnd(text, false)
+      if (end > sent) {
+        onDelta(text.slice(sent, end))
+        sent = end
+      }
     }
+    const end = bodyEnd(text, true)
+    if (end > sent) onDelta(text.slice(sent, end))
     return { text, usage: await stream.usage }
   })
   input.tracer.log({

@@ -103,27 +103,52 @@ const isPastedQuote = (text: string) =>
   /^["“'‘].*["”'’][.,;]?$/s.test(text.replace(/\s*\[[^\]]*\]/g, "").trim())
 
 /** Splits a (possibly partial, still streaming) Writer output into its parts. */
+/**
+ * Where the Writer's "Sources:" block starts: on its own line, or run on after the last sentence
+ * or the caveat ("…sleep [1]. Sources: [1] p2: …"). It must be followed by an entry or a line end,
+ * so "two sources: A and B" in a sentence is never taken for it.
+ */
+const SOURCES_AT = /(^|[.!?)\]]\s+)\**sources\**:?\**(?=\s*(?:\[\d+\]|$))/im
+/** Where "Caveat:" starts: its own line, or after the last sentence on the same line. */
+const CAVEAT_AT = /(^|[.!?)\]]\s+)\**caveat\**:/im
+
+const startOf = (text: string, re: RegExp) => {
+  const m = re.exec(text)
+  return m ? m.index + (m[1]?.length ?? 0) : -1
+}
+
+/**
+ * How much of a streaming draft is answer: everything before the caveat and the sources, which
+ * are read when the draft is done, never shown as it streams. `final` is false while more text
+ * may arrive, so the last few characters wait in case they begin "Caveat:" or "Sources:".
+ */
+export function bodyEnd(text: string, final: boolean) {
+  const ends = [startOf(text, CAVEAT_AT), startOf(text, SOURCES_AT)].filter((i) => i >= 0)
+  if (ends.length) return Math.min(...ends)
+  return final ? text.length : Math.max(0, text.length - "**Sources:**".length)
+}
+
 export function parseAnswer(raw: string): ParsedAnswer {
   const text = raw.replace(/\r/g, "")
   if (text.trim().startsWith(NOT_IN_LIBRARY))
     return { body: "", sources: [], sentences: [], notInLibrary: true }
-  const sourcesAt = text.search(/^\s*\**sources:?\**\s*$/im)
+  const sourcesAt = startOf(text, SOURCES_AT)
   const head = sourcesAt >= 0 ? text.slice(0, sourcesAt) : text
   const tail = sourcesAt >= 0 ? text.slice(sourcesAt) : ""
-  // "Caveat:" may start its own line or follow the last sentence on the same line.
-  const caveatMatch = head.match(/(?:^|\s)\**caveat:?\**\s*(.+)$/is)
-  const body = (caveatMatch ? head.slice(0, caveatMatch.index) : head).trim()
+  const caveatAt = startOf(head, CAVEAT_AT)
+  const body = (caveatAt >= 0 ? head.slice(0, caveatAt) : head).trim()
+  const caveatText =
+    caveatAt >= 0 ? head.slice(caveatAt).replace(/^\**caveat\**:\**\s*/i, "") : undefined
+  // Entries one per line or run together: [n] pN: "quote", the quote ending at its closing mark.
   const sources: SourceLine[] = []
-  for (const line of tail.split("\n")) {
-    const m = line.match(
-      /^\s*[-*]?\s*\[(\d+)\]\s*\[?(p\d+)\]?\s*[:\-–]\s*["“'](.+?)["”']\s*\.?\s*$/i,
-    )
-    if (m) sources.push({ n: Number(m[1]), label: (m[2] ?? "").toLowerCase(), quote: m[3] ?? "" })
-  }
+  for (const m of tail.matchAll(
+    /\[(\d+)\]\s*\[?(p\d+)\]?\s*[:\-–]\s*["“'](.+?)["”'](?=\s*\.?\s*(?:\n|\[\d+\]|[-*]\s|$))/gi,
+  ))
+    sources.push({ n: Number(m[1]), label: (m[2] ?? "").toLowerCase(), quote: m[3] ?? "" })
   return {
     body,
     // The caveat is never cited: a marker the Writer left there would point nowhere.
-    caveat: caveatMatch?.[1]
+    caveat: caveatText
       ?.replace(/\s*\[\d+(?:\s*,\s*\d+)*\]/g, "")
       .replace(/\s+/g, " ")
       .trim(),
