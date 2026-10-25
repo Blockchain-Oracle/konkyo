@@ -109,6 +109,23 @@ function FixIt({
           Try again
         </Button>
       )
+    case "no_text":
+      // Reading (OCR included) found no words: a web page may read next time; a file needs a
+      // copy that has its text (an export, not a photo of it).
+      return file.kind === "web" || file.kind === "youtube" ? (
+        <Button
+          size="sm"
+          variant="secondary"
+          className={small}
+          onClick={() => retry.mutate(file.id)}
+        >
+          Try again
+        </Button>
+      ) : (
+        <Button size="sm" variant="secondary" className={small} onClick={onPick}>
+          Upload a copy with text
+        </Button>
+      )
     case "unsupported":
       return (
         <Button

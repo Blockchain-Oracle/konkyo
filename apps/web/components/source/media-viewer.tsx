@@ -10,6 +10,45 @@ import { type FileDetail, type SourcePassage, usePassages } from "@/lib/use-sour
 
 const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`
 
+/** The bits of YouTube's IFrame Player API this viewer uses. */
+type YouTubePlayer = {
+  getCurrentTime(): number
+  seekTo(seconds: number, allowSeekAhead: boolean): void
+  playVideo(): void
+}
+type YouTubeApi = {
+  Player: new (
+    el: HTMLIFrameElement,
+    options: { events: { onStateChange?: (event: { data: number }) => void } },
+  ) => YouTubePlayer
+}
+declare global {
+  interface Window {
+    YT?: YouTubeApi
+    onYouTubeIframeAPIReady?: () => void
+  }
+}
+/** YouTube's "playing" state. */
+const YT_PLAYING = 1
+
+let youTubeApi: Promise<YouTubeApi> | null = null
+/** YouTube's IFrame Player API, loaded once for the whole app (its documented way in). */
+function loadYouTubeApi(): Promise<YouTubeApi> {
+  if (window.YT?.Player) return Promise.resolve(window.YT)
+  youTubeApi ??= new Promise((resolve) => {
+    const before = window.onYouTubeIframeAPIReady
+    window.onYouTubeIframeAPIReady = () => {
+      before?.()
+      if (window.YT) resolve(window.YT)
+    }
+    const tag = document.createElement("script")
+    tag.src = "https://www.youtube.com/iframe_api"
+    tag.async = true
+    document.head.append(tag)
+  })
+  return youTubeApi
+}
+
 /** The video id of a YouTube link (watch, youtu.be, shorts or embed). */
 function youTubeId(url: string): string | null {
   try {
@@ -37,11 +76,42 @@ export function MediaViewer({
   const frame = useRef<HTMLIFrameElement>(null)
   const [now, setNow] = useState(0)
   const youtube = file.kind === "youtube" && file.sourceUrl ? youTubeId(file.sourceUrl) : null
+  const player = useRef<YouTubePlayer | null>(null)
+  const [ytPlaying, setYtPlaying] = useState(false)
+
+  // A YouTube embed follows playback too (gap #7): the IFrame API's player on the same iframe
+  // says when it plays, and while it does, its time moves the transcript.
+  useEffect(() => {
+    if (!youtube || !frame.current) return
+    let live = true
+    const el = frame.current
+    void loadYouTubeApi().then((api) => {
+      if (!live) return
+      player.current = new api.Player(el, {
+        events: { onStateChange: (event) => setYtPlaying(event.data === YT_PLAYING) },
+      })
+    })
+    return () => {
+      live = false
+      player.current = null
+    }
+  }, [youtube])
+  useEffect(() => {
+    if (!ytPlaying) return
+    const tick = setInterval(() => {
+      const t = player.current?.getCurrentTime()
+      if (typeof t === "number") setNow(t)
+    }, 250)
+    return () => clearInterval(tick)
+  }, [ytPlaying])
 
   const seek = (seconds: number) => {
     if (media.current) {
       media.current.currentTime = seconds
       void media.current.play()
+    } else if (player.current) {
+      player.current.seekTo(seconds, true)
+      player.current.playVideo()
     } else if (frame.current) {
       // YouTube's IFrame API listens for these messages when the embed has enablejsapi=1.
       frame.current.contentWindow?.postMessage(
@@ -123,7 +193,11 @@ export function MediaViewer({
           ))}
         </div>
       ) : (
-        <ol ref={list} className="min-h-0 flex-1 overflow-y-auto px-2 pt-2 pb-6">
+        <ol
+          ref={list}
+          className="min-h-0 flex-1 overflow-y-auto px-2 pt-2 pb-6"
+          data-now={Math.floor(now)}
+        >
           {passages?.map((p) => (
             <TranscriptRow
               key={p.id}
