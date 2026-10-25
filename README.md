@@ -8,8 +8,9 @@ quote word for word in Zetaris, sends unsupported sentences back to be rewritten
 where your sources agree and where they don't. Every answer comes with its receipt: the passages,
 the checks, and the SQL that ran them.
 
-**Live:** [konkyo.xyz](https://konkyo.xyz) (ask the shared sample folder on the home page) ·
-**Docs:** [docs.konkyo.xyz](https://docs.konkyo.xyz)
+**Live:** [konkyo.xyz](https://konkyo.xyz) (ask three real papers on the landing page; no
+account needed to walk in) · **Docs:** [docs.konkyo.xyz](https://docs.konkyo.xyz) ·
+**Made with:** [the partners, in the code](https://konkyo.xyz/made-with/zetaris)
 
 Open Agent Hackathon 2026, **Track 02: The Agent That Can Explain Why**:
 *"Build agents that investigate complex questions across multiple data sources, connect findings,
@@ -150,22 +151,39 @@ and driven from [`packages/agents`](packages/agents/src).
 
 ## Everything else it does
 
+- **Spaces:** each subject or project is a space with its own colour and wall: its sources,
+  pinned answers, notes, practice and audio brief in one place, made from a template (exam prep,
+  essay, literature review, reading group). Share one with an invite link or by email; members
+  are there live (who's here, sources landing as they're added, a space chat that can ask
+  @konkyo), pin answers to the wall and leave takes on sources. Each space has its own email
+  address: forward it a paper and it lands on the wall (mail from outside the space waits for the
+  owner's yes).
 - **Library:** PDF, Word, PowerPoint, Markdown, text, web pages, YouTube, audio and video
-  (transcribed with ElevenLabs Scribe, cited to the second). Folders, ⌘K, Trash, DOI import.
-  Every document gets a PDF rendition, so one viewer highlights any citation.
-- **Chat:** one chat over the whole library, a folder or chosen files; the agree/disagree matrix;
-  the receipt with steps, sources, memories and SQL; "Not in your library" with Find sources.
+  (transcribed with ElevenLabs Scribe, cited to the second). ⌘K, Trash, DOI import. Every
+  document gets a PDF rendition, so one viewer highlights any citation.
+- **Ask:** from the dock, over the whole library, a space or chosen files; the agree/disagree
+  matrix; the receipt with steps, sources, memories and SQL; "Not in your library" with Find
+  sources. **Catch me up** says what moved since your last visit.
+- **Voice:** talk to the orb (ElevenLabs Scribe Realtime); it answers on a card built while you
+  speak and says the short answer out loud.
 - **Deep search:** finds papers (OpenAlex, open access) and web pages, imports them, answers.
 - **Write:** notes with citation chips, "Find a source" for a sentence, "Check my draft"
-  (supported / partly / contradicted / not found), versions, and export to Word in any CSL style or
-  to Google Docs.
+  (supported / partly / contradicted / not found), versions with a diff, export to Word in any
+  CSL style or to Google Docs, and **publish** as a public article whose every claim was checked
+  before it went out.
 - **Study:** quizzes and games from your sources with checked answer keys, hints that never give
-  the answer away, spaced repetition (FSRS) and streaks.
+  the answer away, spaced repetition (FSRS) and streaks. **Live rounds:** play a quiz together in
+  a shared space with a join code; answers turn face up together with the passage.
+- **What it knows:** your corrections (H-MEM) and where your sources stand on each claim (World
+  Model), yours and each space's, readable and editable.
 - **Agents:** saved standing tasks: watch a topic for new papers, or quiz a folder on a schedule.
-- **Public folders:** a read-only link anyone can read and ask, with moderation and caps.
-- **Audio brief:** two voices talk through a folder (ElevenLabs), every line cited and checked.
+- **Public spaces:** a read-only link anyone can read and ask, with moderation and caps.
+- **Audio brief:** two voices talk through a space (ElevenLabs), every line cited and checked.
 - **Connectors:** Gmail, Google Drive and Notion through Composio; imports resync when they
   change.
+- **People:** profiles with handles, follows, and a guest entry that needs no account: keep it
+  later with Google or a code by email.
+- **Email** (Resend): sign-in codes, mail to a space, invites, and an opt-in weekly digest.
 
 ## Entry points
 
@@ -254,6 +272,7 @@ Zetaris statement (by hash), rows returned, verdicts (`approved`, `rejected_to_w
   client.
 - Scanned PDFs are read with OCRmyPDF (installed, or its Docker image); handwriting and complex
   tables can come out imperfect.
+
 
 ## Licences and credits
 
