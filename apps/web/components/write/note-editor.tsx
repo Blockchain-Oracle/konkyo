@@ -69,8 +69,8 @@ function Tool({
       onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
       className={cn(
-        "text-ash-gray hover:text-bone-white [&_svg]:stroke-[1.75]",
-        active && "bg-white/8 text-bone-white",
+        "rounded-full text-white/70 hover:bg-white/10 hover:text-white [&_svg]:stroke-[1.9]",
+        active && "bg-white text-ink hover:bg-white hover:text-ink",
       )}
     >
       {children}
@@ -279,34 +279,26 @@ export function NoteEditor({ note }: { note: NoteDetail }) {
   )
 
   return (
-    <div className="flex h-svh min-h-0 max-md:h-[calc(100svh-3.5rem)]">
-      <div className="min-w-0 flex-1 overflow-y-auto">
-        <header className="sticky top-0 z-20 flex h-12 items-center gap-1 bg-background/95 px-3 md:px-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 px-2 text-snippet text-ash-gray hover:text-bone-white"
-            render={<Link href="/write" />}
-            nativeButton={false}
-          >
-            <ChevronLeftIcon strokeWidth={1.75} />
-            Write
-          </Button>
+    <div className="mx-auto flex w-full max-w-[1260px] items-start gap-6 px-4 pt-4 pb-32 md:px-8 md:pt-[92px]">
+      <div className="min-w-0 flex-1">
+        {/* the note's own row: back, saved, and what to do with it (stickers on the wall) */}
+        <header className="write-top">
+          <Link href="/write" className="room-pill hover:bg-ink">
+            <ChevronLeftIcon className="size-3.5" strokeWidth={2.25} aria-hidden />
+            write
+          </Link>
           <span
-            className={cn(
-              "ml-1 inline-flex items-center gap-1 text-meta",
-              saveState === "retrying" ? "text-partly" : "text-ash-gray",
-            )}
+            className={cn("room-pill", saveState === "retrying" && "is-warning")}
             aria-live="polite"
           >
-            {saveState === "retrying" && <CloudOffIcon className="size-3.5" strokeWidth={1.5} />}
+            {saveState === "retrying" && <CloudOffIcon className="size-3.5" strokeWidth={1.75} />}
             {saveState === "saved"
-              ? "Saved"
+              ? "saved"
               : saveState === "saving"
-                ? "Saving…"
-                : "Not saved, retrying"}
+                ? "saving…"
+                : "not saved, retrying"}
           </span>
-          <div className="ml-auto flex items-center gap-1">
+          <div className="ml-auto flex items-center gap-2">
             <button
               type="button"
               className="publish-open"
@@ -318,40 +310,51 @@ export function NoteEditor({ note }: { note: NoteDetail }) {
             >
               publish <span aria-hidden="true">↗</span>
             </button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 text-snippet text-ash-gray hover:text-bone-white"
+            <button
+              type="button"
+              className="room-pill hover:bg-ink"
               onClick={() => setExporting(true)}
             >
-              <DownloadIcon strokeWidth={1.5} />
-              Export
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              aria-label="Sources, check and history"
-              className="text-ash-gray hover:text-bone-white lg:hidden"
-              onClick={() => setSheet(true)}
-            >
-              <PanelRightIcon strokeWidth={1.5} />
-            </Button>
+              <DownloadIcon className="size-3.5" strokeWidth={2} aria-hidden />
+              export
+            </button>
+            <span className="lg:hidden">
+              <button
+                type="button"
+                aria-label="Sources, check and history"
+                className="room-pill hover:bg-ink"
+                onClick={() => setSheet(true)}
+              >
+                <PanelRightIcon className="size-3.5" strokeWidth={2} aria-hidden />
+              </button>
+            </span>
           </div>
         </header>
 
-        <div className="mx-auto w-full max-w-[68ch] px-6 pt-6 md:pt-10">
-          <input
+        {/* the note itself, on cream paper (R4): 68 characters wide, ink on paper */}
+        <article className="surface-paper write-sheet">
+          <span className="board-tape" aria-hidden />
+          {/* a title wraps like the heading it is; Enter goes on to the note */}
+          <textarea
             value={title}
+            rows={1}
             onChange={(e) => {
-              setTitle(e.target.value)
-              schedule({ title: e.target.value })
+              const next = e.target.value.replace(/\n/g, " ")
+              setTitle(next)
+              schedule({ title: next })
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault()
+                editor?.commands.focus("start")
+              }
             }}
             maxLength={300}
             placeholder="Untitled note"
             aria-label="Title"
-            className="w-full bg-transparent text-heading-2xs font-normal text-bone-white outline-none placeholder:text-ash-gray"
+            className="write-title"
           />
-          <div className="sticky top-12 z-10 -mx-2 mt-4 mb-6 flex flex-wrap items-center gap-0.5 bg-background/95 py-1">
+          <div className="write-toolbar" role="toolbar" aria-label="Formatting">
             <Tool
               label="Heading"
               active={editor?.isActive("heading", { level: 2 })}
@@ -394,11 +397,10 @@ export function NoteEditor({ note }: { note: NoteDetail }) {
             >
               <QuoteIcon />
             </Tool>
-            <span className="mx-1.5 h-4 w-px bg-border" aria-hidden />
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 text-snippet text-ash-gray hover:text-bone-white"
+            <span className="mx-1 h-4 w-px bg-white/20" aria-hidden />
+            <button
+              type="button"
+              className="write-check"
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => {
                 showTab("check")
@@ -406,8 +408,8 @@ export function NoteEditor({ note }: { note: NoteDetail }) {
               }}
               disabled={empty}
             >
-              Check my draft
-            </Button>
+              check my draft
+            </button>
           </div>
           {editor && (
             <BubbleMenu
@@ -417,11 +419,11 @@ export function NoteEditor({ note }: { note: NoteDetail }) {
                 state.doc.textBetween(state.selection.from, state.selection.to).trim().length > 3
               }
             >
-              <div className="flex items-center gap-0.5 rounded-full border border-border bg-overlay p-1 shadow-lg">
+              <div className="write-toolbar is-bubble">
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-7 rounded-full px-2.5 text-snippet text-silver-mist hover:text-bone-white"
+                  className="h-7 rounded-full px-2.5 text-[12.5px] font-bold text-white/85 hover:bg-white/10 hover:text-white"
                   onClick={() => {
                     const { from, to } = editor.state.selection
                     findSource(editor.state.doc.textBetween(from, to, " "))
@@ -448,14 +450,12 @@ export function NoteEditor({ note }: { note: NoteDetail }) {
             </BubbleMenu>
           )}
           <EditorContent editor={editor} />
-        </div>
+        </article>
       </div>
 
-      <aside
-        aria-label="Sources, check and history"
-        className="hidden w-[22rem] shrink-0 border-l border-border bg-panel lg:block"
-      >
-        {panel}
+      {/* sources, check, versions and record: a floating black card beside the paper (R1) */}
+      <aside aria-label="Sources, check and history" className="hidden w-[22rem] shrink-0 lg:block">
+        <div className="write-panel surface-sticker">{panel}</div>
       </aside>
       <Sheet open={sheet} onOpenChange={setSheet}>
         <SheetContent side="right" className="w-full gap-0 p-0 sm:max-w-md lg:hidden">

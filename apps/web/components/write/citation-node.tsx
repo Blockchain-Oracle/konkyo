@@ -54,12 +54,12 @@ function CitationView({ node, deleteNode, selected }: ReactNodeViewProps) {
               onClick={open}
               contentEditable={false}
               data-selected={selected || undefined}
-              className="mx-0.5 inline-flex translate-y-[-0.06em] items-center gap-1 rounded-[6px] border border-white/14 bg-raised px-1.5 align-middle text-[0.72em] leading-[1.6] text-silver-mist transition-colors duration-(--duration-press) hover:border-supports/60 hover:text-bone-white data-selected:border-silver-mist"
+              className="write-cite"
             />
           }
         >
           {citationLabel(a)}
-          <CheckIcon className="size-2.5 text-supports" strokeWidth={2.5} aria-hidden />
+          <CheckIcon className="size-2.5 text-lime" strokeWidth={3} aria-hidden />
         </HoverCardTrigger>
         <HoverCardContent align="start" className="w-80 p-0">
           <div className="flex items-start gap-2.5 border-b border-border p-3">

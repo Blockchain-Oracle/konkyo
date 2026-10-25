@@ -7229,3 +7229,71 @@ body.voice-stage-up .voice-found-pulse {
   color: var(--color-sticker);
   translate: none;
 }
+
+/* ---- System pages (404, error; the offline page copies this in sw.js) ---- */
+.system-page {
+  display: flex;
+  min-height: 100svh;
+  flex-direction: column;
+  background: var(--color-sticker);
+  color: white;
+  padding: 28px clamp(20px, 5vw, 56px) 56px;
+}
+.system-brand {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 8px;
+  color: white;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 800;
+  text-decoration: none;
+}
+.system-body {
+  display: flex;
+  max-width: 44rem;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: 20px;
+}
+.system-sticker {
+  align-self: flex-start;
+  rotate: -6deg;
+  border-radius: 14px;
+  background: var(--color-paper-card);
+  box-shadow: 0 6px 0 rgba(255, 255, 255, 0.12);
+  color: var(--color-sticker);
+  padding: 8px 18px 10px;
+  font-family: var(--font-display);
+  font-size: clamp(28px, 5vw, 40px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+.system-page h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(44px, 9vw, 96px);
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  line-height: 0.95;
+  text-wrap: balance;
+}
+.system-page p {
+  margin: 0;
+  max-width: 34rem;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+.system-action {
+  align-self: flex-start;
+  min-height: 52px;
+  margin-top: 8px;
+  padding: 10px 22px;
+  font-size: 16px;
+  text-decoration: none;
+}

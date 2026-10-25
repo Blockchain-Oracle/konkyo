@@ -8,6 +8,7 @@ import { cn } from "@konkyo/ui/lib/utils"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { EditorContent, useEditor } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
+import { diffWords } from "diff"
 import {
   BookmarkIcon,
   DownloadIcon,
@@ -42,8 +43,12 @@ function VersionPreview({
 }) {
   const { data } = useQuery({
     queryKey: ["note-version", version.id],
-    queryFn: () => api<{ content: unknown }>(`/api/notes/${noteId}/versions/${version.id}`),
+    queryFn: () =>
+      api<{ content: unknown; text: string; now: string }>(
+        `/api/notes/${noteId}/versions/${version.id}`,
+      ),
   })
+  const [view, setView] = useState<"changes" | "then">("changes")
   const editor = useEditor(
     {
       extensions: [StarterKit, Citation],
@@ -73,8 +78,36 @@ function VersionPreview({
           Viewing {version.name ?? "autosave"} · {day.format(new Date(version.createdAt))},{" "}
           {time.format(new Date(version.createdAt))}
         </DialogTitle>
+        <div className="flex gap-1.5" role="tablist" aria-label="How to see it">
+          {(
+            [
+              ["changes", "what changed since"],
+              ["then", "as it was"],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={view === id}
+              onClick={() => setView(id)}
+              className={cn(
+                "h-8 rounded-full px-3.5 text-[12.5px] font-bold",
+                view === id ? "bg-ink text-white" : "text-ash-gray hover:text-bone-white",
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
         <div className="-mx-6 max-h-[60svh] overflow-y-auto border-y border-border px-6 py-4">
-          {data ? <EditorContent editor={editor} /> : <Skeleton className="h-40 w-full" />}
+          {!data ? (
+            <Skeleton className="h-40 w-full" />
+          ) : view === "then" ? (
+            <EditorContent editor={editor} />
+          ) : (
+            <VersionDiff then={data.text} now={data.now} />
+          )}
         </div>
         <DialogFooter className="gap-2">
           <Button variant="ghost" onClick={onClose}>
@@ -86,6 +119,46 @@ function VersionPreview({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  )
+}
+
+/**
+ * What changed between a version and the note now, word by word (jsdiff): words taken out are
+ * struck through, words put in are marked. Blank lines between paragraphs are kept.
+ */
+function VersionDiff({ then, now }: { then: string; now: string }) {
+  const parts = diffWords(then, now)
+  const words = (text: string) => text.split(/\s+/).filter((w) => /[\p{L}\p{N}]/u.test(w)).length
+  const added = parts.filter((p) => p.added).reduce((n, p) => n + words(p.value), 0)
+  const removed = parts.filter((p) => p.removed).reduce((n, p) => n + words(p.value), 0)
+  if (!added && !removed)
+    return <p className="text-snippet text-ash-gray">Nothing has changed since this version.</p>
+  return (
+    <div className="version-diff">
+      <p className="version-diff-sum">
+        <ins>
+          +{added} word{added === 1 ? "" : "s"}
+        </ins>{" "}
+        <del>
+          −{removed} word{removed === 1 ? "" : "s"}
+        </del>{" "}
+        since this version
+      </p>
+      <p className="version-diff-text">
+        {parts.map((p, i) =>
+          p.added ? (
+            // biome-ignore lint/suspicious/noArrayIndexKey: the diff's runs, in order
+            <ins key={i}>{p.value}</ins>
+          ) : p.removed ? (
+            // biome-ignore lint/suspicious/noArrayIndexKey: the diff's runs, in order
+            <del key={i}>{p.value}</del>
+          ) : (
+            // biome-ignore lint/suspicious/noArrayIndexKey: the diff's runs, in order
+            <span key={i}>{p.value}</span>
+          ),
+        )}
+      </p>
+    </div>
   )
 }
 

@@ -4,25 +4,27 @@ import "@konkyo/ui/globals.css"
 
 /**
  * When the root layout itself fails, this replaces the whole document, so it carries its own
- * <html> and <body>, and nothing that could fail the same way.
+ * <html> and <body> and nothing that could fail the same way: the system page's look in plain
+ * markup (its classes come with the stylesheet).
  */
 export default function GlobalError({ reset }: { error: Error; reset: () => void }) {
   return (
-    <html lang="en" className="dark">
-      <body className="grid min-h-svh place-items-center bg-void px-6 font-sans text-bone-white">
-        <main className="w-full max-w-[30rem]">
-          <p className="text-micro text-saffron-spark uppercase">Something went wrong</p>
-          <h1 className="mt-3 text-subheading font-normal">Konkyo didn't load</h1>
-          <p className="mt-4.5 text-body font-extralight">
-            Your files and work are saved. Try again in a moment.
-          </p>
-          <button
-            type="button"
-            onClick={reset}
-            className="mt-9 h-11 rounded-full bg-lime px-6 text-ui font-bold text-ink"
-          >
-            Try again
-          </button>
+    <html lang="en">
+      <body>
+        <main className="system-page">
+          <a href="/" className="system-brand">
+            konkyo
+          </a>
+          <div className="system-body">
+            <span className="system-sticker" aria-hidden="true">
+              hiccup
+            </span>
+            <h1>konkyo didn&apos;t load.</h1>
+            <p>Your files and work are saved. Try again in a moment.</p>
+            <button type="button" onClick={reset} className="claim-done system-action">
+              try again <span aria-hidden="true">↻</span>
+            </button>
+          </div>
         </main>
       </body>
     </html>
