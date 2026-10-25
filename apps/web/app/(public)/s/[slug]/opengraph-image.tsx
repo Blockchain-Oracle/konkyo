@@ -1,5 +1,4 @@
 import { SPACES, type SpaceWall } from "@konkyo/config"
-import { colorFor } from "@konkyo/ui/lib/space"
 import { ImageResponse } from "next/og"
 import { Mark, Spark } from "@/components/og-mark"
 import { OG, ogFonts } from "@/lib/og"
@@ -15,8 +14,7 @@ export default async function PublicSpaceImage({ params }: { params: Promise<{ s
   const share = await openShare(slug).catch(() => null)
   const name = (share?.name ?? "a public space").toLowerCase()
   const count = share?.files.length ?? 0
-  const color = share?.color ?? colorFor(slug)
-  const wall = SPACES.walls[(share?.wall ?? SPACES.defaultWall[color]) as SpaceWall]
+  const wall = SPACES.walls[(share?.wall ?? "violet") as SpaceWall]
   return new ImageResponse(
     <div
       style={{

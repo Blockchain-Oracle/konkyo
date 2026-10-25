@@ -17,7 +17,7 @@ import {
   QuoteIcon,
   SearchIcon,
 } from "lucide-react"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { toast } from "sonner"
 import { api } from "@/lib/fetcher"
 import { useQuery } from "@/lib/use-query"
@@ -43,6 +43,9 @@ function VersionPreview({
 }) {
   const { data } = useQuery({
     queryKey: ["note-version", version.id],
+    // compared with the note as it is now, never a copy from earlier
+    staleTime: 0,
+    refetchOnMount: "always",
     queryFn: () =>
       api<{ content: unknown; text: string; now: string }>(
         `/api/notes/${noteId}/versions/${version.id}`,
@@ -78,7 +81,7 @@ function VersionPreview({
           Viewing {version.name ?? "autosave"} · {day.format(new Date(version.createdAt))},{" "}
           {time.format(new Date(version.createdAt))}
         </DialogTitle>
-        <div className="flex gap-1.5" role="tablist" aria-label="How to see it">
+        <div className="flex gap-1.5">
           {(
             [
               ["changes", "what changed since"],
@@ -88,12 +91,11 @@ function VersionPreview({
             <button
               key={id}
               type="button"
-              role="tab"
-              aria-selected={view === id}
+              aria-pressed={view === id}
               onClick={() => setView(id)}
               className={cn(
                 "h-8 rounded-full px-3.5 text-[12.5px] font-bold",
-                view === id ? "bg-ink text-white" : "text-ash-gray hover:text-bone-white",
+                view === id ? "bg-lime text-ink" : "text-ash-gray hover:text-bone-white",
               )}
             >
               {label}
@@ -122,12 +124,22 @@ function VersionPreview({
   )
 }
 
+/** How long the word-by-word comparison may run before it gives up. */
+const DIFF_TIMEOUT_MS = 300
+
 /**
  * What changed between a version and the note now, word by word (jsdiff): words taken out are
  * struck through, words put in are marked. Blank lines between paragraphs are kept.
  */
 function VersionDiff({ then, now }: { then: string; now: string }) {
-  const parts = diffWords(then, now)
+  // once per pair, and given up after a moment (a long rewrite would hold the page)
+  const parts = useMemo(() => diffWords(then, now, { timeout: DIFF_TIMEOUT_MS }), [then, now])
+  if (!parts)
+    return (
+      <p className="text-snippet text-ash-gray">
+        Too much changed to compare word by word. “As it was” shows this version.
+      </p>
+    )
   const words = (text: string) => text.split(/\s+/).filter((w) => /[\p{L}\p{N}]/u.test(w)).length
   const added = parts.filter((p) => p.added).reduce((n, p) => n + words(p.value), 0)
   const removed = parts.filter((p) => p.removed).reduce((n, p) => n + words(p.value), 0)

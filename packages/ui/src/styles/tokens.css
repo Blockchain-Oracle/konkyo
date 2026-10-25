@@ -868,6 +868,14 @@ html[data-wall-tone="dark"] .status-pill {
   line-height: 1;
   white-space: nowrap;
 }
+a.room-pill,
+button.room-pill {
+  transition: translate 160ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+a.room-pill:hover,
+button.room-pill:hover:not(:disabled) {
+  translate: 0 -2px;
+}
 .room-pill b {
   color: var(--color-lime);
   font-weight: 800;

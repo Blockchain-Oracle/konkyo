@@ -86,6 +86,16 @@ function Tool({
 export function NoteEditor({ note }: { note: NoteDetail }) {
   const [backup] = useState(() => readBackup(note.id, note.updatedAt))
   const [title, setTitle] = useState(backup?.title ?? note.title)
+  // the title grows with its lines (field-sizing where it's supported, this where it isn't)
+  const titleBox = useRef<HTMLTextAreaElement | null>(null)
+  const fitTitle = useCallback((el: HTMLTextAreaElement | null) => {
+    titleBox.current = el
+    if (!el) return
+    el.style.height = "auto"
+    el.style.height = `${el.scrollHeight}px`
+  }, [])
+  // biome-ignore lint/correctness/useExhaustiveDependencies: refit whenever the title changes
+  useEffect(() => fitTitle(titleBox.current), [title, fitTitle])
   const { state: saveState, schedule, flush } = useAutosave(note.id)
   const [tab, setTab] = useState<Tab>("sources")
   const [sheet, setSheet] = useState(false)
@@ -344,11 +354,13 @@ export function NoteEditor({ note }: { note: NoteDetail }) {
               schedule({ title: next })
             }}
             onKeyDown={(e) => {
-              if (e.key === "Enter") {
+              // never mid-IME composition: that Enter picks a word
+              if (e.key === "Enter" && !e.nativeEvent.isComposing) {
                 e.preventDefault()
                 editor?.commands.focus("start")
               }
             }}
+            ref={fitTitle}
             maxLength={300}
             placeholder="Untitled note"
             aria-label="Title"
@@ -454,7 +466,10 @@ export function NoteEditor({ note }: { note: NoteDetail }) {
       </div>
 
       {/* sources, check, versions and record: a floating black card beside the paper (R1) */}
-      <aside aria-label="Sources, check and history" className="hidden w-[22rem] shrink-0 lg:block">
+      <aside
+        aria-label="Sources, check and history"
+        className="hidden w-[22rem] shrink-0 self-start lg:sticky lg:top-[84px] lg:block"
+      >
         <div className="write-panel surface-sticker">{panel}</div>
       </aside>
       <Sheet open={sheet} onOpenChange={setSheet}>

@@ -6652,7 +6652,8 @@ body.voice-stage-up .voice-found-pulse {
   translate: 0 1px;
 }
 
-.claim-done span {
+/* the arrow glyph after its words, not every span inside */
+.claim-done > span[aria-hidden="true"] {
   font-size: 15px;
 }
 

@@ -10,5 +10,9 @@ export const GET = route<{ id: string; vid: string }>(async ({ userId, params })
     getVersion(userId, noteId, z.uuid().parse(params.vid)),
     getNote(userId, noteId),
   ])
-  return { ...version, text: docText(version.content), now: docText(note.content) }
+  return {
+    ...version,
+    text: docText(version.content, { citations: true }),
+    now: docText(note.content, { citations: true }),
+  }
 })

@@ -2,7 +2,7 @@
 
 import { useChat } from "@ai-sdk/react"
 import type { KonkyoMessage } from "@konkyo/agents"
-import { PUBLIC, SPACES } from "@konkyo/config"
+import { PUBLIC } from "@konkyo/config"
 import { Button } from "@konkyo/ui/components/button"
 import { DefaultChatTransport } from "ai"
 import { ArrowUpIcon, RotateCcwIcon, SquareIcon } from "lucide-react"
@@ -11,6 +11,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { BrandMark } from "@/components/brand-mark"
 import { KindIcon } from "@/components/library/kind-icon"
 import { RoomHeader } from "@/components/page-shell"
+import { wallTheme } from "@/components/shell/wall"
 import { Workspace } from "@/components/source/workspace"
 import { errorText } from "@/lib/format"
 import { isSendKey } from "@/lib/keys"
@@ -115,8 +116,7 @@ function PublicChat({ slug, share }: { slug: string; share: PublicShare }) {
   }, [messages.length, last?.parts.length])
 
   const count = share.files.length
-  const wall =
-    share.wall ?? SPACES.defaultWall[(share.color as keyof typeof SPACES.defaultWall) ?? "violet"]
+  const wall = wallTheme(share.wall)
   return (
     <div className={`paper-bg space-theme-${wall} flex min-h-svh flex-col`}>
       <div className="public-top">

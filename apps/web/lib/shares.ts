@@ -1,9 +1,10 @@
 import "server-only"
 import { createHmac, randomBytes } from "node:crypto"
 import { bylineOf } from "@konkyo/agents"
-import { type FileMeta, PUBLIC } from "@konkyo/config"
+import { type FileMeta, PUBLIC, SPACES } from "@konkyo/config"
 import { db, schema } from "@konkyo/db"
 import { env } from "@konkyo/env/server"
+import { colorFor } from "@konkyo/ui/lib/space"
 import { and, count, eq, gte, inArray, isNull, ne } from "drizzle-orm"
 import { subtree } from "./folders"
 import {
@@ -118,6 +119,7 @@ async function resolve(slug: string) {
 /** What a public folder's page shows. */
 export async function openShare(slug: string) {
   const { share, folder, files: rows } = await resolve(slug)
+  const color = folder.color ?? colorFor(folder.id)
   return {
     name: folder.name,
     description: share.description,
@@ -133,8 +135,9 @@ export async function openShare(slug: string) {
         byline: bylineOf(f.meta as FileMeta) ?? null,
         thumbUrl: f.thumbKey ? `/api/public/${slug}/files/${f.id}/thumb` : null,
       })),
-    color: folder.color,
-    wall: folder.wall,
+    // resolved here, once: the page, its preview and the app all show the same colour and wall
+    color,
+    wall: folder.wall ?? SPACES.defaultWall[color],
     symbol: folder.symbol,
   }
 }

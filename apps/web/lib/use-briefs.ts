@@ -37,6 +37,7 @@ export function useMakeBrief() {
       api<{ id: string }>("/api/briefs", { method: "POST", json: { folderId } }),
     onSuccess: ({ id }, folderId) => {
       void queryClient.invalidateQueries({ queryKey: briefKeys.folder(folderId) })
+      void queryClient.invalidateQueries({ queryKey: ["briefs"] })
       router.push(`/briefs/${id}` as Route)
     },
     onError: (error: Error) => toast.error(error.message),

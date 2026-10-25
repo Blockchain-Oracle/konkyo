@@ -32,10 +32,15 @@ export type PMNode = {
  * A note's words as plain text, a blank line between blocks, derived on the server from the saved
  * document: what moderation reads, what read-aloud says, and what a check for publishing checks.
  */
-export function docText(content: unknown): string {
+export function docText(content: unknown, options: { citations?: boolean } = {}): string {
   const blocks: string[] = []
   const inline = (n: PMNode): string =>
-    n.type === "text" ? (n.text ?? "") : (n.content ?? []).map(inline).join("")
+    n.type === "text"
+      ? (n.text ?? "")
+      : n.type === "citation" && options.citations
+        ? // a version's diff shows a citation put in or taken out
+          ` [${String(n.attrs?.title ?? "source")}${n.attrs?.page ? `, p. ${n.attrs.page}` : ""}]`
+        : (n.content ?? []).map(inline).join("")
   const walk = (n: PMNode) => {
     if (["paragraph", "heading", "blockquote", "listItem", "codeBlock"].includes(n.type)) {
       const line = inline(n).trim()

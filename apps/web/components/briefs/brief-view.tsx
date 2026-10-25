@@ -5,7 +5,7 @@ import { BRIEF, SPACES } from "@konkyo/config"
 import { Button } from "@konkyo/ui/components/button"
 import { colorFor } from "@konkyo/ui/lib/space"
 import { cn } from "@konkyo/ui/lib/utils"
-import { useMutation } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   DownloadIcon,
   PauseIcon,
@@ -182,6 +182,7 @@ function citationsOf(lines: Line[]) {
 
 function Player({ brief, color }: { brief: Brief; color: string }) {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const audio = useRef<HTMLAudioElement>(null)
   const [time, setTime] = useState(0)
   const [playing, setPlaying] = useState(false)
@@ -218,6 +219,7 @@ function Player({ brief, color }: { brief: Brief; color: string }) {
     mutationFn: () => api(`/api/briefs/${brief.id}`, { method: "DELETE" }),
     onSuccess: () => {
       toast("Brief deleted")
+      void queryClient.invalidateQueries({ queryKey: ["briefs"] })
       router.replace("/briefs" as Route)
     },
     onError: (error: Error) => toast.error(error.message),

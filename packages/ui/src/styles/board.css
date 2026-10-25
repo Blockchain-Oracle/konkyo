@@ -1081,8 +1081,6 @@ button.board-object:hover,
 }
 .write-panel {
   color: white;
-  position: sticky;
-  top: 84px;
   height: calc(100svh - 104px);
   overflow: hidden;
   border-radius: 24px;
@@ -1271,6 +1269,11 @@ button.board-object:hover,
   font-size: 15px;
   font-weight: 600;
   line-height: 1.4;
+}
+.public-dock:focus-within {
+  box-shadow:
+    0 0 0 3px var(--color-lime),
+    0 8px 0 rgb(17 17 20 / 0.22);
 }
 .public-dock textarea::placeholder {
   color: rgb(255 255 255 / 0.55);
@@ -1723,7 +1726,8 @@ button.board-object:hover,
   gap: 4px;
   margin: 0;
   border-radius: 14px;
-  background: rgb(0 0 0 / 0.12);
+  background: var(--color-paper-card);
+  color: var(--color-ink);
   padding: 10px 12px;
   list-style: none;
   font-size: 12px;

@@ -18,7 +18,12 @@ type YouTubePlayer = {
 type YouTubeApi = {
   Player: new (
     el: HTMLIFrameElement,
-    options: { events: { onStateChange?: (event: { data: number }) => void } },
+    options: {
+      events: {
+        onReady?: (event: { target: YouTubePlayer }) => void
+        onStateChange?: (event: { data: number }) => void
+      }
+    },
   ) => YouTubePlayer
 }
 declare global {
@@ -86,8 +91,14 @@ export function MediaViewer({
     const el = frame.current
     void loadYouTubeApi().then((api) => {
       if (!live) return
-      player.current = new api.Player(el, {
-        events: { onStateChange: (event) => setYtPlaying(event.data === YT_PLAYING) },
+      // usable once ready (seekTo arrives then); until then a seek goes by message, as before
+      new api.Player(el, {
+        events: {
+          onReady: (event) => {
+            if (live) player.current = event.target
+          },
+          onStateChange: (event) => setYtPlaying(event.data === YT_PLAYING),
+        },
       })
     })
     return () => {

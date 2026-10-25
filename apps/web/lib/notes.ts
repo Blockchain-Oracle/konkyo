@@ -263,7 +263,11 @@ export async function listNotes(ownerId: string) {
         select json_build_object('id', s.id, 'name', s.name, 'color', s.color)
         from file_folders ff join folders fo on fo.id = ff.folder_id
         join folders s on s.id = fo.space_id
-        where ff.file_id = ${files.id} and s.deleted_at is null limit 1)`,
+        where ff.file_id = ${files.id} and s.deleted_at is null and fo.deleted_at is null
+          -- only a space this person is still in (a note can stay filed in one they left)
+          and (s.owner_id = ${ownerId} or exists (select 1 from space_members m
+            where m.space_id = s.id and m.user_id = ${ownerId}))
+        order by ff.added_at limit 1)`,
     })
     .from(files)
     .innerJoin(notes, eq(notes.fileId, files.id))

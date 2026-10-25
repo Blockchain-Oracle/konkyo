@@ -6,7 +6,7 @@ import { db, schema } from "@konkyo/db"
 import { folderRole, readableFileSql } from "@konkyo/db/access"
 import { enqueue } from "@konkyo/jobs"
 import { deleteObject } from "@konkyo/storage"
-import { and, desc, eq, inArray, isNull } from "drizzle-orm"
+import { and, desc, eq, inArray, isNull, or, sql } from "drizzle-orm"
 import { alias } from "drizzle-orm/pg-core"
 import { LibraryError } from "./library"
 import { allowanceLeft } from "./usage"
@@ -15,6 +15,12 @@ const { briefs, folders, files } = schema
 
 /** A brief's folder's space: its name and colours (the index's chips, the player's wall). */
 const space = alias(folders, "space")
+/** Only a space this person is still in: a brief made before they left keeps no window on it. */
+const stillIn = (userId: string) =>
+  or(
+    eq(space.ownerId, userId),
+    sql`exists (select 1 from space_members m where m.space_id = ${space.id} and m.user_id = ${userId})`,
+  )
 const spaceColumns = {
   spaceId: space.id,
   spaceName: space.name,
@@ -81,7 +87,7 @@ export async function getBrief(ownerId: string, id: string) {
         .select(spaceColumns)
         .from(folders)
         .innerJoin(space, eq(space.id, folders.spaceId))
-        .where(and(eq(folders.id, brief.folderId), isNull(space.deletedAt)))
+        .where(and(eq(folders.id, brief.folderId), isNull(space.deletedAt), stillIn(ownerId)))
     : []
   // Each citation shows its source's kind and byline, as an answer's chips do.
   const cited = [...new Set(brief.lines.flatMap((l) => (l.citation ? [l.citation.fileId] : [])))]
@@ -129,7 +135,7 @@ export async function listBriefs(ownerId: string, folderId?: string) {
     })
     .from(briefs)
     .leftJoin(folders, eq(folders.id, briefs.folderId))
-    .leftJoin(space, and(eq(space.id, folders.spaceId), isNull(space.deletedAt)))
+    .leftJoin(space, and(eq(space.id, folders.spaceId), isNull(space.deletedAt), stillIn(ownerId)))
     .where(and(eq(briefs.ownerId, ownerId), folderId ? eq(briefs.folderId, folderId) : undefined))
     .orderBy(desc(briefs.createdAt))
     .limit(50)

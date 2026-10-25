@@ -161,7 +161,11 @@ export async function listChats(ownerId: string) {
       space: sql<{ id: string; name: string; color: string | null } | null>`(
         select json_build_object('id', s.id, 'name', s.name, 'color', s.color)
         from folders fo join folders s on s.id = fo.space_id
-        where fo.id = (${chats.scope}->'folderIds'->>0)::uuid and s.deleted_at is null)`,
+        where fo.id = (${chats.scope}->'folderIds'->>0)::uuid and s.deleted_at is null
+          and fo.deleted_at is null
+          -- only a space this person is still in: never a name they have no access to
+          and (s.owner_id = ${ownerId} or exists (select 1 from space_members m
+            where m.space_id = s.id and m.user_id = ${ownerId})))`,
     })
     .from(chats)
     .where(and(eq(chats.ownerId, ownerId), isNull(chats.deletedAt)))

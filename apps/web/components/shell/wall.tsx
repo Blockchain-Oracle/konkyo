@@ -46,6 +46,10 @@ function useOverride() {
   )
 }
 
+/** The CSS theme a wall preset paints with (two presets go by other class names). */
+export const wallTheme = (wall: string) =>
+  wall === "night" ? "nightwall" : wall === "clean" ? "white" : wall
+
 /** Walls the black chrome would sink into; it takes a light rim on these. */
 const DARK_WALLS = new Set(["spruce", "nightwall", "midnight"])
 
@@ -56,7 +60,7 @@ export function WallBackground({ children }: { children: React.ReactNode }) {
   const space = spaceId ? spaces?.find((s) => s.id === spaceId) : undefined
   const chosen = useOverride()
   const wall = chosen ?? space?.wall ?? PLACE_WALL.find(([re]) => re.test(pathname))?.[1] ?? "white"
-  const theme = wall === "night" ? "nightwall" : wall === "clean" ? "white" : wall
+  const theme = wallTheme(wall)
 
   useEffect(() => {
     document.documentElement.dataset.wallTone = DARK_WALLS.has(theme) ? "dark" : "light"
