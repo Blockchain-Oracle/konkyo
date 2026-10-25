@@ -32,7 +32,7 @@ import { MediaViewer } from "./media-viewer"
 // PDFium runs as WebAssembly in a worker: load the viewer only in the browser, only when needed.
 const PdfViewer = dynamic(() => import("./pdf-viewer").then((m) => m.PdfViewer), {
   ssr: false,
-  loading: () => <div className="flex-1 bg-panel" />,
+  loading: () => <div className="flex-1 bg-muted" />,
 })
 
 /** The right pane (plan §7.3): every open source as a tab, the active one below. */
@@ -41,7 +41,11 @@ export function SourcePane({ className }: { className?: string }) {
   const { owner } = useSourceAccess()
   if (!active) return null
   return (
-    <section aria-label="Source" className={cn("flex h-full min-h-0 flex-col bg-panel", className)}>
+    // Reading happens on paper (R4): the pane is a cream card floating beside the room (R1).
+    <section
+      aria-label="Source"
+      className={cn("surface-paper source-sheet flex min-h-0 flex-col", className)}
+    >
       <header className="flex h-12 shrink-0 items-center gap-1 border-b border-border pr-2 pl-2">
         <div
           role="tablist"
@@ -129,7 +133,7 @@ function SourceTabButton({ tab, active }: { tab: SourceTab; active: boolean }) {
         type="button"
         aria-label={`Close ${tab.title}`}
         onClick={() => closeSource(tab.fileId)}
-        className="ml-1 grid size-6 shrink-0 place-items-center rounded-full text-ash-gray opacity-0 transition-opacity duration-(--duration-press) group-hover:opacity-100 hover:bg-white/8 hover:text-bone-white focus-visible:opacity-100 group-has-[[aria-selected=true]]:opacity-100"
+        className="ml-1 grid size-6 shrink-0 place-items-center rounded-full text-ash-gray opacity-0 transition-opacity duration-(--duration-press) group-hover:opacity-100 hover:bg-black/8 hover:text-bone-white focus-visible:opacity-100 group-has-[[aria-selected=true]]:opacity-100"
       >
         <XIcon className="size-3.5" strokeWidth={1.75} />
       </button>
@@ -148,7 +152,7 @@ function SourceBody({ tab }: { tab: SourceTab }) {
     [tab.target, passage],
   )
 
-  if (isPending) return <div className="flex-1 bg-panel" />
+  if (isPending) return <div className="flex-1 bg-muted" />
   if (isError || !file)
     return (
       <p className="grid flex-1 place-items-center p-6 text-center text-ui text-ash-gray">
@@ -170,7 +174,7 @@ function SourceBody({ tab }: { tab: SourceTab }) {
       </p>
     )
   // A cited passage waits for its boxes, so the viewer jumps once instead of twice.
-  if (tab.target?.passageId && !passage) return <div className="flex-1 bg-panel" />
+  if (tab.target?.passageId && !passage) return <div className="flex-1 bg-muted" />
   return (
     <PdfViewer url={file.renditionUrl} fileId={file.id} title={file.title} target={pdfTarget} />
   )

@@ -233,7 +233,9 @@
   display: -webkit-box;
   min-width: 0;
   overflow: hidden;
-  overflow-wrap: anywhere;
+  /* a word breaks only when it alone is wider than the line */
+  overflow-wrap: break-word;
+  hyphens: auto;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }

@@ -323,7 +323,7 @@ function LoadedDocument({
           </ToolbarButton>
         </div>
       </div>
-      <Viewport documentId={documentId} className="min-h-0 flex-1 bg-panel">
+      <Viewport documentId={documentId} className="min-h-0 flex-1 bg-muted">
         <GlobalPointerProvider documentId={documentId}>
           <Scroller documentId={documentId} renderPage={renderPage} />
         </GlobalPointerProvider>
@@ -369,7 +369,7 @@ function ToolbarButton({
 
 function ViewerLoading() {
   return (
-    <div className="grid flex-1 place-items-center bg-panel" role="status">
+    <div className="grid flex-1 place-items-center bg-muted" role="status">
       <Spinner className="size-5 text-ash-gray" />
       <span className="sr-only">Opening the document</span>
     </div>
@@ -378,7 +378,7 @@ function ViewerLoading() {
 
 function ViewerMessage({ children }: { children: React.ReactNode }) {
   return (
-    <div className="grid flex-1 place-items-center bg-panel p-6 text-center text-ui text-ash-gray">
+    <div className="grid flex-1 place-items-center bg-muted p-6 text-center text-ui text-ash-gray">
       {children}
     </div>
   )

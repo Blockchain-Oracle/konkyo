@@ -2,15 +2,15 @@
 
 import { useChat } from "@ai-sdk/react"
 import type { KonkyoMessage } from "@konkyo/agents"
-import { PUBLIC } from "@konkyo/config"
+import { PUBLIC, SPACES } from "@konkyo/config"
 import { Button } from "@konkyo/ui/components/button"
-import { Textarea } from "@konkyo/ui/components/textarea"
 import { DefaultChatTransport } from "ai"
 import { ArrowUpIcon, RotateCcwIcon, SquareIcon } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { BrandMark } from "@/components/brand-mark"
 import { KindIcon } from "@/components/library/kind-icon"
+import { RoomHeader } from "@/components/page-shell"
 import { Workspace } from "@/components/source/workspace"
 import { openSource } from "@/lib/preview"
 import type { openShare } from "@/lib/shares"
@@ -43,20 +43,25 @@ const sizeOf = (f: PublicFile) =>
       ? `${Math.round(f.durationSeconds / 60)} min`
       : null
 
-function SourceCard({ file }: { file: PublicFile }) {
+/** A source on the wall: a paper polaroid (page one, or its kind), opening read-only beside. */
+function SourceCard({ file, i }: { file: PublicFile; i: number }) {
   return (
     <button
       type="button"
       onClick={() => openSource({ fileId: file.id, title: file.title, kind: file.kind })}
-      className="flex w-full items-start gap-3 rounded-xl border border-border bg-panel p-3.5 text-left transition-colors duration-(--duration-press) hover:border-line-strong hover:bg-raised"
+      className="public-source"
+      style={{ rotate: `${[-1.6, 1.2, -0.8, 1.8][i % 4]}deg` }}
     >
-      <KindIcon kind={file.kind} className="mt-0.5 size-4 shrink-0" />
-      <span className="min-w-0">
-        <span className="line-clamp-2 text-ui text-bone-white">{file.title}</span>
-        <span className="mt-1 block truncate text-meta text-ash-gray">
-          {[file.byline, sizeOf(file)].filter(Boolean).join(" · ")}
-        </span>
+      <span className="public-source-face">
+        {file.thumbUrl ? (
+          // biome-ignore lint/performance/noImgElement: same-origin page-one webp
+          <img src={file.thumbUrl} alt="" loading="lazy" />
+        ) : (
+          <KindIcon kind={file.kind} className="size-7" />
+        )}
       </span>
+      <strong>{file.title}</strong>
+      <small>{[file.byline, sizeOf(file)].filter(Boolean).join(" · ")}</small>
     </button>
   )
 }
@@ -116,147 +121,122 @@ function PublicChat({ slug, share }: { slug: string; share: PublicShare }) {
   }, [messages.length, last?.parts.length])
 
   const count = share.files.length
+  const wall =
+    share.wall ?? SPACES.defaultWall[(share.color as keyof typeof SPACES.defaultWall) ?? "violet"]
   return (
-    <div className="flex min-h-svh flex-col">
-      <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-3 border-b border-border bg-background/85 px-5 backdrop-blur-md">
-        <Link href="/" className="flex items-center gap-2 text-ui text-bone-white">
-          <BrandMark small className="size-5" />
-          Konkyo
+    <div className={`paper-bg space-theme-${wall} flex min-h-svh flex-col`}>
+      <div className="public-top">
+        <Link href="/" className="room-pill hover:bg-ink">
+          <BrandMark small className="size-4" />
+          konkyo
         </Link>
-        <span className="hidden text-meta text-ash-gray sm:inline">Shared folder · read-only</span>
-        <Button
-          size="sm"
-          variant="secondary"
-          className="ml-auto"
-          render={<Link href="/sign-in" />}
-          nativeButton={false}
-        >
-          Start your own library
-        </Button>
-      </header>
-
-      <div className="mx-auto w-full max-w-[46rem] flex-1 px-5 pt-10 pb-10 sm:px-6">
-        <p className="text-micro text-saffron-spark uppercase">Shared folder</p>
-        <h1 className="mt-3 text-heading-xs text-balance text-bone-white sm:text-subheading">
-          {share.name}
-        </h1>
-        {share.description && (
-          <p className="mt-3 text-reading text-pretty text-silver-mist">{share.description}</p>
-        )}
-        <p className="mt-3 text-snippet text-ash-gray">
-          {count} source{count === 1 ? "" : "s"}. Every answer quotes them, and each quote is
-          checked word for word before you see it.
-        </p>
-
-        {messages.length === 0 ? (
-          <ul className="mt-8 grid gap-2.5 sm:grid-cols-2" aria-label="Sources">
-            {share.files.map((file) => (
-              <li key={file.id}>
-                <SourceCard file={file} />
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <details className="group mt-6 rounded-xl border border-border bg-panel">
-            <summary className="cursor-pointer list-none px-4 py-3 text-snippet text-silver-mist marker:hidden">
-              The {count} source{count === 1 ? "" : "s"}
-              <span className="ml-1 text-ash-gray group-open:hidden">· show</span>
-            </summary>
-            <ul className="grid gap-2 px-3 pb-3 sm:grid-cols-2">
-              {share.files.map((file) => (
-                <li key={file.id}>
-                  <SourceCard file={file} />
-                </li>
-              ))}
-            </ul>
-          </details>
-        )}
-
-        <div className="mt-10 space-y-8">
-          {messages.map((message, i) =>
-            message.role === "user" ? (
-              <div key={message.id} className="flex justify-end">
-                <p className="max-w-[85%] rounded-2xl bg-raised px-4 py-2.5 text-reading whitespace-pre-wrap text-bone-white">
-                  {textOf(message)}
-                </p>
-              </div>
-            ) : (
-              <PublicAnswer
-                key={message.id}
-                message={message}
-                running={running && i === messages.length - 1}
-              />
-            ),
-          )}
-          {status === "submitted" && last?.role === "user" && (
-            <p className="animate-checking text-snippet text-ash-gray">Starting…</p>
-          )}
-          {error && last?.role === "user" && (
-            <div className="flex items-center gap-3 rounded-xl border border-contradicts/30 bg-contradicts/5 px-4 py-3">
-              <p className="flex-1 text-snippet text-silver-mist">{errorText(error)}</p>
-              <Button variant="secondary" size="sm" onClick={() => regenerate()}>
-                <RotateCcwIcon strokeWidth={1.75} />
-                Try again
-              </Button>
-            </div>
-          )}
-          <div ref={end} />
-        </div>
+        <span className="max-sm:hidden">
+          <span className="room-pill">public space · read only</span>
+        </span>
+        <Link href="/sign-in" className="claim-done ml-auto whitespace-nowrap">
+          <span className="max-sm:hidden">start your own library</span>
+          <span className="sm:hidden">start yours</span> <span aria-hidden="true">↗</span>
+        </Link>
       </div>
 
-      <div className="sticky bottom-0 z-10 bg-gradient-to-t from-black from-60% to-transparent px-5 pt-6 pb-5 sm:px-6">
-        <form
-          className="mx-auto max-w-[46rem]"
-          onSubmit={(e) => {
-            e.preventDefault()
-            ask(text)
-          }}
-        >
-          <div className="relative rounded-card border border-input bg-panel focus-within:border-line-strong">
-            <Textarea
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
-                  e.preventDefault()
-                  ask(text)
-                }
-              }}
-              placeholder={messages.length ? "Ask a follow-up…" : `Ask about ${share.name}…`}
-              aria-label="Your question"
-              rows={2}
-              maxLength={2000}
-              className="max-h-[40vh] min-h-16 resize-none border-0 bg-transparent px-4.5 pt-4 pr-14 text-reading shadow-none placeholder:text-ash-gray focus-visible:ring-0 dark:bg-transparent"
-            />
-            {running ? (
-              <Button
-                type="button"
-                size="icon-sm"
-                variant="secondary"
-                onClick={() => void stop()}
-                className="absolute right-3 bottom-3 rounded-full"
-                aria-label="Stop"
-              >
-                <SquareIcon className="size-3 fill-current" strokeWidth={0} />
-              </Button>
-            ) : (
-              <Button
-                type="submit"
-                size="icon-sm"
-                variant={text.trim() ? "default" : "secondary"}
-                disabled={!text.trim()}
-                className="absolute right-3 bottom-3 rounded-full"
-                aria-label="Ask"
-              >
-                <ArrowUpIcon strokeWidth={2} />
-              </Button>
+      <div className="mx-auto w-full max-w-[1100px] flex-1 px-4 pt-6 pb-16 md:px-8 md:pt-10">
+        <RoomHeader
+          title={share.name}
+          kicker={
+            <>
+              {share.symbol ? `${share.symbol} ` : ""}
+              <b>{count}</b> source{count === 1 ? "" : "s"}
+            </>
+          }
+        />
+        <p className="public-note">
+          {share.description ||
+            "Every answer here quotes these sources, and each quote is checked word for word before you see it."}
+        </p>
+
+        <ul className="public-sources" aria-label="Sources">
+          {share.files.map((file, i) => (
+            <li key={file.id}>
+              <SourceCard file={file} i={i} />
+            </li>
+          ))}
+        </ul>
+
+        {messages.length > 0 && (
+          <section className="public-thread surface-sticker" aria-label="Your questions">
+            {messages.map((message, i) =>
+              message.role === "user" ? (
+                <div key={message.id} className="flex justify-end">
+                  <p className="public-ask-bubble">{textOf(message)}</p>
+                </div>
+              ) : (
+                <PublicAnswer
+                  key={message.id}
+                  message={message}
+                  running={running && i === messages.length - 1}
+                />
+              ),
             )}
-          </div>
-        </form>
-        <p className="mx-auto mt-2 max-w-[46rem] text-center text-meta text-ash-gray">
-          Answers come only from this folder's sources.
-        </p>
+            {status === "submitted" && last?.role === "user" && (
+              <p className="animate-checking text-snippet text-ash-gray">Starting…</p>
+            )}
+            {error && last?.role === "user" && (
+              <div className="flex items-center gap-3 rounded-xl border border-contradicts/30 bg-contradicts/5 px-4 py-3">
+                <p className="flex-1 text-snippet text-silver-mist">{errorText(error)}</p>
+                <Button variant="secondary" size="sm" onClick={() => regenerate()}>
+                  <RotateCcwIcon strokeWidth={1.75} />
+                  Try again
+                </Button>
+              </div>
+            )}
+            <div ref={end} />
+          </section>
+        )}
       </div>
+
+      {/* the dock's "ask", for a visitor: one black pill at the bottom of the room (beside an
+          open source, not over it), answering from this space only */}
+      <form
+        className="public-dock"
+        onSubmit={(e) => {
+          e.preventDefault()
+          ask(text)
+        }}
+      >
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+              e.preventDefault()
+              ask(text)
+            }
+          }}
+          placeholder={messages.length ? "ask a follow-up…" : `ask ${share.name.toLowerCase()}…`}
+          aria-label="Your question"
+          rows={1}
+          maxLength={2000}
+        />
+        {running ? (
+          <button
+            type="button"
+            className="public-dock-send"
+            onClick={() => void stop()}
+            aria-label="Stop"
+          >
+            <SquareIcon className="size-3 fill-current" strokeWidth={0} />
+          </button>
+        ) : (
+          <button
+            type="submit"
+            className="public-dock-send"
+            disabled={!text.trim()}
+            aria-label="Ask"
+          >
+            <ArrowUpIcon className="size-4" strokeWidth={2.5} />
+          </button>
+        )}
+      </form>
     </div>
   )
 }

@@ -43,6 +43,8 @@ const NO_DOCK = [
   /^\/study\/session/,
   /^\/settings/,
   /^\/trash/,
+  // a public space has the visitor's own ask
+  /^\/s\//,
 ]
 
 export function useDockVisible() {
