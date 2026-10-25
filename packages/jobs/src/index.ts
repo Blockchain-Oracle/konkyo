@@ -77,6 +77,17 @@ export const QUEUES = {
     options: { retryLimit: 2, retryDelay: 5, expireInSeconds: 60 },
     send: {},
   },
+  /**
+   * Mail sent to a space's address (plan F59): read from Resend, routed, its sources added or
+   * held for the owner. `approvedBy` is the owner's yes to a held one. Retried: a Resend hiccup
+   * shouldn't lose a paper, and the row's status keeps a retry from adding it twice.
+   */
+  inbound: {
+    name: "inbound",
+    payload: z.object({ inboundId: z.uuid(), approvedBy: z.string().optional() }),
+    options: { retryLimit: 3, retryDelay: 30, retryBackoff: true, expireInSeconds: 10 * 60 },
+    send: {},
+  },
   /** A source's polaroid (plan §16.4): page one, its og:image, or its video thumbnail, as WebP. */
   thumb: {
     name: "thumb",

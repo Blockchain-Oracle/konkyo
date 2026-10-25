@@ -1,6 +1,7 @@
 import { randomInt } from "node:crypto"
 import { LOOKS } from "@konkyo/config"
 import { spaceRole } from "@konkyo/db/access"
+import { emailReady } from "@konkyo/email"
 import type { Metadata, Route } from "next"
 import Link from "next/link"
 import { redirect } from "next/navigation"
@@ -82,6 +83,7 @@ async function Door({ params }: Props) {
           next={`/join/${token}`}
           firstLook={LOOKS[randomInt(LOOKS.length)]?.id ?? LOOKS[0].id}
           here={{ count: 0, looks: [] }}
+          email={emailReady()}
           room={{
             token,
             name: space.name,

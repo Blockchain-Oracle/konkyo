@@ -12,6 +12,7 @@ import {
   FileSearchIcon,
   GraduationCapIcon,
   HeadphonesIcon,
+  MailIcon,
   XIcon,
 } from "lucide-react"
 import type { Route } from "next"
@@ -31,6 +32,7 @@ const KIND = {
   "agent-run": "agent",
   brief: "brief",
   system: "notice",
+  "held-mail": "mail",
 } as const
 
 const ICON = {
@@ -40,6 +42,7 @@ const ICON = {
   "agent-run": BotIcon,
   brief: HeadphonesIcon,
   system: BellRingIcon,
+  "held-mail": MailIcon,
 } as const
 
 /** "2m", "3h", "Tue", "3 Nov": how long ago, as Linear's inbox says it. */
@@ -84,22 +87,34 @@ function Row({ item }: { item: InboxItem }) {
       toast.error((error as Error).message)
     }
   }
+  // Mail to a space from someone outside it (F59): the owner adds its sources, or lets it go.
+  const decide = async (add: boolean) => {
+    try {
+      await api(`/api/inbound/${item.data.inboundId}`, { method: "POST", json: { add } })
+      void refresh()
+      toast.success(add ? "Adding it to the space" : "Discarded", { description: item.title })
+    } catch (error) {
+      toast.error((error as Error).message)
+    }
+  }
   const primary =
-    item.kind === "new-source" && !item.data.fileId && (item.data.doi || item.data.url)
-      ? { label: "Import", run: importSource }
-      : item.href
-        ? {
-            label:
-              item.kind === "review"
-                ? "Start review"
-                : item.kind === "practice"
-                  ? "Practise"
-                  : item.kind === "brief"
-                    ? "Listen"
-                    : "Open",
-            run: open,
-          }
-        : null
+    item.kind === "held-mail" && item.data.inboundId
+      ? { label: "Add to the space", run: () => decide(true) }
+      : item.kind === "new-source" && !item.data.fileId && (item.data.doi || item.data.url)
+        ? { label: "Import", run: importSource }
+        : item.href
+          ? {
+              label:
+                item.kind === "review"
+                  ? "Start review"
+                  : item.kind === "practice"
+                    ? "Practise"
+                    : item.kind === "brief"
+                      ? "Listen"
+                      : "Open",
+              run: open,
+            }
+          : null
 
   // A slip of paper on the wall (OurSpaces' mail arrival): a black tag says what it is, a lime
   // sticker that it's new, and its one action is the lime one.
@@ -130,21 +145,31 @@ function Row({ item }: { item: InboxItem }) {
       {(item.body || item.data.detail) && (
         <p className="inbox-body">{item.data.detail ?? item.body}</p>
       )}
-      {(primary || !item.read) && (
+      {(primary || !item.read || item.kind === "held-mail") && (
         <div className="mt-3 flex items-center gap-3">
           {primary && (
             <button type="button" className="claim-done" onClick={() => void primary.run()}>
               {primary.label.toLowerCase()} <span aria-hidden="true">→</span>
             </button>
           )}
-          {!item.read && (
+          {item.kind === "held-mail" && item.data.inboundId ? (
             <button
               type="button"
               className="text-[12.5px] font-bold text-ink-muted underline-offset-2 hover:underline"
-              onClick={() => void patch({ read: true })}
+              onClick={() => void decide(false)}
             >
-              mark read
+              discard it
             </button>
+          ) : (
+            !item.read && (
+              <button
+                type="button"
+                className="text-[12.5px] font-bold text-ink-muted underline-offset-2 hover:underline"
+                onClick={() => void patch({ read: true })}
+              >
+                mark read
+              </button>
+            )
           )}
         </div>
       )}

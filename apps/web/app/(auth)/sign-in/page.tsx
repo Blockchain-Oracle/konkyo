@@ -1,5 +1,6 @@
 import { randomInt } from "node:crypto"
 import { LOOKS, ROUTES, SPACES, type SpaceWall } from "@konkyo/config"
+import { emailReady } from "@konkyo/email"
 import { env } from "@konkyo/env/server"
 import type { Metadata } from "next"
 import { redirect } from "next/navigation"
@@ -31,7 +32,14 @@ async function Door({ searchParams }: PageProps<"/sign-in">) {
   if (session) redirect(safeNext(params.next) as never)
   const here = await hereNow()
   const firstLook = LOOKS[randomInt(LOOKS.length)]?.id ?? LOOKS[0].id
-  return <EnterCard next={safeNext(params.next)} firstLook={firstLook} here={here} />
+  return (
+    <EnterCard
+      next={safeNext(params.next)}
+      firstLook={firstLook}
+      here={here}
+      email={emailReady()}
+    />
+  )
 }
 
 /** Where the polaroids hang on the wall behind the card (OurSpaces' board, loosely). */

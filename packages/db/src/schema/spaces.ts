@@ -38,6 +38,8 @@ export type SpaceEventKind =
   | "round_started"
   | "round_ended"
   | "brief_ready"
+  /** Mail to the space's address (F59): its sources added, or held for the owner. */
+  | "mail_arrived"
 
 /**
  * The durable activity log of a space (plan §16.9): written with a NOTIFY in the same transaction,

@@ -134,6 +134,10 @@ export const userSettings = pgTable("user_settings", {
   readAloud: boolean().default(true).notNull(),
   /** The ElevenLabs voice Konkyo answers in (one of VOICE.voices); null = the default. */
   voiceId: text(),
+  /** The weekly digest by email (F59): off unless asked for; Fridays at reminderHour. */
+  weeklyDigest: boolean().default(false).notNull(),
+  /** The ISO week of the last digest sent, so a restart never sends one twice. */
+  digestWeek: text(),
   updatedAt: timestamp({ withTimezone: true })
     .defaultNow()
     .notNull()

@@ -81,6 +81,15 @@ export function NotificationSettings() {
         disabled={!data || data.reviewReminders === false}
         onChange={(h) => save.mutate({ reminderHour: Number(h) })}
       />
+      {data?.canEmail && (
+        <SwitchRow
+          id="weekly-digest"
+          title="Weekly digest by email"
+          about="Fridays at your reminder hour: what's new in your spaces, practice waiting, papers your watches found. Nothing to say, no email."
+          checked={data.weeklyDigest}
+          onChange={(on) => save.mutate({ weeklyDigest: on })}
+        />
+      )}
     </div>
   )
 }

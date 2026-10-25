@@ -4,7 +4,8 @@
  * Ported from OurSpaces (https://github.com/thomasnguyen/ourspaces-app, src/components/Canvas.tsx:
  * the header's invite button and invite popover), MIT licence, Copyright (c) 2026 Thomas Nguyen.
  * Konkyo adds the people in the space with their roles (the owner changes or removes them), what
- * a new link gives, the public read-only link, and leaving (plan F56).
+ * a new link gives, the public read-only link, and leaving (plan F56); and, when the server sends
+ * email, an invite by email and the space's own address to mail papers to (F59).
  */
 
 import { useMutation, useQueryClient } from "@tanstack/react-query"
@@ -137,9 +138,16 @@ function InvitePopover({
   const canInvite = role !== "read"
   const { data: inviteData } = useQuery({
     queryKey: qk.spaces.invite(spaceId),
-    queryFn: () => api<{ invite: Invite | null }>(`/api/spaces/${spaceId}/invite`),
+    queryFn: () => api<{ invite: Invite | null; email: boolean }>(`/api/spaces/${spaceId}/invite`),
     enabled: canInvite,
   })
+  const { data: addressData } = useQuery({
+    queryKey: ["space-address", spaceId],
+    queryFn: () => api<{ address: string | null }>(`/api/spaces/${spaceId}/address`),
+    enabled: canInvite,
+  })
+  const address = addressData?.address ?? null
+  const [mailTo, setMailTo] = useState("")
   const invite = inviteData?.invite ?? null
   const url =
     invite && typeof window !== "undefined" ? `${window.location.origin}${invite.path}` : ""
@@ -157,6 +165,25 @@ function InvitePopover({
     onSuccess: (result) => {
       queryClient.setQueryData(qk.spaces.invite(spaceId), result)
       toast("A new link", { description: "The old one stopped working." })
+    },
+    onError: (error: Error) => toast.error(error.message),
+  })
+  const sendInvite = useMutation({
+    mutationFn: (email: string) =>
+      api(`/api/spaces/${spaceId}/invite/email`, { method: "POST", json: { email } }),
+    onSuccess: (_, email) => {
+      setMailTo("")
+      sound("place")
+      toast("Invite sent", { description: `${email} gets the link by email.` })
+    },
+    onError: (error: Error) => toast.error(error.message),
+  })
+  const newAddress = useMutation({
+    mutationFn: () =>
+      api<{ address: string }>(`/api/spaces/${spaceId}/address`, { method: "POST" }),
+    onSuccess: (result) => {
+      queryClient.setQueryData(["space-address", spaceId], result)
+      toast("A new address", { description: "The old one stopped working." })
     },
     onError: (error: Error) => toast.error(error.message),
   })
@@ -264,6 +291,77 @@ function InvitePopover({
               )}
             </div>
           </>
+        )}
+
+        {canInvite && inviteData?.email && (
+          <form
+            className="invite-email"
+            onSubmit={(event) => {
+              event.preventDefault()
+              const email = mailTo.trim()
+              if (email) sendInvite.mutate(email)
+            }}
+          >
+            <label className="invite-url-label">
+              or send it by email
+              <input
+                className="invite-url-input"
+                type="email"
+                inputMode="email"
+                autoComplete="off"
+                placeholder="friend@email.com"
+                value={mailTo}
+                maxLength={254}
+                onChange={(event) => setMailTo(event.target.value)}
+                aria-label="Their email"
+              />
+            </label>
+            <button
+              type="submit"
+              className="invite-copy-button"
+              disabled={!mailTo.trim() || sendInvite.isPending}
+            >
+              {sendInvite.isPending ? "sending…" : "send invite"}
+            </button>
+          </form>
+        )}
+
+        {canInvite && address && (
+          <div className="invite-address">
+            <span className="invite-popover-kicker">email this space</span>
+            <p>
+              forward a paper here and it lands on the wall. mail from anyone else waits for{" "}
+              {role === "owner" ? "your" : "the owner's"} yes.
+            </p>
+            <div className="invite-popover-actions">
+              <button
+                type="button"
+                className="invite-share-button invite-address-chip"
+                title="Copy the address"
+                onClick={() =>
+                  void navigator.clipboard
+                    .writeText(address)
+                    .then(() => {
+                      sound("tap")
+                      toast("Address copied", { description: address })
+                    })
+                    .catch(() => toast(address))
+                }
+              >
+                ✉ {address}
+              </button>
+              {role === "owner" && (
+                <button
+                  type="button"
+                  className="invite-leave-link"
+                  disabled={newAddress.isPending}
+                  onClick={() => newAddress.mutate()}
+                >
+                  new address
+                </button>
+              )}
+            </div>
+          </div>
         )}
 
         {role === "owner" && (

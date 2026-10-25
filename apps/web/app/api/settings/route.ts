@@ -5,7 +5,7 @@ import { getSettings, type Settings, updateSettings } from "@/lib/settings"
 
 export const GET = route(async ({ userId }) => getSettings(userId))
 
-export const PATCH = route<Record<string, never>, Partial<Settings>>(
+export const PATCH = route<Record<string, never>, Partial<Omit<Settings, "canEmail">>>(
   async ({ userId, body }) => updateSettings(userId, body),
   z.object({
     autoImportSources: z.boolean().optional(),
@@ -15,6 +15,7 @@ export const PATCH = route<Record<string, never>, Partial<Settings>>(
     reminderHour: z.number().int().min(0).max(23).optional(),
     interfaceSounds: z.boolean().optional(),
     readAloud: z.boolean().optional(),
+    weeklyDigest: z.boolean().optional(),
     voiceId: z
       .string()
       .refine((id) => VOICE.voices.some((voice) => voice.id === id))

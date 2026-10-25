@@ -3,9 +3,17 @@ import { owner } from "./library"
 
 /**
  * What lands in the Inbox (plan F41): review reminders, sources a watch found, finished agent
- * runs, and practice an agent made.
+ * runs, practice an agent made, and mail to a space that waits for its owner.
  */
-export type InboxKind = "review" | "new-source" | "agent-run" | "practice" | "brief" | "system"
+export type InboxKind =
+  | "review"
+  | "new-source"
+  | "agent-run"
+  | "practice"
+  | "brief"
+  | "system"
+  /** Mail to a space from someone who isn't in it, waiting for the owner's yes (F59). */
+  | "held-mail"
 
 export type InboxData = {
   /** new-source: what Import brings in (a DOI, or a page's address). */
@@ -20,6 +28,9 @@ export type InboxData = {
   detail?: string
   /** Set once it's been imported (Import becomes Open). */
   fileId?: string
+  /** held-mail: the email and the space it was sent to. */
+  inboundId?: string
+  spaceId?: string
 }
 
 export const inboxItems = pgTable(

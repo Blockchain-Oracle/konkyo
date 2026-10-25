@@ -57,6 +57,7 @@ function staleFor(event: SpaceMessage): QueryKey[] {
     case "source_ready":
     case "source_failed":
     case "source_removed":
+    case "mail_arrived":
       return [qk.files.all, qk.spaces.all, ["catchup"], ["folders"]]
     case "pin_added":
     case "pin_removed":
@@ -127,6 +128,16 @@ export function LiveProvider({ children }: { children: React.ReactNode }) {
       }
       if (event.subjectId === meId && event.kind === "role_changed")
         toast("Your role in a space changed")
+      // mail to the space you're in (F59): the envelope arrives, with what becomes of it (events
+      // carry ids only: an actor means its sender could add, so its sources are on their way)
+      if (event.kind === "mail_arrived" && where.current.includes(event.spaceId)) {
+        sound("place")
+        toast("✉ Mail just arrived in this space", {
+          description: event.actorId
+            ? "Its papers are landing on the wall and being read."
+            : "It's from someone outside the space: it waits for the owner's yes.",
+        })
+      }
       // someone started a live round in one of your spaces: a seat is one tap away
       if (event.kind === "round_started" && event.actorId !== meId) {
         sound("place")

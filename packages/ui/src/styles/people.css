@@ -2327,6 +2327,7 @@ label.setting-text {
 }
 
 .invite-public,
+.invite-address,
 .invite-leave {
   display: flex;
   flex-direction: column;
@@ -3327,4 +3328,98 @@ label.setting-text {
 
 .passage-card-foot a {
   color: var(--color-ink);
+}
+
+/* ------------------------------------------------------------- the join form (F59, S24)
+ * OurSpaces' JoinForm (src/components/JoinForm.tsx and its join-form rules in src/index.css,
+ * MIT): email in, six digits back, inside the black claim card. The code boxes are Base UI's
+ * OTP field (otp-slot), drawn here as OurSpaces' code slots on black, with ink-white digits
+ * (lime stays a fill: the box you're on and the ones you've filled). */
+.join-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.join-form-reason {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
+  line-height: 1.35;
+}
+.join-form .claim-name-input {
+  width: 100%;
+}
+.join-form .otp-field {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+}
+.join-form .otp-slot {
+  width: 100%;
+  height: 46px;
+  border: 1.5px solid rgba(255, 255, 255, 0.16);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  font-size: 22px;
+  transition:
+    border-color var(--dur-quick) var(--ease-glide),
+    background var(--dur-quick) var(--ease-glide);
+}
+.join-form .otp-slot[data-filled] {
+  border-color: rgba(201, 255, 61, 0.5);
+  background: rgba(201, 255, 61, 0.1);
+}
+.join-form .otp-slot:focus-visible {
+  border-color: var(--color-lime);
+  box-shadow: none;
+}
+.join-form .claim-done:disabled {
+  cursor: default;
+  opacity: 0.6;
+  translate: none;
+}
+.join-form-back {
+  align-self: center;
+  border: 0;
+  background: none;
+  padding: 0;
+  color: rgba(255, 255, 255, 0.62);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+}
+.join-form-back:hover {
+  color: rgba(255, 255, 255, 0.86);
+}
+.join-form.is-done strong {
+  font-family: var(--font-display);
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+.join-form.is-done span:last-of-type {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
+}
+
+/* Invite by email and the space's address (F59): the link's row, repeated for an email. */
+.invite-email {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.invite-email .invite-copy-button {
+  align-self: flex-start;
+}
+.invite-address p,
+.invite-public p {
+  margin: 0;
+}
+.invite-address-chip {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 12px;
 }

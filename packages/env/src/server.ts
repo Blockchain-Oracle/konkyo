@@ -43,15 +43,23 @@ export const env = createEnv({
     EVIDENCE_DIR: z.string().min(1),
     ZETARIS_EVIDENCE_URI: z.string().min(1),
 
-    /** Web Push (F41): without the keys, the Inbox still works and push is simply off. */
     // Connectors (F35) through Composio: the API key and one auth config per toolkit.
     COMPOSIO_API_KEY: z.string().min(1).optional(),
     COMPOSIO_AUTH_CONFIG_GMAIL: z.string().min(1).optional(),
     COMPOSIO_AUTH_CONFIG_GOOGLEDRIVE: z.string().min(1).optional(),
     COMPOSIO_AUTH_CONFIG_NOTION: z.string().min(1).optional(),
+    /** Web Push (F41): without the keys, the Inbox still works and push is simply off. */
     VAPID_PUBLIC_KEY: z.string().min(1).optional(),
     VAPID_PRIVATE_KEY: z.string().min(1).optional(),
     VAPID_SUBJECT: z.string().min(1).default("https://konkyo.xyz"),
+
+    /** Email through Resend (F59): without the key, email sign-in, invites and the digest are off. */
+    RESEND_API_KEY: z.string().min(1).optional(),
+    /** The signing secret of the webhook that delivers mail sent to a space's address. */
+    RESEND_WEBHOOK_SECRET: z.string().min(1).optional(),
+    /** Overrides EMAIL.from / EMAIL.inboundDomain (a test server on another domain). */
+    EMAIL_FROM: z.string().min(1).optional(),
+    INBOUND_EMAIL_DOMAIN: z.string().min(1).optional(),
 
     /** The public folder the landing page's live demo asks (`pnpm konkyo seed` prints it). */
     DEMO_SHARE_SLUG: z.string().min(1).optional(),

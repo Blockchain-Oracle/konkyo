@@ -4,8 +4,9 @@
  * Ported from OurSpaces (https://github.com/thomasnguyen/ourspaces-app, src/components/ClaimCard.tsx,
  * the "gate" variant), MIT licence, Copyright (c) 2026 Thomas Nguyen. Their door into a live room
  * is Konkyo's door into your library: the room is named at the top with who's in, a look is one
- * tap, Enter walks you in as a guest, and keeping it is one quiet line under the way in. Their
- * email code arrives with S24; until then "keep this" and "sign in" are Google.
+ * tap, Enter walks you in as a guest, and keeping it is one quiet line under the way in. "Keep
+ * this" and "sign in" open their join form (an email code, Google one tap away) when the server
+ * can send email, and go straight to Google when it can't.
  */
 
 import { LOOKS, type LookId, PEOPLE, SPACES } from "@konkyo/config"
@@ -17,6 +18,7 @@ import { api } from "@/lib/fetcher"
 import type { Face } from "@/lib/profiles"
 import { sound } from "@/lib/sounds"
 import { saveProfile, uploadPhoto } from "@/lib/use-me"
+import { JoinForm } from "./join-form"
 import { LookRow } from "./look-row"
 import { MemberFace } from "./member-face"
 import { PhotoInput } from "./photo-input"
@@ -41,6 +43,7 @@ export function EnterCard({
   firstLook,
   here,
   room,
+  email = false,
 }: {
   /** Where you were going (`?next=`), already checked to be one of ours. */
   next: string
@@ -48,6 +51,8 @@ export function EnterCard({
   firstLook: LookId
   here: { count: number; looks: LookId[] }
   room?: EnterRoom
+  /** The server can send email: keeping and signing in offer a code as well as Google. */
+  email?: boolean
 }) {
   const router = useRouter()
   const start = LOOKS.find((look) => look.id === firstLook) ?? LOOKS[0]
@@ -58,6 +63,9 @@ export function EnterCard({
   const [pending, setPending] = useState<Pending>(null)
   const [error, setError] = useState<string | null>(null)
   const [leaving, setLeaving] = useState(false)
+  const [joining, setJoining] = useState<"keep" | "signin" | null>(null)
+  /** Where a guest who keeps their library goes once they're in (their space, for an invite). */
+  const keptTo = useRef<string | null>(null)
   const cardRef = useRef<HTMLFormElement>(null)
   const nameRef = useRef<HTMLInputElement>(null)
   const photoRef = useRef<HTMLInputElement>(null)
@@ -194,6 +202,45 @@ export function EnterCard({
     photoRef.current?.click()
   }
 
+  if (joining)
+    return (
+      <section
+        className="claim-card is-gate"
+        aria-label={joining === "signin" ? "Sign in" : "Keep this library"}
+        style={{ "--look": lookColor } as CSSProperties}
+      >
+        <JoinForm
+          title={joining === "signin" ? "sign in" : "keep this"}
+          reason={
+            joining === "signin"
+              ? "type the email you joined with: your name, look and library come back with it."
+              : "your name, your look, your library: kept, so you're the same person on your phone."
+          }
+          name={joining === "keep" ? name : undefined}
+          google={() => void (joining === "signin" ? signIn() : keep())}
+          // keeping: the guest walks in first, so signing in carries everything over
+          onReady={
+            joining === "keep"
+              ? async () => {
+                  keptTo.current ??= await becomeGuest()
+                }
+              : undefined
+          }
+          onJoined={() => {
+            const to =
+              joining === "keep" ? (keptTo.current ?? next) : room ? `/join/${room.token}` : next
+            router.replace(to as Route)
+            router.refresh()
+          }}
+          onCancel={() => {
+            setJoining(null)
+            // a guest made on the way stays a guest: let them in rather than strand them here
+            if (keptTo.current) router.refresh()
+          }}
+        />
+      </section>
+    )
+
   return (
     <form
       ref={cardRef}
@@ -313,7 +360,7 @@ export function EnterCard({
         <button
           type="button"
           className="claim-join-link"
-          onClick={() => void keep()}
+          onClick={() => (email ? setJoining("keep") : void keep())}
           disabled={pending !== null}
         >
           {pending === "keep" ? "opening Google…" : "keep this on your other devices"}
@@ -321,7 +368,7 @@ export function EnterCard({
         <button
           type="button"
           className="claim-join-link"
-          onClick={() => void signIn()}
+          onClick={() => (email ? setJoining("signin") : void signIn())}
           disabled={pending !== null}
         >
           {pending === "signin" ? "opening Google…" : "been here before? sign in"}

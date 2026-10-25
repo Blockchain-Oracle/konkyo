@@ -1,9 +1,10 @@
 import "server-only"
 import { VOICE } from "@konkyo/config"
 import { db, schema } from "@konkyo/db"
+import { emailReady } from "@konkyo/email"
 import { eq } from "drizzle-orm"
 
-const { userSettings } = schema
+const { userSettings, user } = schema
 
 /** A stored voice that's still on offer, else Konkyo's own. */
 export const voiceOf = (id: string | null | undefined) =>
@@ -22,13 +23,20 @@ export type Settings = {
   readAloud: boolean
   /** The voice it answers in: one of VOICE.voices. */
   voiceId: string
+  /** The weekly digest by email, Fridays at reminderHour (F59). */
+  weeklyDigest: boolean
+  /** Konkyo can email this person: the server sends email and they have a real address. */
+  canEmail: boolean
   /** First run is over (a starter chosen or skipped). */
   onboarded: boolean
 }
 
 /** The person's settings, with defaults for anything never set. */
 export async function getSettings(userId: string): Promise<Settings> {
-  const row = await db.query.userSettings.findFirst({ where: eq(userSettings.userId, userId) })
+  const [row, person] = await Promise.all([
+    db.query.userSettings.findFirst({ where: eq(userSettings.userId, userId) }),
+    db.query.user.findFirst({ where: eq(user.id, userId), columns: { isAnonymous: true } }),
+  ])
   return {
     autoImportSources: row?.autoImportSources ?? false,
     citationStyle: row?.citationStyle ?? "apa",
@@ -39,11 +47,16 @@ export async function getSettings(userId: string): Promise<Settings> {
     interfaceSounds: row?.interfaceSounds ?? true,
     readAloud: row?.readAloud ?? true,
     voiceId: voiceOf(row?.voiceId),
+    weeklyDigest: row?.weeklyDigest ?? false,
+    canEmail: emailReady() && Boolean(person) && !person?.isAnonymous,
     onboarded: Boolean(row?.onboardedAt),
   }
 }
 
-export async function updateSettings(userId: string, patch: Partial<Omit<Settings, "onboarded">>) {
+export async function updateSettings(
+  userId: string,
+  patch: Partial<Omit<Settings, "onboarded" | "canEmail">>,
+) {
   await db
     .insert(userSettings)
     .values({ userId, ...patch })

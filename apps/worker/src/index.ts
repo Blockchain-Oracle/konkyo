@@ -8,6 +8,8 @@ import { makeArticleAssets } from "./articles"
 import { makeBrief } from "./brief"
 import { syncConnections } from "./connectors"
 import { deepJob } from "./deep"
+import { sendDigests } from "./digest"
+import { handleInbound } from "./inbound"
 import { closeInterrupted } from "./interrupted"
 import { indexNote } from "./notes"
 import { ingestFile } from "./pipeline"
@@ -125,6 +127,22 @@ await queues.work(CONNECTORS_SYNC, async () => {
   if (synced.refreshed + synced.imported) console.info(`[connectors] ${JSON.stringify(synced)}`)
 })
 
+// Mail to a space's address (F59): read, routed, its sources added or held for the owner.
+await queues.work(QUEUES.inbound.name, { localConcurrency: 2 }, async ([job]) => {
+  if (!job) return
+  const { inboundId, approvedBy } = QUEUES.inbound.payload.parse(job.data)
+  await handleInbound(inboundId, approvedBy)
+})
+
+// The weekly digest (F59): hourly, each person on Friday at their own hour, when they asked for it.
+const DIGEST = "weekly-digest"
+await queues.createQueue(DIGEST)
+await queues.schedule(DIGEST, "0 * * * *", {}, { tz: "UTC" })
+await queues.work(DIGEST, async () => {
+  const sent = await sendDigests()
+  if (sent) console.info(`[digest] sent ${sent}`)
+})
+
 // Review reminders (F29): hourly, each person at their own hour in their own time zone.
 const REMINDERS = "review-reminders"
 await queues.createQueue(REMINDERS)
@@ -135,7 +153,7 @@ await queues.work(REMINDERS, async () => {
 })
 
 console.info(
-  `[worker] listening on "${QUEUES.ingest.name}" (×${INGEST_CONCURRENCY}), "deep" (×3), "study" (×3), "purge", "article-assets" (×2), "round-tick" (×4), daily sweep, hourly reminders, agents every 5 min, connectors every 15 min`,
+  `[worker] listening on "${QUEUES.ingest.name}" (×${INGEST_CONCURRENCY}), "deep" (×3), "study" (×3), "purge", "article-assets" (×2), "round-tick" (×4), "inbound" (×2), daily sweep, hourly reminders and digests, agents every 5 min, connectors every 15 min`,
 )
 
 // On shutdown stop taking jobs and exit promptly: a job cut off here stops sending heartbeats and

@@ -1,0 +1,23 @@
+{
+  "name": "@konkyo/email",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./templates": "./src/templates.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@konkyo/config": "workspace:*",
+    "@konkyo/env": "workspace:*",
+    "resend": "6.34.1"
+  },
+  "devDependencies": {
+    "@konkyo/typescript-config": "workspace:*",
+    "@types/node": "24.19.2",
+    "typescript": "7.0.2"
+  }
+}

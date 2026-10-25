@@ -277,6 +277,34 @@ export const CONNECTORS = {
 } as const
 
 /**
+ * Email through Resend (plan F59). The free plan sends and receives 100 a day and 3,000 a month
+ * in total, so every kind of mail here is capped well under that.
+ */
+export const EMAIL = {
+  from: "Konkyo <hello@konkyo.xyz>",
+  /** A space's address is <token>@in.konkyo.xyz: its own subdomain, so the root keeps its mail. */
+  inboundDomain: "in.konkyo.xyz",
+  /** Lowercase letters and digits without look-alikes: addresses are read and typed. */
+  inboundTokenLength: 10,
+  inboundAlphabet: "abcdefghjkmnpqrstuvwxyz23456789",
+  /** Sign-in codes (Better Auth email OTP): six digits, ten minutes, five tries. */
+  codeLength: 6,
+  codeMinutes: 10,
+  codeAttempts: 5,
+  /** Codes the server sends a day, for everyone: the free plan's 100 must leave room for the rest. */
+  codesPerDay: 50,
+  /** Invites by email each person can send a day. */
+  invitesPerDay: 10,
+  /** Mail from someone who isn't in the space waits this long for a yes. */
+  heldDays: 7,
+  /** At most this many attachments become sources from one email. */
+  attachmentsPerEmail: 10,
+  fetchTimeoutMs: 30_000,
+  /** The weekly digest goes out on Fridays at the hour people chose for reminders. */
+  digestWeekday: 5,
+} as const
+
+/**
  * Audio briefs (plan F37): two voices talk through a folder. One Text-to-Dialogue request stays
  * reliable to about 2,000 characters (S00), so a brief is one request of about two minutes.
  * Voices and the model are the ones the S00 spike measured.
