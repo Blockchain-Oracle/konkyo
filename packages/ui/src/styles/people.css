@@ -2072,6 +2072,11 @@ label.setting-text {
   animation: invite-popover-in 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+/* focus lands on the panel itself so Tab starts inside it; the panel needs no ring of its own */
+.invite-popover:focus {
+  outline: none;
+}
+
 @keyframes invite-popover-in {
   from {
     opacity: 0;

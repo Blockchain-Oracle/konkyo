@@ -11,7 +11,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import type { Route } from "next"
 import { useRouter } from "next/navigation"
-import { useLayoutEffect, useRef, useState } from "react"
+import { useEffect, useEffectEvent, useLayoutEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { toast } from "sonner"
 import { api } from "@/lib/fetcher"
@@ -129,10 +129,22 @@ function InvitePopover({
   const [take, setTake] = useState(false)
   const input = useRef<HTMLInputElement>(null)
 
+  const panel = useRef<HTMLElement>(null)
   // under the button, its right edge lined up (OurSpaces' invitePosition)
   useLayoutEffect(() => {
     const r = anchor?.getBoundingClientRect()
     if (r) setPlace({ top: r.bottom + 10, right: Math.max(16, window.innerWidth - r.right) })
+  }, [anchor])
+  // A dialog: focus goes in, Escape closes it, and focus returns to the invite button.
+  const close = useEffectEvent(() => onClose())
+  useEffect(() => {
+    panel.current?.focus()
+    const onKey = (event: KeyboardEvent) => event.key === "Escape" && close()
+    window.addEventListener("keydown", onKey)
+    return () => {
+      window.removeEventListener("keydown", onKey)
+      anchor?.focus()
+    }
   }, [anchor])
 
   const canInvite = role !== "read"
@@ -231,8 +243,16 @@ function InvitePopover({
         aria-label="Close"
       />
       <section
+        ref={panel}
+        role="dialog"
+        tabIndex={-1}
         className="invite-popover"
-        style={{ top: place.top, right: place.right }}
+        // it fits below its button: everything in it scrolls into reach on a short screen
+        style={{
+          top: place.top,
+          right: place.right,
+          maxHeight: `calc(100dvh - ${place.top + 16}px)`,
+        }}
         aria-label={`People in ${name}`}
       >
         <div className="invite-popover-heading">

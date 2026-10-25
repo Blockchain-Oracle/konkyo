@@ -31,7 +31,7 @@ export function CitedBar({ messageId, n }: { messageId: string; n: number }) {
   }
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-4 z-20 flex justify-center">
-      <div className="pointer-events-auto flex animate-in items-center gap-1 rounded-full border border-border bg-overlay/95 py-1 pr-1 pl-3.5 shadow-lg duration-(--duration-menu) fade-in-0 slide-in-from-bottom-2">
+      <div className="pointer-events-auto flex animate-in items-center gap-1 surface-sticker rounded-full border border-border bg-overlay/95 py-1 pr-1 pl-3.5 shadow-lg duration-(--duration-menu) fade-in-0 slide-in-from-bottom-2">
         {vote ? (
           <span className="inline-flex items-center gap-1.5 py-1 pr-2.5 text-snippet text-silver-mist">
             <CheckIcon className="size-3.5 text-supports" strokeWidth={2} aria-hidden />
