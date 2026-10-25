@@ -16,7 +16,8 @@
     "services:up": "docker compose -f infra/compose.yaml --env-file .env up -d --wait",
     "services:down": "docker compose -f infra/compose.yaml --env-file .env down",
     "services:check": "node --env-file-if-exists=.env scripts/check-services.ts",
-    "postinstall": "pnpm --filter @konkyo/meterless build"
+    "postinstall": "pnpm --filter @konkyo/meterless build",
+    "made-with:code": "node scripts/made-with-code.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
@@ -25,6 +26,7 @@
     "@konkyo/typescript-config": "workspace:*",
     "@types/node": "24.19.2",
     "postgres": "3.4.9",
+    "shiki": "4.5.0",
     "tsx": "4.23.15",
     "turbo": "2.11.8",
     "typescript": "7.0.2"

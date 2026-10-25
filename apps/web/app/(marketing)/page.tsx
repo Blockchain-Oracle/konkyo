@@ -23,37 +23,31 @@ export const metadata: Metadata = {
 
 const DOCS = APP.docs ?? "https://docs.konkyo.xyz"
 
-/** Who Konkyo is built on (plan F61), each with the docs section that shows the real use. */
-const MAKERS: { vendor: Vendor; body: string; href: string }[] = [
+/** Who Konkyo is built on (plan F61), each opening its made-with page. */
+const MAKERS: { vendor: Vendor; body: string }[] = [
   {
     vendor: "zetaris",
     body: "Checks every quote word for word against its own reading of the source.",
-    href: `${DOCS}/sponsor-tech#zetaris-the-evidence-store-every-claim-is-checked-against`,
   },
   {
     vendor: "meterless",
     body: "Remembers your corrections and which source said what.",
-    href: `${DOCS}/sponsor-tech#meterless-memory-world-state-and-long-tasks`,
   },
   {
     vendor: "openai",
     body: "The models that plan, write, check and make your practice.",
-    href: `${DOCS}/sponsor-tech#openai-the-models-that-plan-write-check-and-teach`,
   },
   {
     vendor: "elevenlabs",
     body: "Transcribes your lectures and reads your audio briefs aloud.",
-    href: `${DOCS}/sponsor-tech#elevenlabs-listening-and-speaking`,
   },
   {
     vendor: "composio",
     body: "Brings in what's waiting in Gmail, Drive and Notion.",
-    href: `${DOCS}/sponsor-tech#composio-gmail-google-drive-and-notion`,
   },
   {
     vendor: "openalex",
     body: "Open papers for deep search when your library runs out.",
-    href: `${DOCS}/sponsor-tech#openalex-open-papers`,
   },
 ]
 
@@ -236,18 +230,20 @@ export default function LandingPage() {
               <br />
               behind the <span>scenes.</span>
             </h2>
-            <p>Six partners' tools each do a real job in Konkyo. Follow any of them in the docs.</p>
+            <p>
+              Six partners' tools each do a real job in Konkyo. Follow any of them into the code.
+            </p>
           </div>
           <ul className="about-makers">
             {MAKERS.map((m) => (
               <li key={m.vendor}>
-                <a href={m.href} className="about-maker-link">
+                <Link href={`/made-with/${m.vendor}`} className="about-maker-link">
                   <VendorLogo vendor={m.vendor} />
                   <p>{m.body}</p>
                   <small>
                     see how it works <span aria-hidden>↗</span>
                   </small>
-                </a>
+                </Link>
               </li>
             ))}
           </ul>

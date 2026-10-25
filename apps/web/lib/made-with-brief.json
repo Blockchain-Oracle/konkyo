@@ -1,0 +1,104 @@
+{
+  "title": "Caffeine, Sleep, and Memory",
+  "durationSeconds": 95.22,
+  "lines": [
+    {
+      "speaker": "A",
+      "text": "Today we’re looking at how caffeine acts in the brain, and what it may mean for sleep and memory.",
+      "start": 0.1,
+      "end": 5.48
+    },
+    {
+      "speaker": "B",
+      "text": "Ribeiro and Sebastião say caffeine mainly works by blocking adenosine receptors, affecting brain functions including sleep, learning, and memory.",
+      "start": 6.7,
+      "end": 16.26,
+      "source": "Caffeine and Adenosine",
+      "page": 1,
+      "quote": "Caffeine causes most of its biological effects via antagonizing all types of adenosine receptors"
+    },
+    {
+      "speaker": "A",
+      "text": "Landolt describes adenosine as a sleep-regulating substance, while noting open questions about how caffeine changes sleep.",
+      "start": 17.74,
+      "end": 25.26,
+      "source": "Adenosine, caffeine, and sleep–wake regulation: state of the science and perspectives",
+      "page": 2,
+      "quote": "Today, adenosine is widely accepted as an endogenous sleepregulatory substance."
+    },
+    {
+      "speaker": "B",
+      "text": "A review of sleep and daytime functioning also raises a trade-off: caffeine may affect nighttime rest and next-day performance.",
+      "start": 26.34,
+      "end": 34.32,
+      "source": "Effects of caffeine on sleep quality and daytime functioning",
+      "page": 1,
+      "quote": "the relationship between caffeine consumption and subsequent quality and quantity of nighttime rest"
+    },
+    {
+      "speaker": "A",
+      "text": "On memory, the evidence is mixed. One review says there is no reliable long-term memory effect, with results varying by task.",
+      "start": 35.66,
+      "end": 44.46,
+      "source": "How does caffeine influence memory? Drug, experimental, and demographic factors",
+      "page": 10,
+      "quote": "There is no reliable effect of caffeine on LTM"
+    },
+    {
+      "speaker": "B",
+      "text": "That review notes a study where 200 milligrams after learning improved delayed recognition, but another study did not replicate it.",
+      "start": 45.64,
+      "end": 53.92,
+      "source": "How does caffeine influence memory? Drug, experimental, and demographic factors",
+      "page": 10,
+      "quote": "Aust and Stahl (2020) failed to replicate the findings of this study"
+    },
+    {
+      "speaker": "A",
+      "text": "The authors suggest withdrawal reversal may partly explain that earlier positive result.",
+      "start": 55.18,
+      "end": 60.04,
+      "source": "How does caffeine influence memory? Drug, experimental, and demographic factors",
+      "page": 10,
+      "quote": "likely the reversal of withdrawal symptoms from caffeine abstinence escalated the positive treatment effect."
+    },
+    {
+      "speaker": "B",
+      "text": "A face-recognition experiment found no consolidation benefit; instead, caffeine reduced recognition accuracy.",
+      "start": 61.3,
+      "end": 68.6,
+      "source": "Caffeine reduces accuracy in face recognition memory consolidation",
+      "page": 1,
+      "quote": "caffeine consumption did not improve the consolidation of face recognition memory."
+    },
+    {
+      "speaker": "A",
+      "text": "So the findings differ: an earlier object-memory study reported improved discrimination, but face memory showed impairment.",
+      "start": 69.96,
+      "end": 77.78,
+      "source": "Caffeine reduces accuracy in face recognition memory consolidation",
+      "page": 1,
+      "quote": "a general impairment in recognition performance"
+    },
+    {
+      "speaker": "B",
+      "text": "The broader review suggests caffeine may influence memory indirectly through attention, mood, and alertness, rather than reliably strengthening memory itself.",
+      "start": 79.02,
+      "end": 88.42,
+      "source": "How does caffeine influence memory? Drug, experimental, and demographic factors",
+      "page": 30,
+      "quote": "increasing attentional control and processing resources or modulating learning factors including mood, concentration, arousal, and alertness."
+    },
+    {
+      "speaker": "B",
+      "text": "The one thing to remember is that caffeine can change alertness, but it is not a dependable memory enhancer.",
+      "start": 89.34,
+      "end": 95.22,
+      "source": "How does caffeine influence memory? Drug, experimental, and demographic factors",
+      "page": 30,
+      "quote": "very limited treatment effects of caffeine on memory performance."
+    }
+  ],
+  "audio": "/made-with/brief.mp3",
+  "made": "2026-10-23"
+}
