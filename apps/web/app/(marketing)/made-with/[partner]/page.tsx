@@ -48,7 +48,8 @@ export default async function MadeWithPage({ params }: Props) {
   return (
     <div className="about-page vendor-page" style={colors(partner) as CSSProperties}>
       <header className="about-wrap about-bar">
-        <Link href="/" className="about-brand" aria-label={`${APP.name} home`}>
+        {/* named by what it shows ("konkyo made with"): the mark is decorative */}
+        <Link href="/" className="about-brand">
           <BrandMark small className="size-[30px]" />
           <span>{APP.name.toLowerCase()}</span>
           <small>made with</small>

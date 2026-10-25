@@ -57,7 +57,7 @@ export function HeroBoard() {
             ) : (
               <>
                 <span className="about-answer-kicker">asked this space</span>
-                <h3>Does a daytime nap help motor learning?</h3>
+                <h2>Does a daytime nap help motor learning?</h2>
                 <p>
                   Yes. In Nishida and Walker's study, motor memories were “dynamically facilitated
                   across daytime naps”

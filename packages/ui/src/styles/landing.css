@@ -1018,8 +1018,10 @@
   font-size: 12px;
   font-weight: 600;
 }
-.about-answer h3 {
+/* An h2 (it follows the page's h1) drawn as the card's small title, weight as the page's h3s. */
+.about-answer h2 {
   font-size: 19px;
+  font-weight: 700;
   line-height: 1.2;
   letter-spacing: -0.02em;
 }
