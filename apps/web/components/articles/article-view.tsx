@@ -8,9 +8,9 @@ import { createPortal } from "react-dom"
 import { toast } from "sonner"
 import { BrandMark } from "@/components/brand-mark"
 import { FollowButton } from "@/components/people/follow-button"
+import { openKeep } from "@/components/people/keep-dialog"
 import { MemberFace } from "@/components/people/member-face"
 import type { ArticleCitation, PublicArticle } from "@/lib/articles"
-import { authClient } from "@/lib/auth-client"
 import { api } from "@/lib/fetcher"
 import { whereIs } from "@/lib/format"
 import type { Relation } from "@/lib/people"
@@ -287,14 +287,11 @@ function ArticleActions({
     if (viewer === "signed-out") return toDoor()
     if (viewer === "guest")
       return void toast("♥ needs a kept account", {
-        description: "Keep yours with Google: your library and your look come with you.",
+        description: "Keep yours with an email code or Google: your library and look come along.",
         action: {
           label: "keep it",
           onClick: () =>
-            void authClient.signIn.social({
-              provider: "google",
-              callbackURL: `/a/${article.slug}`,
-            }),
+            openKeep("a like carries your name: keep this library first.", `/a/${article.slug}`),
         },
       })
     const next = !likes.on

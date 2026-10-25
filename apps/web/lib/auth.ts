@@ -50,7 +50,7 @@ const beforeCode = createAuthMiddleware(async (ctx) => {
     "local"
   if (!takeCodeSend(address))
     throw new APIError("TOO_MANY_REQUESTS", {
-      message: "That's all the codes for today. Continue with Google, or try tomorrow.",
+      message: "That's all the codes for today. Use Google, or try tomorrow.",
     })
 })
 

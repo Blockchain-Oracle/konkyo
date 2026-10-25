@@ -15,6 +15,7 @@ import { Spinner } from "@konkyo/ui/components/spinner"
 import { HardDriveIcon, MailIcon, NotebookTextIcon } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "sonner"
+import { openKeep } from "@/components/people/keep-dialog"
 import { openConnectorImport } from "@/components/shell/app-dialogs"
 import {
   type ConnectionRow,
@@ -108,11 +109,28 @@ export function ConnectorsSection() {
 
   return (
     <div ref={section}>
-      <p className="text-snippet text-ash-gray">
-        {data.guest
-          ? "Continue with Google from the account menu first: connections belong to an account, not a guest session."
-          : "Konkyo only reads. Disconnecting revokes its access; you choose whether the imports stay."}
-      </p>
+      {data.guest ? (
+        <div className="flex flex-wrap items-center gap-3">
+          <p className="min-w-0 flex-1 text-snippet text-ash-gray">
+            Connections belong to an account, not a guest session.
+          </p>
+          <Button
+            size="sm"
+            onClick={() =>
+              openKeep(
+                "gmail, drive and notion connect to an account: keep this library, then connect.",
+                "/settings",
+              )
+            }
+          >
+            Keep this library
+          </Button>
+        </div>
+      ) : (
+        <p className="text-snippet text-ash-gray">
+          Konkyo only reads. Disconnecting revokes its access; you choose whether the imports stay.
+        </p>
+      )}
       <ul className="mt-4 divide-y divide-border border-y border-border">
         {ROWS.map(({ toolkit, icon: Icon, about }) => {
           const row = data.connections.find((c) => c.toolkit === toolkit)

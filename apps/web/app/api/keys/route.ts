@@ -12,7 +12,10 @@ export const POST = route<Record<string, never>, { name: string }>(
   async ({ userId, body }) => {
     const session = await getSession()
     if (session?.user.isAnonymous)
-      throw new LibraryError("Continue with Google first, then make an API key", 403)
+      throw new LibraryError(
+        "Keep this library first (your card in the rail), then make an API key",
+        403,
+      )
     return createKey(userId, body.name)
   },
   z.object({ name: z.string().max(60) }),

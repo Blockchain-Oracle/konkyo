@@ -26,7 +26,7 @@ const RULES = {
       ) asked`,
     reached: (guest: boolean, limit: number) =>
       guest
-        ? `Guests can ask ${limit} questions a day. Continue with Google to keep going.`
+        ? `Guests can ask ${limit} questions a day. Keep this library (your card in the rail) to keep going.`
         : "You've asked a lot today. Each question frees up 24 hours after you asked it.",
   },
   deepSearches: {
@@ -37,7 +37,7 @@ const RULES = {
       sql`select created_at from runs where owner_id = ${ownerId} and kind = 'deep' and created_at >= ${since}::timestamptz`,
     reached: (guest: boolean, limit: number) =>
       guest
-        ? `Guests can run ${limit} deep searches a day. Continue with Google for more.`
+        ? `Guests can run ${limit} deep searches a day. Keep this library (your card in the rail) for more.`
         : "You've run a lot of deep searches today. Each one frees up 24 hours after it started.",
   },
   practiceSets: {
@@ -48,7 +48,7 @@ const RULES = {
       sql`select created_at from study_sets where owner_id = ${ownerId} and created_at >= ${since}::timestamptz`,
     reached: (guest: boolean, limit: number) =>
       guest
-        ? `Guests can make ${limit} practice sets a day. Continue with Google to keep going.`
+        ? `Guests can make ${limit} practice sets a day. Keep this library (your card in the rail) to keep going.`
         : "You've made a lot of practice today. Each set frees up 24 hours after it was made.",
   },
   audioBriefs: {
@@ -59,7 +59,7 @@ const RULES = {
       sql`select created_at from briefs where owner_id = ${ownerId} and created_at >= ${since}::timestamptz`,
     reached: (guest: boolean, limit: number) =>
       guest
-        ? `Guests can make ${limit} audio brief a day. Continue with Google for more.`
+        ? `Guests can make ${limit} audio brief a day. Keep this library (your card in the rail) for more.`
         : `You've made ${limit} audio briefs today. Each one frees up 24 hours after it was made.`,
   },
   publishes: {
@@ -79,7 +79,7 @@ const RULES = {
       sql`select created_at from files where owner_id = ${ownerId} and kind <> 'note' and created_at >= ${since}::timestamptz`,
     reached: (guest: boolean, limit: number) =>
       guest
-        ? `Guests can add ${limit} files a day. Continue with Google to add more.`
+        ? `Guests can add ${limit} files a day. Keep this library (your card in the rail) to add more.`
         : `You've added ${limit} files today. Each one frees up 24 hours after it was added.`,
   },
   voiceSessions: {
@@ -90,7 +90,7 @@ const RULES = {
       sql`select created_at, amount from voice_usage where owner_id = ${ownerId} and kind = 'listen' and created_at >= ${since}::timestamptz`,
     reached: (guest: boolean, limit: number) =>
       guest
-        ? `Guests can talk to Konkyo ${limit} times a day. Continue with Google for more, or type instead.`
+        ? `Guests can talk to Konkyo ${limit} times a day. Keep this library (your card in the rail) for more, or type instead.`
         : "Voice is resting for today. Type instead; it frees up 24 hours after you used it.",
   },
   readAloud: {

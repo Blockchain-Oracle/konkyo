@@ -8,8 +8,8 @@ import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 import { toast } from "sonner"
+import { openKeep } from "@/components/people/keep-dialog"
 import type { PublishState } from "@/lib/articles"
-import { authClient } from "@/lib/auth-client"
 import { api } from "@/lib/fetcher"
 import { sound } from "@/lib/sounds"
 import { useQuery } from "@/lib/use-query"
@@ -202,13 +202,13 @@ export function PublishSheet({
                 type="button"
                 className="claim-done"
                 onClick={() =>
-                  void authClient.signIn.social({
-                    provider: "google",
-                    callbackURL: `/write/${noteId}`,
-                  })
+                  openKeep(
+                    "an article carries your name: keep this library, then publish it from here.",
+                    `/write/${noteId}`,
+                  )
                 }
               >
-                keep it with Google
+                keep this library <span aria-hidden="true">→</span>
               </button>
             )}
             {state.blocked.startsWith("Claim a handle") && (

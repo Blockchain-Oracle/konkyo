@@ -28,6 +28,7 @@ import type { Face } from "@/lib/profiles"
 import { sound } from "@/lib/sounds"
 import { deleteMyAccount } from "@/lib/use-account"
 import { type Me, useMe } from "@/lib/use-me"
+import { openKeep } from "./keep-dialog"
 import { LookRow } from "./look-row"
 import { MemberFace } from "./member-face"
 import { PhotoInput } from "./photo-input"
@@ -152,14 +153,21 @@ function SettingsCard({ me, onClose }: { me: Me; onClose: () => void }) {
             Sign out of this guest session?
           </DialogTitle>
           <DialogDescription className="text-ui text-ash-gray">
-            Guests can't sign back in, so everything you made here is deleted. Keep it with Google
-            first to take it with you.
+            Guests can't sign back in, so everything you made here is deleted. Keep it first, with
+            an email code or Google, to take it with you.
           </DialogDescription>
           <DialogFooter className="mt-3 gap-2">
             <Button variant="ghost" onClick={() => void leaveAsGuest()}>
               Sign out and delete
             </Button>
-            <Button onClick={() => void keepWithGoogle()}>Keep it with Google</Button>
+            <Button
+              onClick={() => {
+                setConfirmLeave(false)
+                keepAccount()
+              }}
+            >
+              Keep it first
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -167,11 +175,9 @@ function SettingsCard({ me, onClose }: { me: Me; onClose: () => void }) {
   )
 }
 
-/** Keep a guest's work with Google: signing in while a guest links the two (owned.ts moves all). */
-async function keepWithGoogle() {
-  const { error } = await authClient.signIn.social({ provider: "google", callbackURL: "/home" })
-  if (error) toast.error("Google didn't open. Try again.")
-}
+/** Keep a guest's work: signing in while a guest links the two (owned.ts moves everything). */
+const keepAccount = () =>
+  openKeep("your name, your look, your library: kept, so you're the same person on your phone.")
 
 /**
  * Who you are, shared by the card off the rail and the "you" section of Settings: your face and
@@ -270,11 +276,7 @@ export function SettingsBody({ me }: { me: Me }) {
             <span className="settings-account-email">
               this name, this look and everything in your library live in this browser only.
             </span>
-            <button
-              type="button"
-              className="claim-done settings-keep"
-              onClick={() => void keepWithGoogle()}
-            >
+            <button type="button" className="claim-done settings-keep" onClick={keepAccount}>
               keep this on my other devices <span aria-hidden="true">→</span>
             </button>
           </div>

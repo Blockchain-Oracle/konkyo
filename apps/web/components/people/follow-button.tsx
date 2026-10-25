@@ -5,10 +5,10 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { toast } from "sonner"
-import { authClient } from "@/lib/auth-client"
 import { api } from "@/lib/fetcher"
 import type { Counts, Relation } from "@/lib/people"
 import { sound } from "@/lib/sounds"
+import { openKeep } from "./keep-dialog"
 
 export type { Counts, Relation }
 
@@ -48,11 +48,11 @@ export function FollowButton({
   const go = async (method: "POST" | "DELETE") => {
     if (viewer === "guest") {
       toast("Following needs a kept account", {
-        description: "Keep yours with Google: your library and your look come with you.",
+        description: "Keep yours with an email code or Google: your library and look come along.",
         action: {
           label: "keep it",
           onClick: () =>
-            void authClient.signIn.social({ provider: "google", callbackURL: `/u/${handle}` }),
+            openKeep("following carries your name: keep this library first.", `/u/${handle}`),
         },
       })
       return

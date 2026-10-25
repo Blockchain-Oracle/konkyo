@@ -1,10 +1,12 @@
 import "@konkyo/ui/globals.css"
 import { ROUTES } from "@konkyo/config"
+import { emailReady } from "@konkyo/email"
 import { Skeleton } from "@konkyo/ui/components/skeleton"
 import { redirect } from "next/navigation"
 import { Suspense } from "react"
 import { FileDetailsSheet } from "@/components/library/file-details"
 import { UploadsProvider } from "@/components/library/uploads-provider"
+import { KeepDialog } from "@/components/people/keep-dialog"
 import { AppDialogs } from "@/components/shell/app-dialogs"
 import { CommandPalette } from "@/components/shell/command-palette"
 import { LiveProvider } from "@/components/shell/live-provider"
@@ -40,6 +42,7 @@ async function Shell({ children }: { children: React.ReactNode }) {
         <CommandPalette />
         <AppDialogs />
         <FileDetailsSheet />
+        <KeepDialog email={emailReady()} />
       </LiveProvider>
     </UploadsProvider>
   )

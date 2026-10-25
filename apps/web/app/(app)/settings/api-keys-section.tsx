@@ -14,6 +14,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { CheckIcon, CopyIcon } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
+import { openKeep } from "@/components/people/keep-dialog"
 import { api } from "@/lib/fetcher"
 import { useQuery } from "@/lib/use-query"
 
@@ -61,10 +62,19 @@ export function ApiKeysSection({ guest }: { guest: boolean }) {
 
   if (guest)
     return (
-      <p className="border-y border-border py-4 text-snippet text-ash-gray">
-        Continue with Google from the account menu first: a key belongs to an account, not a guest
-        session.
-      </p>
+      <div className="flex flex-wrap items-center gap-3 border-y border-border py-4">
+        <p className="min-w-0 flex-1 text-snippet text-ash-gray">
+          A key belongs to an account, not a guest session.
+        </p>
+        <Button
+          size="sm"
+          onClick={() =>
+            openKeep("a key belongs to an account: keep this library, then make one.", "/settings")
+          }
+        >
+          Keep this library
+        </Button>
+      </div>
     )
 
   return (

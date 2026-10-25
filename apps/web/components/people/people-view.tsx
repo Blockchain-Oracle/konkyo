@@ -4,7 +4,6 @@ import type { Route } from "next"
 import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
-import { authClient } from "@/lib/auth-client"
 import { api } from "@/lib/fetcher"
 import type { Counts, PeopleTab, Person } from "@/lib/people"
 import { qk } from "@/lib/query-keys"
@@ -12,6 +11,7 @@ import { sound } from "@/lib/sounds"
 import { useMe } from "@/lib/use-me"
 import { useQuery } from "@/lib/use-query"
 import { FollowButton } from "./follow-button"
+import { openKeep } from "./keep-dialog"
 import { MemberFace } from "./member-face"
 
 const TABS: { id: PeopleTab; label: string; empty: string }[] = [
@@ -134,7 +134,7 @@ function InviteCard({ handle, guest }: { handle: string | null; guest: boolean }
           type="button"
           className="claim-done"
           onClick={() =>
-            void authClient.signIn.social({ provider: "google", callbackURL: "/people" })
+            openKeep("friends find you by your page: keep this library, then share it.", "/people")
           }
         >
           keep my account first

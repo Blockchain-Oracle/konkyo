@@ -23,7 +23,10 @@ export const POST = route<Record<string, never>, { toolkit: (typeof TOOLKITS)[nu
     // different one, so connecting waits for a Google account.
     const session = await getSession()
     if (session?.user.isAnonymous)
-      throw new LibraryError("Continue with Google first, then connect your accounts", 403)
+      throw new LibraryError(
+        "Keep this library first (your card in the rail), then connect your accounts",
+        403,
+      )
     return connect(userId, body.toolkit)
   },
   z.object({ toolkit: z.enum(TOOLKITS) }),
