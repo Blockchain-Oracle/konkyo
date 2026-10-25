@@ -23,7 +23,8 @@ Remove Zetaris and nothing can be marked verified.
   joined to Zetaris's text. The same check covers the Analyst's matrix, study items, lecture notes
   and audio briefs.
 - **Topic watches**: each is a Lightning `REST` table over OpenAlex; new papers are found with one
-  `LEFT ANTI JOIN` against the DOIs already seen. (`watch.ts`)
+  `LEFT ANTI JOIN` against the DOIs already seen. (`watch.ts`) If Zetaris can't answer, that run
+  asks OpenAlex directly instead and its trace says so (`zetaris_unavailable`).
 
 ## Meterless: memory, world state and long tasks
 
