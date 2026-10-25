@@ -60,7 +60,10 @@ function Tabs<T extends string>({
 
 // ------------------------------------------------------------------ Zetaris: three quotes, one statement
 
-type Check = { found: string[]; ms: number; sql: string }
+type Check = { found: string[]; ms: number; sql: string; checkedAt: number }
+
+/** A proxy's error page isn't JSON: read what there is, and fall back to the route's own words. */
+const bodyOf = (res: Response) => res.json().catch(() => ({}))
 
 /** The quote with the words a variant changed marked, against the one as written. */
 function Marked({ text, against }: { text: string; against: string }) {
@@ -89,7 +92,7 @@ function ZetarisExample() {
     setCheck(null)
     try {
       const res = await fetch("/api/made-with/zetaris", { method: "POST" })
-      const body = await res.json()
+      const body = await bodyOf(res)
       if (!res.ok) throw new Error(body.error ?? "Zetaris didn't answer just now.")
       setCheck(body)
       setState("idle")
@@ -137,7 +140,10 @@ function ZetarisExample() {
           <span aria-hidden>↗</span>
         </button>
         {check && (
-          <p className="mw-stat">1 statement · 3 quotes · {check.ms.toLocaleString()} ms</p>
+          <p className="mw-stat">
+            1 statement · 3 quotes · {check.ms.toLocaleString()} ms
+            <CheckedAgo at={check.checkedAt} />
+          </p>
         )}
         {state === "failed" && <p className="mw-stat">{error}</p>}
       </div>
@@ -149,6 +155,12 @@ function ZetarisExample() {
       )}
     </>
   )
+}
+
+/** A check shared from the last half minute says when it ran (the route keeps one at a time). */
+function CheckedAgo({ at }: { at: number }) {
+  const seconds = Math.round((Date.now() - at) / 1000)
+  return seconds >= 3 ? <> · checked {seconds} s ago</> : null
 }
 
 // ------------------------------------------------------------------ Meterless: one correction
@@ -312,6 +324,7 @@ type BriefLine = (typeof brief.lines)[number] & { source?: string; page?: number
 function ElevenLabsExample() {
   const audio = useRef<HTMLAudioElement>(null)
   const [playing, setPlaying] = useState(false)
+  const [failed, setFailed] = useState(false)
   const [now, setNow] = useState(0)
   const lines = brief.lines as BriefLine[]
   const at = Math.max(
@@ -322,7 +335,8 @@ function ElevenLabsExample() {
   const toggle = () => {
     const el = audio.current
     if (!el) return
-    if (el.paused) void el.play()
+    setFailed(false)
+    if (el.paused) el.play().catch(() => setFailed(true))
     else el.pause()
   }
   return (
@@ -356,11 +370,13 @@ function ElevenLabsExample() {
             <i style={{ width: `${(now / brief.durationSeconds) * 100}%` }} />
           </div>
           <p className="mw-radio-time">
-            {clock(now)} / {clock(brief.durationSeconds)}
+            {failed
+              ? "the recording didn't load"
+              : `${clock(now)} / ${clock(brief.durationSeconds)}`}
           </p>
         </div>
       </div>
-      <div className="mw-slip mw-line" aria-live="polite">
+      <div className="mw-slip mw-line" aria-live={playing ? "off" : "polite"}>
         <small>
           {line ? BRIEF.voices[line.speaker as "A" | "B"].name : ""} · line {at + 1} of{" "}
           {lines.length}
@@ -482,7 +498,7 @@ function OpenAlexExample() {
     setError("")
     fetch(`/api/made-with/openalex?topic=${topic}`)
       .then(async (res) => {
-        const body = await res.json()
+        const body = await bodyOf(res)
         if (!res.ok) throw new Error(body.error ?? "OpenAlex didn't answer just now.")
         if (live) setWorks(body.works)
       })
@@ -503,6 +519,10 @@ function OpenAlexExample() {
         {error ? (
           <li className="mw-slip">
             <p>{error}</p>
+          </li>
+        ) : works && !works.length ? (
+          <li className="mw-slip">
+            <p>OpenAlex has no open-access papers with a PDF copy on this just now.</p>
           </li>
         ) : works ? (
           works.map((w) => (

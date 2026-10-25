@@ -334,7 +334,7 @@ export const PARTNERS: Partner[] = [
     capabilities: [
       {
         title: "Lectures become sources.",
-        body: "Scribe v2 transcribes recordings with word timings and speakers. Passages break at a new speaker, a pause or 45 seconds, so a citation plays the recording from its first word.",
+        body: "Scribe v2 transcribes recordings with word timings and speakers. Passages break at a new speaker, a pause, or a sentence end past 45 seconds, so a citation plays the recording from its first word.",
         code: { file: "packages/ingest/src/transcript.ts", symbol: "transcribe" },
       },
       {
@@ -450,7 +450,7 @@ export const PARTNERS: Partner[] = [
       },
       {
         title: "Drive's own formats",
-        body: "Google Docs, Sheets and Slides are exported; other files download as they are, up to 10 MB.",
+        body: "Google Docs, Sheets and Slides are exported to files Konkyo can read, within Google's 10 MB export limit; any other file downloads as it is.",
         code: { file: CONNECTORS, symbol: "driveDownload" },
       },
       {

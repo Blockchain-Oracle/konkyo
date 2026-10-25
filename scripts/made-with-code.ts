@@ -6,71 +6,49 @@
 //   pnpm made-with:code
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
+import { parse } from "@babel/parser"
+import type { Statement } from "@babel/types"
 import { codeToHtml } from "shiki"
 import { type CodeRef, codeKey, PARTNERS } from "../apps/web/lib/made-with.ts"
 
 const root = join(import.meta.dirname, "..")
 /** An excerpt longer than this is cut, with a note of how much more there is. */
-const MAX_LINES = 40
-const LANG: Record<string, string> = { ts: "ts", tsx: "tsx", sql: "sql", css: "css", mjs: "js" }
+const MAX_LINES = 60
+const LANG: Record<string, string> = { ts: "ts", tsx: "tsx" }
 
-const literally = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-
-/** The line a declaration of `symbol` starts on: function, const, class, method, key or table. */
-function startOf(lines: string[], symbol: string) {
-  const name = literally(symbol)
-  const patterns = [
-    new RegExp(`^\\s*(export\\s+)?(default\\s+)?(async\\s+)?function\\*?\\s+${name}\\b`),
-    new RegExp(`^\\s*(export\\s+)?(const|let)\\s+${name}\\b`),
-    new RegExp(`^\\s*(export\\s+)?(abstract\\s+)?class\\s+${name}\\b`),
-    new RegExp(`^\\s*(export\\s+)?(type|interface)\\s+${name}\\b`),
-    new RegExp(`^\\s*(public\\s+|private\\s+|static\\s+)*(async\\s+)?${name}\\s*[(<]`),
-    new RegExp(`^\\s*"?${name}"?\\s*:`),
-    new RegExp(`^\\s*CREATE (UNIQUE )?(TABLE|INDEX)[^;]*\\b${name}\\b`, "i"),
-  ]
-  for (const pattern of patterns) {
-    const at = lines.findIndex((line) => pattern.test(line))
-    if (at >= 0) return at
+/** A top-level declaration's name, unwrapping `export` and `export default`. */
+function namesOf(node: Statement): string[] {
+  const inner =
+    node.type === "ExportNamedDeclaration" || node.type === "ExportDefaultDeclaration"
+      ? node.declaration
+      : node
+  if (!inner) return []
+  switch (inner.type) {
+    case "FunctionDeclaration":
+    case "ClassDeclaration":
+    case "TSTypeAliasDeclaration":
+    case "TSInterfaceDeclaration":
+      return inner.id ? [inner.id.name] : []
+    case "VariableDeclaration":
+      return inner.declarations.flatMap((d) => (d.id.type === "Identifier" ? [d.id.name] : []))
+    default:
+      return []
   }
-  return -1
 }
 
-/** A line without its escapes, strings and comments: only the brackets that are code. */
-const codeOf = (line: string, string = "") =>
-  line
-    .replace(/\\./g, "")
-    .replace(/(["'`])(?:(?!\1).)*\1/g, string)
-    .replace(/(^|\s)(\/\/|--\s).*$/, "")
-    .trim()
-
-/** The expression goes on: the line ends mid-expression, or the next one continues it. */
-const continues = (line: string, next: string | undefined) =>
-  /(=>|=|\?|:|,|\(|&&|\|\||\+)$/.test(codeOf(line, "0")) ||
-  /^(\.|\?|:|&&|\|\||\+|as\s)/.test((next ?? "").trim())
-
-/** Where the declaration ends: the bracket depth comes back to where it started. */
-function endOf(lines: string[], start: number) {
-  let depth = 0
-  let opened = false
-  let carry = false
-  for (let i = start; i < lines.length; i++) {
-    const code = codeOf(lines[i] ?? "")
-    for (const ch of code) {
-      if (ch === "{" || ch === "(" || ch === "[") {
-        depth++
-        opened = true
-      } else if (ch === "}" || ch === ")" || ch === "]") depth--
-    }
-    if (depth > 0) continue
-    // a comment line inside an expression that goes on
-    if (!codeOf(lines[i] ?? "", "0") && carry) continue
-    carry = continues(lines[i] ?? "", lines[i + 1])
-    if (carry) continue
-    if (opened) return i
-    // a one-line declaration with no brackets (a const of a string, a SQL statement)
-    if (/;\s*$|^\s*$/.test(lines[i] ?? "")) return i
-  }
-  return lines.length - 1
+/**
+ * Where `symbol` is declared at the top level of the file, by a real parse (Babel, TypeScript +
+ * JSX): its first and last line, 0-based. A bracket counter got regexes and multi-line template
+ * strings wrong (a `)` in a regex ended findMetadata 42 lines early).
+ */
+function rangeOf(source: string, file: string, symbol: string) {
+  const ast = parse(source, {
+    sourceType: "module",
+    plugins: ["typescript", ...(file.endsWith(".tsx") ? (["jsx"] as const) : [])],
+  })
+  const node = ast.program.body.find((n) => namesOf(n).includes(symbol))
+  if (!node?.loc) return null
+  return { start: node.loc.start.line - 1, end: node.loc.end.line - 1 }
 }
 
 export type Excerpt = {
@@ -85,13 +63,14 @@ export type Excerpt = {
 }
 
 async function excerpt(ref: CodeRef): Promise<Excerpt> {
-  const lines = readFileSync(join(root, ref.file), "utf8").split("\n")
-  const start = startOf(lines, ref.symbol)
-  if (start < 0) throw new Error(`no "${ref.symbol}" in ${ref.file}`)
+  const source = readFileSync(join(root, ref.file), "utf8")
+  const lines = source.split("\n")
+  const range = rangeOf(source, ref.file, ref.symbol)
+  if (!range) throw new Error(`no top-level "${ref.symbol}" in ${ref.file}`)
+  const { start, end } = range
   // keep the comment just above it: it says what the function is for
   let from = start
-  while (from > 0 && /^\s*(\/\/|\*|\/\*\*|\*\/|--)/.test(lines[from - 1])) from--
-  const end = endOf(lines, start)
+  while (from > 0 && /^\s*(\/\/|\*|\/\*\*|\*\/)/.test(lines[from - 1] ?? "")) from--
   const body = lines.slice(from, end + 1)
   const shown = body.slice(0, MAX_LINES)
   const html = await codeToHtml(shown.join("\n"), {

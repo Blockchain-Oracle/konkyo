@@ -20,6 +20,7 @@
     "made-with:code": "node scripts/made-with-code.ts"
   },
   "devDependencies": {
+    "@babel/parser": "7.29.9",
     "@biomejs/biome": "2.5.15",
     "@konkyo/env": "workspace:*",
     "@konkyo/storage": "workspace:*",

@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server"
 import { LibraryError } from "@/lib/library"
-import { liveAllowed, searchExample } from "@/lib/made-with-live"
+import { freshSearch, liveAllowed, searchExample } from "@/lib/made-with-live"
 
 /** The OpenAlex page's live search (plan F61): the search deep search runs, for one topic. */
 export async function GET(request: Request) {
-  const topic = Number(new URL(request.url).searchParams.get("topic"))
+  const raw = new URL(request.url).searchParams.get("topic")
+  const topic = raw === null || raw === "" ? Number.NaN : Number(raw)
   if (!Number.isInteger(topic)) return NextResponse.json({ error: "Pick a topic" }, { status: 400 })
-  if (!liveAllowed(request, "openalex"))
+  // A fresh search is shown again without counting: only real calls to OpenAlex are limited.
+  if (!freshSearch(topic) && !liveAllowed(request, "openalex"))
     return NextResponse.json(
       { error: "That's a lot of searches. Try again in a minute." },
       { status: 429 },

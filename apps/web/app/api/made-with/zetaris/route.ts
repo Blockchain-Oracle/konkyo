@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server"
 import { LibraryError } from "@/lib/library"
-import { checkExample, liveAllowed } from "@/lib/made-with-live"
+import { checkExample, freshCheck, liveAllowed } from "@/lib/made-with-live"
 
-/** The Zetaris page's live check (plan F61): three quotes, one statement, the real engine. */
+/**
+ * The Zetaris page's live check (plan F61): three quotes, one statement, the real engine. A
+ * check made in the last half minute is shown again (with when it ran) without touching Zetaris.
+ */
 export async function POST(request: Request) {
-  if (!liveAllowed(request, "zetaris"))
+  if (!freshCheck() && !liveAllowed(request, "zetaris"))
     return NextResponse.json(
       { error: "That's a lot of checks. Try again in a minute." },
       { status: 429 },
