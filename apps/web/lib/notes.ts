@@ -1,13 +1,13 @@
 import "server-only"
 import { createHash } from "node:crypto"
-import { NOTES } from "@konkyo/config"
+import { NOTES, type SpaceColor } from "@konkyo/config"
 import { db, schema } from "@konkyo/db"
 import { fileAccess } from "@konkyo/db/access"
 import { enqueueDebounced } from "@konkyo/jobs"
 import { and, desc, eq, isNull, sql } from "drizzle-orm"
 import { fileableFolder, LibraryError } from "./library"
 
-const { files, fileFolders, folders, notes, noteVersions, noteEvents } = schema
+const { files, fileFolders, notes, noteVersions, noteEvents } = schema
 
 /** A Tiptap (ProseMirror) document. */
 export type NoteDoc = { type: "doc"; content?: unknown[] }
@@ -63,15 +63,32 @@ async function ownNote(ownerId: string, fileId: string) {
   return file
 }
 
+/** The space a note is filed in, as its card and its editor show it. */
+const spaceOfNote = (ownerId: string) =>
+  sql<{ id: string; name: string; color: SpaceColor | null } | null>`(
+    select json_build_object('id', s.id, 'name', s.name, 'color', s.color)
+    from file_folders ff join folders fo on fo.id = ff.folder_id
+    join folders s on s.id = fo.space_id
+    where ff.file_id = ${files.id} and s.deleted_at is null and fo.deleted_at is null
+      -- only a space this person is still in (a note can stay filed in one they left)
+      and (s.owner_id = ${ownerId} or exists (select 1 from space_members m
+        where m.space_id = s.id and m.user_id = ${ownerId}))
+    order by ff.added_at limit 1)`
+
 export async function getNote(ownerId: string, fileId: string) {
   const file = await ownNote(ownerId, fileId)
   const note = await db.query.notes.findFirst({ where: eq(notes.fileId, fileId) })
+  const [filed] = await db
+    .select({ space: spaceOfNote(ownerId) })
+    .from(files)
+    .where(eq(files.id, fileId))
   return {
     id: file.id,
     title: file.title,
     content: (note?.content ?? EMPTY_DOC) as NoteDoc,
     words: note?.words ?? 0,
     updatedAt: (note?.updatedAt ?? file.updatedAt).toISOString(),
+    space: filed?.space ?? null,
   }
 }
 
@@ -259,15 +276,7 @@ export async function listNotes(ownerId: string) {
       // on the card: whether it's out as an article, and the space it's filed in
       published: sql<boolean>`exists (select 1 from articles a
         where a.note_file_id = ${files.id} and a.unpublished_at is null)`,
-      space: sql<{ id: string; name: string; color: string | null } | null>`(
-        select json_build_object('id', s.id, 'name', s.name, 'color', s.color)
-        from file_folders ff join folders fo on fo.id = ff.folder_id
-        join folders s on s.id = fo.space_id
-        where ff.file_id = ${files.id} and s.deleted_at is null and fo.deleted_at is null
-          -- only a space this person is still in (a note can stay filed in one they left)
-          and (s.owner_id = ${ownerId} or exists (select 1 from space_members m
-            where m.space_id = s.id and m.user_id = ${ownerId}))
-        order by ff.added_at limit 1)`,
+      space: spaceOfNote(ownerId),
     })
     .from(files)
     .innerJoin(notes, eq(notes.fileId, files.id))

@@ -1,9 +1,11 @@
 "use client"
 
 import type { CitationMatch, ClaimResult } from "@konkyo/agents"
+import { SPACES } from "@konkyo/config"
 import { Button } from "@konkyo/ui/components/button"
 import { Sheet, SheetContent, SheetTitle } from "@konkyo/ui/components/sheet"
 import { ToggleGroup, ToggleGroupItem } from "@konkyo/ui/components/toggle-group"
+import { colorFor } from "@konkyo/ui/lib/space"
 import { cn } from "@konkyo/ui/lib/utils"
 import type { Editor } from "@tiptap/core"
 import { Placeholder } from "@tiptap/extensions"
@@ -253,6 +255,7 @@ export function NoteEditor({ note }: { note: NoteDetail }) {
         {tab === "sources" && (
           <SourcesPanel
             noteId={note.id}
+            space={note.space}
             request={lookup}
             onInsert={(m) => insertCitation(fromMatch(m))}
           />
@@ -297,6 +300,19 @@ export function NoteEditor({ note }: { note: NoteDetail }) {
             <ChevronLeftIcon className="size-3.5" strokeWidth={2.25} aria-hidden />
             write
           </Link>
+          {/* the space it's filed in: back to its wall */}
+          {note.space && (
+            <Link href={`/spaces/${note.space.id}`} className="room-pill hover:bg-ink">
+              <span
+                aria-hidden
+                className="size-2.5 rounded-full"
+                style={{
+                  background: SPACES.colors[note.space.color ?? colorFor(note.space.id)].hex,
+                }}
+              />
+              {note.space.name.toLowerCase()}
+            </Link>
+          )}
           <span
             className={cn("room-pill", saveState === "retrying" && "is-warning")}
             aria-live="polite"

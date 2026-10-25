@@ -14,6 +14,7 @@ import { api } from "@/lib/fetcher"
 import { whereIs } from "@/lib/format"
 import { isSendKey } from "@/lib/keys"
 import { openSource } from "@/lib/preview"
+import { useSpaceFiles } from "@/lib/use-library"
 
 /**
  * Search citation (plan F22): the selected words (or any words) against the library's sources.
@@ -22,10 +23,13 @@ import { openSource } from "@/lib/preview"
  */
 export function SourcesPanel({
   noteId,
+  space,
   request,
   onInsert,
 }: {
   noteId: string
+  /** The space the note is filed in: its sources are listed beside the note before any search. */
+  space: { id: string; name: string } | null
   /** Text to look up, from the editor ("Find a source" on a selection or a claim). */
   request: { text: string; nonce: number } | null
   onInsert: (match: CitationMatch) => void
@@ -109,6 +113,7 @@ export function SourcesPanel({
             ))}
           </ul>
         )}
+        {!results && !busy && space && <SpaceSources space={space} />}
         {results && !results.length && (
           <p className="p-4 text-snippet text-ash-gray">
             Nothing in your sources supports this yet. Try other words, or find sources with a deep
@@ -183,5 +188,39 @@ export function SourcesPanel({
         )}
       </div>
     </div>
+  )
+}
+
+/** The space's own sources, beside the note: open one to read it, or search for support above. */
+function SpaceSources({ space }: { space: { id: string; name: string } }) {
+  const { data: files, isPending } = useSpaceFiles(space.id)
+  const sources = files?.filter((f) => f.kind !== "note" && f.status === "ready") ?? []
+  if (isPending)
+    return (
+      <div className="space-y-2 p-4" aria-hidden>
+        <Skeleton className="h-3.5 w-2/5" />
+        <Skeleton className="h-3.5 w-3/5" />
+      </div>
+    )
+  if (!sources.length) return null
+  return (
+    <section className="p-4" aria-label={`Sources in ${space.name}`}>
+      <p className="text-meta text-ash-gray">In {space.name.toLowerCase()}</p>
+      <ul className="mt-2 space-y-1">
+        {sources.map((f) => (
+          <li key={f.id}>
+            <button
+              type="button"
+              onClick={() => openSource({ fileId: f.id, title: f.title, kind: f.kind as FileKind })}
+              className="flex w-full items-start gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-black/5"
+            >
+              <KindIcon kind={f.kind as FileKind} className="mt-0.5 size-3.5 shrink-0" />
+              <span className="line-clamp-2 text-snippet text-bone-white">{f.title}</span>
+              <ArrowUpRightIcon className="mt-0.5 ml-auto size-3.5 shrink-0 text-ash-gray" />
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }
