@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Write" }
 
 export default function WritePage() {
   return (
-    <PageShell title="Write">
+    <PageShell title="write" bare>
       <NotesList />
     </PageShell>
   )

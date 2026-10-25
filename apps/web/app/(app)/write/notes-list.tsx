@@ -1,9 +1,10 @@
 "use client"
 
-import { Button } from "@konkyo/ui/components/button"
+import { SPACES } from "@konkyo/config"
 import { Skeleton } from "@konkyo/ui/components/skeleton"
+import { colorFor, tiltFor } from "@konkyo/ui/lib/space"
 import { useMutation } from "@tanstack/react-query"
-import { NotebookPenIcon, PlusIcon } from "lucide-react"
+import { PlusIcon } from "lucide-react"
 import type { Route } from "next"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -12,7 +13,15 @@ import { EmptyState } from "@/components/empty-state"
 import { api } from "@/lib/fetcher"
 import { useQuery } from "@/lib/use-query"
 
-type NoteRow = { id: string; title: string; words: number; updatedAt: string; excerpt: string }
+type NoteRow = {
+  id: string
+  title: string
+  words: number
+  updatedAt: string
+  excerpt: string
+  published: boolean
+  space: { id: string; name: string; color: keyof typeof SPACES.colors | null } | null
+}
 
 const relative = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" })
 function ago(iso: string) {
@@ -36,10 +45,15 @@ export function NotesList() {
     onError: (error: Error) => toast.error(error.message),
   })
   const newNote = (
-    <Button onClick={() => create.mutate()} disabled={create.isPending}>
-      <PlusIcon strokeWidth={1.75} />
-      New note
-    </Button>
+    <button
+      type="button"
+      className="claim-done"
+      onClick={() => create.mutate()}
+      disabled={create.isPending}
+    >
+      <PlusIcon className="size-4" strokeWidth={2.5} />
+      new note
+    </button>
   )
 
   if (isPending)
@@ -65,28 +79,36 @@ export function NotesList() {
     )
   return (
     <>
-      <div className="mt-9 flex justify-end">{newNote}</div>
-      <ul className="mt-4.5 border-t border-border">
+      <div className="mb-6 flex flex-wrap items-center gap-2">
+        <span className="room-pill">
+          <b>{notes.length}</b> note{notes.length === 1 ? "" : "s"} ·{" "}
+          {notes.filter((n) => n.published).length} published
+        </span>
+        <span className="ml-auto">{newNote}</span>
+      </div>
+      {/* every note as a sheet of paper, newest edit first (R4) */}
+      <ul className="notes-grid">
         {notes.map((n) => (
-          <li
-            key={n.id}
-            className="relative flex min-h-16 items-center gap-3 border-b border-border px-2 py-3 transition-colors duration-(--duration-press) hover:bg-accent"
-          >
-            <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-panel">
-              <NotebookPenIcon className="size-4 text-ash-gray" strokeWidth={1.5} aria-hidden />
-            </span>
-            <div className="min-w-0 flex-1">
-              <Link
-                href={`/write/${n.id}` as Route}
-                className="block truncate text-ui text-bone-white after:absolute after:inset-0 after:content-['']"
-              >
-                {n.title}
-              </Link>
-              <p className="mt-0.5 truncate text-meta text-ash-gray">
+          <li key={n.id} className="note-card" style={{ rotate: tiltFor(n.id, 300) }}>
+            {n.published && <span className="note-published">published</span>}
+            <Link href={`/write/${n.id}` as Route} className="note-card-title">
+              {n.title}
+            </Link>
+            {n.excerpt && <p className="note-card-text">{n.excerpt}</p>}
+            <p className="note-card-foot">
+              {n.space && (
+                <span className="note-card-space">
+                  <i
+                    aria-hidden
+                    style={{ background: SPACES.colors[n.space.color ?? colorFor(n.space.id)].hex }}
+                  />
+                  {n.space.name.toLowerCase()}
+                </span>
+              )}
+              <span>
                 {n.words} words · {ago(n.updatedAt)}
-                {n.excerpt ? ` · ${n.excerpt}` : ""}
-              </p>
-            </div>
+              </span>
+            </p>
           </li>
         ))}
       </ul>

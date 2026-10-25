@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Agents" }
 
 export default function AgentsPage() {
   return (
-    <PageShell title="Agents">
+    <PageShell title="agents" bare>
       <Suspense>
         <AgentsView />
       </Suspense>

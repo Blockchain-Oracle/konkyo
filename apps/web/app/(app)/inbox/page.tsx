@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Inbox" }
 
 export default function InboxPage() {
   return (
-    <PageShell title="Inbox">
+    <PageShell title="inbox" bare>
       <InboxView />
     </PageShell>
   )

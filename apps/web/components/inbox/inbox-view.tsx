@@ -2,6 +2,7 @@
 
 import { Button } from "@konkyo/ui/components/button"
 import { Skeleton } from "@konkyo/ui/components/skeleton"
+import { tiltFor } from "@konkyo/ui/lib/space"
 import { cn } from "@konkyo/ui/lib/utils"
 import { useQueryClient } from "@tanstack/react-query"
 import {
@@ -21,6 +22,16 @@ import { EmptyState } from "@/components/empty-state"
 import { api } from "@/lib/fetcher"
 import type { InboxItem } from "@/lib/inbox"
 import { inboxKeys, useInbox } from "@/lib/use-inbox"
+
+/** What kind of slip it is, said on its black tag. */
+const KIND = {
+  review: "review",
+  practice: "practice",
+  "new-source": "found",
+  "agent-run": "agent",
+  brief: "brief",
+  system: "notice",
+} as const
 
 const ICON = {
   review: GraduationCapIcon,
@@ -90,62 +101,53 @@ function Row({ item }: { item: InboxItem }) {
           }
         : null
 
+  // A slip of paper on the wall (OurSpaces' mail arrival): a black tag says what it is, a lime
+  // sticker that it's new, and its one action is the lime one.
   return (
-    <li className="group relative flex gap-3.5 border-b border-border py-4 pr-1 pl-1">
-      <span className="relative mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full border border-border bg-panel">
-        <Icon className="size-4 text-silver-mist" strokeWidth={1.5} aria-hidden />
-        {!item.read && (
-          <span className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full border-2 border-background bg-electric-iris">
-            <span className="sr-only">Unread</span>
-          </span>
-        )}
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-baseline gap-3">
-          <p
-            className={cn(
-              "min-w-0 flex-1 truncate text-ui",
-              item.read ? "text-silver-mist" : "text-bone-white",
-            )}
-          >
-            {item.title}
-          </p>
-          <span className="shrink-0 text-meta text-ash-gray tabular-nums">
-            {ago(item.createdAt)}
-          </span>
-        </div>
-        {(item.body || item.data.detail) && (
-          <p className="mt-0.5 line-clamp-2 text-snippet text-ash-gray">
-            {item.data.detail ?? item.body}
-          </p>
-        )}
-        <div className="mt-2.5 flex items-center gap-1.5">
+    <li
+      className={cn("inbox-slip", !item.read && "is-new")}
+      style={{ rotate: tiltFor(item.id, 760) }}
+    >
+      <div className="inbox-slip-top">
+        <span className="inbox-tag">
+          <Icon className="size-3.5" strokeWidth={2} aria-hidden />
+          {KIND[item.kind] ?? "notice"}
+        </span>
+        {!item.read && <span className="inbox-new">new</span>}
+        <span className="ml-auto text-[12px] font-bold text-ink-muted tabular-nums">
+          {ago(item.createdAt)}
+        </span>
+        <button
+          type="button"
+          aria-label={`Dismiss ${item.title}`}
+          onClick={() => void dismiss()}
+          className="inbox-dismiss"
+        >
+          <XIcon className="size-3.5" strokeWidth={2.25} />
+        </button>
+      </div>
+      <p className="inbox-title">{item.title}</p>
+      {(item.body || item.data.detail) && (
+        <p className="inbox-body">{item.data.detail ?? item.body}</p>
+      )}
+      {(primary || !item.read) && (
+        <div className="mt-3 flex items-center gap-3">
           {primary && (
-            <Button size="sm" variant="secondary" onClick={() => void primary.run()}>
-              {primary.label}
-            </Button>
+            <button type="button" className="claim-done" onClick={() => void primary.run()}>
+              {primary.label.toLowerCase()} <span aria-hidden="true">→</span>
+            </button>
           )}
           {!item.read && (
-            <Button
-              size="sm"
-              variant="ghost"
-              className="text-ash-gray"
+            <button
+              type="button"
+              className="text-[12.5px] font-bold text-ink-muted underline-offset-2 hover:underline"
               onClick={() => void patch({ read: true })}
             >
-              Mark read
-            </Button>
+              mark read
+            </button>
           )}
         </div>
-      </div>
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        aria-label={`Dismiss ${item.title}`}
-        onClick={() => void dismiss()}
-        className="text-ash-gray opacity-100 hover:text-bone-white md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
-      >
-        <XIcon strokeWidth={1.5} />
-      </Button>
+      )}
     </li>
   )
 }
@@ -184,13 +186,13 @@ export function InboxView() {
   const unread = items.filter((i) => !i.read).length
   return (
     <section aria-label="Inbox">
-      <div className="flex items-center justify-between border-b border-border pb-3">
-        <p className="text-snippet text-ash-gray">
-          {unread ? `${unread} unread` : "All read"} · {items.length} in all
-        </p>
-        <Button
-          size="sm"
-          variant="ghost"
+      <div className="mb-6 flex items-center gap-2">
+        <span className="room-pill">
+          <b>{unread}</b> unread · {items.length} in all
+        </span>
+        <button
+          type="button"
+          className="room-pill hover:bg-ink disabled:opacity-50"
           disabled={!unread}
           onClick={() =>
             void api("/api/inbox/read-all", { method: "POST" }).then(() =>
@@ -198,11 +200,11 @@ export function InboxView() {
             )
           }
         >
-          <CheckCheckIcon strokeWidth={1.5} />
-          Mark all read
-        </Button>
+          <CheckCheckIcon className="size-3.5" strokeWidth={2} />
+          mark all read
+        </button>
       </div>
-      <ul>
+      <ul className="inbox-slips">
         {items.map((item) => (
           <Row key={item.id} item={item} />
         ))}

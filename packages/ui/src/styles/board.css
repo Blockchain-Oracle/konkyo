@@ -1513,3 +1513,313 @@ button.board-object:hover,
   border-radius: 50%;
   background: var(--brief);
 }
+
+/* ------------------------------------------------------------------ the inbox (F41): paper slips */
+.inbox-slips {
+  display: flex;
+  max-width: 760px;
+  flex-direction: column;
+  gap: 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.inbox-slip {
+  position: relative;
+  border-radius: 18px;
+  background:
+    linear-gradient(rgb(255 250 247 / 0.86), rgb(255 250 247 / 0.86)),
+    url("/os/note-paper.jpg") center / 260px 260px,
+    var(--color-paper-card);
+  box-shadow: 0 6px 0 rgb(17 17 20 / 0.18);
+  color: var(--color-ink);
+  padding: 16px 18px 18px;
+}
+.inbox-slip.is-new {
+  box-shadow:
+    0 0 0 3px var(--color-lime),
+    0 6px 0 rgb(17 17 20 / 0.18);
+}
+.inbox-slip-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.inbox-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 999px;
+  background: var(--color-sticker);
+  color: white;
+  padding: 4px 10px;
+  font-size: 11.5px;
+  font-weight: 800;
+}
+.inbox-new {
+  rotate: -4deg;
+  border-radius: 6px;
+  background: var(--color-lime);
+  color: var(--color-sticker);
+  padding: 2px 7px;
+  font-size: 11px;
+  font-weight: 900;
+}
+.inbox-dismiss {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-ink-muted, #5f5055);
+  cursor: pointer;
+}
+.inbox-dismiss:hover {
+  background: rgb(17 17 20 / 0.08);
+  color: var(--color-ink);
+}
+.inbox-title {
+  margin: 10px 0 0;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+}
+.inbox-body {
+  display: -webkit-box;
+  margin: 6px 0 0;
+  overflow: hidden;
+  color: #3a3036;
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+/* ------------------------------------------------------------------ agents (F34): cards by kind */
+.agents-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.agent-card {
+  display: flex;
+  min-height: 250px;
+  flex-direction: column;
+  gap: 14px;
+  border-radius: 24px;
+  background: var(--agent);
+  box-shadow: 0 8px 0 rgb(17 17 20 / 0.2);
+  color: var(--agent-ink);
+  padding: 18px;
+}
+.agent-card.is-paused {
+  filter: saturate(0.35);
+}
+.agent-icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  place-items: center;
+  rotate: -6deg;
+  border-radius: 12px;
+  background: var(--color-sticker);
+  color: white;
+}
+.agent-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.agent-what {
+  margin: 4px 0 0;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.85;
+}
+.agent-more {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0.12);
+  color: inherit;
+  cursor: pointer;
+}
+.agent-slip {
+  border-radius: 14px;
+  background: var(--color-paper-card);
+  box-shadow: 0 4px 0 rgb(17 17 20 / 0.16);
+  color: var(--color-ink);
+  padding: 10px 13px;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.agent-slip small {
+  color: #5f5055;
+  font-size: 12px;
+}
+.agent-pill {
+  border-radius: 999px;
+  background: var(--color-sticker);
+  color: white;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 800;
+}
+.agent-run {
+  display: inline-flex;
+  height: 30px;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  border: 0;
+  border-radius: 999px;
+  background: white;
+  color: var(--color-sticker);
+  cursor: pointer;
+  padding: 0 12px;
+  font-size: 12.5px;
+  font-weight: 800;
+}
+.agent-run:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+.agent-history-toggle {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 800;
+  opacity: 0.8;
+}
+.agent-history {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  border-radius: 14px;
+  background: rgb(0 0 0 / 0.12);
+  padding: 10px 12px;
+  list-style: none;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ------------------------------------------------------------------ notes (F21): sheets of paper */
+.notes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 22px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.note-card {
+  position: relative;
+  display: flex;
+  min-height: 200px;
+  flex-direction: column;
+  gap: 8px;
+  border-radius: 18px;
+  background:
+    linear-gradient(rgb(255 250 247 / 0.86), rgb(255 250 247 / 0.86)),
+    url("/os/note-paper.jpg") center / 260px 260px,
+    var(--color-paper-card);
+  box-shadow: 0 7px 0 rgb(17 17 20 / 0.18);
+  color: var(--color-ink);
+  padding: 18px 18px 16px;
+  transition:
+    translate 180ms cubic-bezier(0.16, 1, 0.3, 1),
+    rotate 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.note-card:hover {
+  translate: 0 -4px;
+  rotate: 0deg !important;
+}
+.note-card-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+  text-decoration: none;
+}
+/* the whole sheet opens the note */
+.note-card-title::after {
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  content: "";
+}
+.note-card-text {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: #3a3036;
+  font-size: 13.5px;
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+}
+.note-card-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin: auto 0 0;
+  color: #5f5055;
+  font-size: 12px;
+  font-weight: 700;
+}
+.note-card-space {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 999px;
+  background: var(--color-sticker);
+  color: white;
+  padding: 3px 9px;
+}
+.note-card-space i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.note-published {
+  position: absolute;
+  top: -10px;
+  right: 14px;
+  rotate: 5deg;
+  border-radius: 8px;
+  background: var(--color-lime);
+  box-shadow: 0 3px 0 rgb(17 17 20 / 0.2);
+  color: var(--color-sticker);
+  padding: 3px 9px;
+  font-size: 11.5px;
+  font-weight: 900;
+}

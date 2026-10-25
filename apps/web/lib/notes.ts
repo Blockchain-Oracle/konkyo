@@ -4,7 +4,7 @@ import { NOTES } from "@konkyo/config"
 import { db, schema } from "@konkyo/db"
 import { fileAccess } from "@konkyo/db/access"
 import { enqueueDebounced } from "@konkyo/jobs"
-import { and, desc, eq, isNull } from "drizzle-orm"
+import { and, desc, eq, isNull, sql } from "drizzle-orm"
 import { fileableFolder, LibraryError } from "./library"
 
 const { files, fileFolders, folders, notes, noteVersions, noteEvents } = schema
@@ -256,6 +256,14 @@ export async function listNotes(ownerId: string) {
       words: notes.words,
       updatedAt: notes.updatedAt,
       text: notes.text,
+      // on the card: whether it's out as an article, and the space it's filed in
+      published: sql<boolean>`exists (select 1 from articles a
+        where a.note_file_id = ${files.id} and a.unpublished_at is null)`,
+      space: sql<{ id: string; name: string; color: string | null } | null>`(
+        select json_build_object('id', s.id, 'name', s.name, 'color', s.color)
+        from file_folders ff join folders fo on fo.id = ff.folder_id
+        join folders s on s.id = fo.space_id
+        where ff.file_id = ${files.id} and s.deleted_at is null limit 1)`,
     })
     .from(files)
     .innerJoin(notes, eq(notes.fileId, files.id))
@@ -268,6 +276,8 @@ export async function listNotes(ownerId: string) {
     words: r.words,
     updatedAt: r.updatedAt.toISOString(),
     excerpt: r.text.replace(/\s+/g, " ").slice(0, 160),
+    published: r.published,
+    space: r.space,
   }))
 }
 
