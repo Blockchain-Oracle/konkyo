@@ -137,8 +137,9 @@ export function ChatView({
   const [focus, setFocus] = useState<Focus>(() =>
     scope ? focusOf(scope) : (peekQuestion(id)?.focus ?? focusFromSearch(params)),
   )
-  // The transport reads the focus at send time.
+  // The transport reads the focus (and whether to compare) at send time.
   const scopeRef = useRef(focus)
+  const compareRef = useRef(false)
   useEffect(() => {
     scopeRef.current = focus
   }, [focus])
@@ -148,7 +149,13 @@ export function ChatView({
         api: "/api/chat",
         // The server keeps the history; only the new question travels.
         prepareSendMessagesRequest: ({ id: chatId, messages, trigger }) => ({
-          body: { chatId, message: messages.at(-1), trigger, scope: scopeRef.current },
+          body: {
+            chatId,
+            message: messages.at(-1),
+            trigger,
+            scope: scopeRef.current,
+            compare: compareRef.current,
+          },
         }),
       }),
     [],
@@ -208,13 +215,19 @@ export function ChatView({
     text,
     quote,
     deep,
+    compare,
     intoFolderId,
-  }: Pick<ComposerSubmit, "text" | "quote"> & { deep?: boolean; intoFolderId?: string }) => {
+  }: Pick<ComposerSubmit, "text" | "quote"> & {
+    deep?: boolean
+    compare?: boolean
+    intoFolderId?: string
+  }) => {
     const parts: KonkyoMessage["parts"] = [
       ...(quote ? [{ type: "data-quote" as const, data: quote }] : []),
       { type: "text" as const, text },
     ]
     if (deep) return startDeep(text, { id: crypto.randomUUID(), role: "user", parts }, intoFolderId)
+    compareRef.current = Boolean(compare)
     return sendMessage({ role: "user", parts })
   }
 

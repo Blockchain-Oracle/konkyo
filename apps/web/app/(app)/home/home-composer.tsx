@@ -21,9 +21,14 @@ export function HomeComposer() {
   const [picking, setPicking] = useState(false)
   const hasReady = files?.some((f) => f.status === "ready") ?? false
 
-  const ask = ({ text, deep, quote }: Pick<ComposerSubmit, "text"> & Partial<ComposerSubmit>) => {
+  const ask = ({
+    text,
+    deep,
+    compare,
+    quote,
+  }: Pick<ComposerSubmit, "text"> & Partial<ComposerSubmit>) => {
     const chatId = crypto.randomUUID()
-    holdQuestion(chatId, { text, deep, quote, focus })
+    holdQuestion(chatId, { text, deep, compare, quote, focus })
     router.push(`/chats/${chatId}` as Route)
   }
 

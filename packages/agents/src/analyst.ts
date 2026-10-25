@@ -318,7 +318,11 @@ export async function analyse(
     latencyMs: Math.round(performance.now() - started),
     tokens: { input: result.usage.inputTokens, output: result.usage.outputTokens },
     rowsReturned: claims.length,
-    detail: { droppedByCode: dropped },
+    detail: {
+      droppedByCode: dropped,
+      // a claim only one source speaks to isn't a comparison: it never reaches the matrix
+      singleSource: claims.filter((c) => new Set(c.cells.map((x) => x.fileId)).size < 2).length,
+    },
   })
   const checking = shape(claims, sources, "checking")
   if (!checking.claims.length) return null

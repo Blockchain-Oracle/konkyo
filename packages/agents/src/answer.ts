@@ -110,6 +110,8 @@ const MIN_SIMILARITY = 0.22
  * as a whole near 0.35, questions the library answers above 0.55.
  */
 const THIN_SIMILARITY = 0.3
+/** Passages a comparison weighs in all, shared evenly among its sources (at least 3 each). */
+const COMPARE_PASSAGES = 16
 /** How many of the weak first matches the Planner sees when it replans. */
 const REPLAN_GLIMPSE = 4
 
@@ -855,7 +857,11 @@ export async function answer(input: AnswerInput) {
     }
     step("replan", "Broadening the search", "done", `${revised.why} ${passagesIn(found)}.`)
   }
-  const candidates = comparison ? spread(found, 3, 14) : found
+  // Few sources: each gets more of its passages heard, so the Analyst finds what they share.
+  const sourceCount = new Set(found.map((c) => c.fileId)).size
+  const candidates = comparison
+    ? spread(found, Math.max(3, Math.ceil(COMPARE_PASSAGES / sourceCount)), COMPARE_PASSAGES)
+    : found
   const best = bestOf(candidates)
   const files = new Set(candidates.map((c) => c.fileId))
   if (tried.length === planned.queries.length)

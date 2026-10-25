@@ -12,6 +12,7 @@ import {
   AtSignIcon,
   LibraryBigIcon,
   PlusIcon,
+  ScaleIcon,
   SquareIcon,
   TelescopeIcon,
   XIcon,
@@ -36,7 +37,13 @@ import { isSendKey } from "@/lib/keys"
 import { useFiles } from "@/lib/use-library"
 import { useUploads } from "./library/uploads-provider"
 
-export type ComposerSubmit = { text: string; deep: boolean; quote?: QuotedPassage }
+export type ComposerSubmit = {
+  text: string
+  deep: boolean
+  /** Weigh the sources against each other: the answer comes with the agree/disagree matrix. */
+  compare: boolean
+  quote?: QuotedPassage
+}
 
 /** An `@` being typed: where it starts and what follows it, up to the caret. */
 type Mention = { start: number; end: number; query: string }
@@ -81,6 +88,7 @@ export function Composer({
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const [text, setText] = useState("")
   const [deep, setDeep] = useState(false)
+  const [compare, setCompare] = useState(false)
   const [mention, setMention] = useState<Mention | null>(null)
   const [active, setActive] = useState(0)
   const [pickingState, setPickingState] = useState(false)
@@ -156,7 +164,7 @@ export function Composer({
       onSubmit={(event) => {
         event.preventDefault()
         if (!canSend || running) return
-        onSubmit({ text: text.trim(), deep, quote: quote ?? undefined })
+        onSubmit({ text: text.trim(), deep, compare, quote: quote ?? undefined })
         setText("")
         quoteInComposer(null)
       }}
@@ -318,6 +326,20 @@ export function Composer({
           >
             <TelescopeIcon className="size-3.5" strokeWidth={1.5} />
             Deep search
+          </InputGroupButton>
+          <InputGroupButton
+            size="sm"
+            variant="ghost"
+            aria-pressed={compare}
+            onClick={() => setCompare((value) => !value)}
+            title="Where your sources agree and disagree, claim by claim"
+            className={cn(
+              "h-8 rounded-full px-2.5 text-snippet whitespace-nowrap text-ash-gray",
+              compare && "bg-raised text-bone-white",
+            )}
+          >
+            <ScaleIcon className="size-3.5" strokeWidth={1.5} />
+            Compare
           </InputGroupButton>
           {reading > 0 && (
             <span className="ml-auto text-[12px] font-semibold text-ash-gray" aria-live="polite">

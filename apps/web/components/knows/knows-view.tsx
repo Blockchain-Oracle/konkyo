@@ -334,8 +334,8 @@ export function KnowsView({ spaceId }: { spaceId: string | null }) {
                   </ul>
                 ) : (
                   <p className="knows-why mt-3 pr-0!">
-                    Ask a question two of your sources both speak to, like “where do these papers
-                    disagree?”, and what each one says lands here.
+                    Ask with <b>Compare</b> on in the chat box, about something two of your sources
+                    both speak to, and where each one stands lands here.
                   </p>
                 )}
               </section>

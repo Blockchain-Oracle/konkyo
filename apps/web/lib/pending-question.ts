@@ -8,6 +8,7 @@ export type PendingQuestion = {
   text: string
   quote?: QuotedPassage
   deep?: boolean
+  compare?: boolean
   focus?: Focus
   /** "Find sources on this topic": the deep search imports into this folder. */
   intoFolderId?: string

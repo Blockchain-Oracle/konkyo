@@ -28,6 +28,8 @@ const Body = z.object({
       folderIds: z.array(z.uuid()).max(50).optional(),
     })
     .optional(),
+  /** Compare: weigh the sources against each other (the agree/disagree matrix, F13). */
+  compare: z.boolean().optional(),
 })
 
 export async function POST(request: Request) {
@@ -37,7 +39,7 @@ export async function POST(request: Request) {
   const parsed = Body.safeParse(await request.json())
   if (!parsed.success)
     return NextResponse.json({ error: "That request wasn't valid" }, { status: 400 })
-  const { chatId, scope } = parsed.data
+  const { chatId, scope, compare } = parsed.data
   const userMessage = parsed.data.message as unknown as KonkyoMessage
   const question = userMessage.parts
     .flatMap((p) => (p.type === "text" ? [p.text] : []))
@@ -56,7 +58,7 @@ export async function POST(request: Request) {
 
   let started: Awaited<ReturnType<typeof startAnswer>>
   try {
-    started = await startAnswer({ ownerId, chatId, userMessage, question, asked, scope })
+    started = await startAnswer({ ownerId, chatId, userMessage, question, asked, scope, compare })
   } catch (error) {
     if (error instanceof LibraryError)
       return NextResponse.json({ error: error.message }, { status: error.status })

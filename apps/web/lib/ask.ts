@@ -22,6 +22,8 @@ export async function startAnswer(input: {
   question: string
   asked: string
   scope?: { fileIds?: string[]; folderIds?: string[] }
+  /** Weigh the sources against each other whatever the Planner decides. */
+  compare?: boolean
   tap?: {
     onEvent?: (event: AnswerEvent) => void
     onEnd?: (outcome: { status: RunStatus; runId: string; tracer: Tracer }) => void
@@ -54,6 +56,7 @@ export async function startAnswer(input: {
         question: input.asked,
         history,
         scope: chat.scope,
+        compare: input.compare,
         tracer,
         // Not the request's signal: leaving the page must not throw the answer away; Stop aborts.
         abortSignal: stopSignal,

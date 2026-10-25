@@ -441,7 +441,7 @@ function PanelAnswer({
 }) {
   const router = useRouter()
   const queryClient = useQueryClient()
-  const { steps, draft, sources, final, receipt, notFound } = partsOf(message)
+  const { steps, draft, sources, final, receipt, notFound, matrix } = partsOf(message)
   const [pin, setPin] = useState<"idle" | "pinning" | "pinned" | "failed">("idle")
   const runId = message.metadata?.runId
   // read aloud: the sentence being said is underlined in place
@@ -532,6 +532,13 @@ function PanelAnswer({
           <span className="recap-receipt">
             ✓ {receipt.quotes === 1 ? "1 quote" : `${receipt.quotes} quotes`} checked, word for word
           </span>
+        )}
+        {/* The agree/disagree matrix is too wide for the panel: it says what it found and links. */}
+        {matrix?.state === "done" && matrix.claims.length > 0 && (
+          <Link href={`/chats/${chatId}` as Route} className="recap-receipt underline">
+            ⚖ where {matrix.counts.sources} sources agree and disagree on {matrix.counts.claims}{" "}
+            {matrix.counts.claims === 1 ? "point" : "points"} ↗
+          </Link>
         )}
         {!running && final && (
           <div className="recap-answer-actions">
