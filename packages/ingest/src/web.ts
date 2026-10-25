@@ -40,6 +40,24 @@ export async function fetchSource(url: string): Promise<FetchedSource> {
   }
 }
 
+/**
+ * The PDF a scholarly page says is its full text (Highwire's `citation_pdf_url`, which arXiv,
+ * bioRxiv, PLOS and most journal sites set), resolved against the page's address. A pasted
+ * arXiv or journal link then reads the paper, not its abstract page.
+ */
+export function citationPdfUrl(html: string, base: string): string | null {
+  for (const tag of html.match(/<meta\b[^>]*>/gi) ?? []) {
+    if (!/\bname\s*=\s*["']citation_pdf_url["']/i.test(tag)) continue
+    const content = tag.match(/\bcontent\s*=\s*["']([^"']+)["']/i)?.[1]
+    if (!content) continue
+    try {
+      const url = new URL(content.replace(/&amp;/g, "&"), base)
+      return url.protocol === "https:" || url.protocol === "http:" ? url.href : null
+    } catch {}
+  }
+  return null
+}
+
 export type Article = {
   title: string
   byline?: string

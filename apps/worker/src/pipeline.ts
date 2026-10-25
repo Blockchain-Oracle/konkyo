@@ -4,6 +4,7 @@ import { db, schema } from "@konkyo/db"
 import { fileSpaceEvents } from "@konkyo/db/live"
 import {
   articleToPdf,
+  citationPdfUrl,
   documentHtml,
   doiFromUrl,
   embeddingHash,
@@ -279,6 +280,14 @@ async function readSource(file: FileRow): Promise<DocResult> {
       const source = await fetchSource(file.sourceUrl)
       if (source.contentType.includes("pdf"))
         return { ...(await fromPdf(file, source.bytes, PDF_HYPHENS.pdf)), kind: "pdf" }
+      if (source.contentType.includes("html")) {
+        const pdfUrl = citationPdfUrl(new TextDecoder().decode(source.bytes), source.finalUrl)
+        const paper = pdfUrl ? await fetchSource(pdfUrl).catch(() => null) : null
+        if (paper?.contentType.includes("pdf")) {
+          await stage(file.id, "Reading the paper's PDF", 0.2)
+          return { ...(await fromPdf(file, paper.bytes, PDF_HYPHENS.pdf)), kind: "pdf" }
+        }
+      }
       if (!source.contentType.includes("html")) {
         throw new ProblemError(
           "unsupported",
