@@ -27,5 +27,6 @@ export const config = {
     "/knows/:path*",
     "/people/:path*",
     "/trash/:path*",
+    "/briefs/:path*",
   ],
 }

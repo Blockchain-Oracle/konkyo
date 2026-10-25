@@ -7,10 +7,20 @@ import { folderRole, readableFileSql } from "@konkyo/db/access"
 import { enqueue } from "@konkyo/jobs"
 import { deleteObject } from "@konkyo/storage"
 import { and, desc, eq, inArray, isNull } from "drizzle-orm"
+import { alias } from "drizzle-orm/pg-core"
 import { LibraryError } from "./library"
 import { allowanceLeft } from "./usage"
 
 const { briefs, folders, files } = schema
+
+/** A brief's folder's space: its name and colours (the index's chips, the player's wall). */
+const space = alias(folders, "space")
+const spaceColumns = {
+  spaceId: space.id,
+  spaceName: space.name,
+  spaceColor: space.color,
+  spaceWall: space.wall,
+}
 
 /** Make an audio brief of a folder or some files (plan F37); the worker does the rest. */
 export async function startBrief(
@@ -66,6 +76,13 @@ async function ownBrief(ownerId: string, id: string) {
 /** A brief for its page: the lines with their times and citations, and where its audio is. */
 export async function getBrief(ownerId: string, id: string) {
   const { audioKey, ownerId: _, ...brief } = await ownBrief(ownerId, id)
+  const [where] = brief.folderId
+    ? await db
+        .select(spaceColumns)
+        .from(folders)
+        .innerJoin(space, eq(space.id, folders.spaceId))
+        .where(and(eq(folders.id, brief.folderId), isNull(space.deletedAt)))
+    : []
   // Each citation shows its source's kind and byline, as an answer's chips do.
   const cited = [...new Set(brief.lines.flatMap((l) => (l.citation ? [l.citation.fileId] : [])))]
   const sources = cited.length
@@ -89,6 +106,9 @@ export async function getBrief(ownerId: string, id: string) {
           }
         : null,
     })),
+    space: where?.spaceId
+      ? { id: where.spaceId, name: where.spaceName, color: where.spaceColor, wall: where.spaceWall }
+      : null,
     audioUrl: audioKey ? `/api/briefs/${id}/audio` : null,
     downloadUrl: audioKey ? `/api/briefs/${id}/audio?download=1` : null,
   }
@@ -105,8 +125,11 @@ export async function listBriefs(ownerId: string, folderId?: string) {
       status: briefs.status,
       durationSeconds: briefs.durationSeconds,
       createdAt: briefs.createdAt,
+      ...spaceColumns,
     })
     .from(briefs)
+    .leftJoin(folders, eq(folders.id, briefs.folderId))
+    .leftJoin(space, and(eq(space.id, folders.spaceId), isNull(space.deletedAt)))
     .where(and(eq(briefs.ownerId, ownerId), folderId ? eq(briefs.folderId, folderId) : undefined))
     .orderBy(desc(briefs.createdAt))
     .limit(50)

@@ -1,8 +1,9 @@
 "use client"
 
 import type { Citation } from "@konkyo/agents"
-import { BRIEF } from "@konkyo/config"
+import { BRIEF, SPACES } from "@konkyo/config"
 import { Button } from "@konkyo/ui/components/button"
+import { colorFor } from "@konkyo/ui/lib/space"
 import { cn } from "@konkyo/ui/lib/utils"
 import { useMutation } from "@tanstack/react-query"
 import {
@@ -16,16 +17,17 @@ import {
 import type { Route } from "next"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "sonner"
 import { CitationChip } from "@/components/chat/citation-chip"
-import { MobileHeader } from "@/components/page-header"
+import { RoomHeader } from "@/components/page-shell"
+import { useRoomWall } from "@/components/shell/wall"
 import type { Brief } from "@/lib/briefs"
 import { api } from "@/lib/fetcher"
 import { useQuery } from "@/lib/use-query"
 
 const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`
-const RATES = [1, 1.25, 1.5, 2, 0.75] as const
+const SPEEDS = [0.75, 1, 1.25, 1.5, 2] as const
 const VOICE = {
   A: { name: BRIEF.voices.A.name, dot: "bg-voice-a", bar: "bg-voice-a", text: "text-voice-a" },
   B: { name: BRIEF.voices.B.name, dot: "bg-voice-b", bar: "bg-voice-b", text: "text-voice-b" },
@@ -44,25 +46,54 @@ export function BriefView({ id }: { id: string }) {
     queryFn: () => api<Brief>(`/api/briefs/${id}`),
     refetchInterval: (query) => (query.state.data?.status === "making" ? 2_500 : false),
   })
+  // a brief of a space plays on that space's wall
+  useRoomWall(brief?.space?.wall ?? null)
+  const color = brief?.space
+    ? SPACES.colors[brief.space.color ?? colorFor(brief.space.id)].hex
+    : "#c9ff3d"
   return (
-    <>
-      <MobileHeader title="Audio brief" />
-      <div className="mx-auto w-full max-w-3xl px-6 pt-10 pb-24 md:pt-15">
-        {isError ? (
-          <p className="text-ui text-ash-gray">This brief couldn't be found.</p>
-        ) : !brief ? (
-          <div className="h-48 animate-pulse rounded-card bg-panel" />
-        ) : (
-          <>
-            <p className="text-micro text-saffron-spark uppercase">Audio brief</p>
-            <h1 className="mt-3 text-heading-xs text-balance text-bone-white">{brief.title}</h1>
-            {brief.status === "making" && <Making createdAt={brief.createdAt} />}
-            {brief.status === "failed" && <Failed brief={brief} />}
-            {brief.status === "ready" && brief.audioUrl && <Player brief={brief} />}
-          </>
-        )}
-      </div>
-    </>
+    <div className="mx-auto w-full max-w-[880px] px-4 pt-4 pb-32 md:px-8 md:pt-[92px]">
+      {isError ? (
+        <RoomHeader title="brief not found" kicker="audio brief" />
+      ) : !brief ? (
+        <div className="brief-radio h-56 animate-pulse" />
+      ) : (
+        <>
+          <RoomHeader
+            title={brief.title}
+            kicker={
+              <>
+                audio brief
+                {brief.durationSeconds ? (
+                  <>
+                    {" · "}
+                    <b>{clock(brief.durationSeconds)}</b>
+                  </>
+                ) : null}
+              </>
+            }
+            actions={
+              <>
+                <Link href={"/briefs" as Route} className="room-pill hover:bg-ink">
+                  all briefs
+                </Link>
+                {brief.space && (
+                  <Link
+                    href={`/spaces/${brief.space.id}` as Route}
+                    className="room-pill hover:bg-ink"
+                  >
+                    {brief.space.name.toLowerCase()} ↗
+                  </Link>
+                )}
+              </>
+            }
+          />
+          {brief.status === "making" && <Making createdAt={brief.createdAt} />}
+          {brief.status === "failed" && <Failed brief={brief} />}
+          {brief.status === "ready" && brief.audioUrl && <Player brief={brief} color={color} />}
+        </>
+      )}
+    </div>
   )
 }
 
@@ -81,8 +112,8 @@ function Making({ createdAt }: { createdAt: string | Date }) {
     "Timing every line against the audio",
   ]
   return (
-    <div className="mt-8 rounded-card border border-border bg-panel p-5">
-      <p className="text-ui text-bone-white">Making your brief · {clock(seconds)}</p>
+    <div className="brief-radio surface-sticker">
+      <p className="text-ui font-bold text-white">Making your brief · {clock(seconds)}</p>
       <ol className="mt-3 space-y-1.5">
         {stages.map((s) => (
           <li key={s} className="text-snippet text-ash-gray">
@@ -109,7 +140,7 @@ function Failed({ brief }: { brief: Brief }) {
     onError: (error: Error) => toast.error(error.message),
   })
   return (
-    <div className="mt-8 flex flex-wrap items-center gap-3 rounded-card border border-border bg-panel p-5">
+    <div className="brief-radio surface-sticker flex flex-wrap items-center gap-3">
       <p className="flex-1 text-snippet text-silver-mist">
         {brief.problem ?? "This brief couldn't be made."}
       </p>
@@ -149,12 +180,12 @@ function citationsOf(lines: Line[]) {
   )
 }
 
-function Player({ brief }: { brief: Brief }) {
+function Player({ brief, color }: { brief: Brief; color: string }) {
   const router = useRouter()
   const audio = useRef<HTMLAudioElement>(null)
   const [time, setTime] = useState(0)
   const [playing, setPlaying] = useState(false)
-  const [rate, setRate] = useState<(typeof RATES)[number]>(1)
+  const [rate, setRate] = useState<(typeof SPEEDS)[number]>(1)
   const lines = brief.lines
   const duration = brief.durationSeconds ?? lines.at(-1)?.end ?? 0
   const citations = useMemo(() => citationsOf(lines), [lines])
@@ -187,7 +218,7 @@ function Player({ brief }: { brief: Brief }) {
     mutationFn: () => api(`/api/briefs/${brief.id}`, { method: "DELETE" }),
     onSuccess: () => {
       toast("Brief deleted")
-      router.replace((brief.folderId ? `/library/folders/${brief.folderId}` : "/library") as Route)
+      router.replace("/briefs" as Route)
     },
     onError: (error: Error) => toast.error(error.message),
   })
@@ -205,22 +236,6 @@ function Player({ brief }: { brief: Brief }) {
 
   return (
     <>
-      <p className="mt-3 text-snippet text-ash-gray">
-        {VOICE.A.name} and {VOICE.B.name} · {clock(duration)} · {cited} cited line
-        {cited === 1 ? "" : "s"}, each checked against its passage before it was recorded
-        {brief.folderId && (
-          <>
-            {" · "}
-            <Link
-              href={`/library/folders/${brief.folderId}` as Route}
-              className="underline decoration-white/20 underline-offset-2 hover:text-bone-white"
-            >
-              Open the folder
-            </Link>
-          </>
-        )}
-      </p>
-
       {/* biome-ignore lint/a11y/useMediaCaption: the transcript below is the caption */}
       <audio
         ref={audio}
@@ -232,37 +247,46 @@ function Player({ brief }: { brief: Brief }) {
         onEnded={() => setPlaying(false)}
       />
 
-      <div className="sticky top-0 z-10 -mx-6 mt-8 bg-background/90 px-6 py-4 backdrop-blur-md md:top-0">
-        <div className="relative h-2.5 rounded-full bg-raised">
-          {/* Speaker-coloured spans; the heard part at full strength, the rest dimmed. */}
-          {segments.map((s, i) => (
-            <span
-              // biome-ignore lint/suspicious/noArrayIndexKey: spans follow the fixed line order
-              key={i}
-              aria-hidden
-              className={cn("absolute inset-y-0 opacity-30", VOICE[s.speaker].bar)}
-              style={{ left: `${s.left}%`, width: `calc(${s.width}% - 2px)` }}
-            />
-          ))}
-          <div
-            aria-hidden
-            className="absolute inset-y-0 left-0 overflow-hidden"
-            style={{ width: `${progress}%` }}
+      {/* the radio (OurSpaces' room radio): one big play, the time, a scrub bar in the space's
+          colour with a tick where the other host takes over, and the speeds as pills */}
+      <section
+        className="brief-radio surface-sticker"
+        aria-label="Player"
+        style={{ "--brief": color } as CSSProperties}
+      >
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={toggle}
+            aria-label={playing ? "Pause" : "Play"}
+            className="brief-play"
           >
-            <div
-              className="relative h-full"
-              style={{ width: `${progress ? 10_000 / progress : 0}%` }}
-            >
-              {segments.map((s, i) => (
-                <span
-                  // biome-ignore lint/suspicious/noArrayIndexKey: spans follow the fixed line order
-                  key={i}
-                  className={cn("absolute inset-y-0", VOICE[s.speaker].bar)}
-                  style={{ left: `${s.left}%`, width: `calc(${s.width}% - 2px)` }}
-                />
-              ))}
-            </div>
+            {playing ? (
+              <PauseIcon className="size-7 fill-current" />
+            ) : (
+              <PlayIcon className="size-7 translate-x-0.5 fill-current" />
+            )}
+          </button>
+          <div className="min-w-0 flex-1">
+            <p className="brief-time tabular-nums">
+              {clock(time)} <span>/ {clock(duration)}</span>
+            </p>
+            <p className="brief-who">
+              <span className="brief-voice is-a" /> {VOICE.A.name}
+              <span className="brief-voice is-b" /> {VOICE.B.name} · {cited} cited line
+              {cited === 1 ? "" : "s"}, each checked before it was recorded
+            </p>
           </div>
+        </div>
+
+        <div className="brief-scrub">
+          <div className="brief-scrub-fill" style={{ width: `${progress}%` }} aria-hidden />
+          {segments.slice(1).map((s, i) =>
+            s.speaker !== segments[i]?.speaker ? (
+              // biome-ignore lint/suspicious/noArrayIndexKey: ticks follow the fixed line order
+              <i key={i} className="brief-scrub-tick" style={{ left: `${s.left}%` }} aria-hidden />
+            ) : null,
+          )}
           <input
             type="range"
             min={0}
@@ -272,74 +296,65 @@ function Player({ brief }: { brief: Brief }) {
             onChange={(e) => seek(Number(e.target.value))}
             aria-label="Position in the brief"
             aria-valuetext={`${clock(time)} of ${clock(duration)}`}
-            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
           />
         </div>
-        <div className="mt-3 flex items-center gap-2">
-          <Button
-            size="icon"
-            onClick={toggle}
-            aria-label={playing ? "Pause" : "Play"}
-            className="rounded-full"
-          >
-            {playing ? (
-              <PauseIcon className="fill-current" />
-            ) : (
-              <PlayIcon className="fill-current" />
-            )}
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
+
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            className="brief-pill"
             onClick={() => seek(time - 10)}
             aria-label="Back 10 seconds"
           >
-            <RotateCcwIcon strokeWidth={1.5} />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
+            <RotateCcwIcon className="size-3.5" strokeWidth={2} /> 10
+          </button>
+          <button
+            type="button"
+            className="brief-pill"
             onClick={() => seek(time + 10)}
             aria-label="Forward 10 seconds"
           >
-            <RotateCwIcon strokeWidth={1.5} />
-          </Button>
-          <span className="ml-1 text-snippet text-silver-mist tabular-nums">
-            {clock(time)} <span className="text-ash-gray">/ {clock(duration)}</span>
-          </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setRate(RATES[(RATES.indexOf(rate) + 1) % RATES.length] ?? 1)}
-            aria-label={`Speed ${rate}×, change`}
-            className="ml-auto rounded-full text-snippet tabular-nums"
-          >
-            {rate}×
-          </Button>
-          {brief.downloadUrl && (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              aria-label="Download the mp3"
-              render={<a href={brief.downloadUrl} download />}
-              nativeButton={false}
+            10 <RotateCwIcon className="size-3.5" strokeWidth={2} />
+          </button>
+          <fieldset className="brief-speeds">
+            <legend className="sr-only">Speed</legend>
+            {SPEEDS.map((r) => (
+              <button
+                key={r}
+                type="button"
+                aria-pressed={rate === r}
+                className={cn("brief-pill", rate === r && "is-on")}
+                onClick={() => setRate(r)}
+              >
+                {r}×
+              </button>
+            ))}
+          </fieldset>
+          <span className="ml-auto flex gap-2">
+            {brief.downloadUrl && (
+              <a
+                className="brief-pill"
+                href={brief.downloadUrl}
+                download
+                aria-label="Download the mp3"
+              >
+                <DownloadIcon className="size-3.5" strokeWidth={2} /> mp3
+              </a>
+            )}
+            <button
+              type="button"
+              className="brief-pill"
+              aria-label="Delete this brief"
+              onClick={() => remove.mutate()}
+              disabled={remove.isPending}
             >
-              <DownloadIcon strokeWidth={1.5} />
-            </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Delete this brief"
-            onClick={() => remove.mutate()}
-            disabled={remove.isPending}
-          >
-            <Trash2Icon strokeWidth={1.5} />
-          </Button>
+              <Trash2Icon className="size-3.5" strokeWidth={2} />
+            </button>
+          </span>
         </div>
-      </div>
+      </section>
 
-      <ol className="mt-4 space-y-1" aria-label="Transcript">
+      <ol className="surface-paper brief-transcript" aria-label="Transcript">
         {lines.map((line, i) => {
           const voice = VOICE[line.speaker]
           const citation = citations[i]
@@ -351,10 +366,7 @@ function Player({ brief }: { brief: Brief }) {
                 items.current[i] = el
               }}
               aria-current={i === active ? "true" : undefined}
-              className={cn(
-                "grid grid-cols-[3.25rem_1fr] gap-3 rounded-xl px-3 py-3 transition-colors duration-(--duration-press)",
-                i === active && "bg-panel",
-              )}
+              className={cn("brief-line", i === active && "is-on")}
             >
               <button
                 type="button"
@@ -368,14 +380,17 @@ function Player({ brief }: { brief: Brief }) {
                 {clock(line.start)}
               </button>
               <div>
-                <p className={cn("flex items-center gap-1.5 text-meta", voice.text)}>
-                  <span className={cn("size-1.5 rounded-full", voice.dot)} aria-hidden />
+                <p className="brief-speaker">
+                  <span
+                    className={cn("brief-voice", line.speaker === "A" ? "is-a" : "is-b")}
+                    aria-hidden
+                  />
                   {voice.name}
                 </p>
                 <p
                   className={cn(
                     "mt-1 text-reading text-pretty transition-colors duration-(--duration-press)",
-                    i === active ? "text-bone-white" : "text-silver-mist",
+                    i === active ? "text-ink" : "text-[#3a3036]",
                   )}
                 >
                   {line.text}
