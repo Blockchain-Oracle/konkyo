@@ -8,7 +8,7 @@ import type { CSSProperties } from "react"
 import { Suspense } from "react"
 import { BrandMark } from "@/components/brand-mark"
 import { HeroBoard } from "@/components/landing/hero-board"
-import { LiveAnswer } from "@/components/landing/live-answer"
+import { LazyLiveAnswer } from "@/components/landing/live-answer-lazy"
 import { LiveCounts } from "@/components/landing/live-counts"
 import { type Vendor, VendorLogo } from "@/components/landing/vendor-logo"
 import { liveTotals } from "@/lib/landing"
@@ -155,7 +155,7 @@ async function LiveDemo() {
         checks and its trace.
       </p>
     )
-  return <LiveAnswer slug={demo.slug} share={demo.share} />
+  return <LazyLiveAnswer slug={demo.slug} share={demo.share} />
 }
 
 /** Real totals across Konkyo (cached for a minute), at request time. */

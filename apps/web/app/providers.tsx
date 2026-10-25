@@ -3,10 +3,13 @@
 import { Toaster } from "@konkyo/ui/components/sonner"
 import { TooltipProvider } from "@konkyo/ui/components/tooltip"
 import { QueryClientProvider } from "@tanstack/react-query"
-import { domMax, LazyMotion, MotionConfig } from "motion/react"
+import { LazyMotion, MotionConfig } from "motion/react"
 import { useEffect } from "react"
 import { getQueryClient } from "@/lib/query-client"
 import { primeSounds } from "@/lib/sounds"
+
+/** Motion's features arrive just after the first paint (lib/motion-features.ts). */
+const loadMotion = () => import("@/lib/motion-features").then((m) => m.default)
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const queryClient = getQueryClient()
@@ -32,8 +35,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={queryClient}>
       {/* Respect the system "reduce motion" setting everywhere: movement goes, fades stay. */}
       <MotionConfig reducedMotion="user">
-        {/* domMax: shared-layout (layoutId) animations, such as the sliding segmented pill. */}
-        <LazyMotion features={domMax}>
+        <LazyMotion features={loadMotion}>
           <TooltipProvider>
             {children}
             <Toaster position="bottom-right" />

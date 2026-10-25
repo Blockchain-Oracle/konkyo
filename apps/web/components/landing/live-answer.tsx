@@ -5,9 +5,8 @@ import type { KonkyoMessage } from "@konkyo/agents"
 import { Button } from "@konkyo/ui/components/button"
 import { Sheet, SheetContent, SheetTitle } from "@konkyo/ui/components/sheet"
 import { DefaultChatTransport } from "ai"
-import { ArrowUpIcon, RotateCcwIcon, SquareIcon } from "lucide-react"
+import { RotateCcwIcon } from "lucide-react"
 import dynamic from "next/dynamic"
-import Link from "next/link"
 import { useEffect, useEffectEvent, useMemo, useState } from "react"
 import { PublicAnswer } from "@/components/public/public-answer"
 import type { PublicShare } from "@/components/public/public-folder"
@@ -15,6 +14,7 @@ import { errorText } from "@/lib/format"
 import { closeAllSources, usePreview } from "@/lib/preview"
 import { SourceAccessProvider } from "@/lib/source-access"
 import { ASK_EVENT } from "./ask-event"
+import { AskForm } from "./live-answer-parts"
 
 // The viewer (PDFium in a worker) loads only when a citation is opened.
 const SourcePane = dynamic(
@@ -22,24 +22,18 @@ const SourcePane = dynamic(
   { ssr: false },
 )
 
-/** Questions these three papers answer (each checked against them on testing). */
-const SUGGESTED = [
-  "Does a daytime nap help motor learning?",
-  "What role do sleep spindles play in memory?",
-  "Does sleep help memory the same way in older adults?",
-]
-
 /**
  * The landing's live answer (plan §8 section 3): a real public folder (F36) asked from the page,
  * through the same route, agents and checks as any shared folder. No recording: what you see is
  * being planned, written and checked as you watch. Citations open the passage in a sheet. It sits
- * on the page's paper sheet (R4); the board above can hand it a question (ASK_EVENT).
+ * on the page's paper sheet (R4); the board above can hand it a question (ASK_EVENT). It loads
+ * only when needed (live-answer-lazy.tsx), carrying over what was typed or asked before then.
  */
-export function LiveAnswer({ slug, share }: { slug: string; share: PublicShare }) {
+export function LiveAnswer({ slug, share, draft = "" }: LiveProps) {
   const access = useMemo(() => ({ api: `/api/public/${slug}`, owner: false }), [slug])
   return (
     <SourceAccessProvider value={access}>
-      <LiveChat slug={slug} share={share} />
+      <LiveChat slug={slug} share={share} draft={draft} />
       <SourceSheet />
     </SourceAccessProvider>
   )
@@ -61,7 +55,14 @@ function SourceSheet() {
   )
 }
 
-function LiveChat({ slug, share }: { slug: string; share: PublicShare }) {
+type LiveProps = {
+  slug: string
+  share: PublicShare
+  /** What was typed in the box before the chat code arrived. */
+  draft?: string
+}
+
+function LiveChat({ slug, share, draft = "" }: LiveProps) {
   const transport = useMemo(
     () =>
       new DefaultChatTransport<KonkyoMessage>({
@@ -76,7 +77,7 @@ function LiveChat({ slug, share }: { slug: string; share: PublicShare }) {
   const { messages, setMessages, sendMessage, regenerate, status, error, stop } =
     useChat<KonkyoMessage>({ transport })
   const running = status === "submitted" || status === "streaming"
-  const [text, setText] = useState("")
+  const [text, setText] = useState(draft)
   const ask = (question: string) => {
     const q = question.trim()
     if (!q || running) return
@@ -85,7 +86,7 @@ function LiveChat({ slug, share }: { slug: string; share: PublicShare }) {
     setMessages([])
     void sendMessage({ text: q })
   }
-  // A question picked on the board above.
+  // A question picked on the board above (or asked before this code arrived: live-answer-lazy).
   const onAsk = useEffectEvent((e: Event) => ask((e as CustomEvent<string>).detail))
   useEffect(() => {
     window.addEventListener(ASK_EVENT, onAsk)
@@ -96,72 +97,15 @@ function LiveChat({ slug, share }: { slug: string; share: PublicShare }) {
 
   return (
     <div className="p-5 sm:p-8">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <p className="font-display text-[22px] leading-tight font-extrabold tracking-[-0.03em] lowercase">
-          {share.name}
-        </p>
-        <Link
-          href={`/s/${slug}`}
-          className="text-meta text-ash-gray underline-offset-4 hover:text-ink hover:underline"
-        >
-          {share.files.length} open-access papers · open the space ↗
-        </Link>
-      </div>
-
-      <form
-        className="mt-4"
-        onSubmit={(e) => {
-          e.preventDefault()
-          ask(text)
-        }}
-      >
-        <div className="relative rounded-full border-2 border-ink/15 bg-white focus-within:border-ink">
-          <input
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="Ask these papers anything…"
-            aria-label="Your question"
-            maxLength={500}
-            className="h-13 w-full rounded-full bg-transparent pr-14 pl-5 text-reading text-ink outline-none placeholder:text-ash-gray"
-          />
-          {running ? (
-            <Button
-              type="button"
-              size="icon-sm"
-              variant="secondary"
-              onClick={() => void stop()}
-              className="absolute top-2.5 right-3"
-              aria-label="Stop"
-            >
-              <SquareIcon className="size-3 fill-current" strokeWidth={0} />
-            </Button>
-          ) : (
-            <Button
-              type="submit"
-              size="icon-sm"
-              variant={text.trim() ? "default" : "secondary"}
-              disabled={!text.trim()}
-              className="absolute top-2.5 right-3"
-              aria-label="Ask"
-            >
-              <ArrowUpIcon strokeWidth={2} />
-            </Button>
-          )}
-        </div>
-      </form>
-      <div className="mt-3 flex flex-wrap gap-2">
-        {SUGGESTED.map((s) => (
-          <button
-            key={s}
-            type="button"
-            disabled={running}
-            onClick={() => ask(s)}
-            className="rounded-full border border-ink/15 bg-white px-3.5 py-1.5 text-snippet font-medium text-ink transition-colors duration-(--duration-press) hover:border-ink disabled:opacity-50"
-          >
-            {s}
-          </button>
-        ))}
-      </div>
+      <AskForm
+        slug={slug}
+        share={share}
+        text={text}
+        onText={setText}
+        onAsk={ask}
+        running={running}
+        onStop={() => void stop()}
+      />
 
       {question && (
         <div className="mt-7 border-t border-border pt-6" aria-live="polite">
