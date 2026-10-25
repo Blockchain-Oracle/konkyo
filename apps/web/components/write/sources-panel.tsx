@@ -12,6 +12,7 @@ import { toast } from "sonner"
 import { KindIcon } from "@/components/library/kind-icon"
 import { api } from "@/lib/fetcher"
 import { whereIs } from "@/lib/format"
+import { isSendKey } from "@/lib/keys"
 import { openSource } from "@/lib/preview"
 
 /**
@@ -78,7 +79,7 @@ export function SourcesPanel({
           aria-label="What needs a source"
           className="resize-none text-snippet"
           onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+            if (isSendKey(e)) {
               e.preventDefault()
               void search(text)
             }

@@ -13,6 +13,7 @@ import { KindIcon } from "@/components/library/kind-icon"
 import { RoomHeader } from "@/components/page-shell"
 import { Workspace } from "@/components/source/workspace"
 import { errorText } from "@/lib/format"
+import { isSendKey } from "@/lib/keys"
 import { openSource } from "@/lib/preview"
 import type { openShare } from "@/lib/shares"
 import { SourceAccessProvider } from "@/lib/source-access"
@@ -200,7 +201,7 @@ function PublicChat({ slug, share }: { slug: string; share: PublicShare }) {
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+            if (isSendKey(e)) {
               e.preventDefault()
               ask(text)
             }

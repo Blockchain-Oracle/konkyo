@@ -16,6 +16,7 @@ import { CitationTour } from "@/components/onboarding/citation-tour"
 import { api } from "@/lib/fetcher"
 import { type Focus, focusFromSearch, focusOf } from "@/lib/focus"
 import { errorText } from "@/lib/format"
+import { isSendKey } from "@/lib/keys"
 import { peekQuestion, releaseQuestion } from "@/lib/pending-question"
 import { usePreview } from "@/lib/preview"
 import { AssistantMessage } from "./assistant-message"
@@ -56,7 +57,7 @@ function UserMessage({
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Escape") setEditing(false)
-            if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+            if (isSendKey(e)) {
               e.preventDefault()
               e.currentTarget.form?.requestSubmit()
             }

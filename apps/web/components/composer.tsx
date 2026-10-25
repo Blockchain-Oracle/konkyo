@@ -32,6 +32,7 @@ import {
   useFocusItems,
   WHOLE_LIBRARY,
 } from "@/lib/focus"
+import { isSendKey } from "@/lib/keys"
 import { useFiles } from "@/lib/use-library"
 import { useUploads } from "./library/uploads-provider"
 
@@ -245,8 +246,7 @@ export function Composer({
                 return
               }
             }
-            // Enter sends, Shift+Enter is a new line; never send mid-IME composition.
-            if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
+            if (isSendKey(event)) {
               event.preventDefault()
               formRef.current?.requestSubmit()
             }
