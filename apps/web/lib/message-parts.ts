@@ -10,7 +10,7 @@ export function partsOf(message: KonkyoMessage) {
   >["data"]["sources"] = []
   let final: Extract<KonkyoMessage["parts"][number], { type: "data-final" }>["data"] | undefined
   let receipt: Extract<KonkyoMessage["parts"][number], { type: "data-receipt" }>["data"] | undefined
-  let notFound: { question: string } | undefined
+  let notFound: { question: string; tried?: string[] } | undefined
   let matrix: Extract<KonkyoMessage["parts"][number], { type: "data-matrix" }>["data"] | undefined
   for (const part of message.parts) {
     if (part.type === "data-step") steps.set(part.data.id, part.data)

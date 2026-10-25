@@ -11,8 +11,11 @@ description: The path from a question to an answer where every quote was found i
    the question so it stands alone, plans one to three searches, and decides whether the question
    weighs several sources against each other.
 2. **Retriever.** Searches your passages two ways for each query, by meaning (pgvector) and by
-   words (Postgres full text), and fuses the lists. If nothing is close enough, the answer is
-   "Not in your library", never a guess.
+   words (Postgres full text), and fuses the lists. When even the best match is weak, the
+   **Planner replans** from what came back (broader terms, synonyms, the words the closest
+   passages use) and the Retriever searches again, fusing both rounds. If nothing is close enough
+   after that, the answer is "Not in your library", never a guess: it lists every search it tried
+   and offers **Find sources**, which sends the Scout to open papers and the web.
 3. **Zetaris pre-check.** While the Writer writes, confirms the documents behind those passages are in
    the evidence store.
 4. **Writer.** Writes one finding per sentence. Each sentence carries a citation, and each

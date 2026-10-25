@@ -74,6 +74,8 @@ flowchart LR
   Q[Question] --> M[H-MEM: your corrections]
   M --> P[Planner]
   P --> R[Retriever: pgvector + full text, fused]
+  R -- best match weak --> P2[Planner replans: broader terms, the papers' own words]
+  P2 --> R
   R --> Z1[Zetaris pre-check: are these documents in the evidence store?]
   R --> W[Writer: cited draft, streamed]
   R --> A[Analyst: claims × sources, when comparing]
@@ -89,7 +91,7 @@ flowchart LR
 
 | Agent | Does | Model |
 |---|---|---|
-| Planner | Rewrites the question to stand alone, plans 1–3 searches, flags comparisons, reads the person's corrections from H-MEM first | `gpt-6-luna` (low reasoning) |
+| Planner | Rewrites the question to stand alone, plans 1–3 searches, flags comparisons, reads the person's corrections from H-MEM first; when the first search comes back thin, replans from what it found and searches again before saying "Not in your library" | `gpt-6-luna` (low reasoning) |
 | Retriever | Hybrid search: pgvector cosine and Postgres full text per query, fused by Reciprocal Rank Fusion | `text-embedding-3-small` |
 | Writer | One finding per sentence, each with a citation and an exact quote from its passage | `gpt-6-luna` |
 | Verifier | Checks each quote in code, then all of them in **one Zetaris statement** against Zetaris's own reading of the PDF; judges whether each sentence's quotes support it; sends failures back with reasons (at most two rewrite rounds); anything that still fails is dropped, never shown as verified | `gpt-6-luna` (low) |

@@ -47,7 +47,11 @@ export function answerWriter(writer: UIMessageStreamWriter<KonkyoMessage>) {
         break
       case "not-found":
         endDraft()
-        writer.write({ type: "data-notFound", id: "not-found", data: { question: event.question } })
+        writer.write({
+          type: "data-notFound",
+          id: "not-found",
+          data: { question: event.question, tried: event.tried },
+        })
         break
       case "matrix":
         writer.write({ type: "data-matrix", id: "matrix", data: event.matrix })

@@ -5,7 +5,7 @@ description: Who does what, with which model, and how to read the trace.
 
 | Agent | Does | Model |
 |---|---|---|
-| Planner | Stand-alone question, 1–3 searches, comparison flag; reads H-MEM corrections first | `gpt-6-luna` (low reasoning) |
+| Planner | Stand-alone question, 1–3 searches, comparison flag; reads H-MEM corrections first; replans more broadly when the first search is thin | `gpt-6-luna` (low reasoning) |
 | Retriever | Hybrid search: pgvector and Postgres full text, fused by Reciprocal Rank Fusion | `text-embedding-3-small` |
 | Writer | Cited draft, one finding per sentence; rewrites rejected sentences | `gpt-6-luna` |
 | Verifier | Code check, one Zetaris statement, support judgement; at most two rewrite rounds | `gpt-6-luna` (low) |
@@ -26,7 +26,7 @@ Every run writes `logs/<runId>.jsonl`, one JSON line per step:
 
 | Field | Meaning |
 |---|---|
-| `agent`, `step`, `action` | Who did what: `planned`, `hybrid_search`, `queried_zetaris`, `drafted_answer`, `rejected_to_writer`, `revised_sentences`, `approved`, `asserted_world_model`, `read_hmem` |
+| `agent`, `step`, `action` | Who did what: `planned`, `hybrid_search`, `broadened_search`, `hybrid_search_broadened`, `not_in_library`, `offered_scout`, `queried_zetaris`, `drafted_answer`, `rejected_to_writer`, `revised_sentences`, `approved`, `asserted_world_model`, `read_hmem` |
 | `model`, `tokens`, `latencyMs` | Which model, at what cost and speed |
 | `sqlHash`, `rowsReturned` | Which Zetaris statement (by hash) and what came back |
 | `verdict`, `detail` | The decision, and its reasons |

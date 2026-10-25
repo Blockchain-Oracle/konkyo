@@ -70,7 +70,13 @@ export type AnswerEvent =
       /** Sentences of the final text that the Verifier sent back and the Writer rewrote. */
       rewritten: string[]
     }
-  | { type: "not-found"; question: string; reason: "no-passages" | "writer" }
+  | {
+      type: "not-found"
+      question: string
+      reason: "no-passages" | "writer"
+      /** Every query the Retriever ran, the Planner's broader second try included. */
+      tried?: string[]
+    }
   /** The agree/disagree matrix: first with cells "checking", then only the verified cells. */
   | { type: "matrix"; matrix: Matrix }
   | { type: "receipt"; receipt: Receipt }
@@ -98,6 +104,16 @@ export type AnswerInput = {
 const MAX_ROUNDS = 2
 /** Below this best cosine similarity, and with no full-text hit, the library doesn't cover it. */
 const MIN_SIMILARITY = 0.22
+/**
+ * Below this, the first search is thin and the Planner tries again more broadly before giving
+ * up. Measured on past runs: unrelated questions top out near 0.25, questions about the papers
+ * as a whole near 0.35, questions the library answers above 0.55.
+ */
+const THIN_SIMILARITY = 0.3
+/** How many of the weak first matches the Planner sees when it replans. */
+const REPLAN_GLIMPSE = 4
+
+const bestOf = (list: Candidate[]) => Math.max(0, ...list.map((c) => c.similarity))
 
 /** Best-ranked first, at most `perFile` from any one file, `limit` in all. */
 function spread(candidates: Candidate[], perFile: number, limit: number) {
@@ -197,12 +213,91 @@ async function plan(input: AnswerInput, memories: Recalled[]) {
   return { ...out, model: choice.id }
 }
 
+const ReplanSchema = z.object({
+  queries: z
+    .array(z.string())
+    .min(1)
+    .max(3)
+    .describe("1-3 new search queries, none repeating a first query"),
+  why: z
+    .string()
+    .describe(
+      "Under 10 plain words for the person: what the new queries try, e.g. 'Trying the papers' own word for it'",
+    ),
+})
+
+/**
+ * The Planner revises its plan when the Retriever reports thin coverage (plan §2 "Retry": 0 hits
+ * → it broadens). It sees what the first search turned up, so it can borrow the library's own
+ * words: a paper may say "post-lunch dip" where the person asked about "afternoon tiredness".
+ */
+async function replan(
+  input: AnswerInput,
+  planned: Awaited<ReturnType<typeof plan>>,
+  closest: Candidate[],
+  best: number,
+) {
+  const started = performance.now()
+  const { result, choice } = await withFallback("planner", input.tracer, "replan", (c) =>
+    generateText({
+      model: model(c),
+      providerOptions: reasoning(c),
+      output: Output.object({ schema: ReplanSchema }),
+      instructions:
+        "You are the Planner in a research assistant that answers only from the user's own library. Your first search found nothing close. Write different search queries that could still find passages answering the question: broader terms, synonyms, the field's own vocabulary, the core concept on its own, or the words the closest passages use. Never repeat a first query. Keywords and phrases, not questions.",
+      prompt: `Question: ${planned.standalone}\n\nFirst queries:\n${planned.queries
+        .map((q) => `- ${q}`)
+        .join("\n")}\n\nClosest passages found (weak matches):\n${
+        closest
+          .slice(0, REPLAN_GLIMPSE)
+          .map((c) => `- ${c.title}: ${c.text.slice(0, 220).replace(/\s+/g, " ")}`)
+          .join("\n") || "- none"
+      }`,
+      abortSignal: input.abortSignal,
+    }),
+  )
+  const asked = new Set(planned.queries.map((q) => q.trim().toLowerCase()))
+  const queries = result.output.queries.filter((q) => !asked.has(q.trim().toLowerCase()))
+  input.tracer.log({
+    agent: "planner",
+    step: "replan",
+    action: "broadened_search",
+    model: choice.id,
+    latencyMs: Math.round(performance.now() - started),
+    tokens: { input: result.usage.inputTokens, output: result.usage.outputTokens },
+    detail: {
+      reason: "thin_coverage",
+      bestSimilarity: Number(best.toFixed(3)),
+      firstQueries: planned.queries,
+      queries,
+      why: result.output.why,
+    },
+  })
+  return { queries, why: result.output.why }
+}
+
+/** Two searches' candidates as one list: fused scores add up (more lists, same RRF). */
+function mergeCandidates(first: Candidate[], second: Candidate[], limit: number) {
+  const byId = new Map<string, Candidate>()
+  for (const c of [...first, ...second]) {
+    const had = byId.get(c.id)
+    byId.set(
+      c.id,
+      had
+        ? { ...had, score: had.score + c.score, similarity: Math.max(had.similarity, c.similarity) }
+        : c,
+    )
+  }
+  return [...byId.values()].sort((a, b) => b.score - a.score).slice(0, limit)
+}
+
 // ------------------------------------------------------------------ writer
 
 const WRITER_INSTRUCTIONS = `You are the Writer in a research assistant. Answer ONLY from the given passages from the user's library.
 Every sentence must carry at least one numbered citation [n], placed before the sentence's final punctuation, and for each citation number a quote that is an EXACT verbatim substring of its passage (copy the characters exactly, at least five words, no ellipses).
 Choose each quote so that it, on its own, states what its sentence claims: the reader is shown the quote as proof. So write one finding per sentence; never pack several findings behind one citation. Quotes go only on the Sources lines: never paste a quotation into the answer as a sentence of its own.
 When passages come from several sources, say what each relevant source found (with its own citation), and where they differ.
+Keep a comparison whole: say what was compared with what ("no difference between taking it at bedtime and 3 h before"), never only one side of it.
 If the question contains a claim the passages do not support, answer it directly in a cited sentence ("No: the paper reports … [1].") and say what the passages actually report. Be direct and plain. Use 2-7 sentences; start a new paragraph for a new idea.
 If the passages do not answer the question at all, reply with exactly: ${NOT_IN_LIBRARY}
 
@@ -383,6 +478,7 @@ async function reviseSentences(
 // The benchmark's measured Verifier prompt (0/10 false rejections at Luna "low"), plus one rule:
 // correcting the question's false premise is not an unsupported claim.
 const VERIFIER_INSTRUCTIONS = `You are the Verifier. A claim is supported only if every fact in it (numbers, durations, significance) is stated in its cited passages. Be strict about numbers. Paraphrase is fine when the meaning is the same.
+A comparison must keep what was compared with what: "no difference between A and B" does not support "A had no effect", and a finding about one group does not support a claim about everyone.
 Correcting a false premise from the question ("not 12, as asked") is supported when the passage states the correct fact.`
 
 const SupportSchema = z.object({
@@ -717,46 +813,66 @@ export async function answer(input: AnswerInput) {
       ? "Searching this space"
       : "Searching your library"
   step("search", searching, "running")
-  const searchStarted = performance.now()
   // A comparison needs every source heard: fetch wider, then keep at most 3 passages per file
   // (best first), so two long papers can't crowd out the rest.
   const comparison = input.compare || planned.compare
-  const found = await hybridSearch(
-    input.ownerId,
-    [...new Set([planned.standalone, ...planned.queries])],
-    input.scope,
-    comparison ? 40 : 12,
-  )
-  const candidates = comparison ? spread(found.candidates, 3, 14) : found.candidates
-  const best = Math.max(0, ...candidates.map((c) => c.similarity))
-  tracer.log({
-    agent: "retriever",
-    step: "search",
-    action: "hybrid_search",
-    latencyMs: Math.round(performance.now() - searchStarted),
-    rowsReturned: candidates.length,
-    detail: {
-      queries: planned.queries,
-      bestSimilarity: Number(best.toFixed(3)),
-      scope: input.scope,
-    },
-  })
+  const limit = comparison ? 40 : 12
+  const search = async (queries: string[], round: number) => {
+    const started = performance.now()
+    const found = await hybridSearch(input.ownerId, queries, input.scope, limit)
+    tracer.log({
+      agent: "retriever",
+      step: "search",
+      action: round === 1 ? "hybrid_search" : "hybrid_search_broadened",
+      latencyMs: Math.round(performance.now() - started),
+      rowsReturned: found.candidates.length,
+      detail: {
+        round,
+        queries,
+        bestSimilarity: Number(bestOf(found.candidates).toFixed(3)),
+        scope: input.scope,
+      },
+    })
+    return found.candidates
+  }
+  const passagesIn = (list: Candidate[]) => {
+    const n = new Set(list.map((c) => c.fileId)).size
+    return `${list.length} passages from ${n} file${n === 1 ? "" : "s"}`
+  }
+
+  let found = await search([...new Set([planned.standalone, ...planned.queries])], 1)
+  const tried = [...planned.queries]
+  // Thin coverage: the Planner replans from what came back and the Retriever searches again,
+  // before anything is called missing. An empty list means nothing in reach is readable yet,
+  // where broader words can't help.
+  if (planned.needsLibrary && found.length && bestOf(found) < THIN_SIMILARITY) {
+    step("search", searching, "done", "Nothing close yet")
+    step("replan", "Broadening the search", "running")
+    const revised = await replan(input, planned, found, bestOf(found))
+    if (revised.queries.length) {
+      tried.push(...revised.queries)
+      found = mergeCandidates(found, await search(revised.queries, 2), limit)
+    }
+    step("replan", "Broadening the search", "done", `${revised.why} ${passagesIn(found)}.`)
+  }
+  const candidates = comparison ? spread(found, 3, 14) : found
+  const best = bestOf(candidates)
   const files = new Set(candidates.map((c) => c.fileId))
-  step(
-    "search",
-    searching,
-    "done",
-    `${candidates.length} passages from ${files.size} file${files.size === 1 ? "" : "s"}`,
-  )
+  if (tried.length === planned.queries.length)
+    step("search", searching, "done", passagesIn(candidates))
 
   if (!candidates.length || (best < MIN_SIMILARITY && planned.needsLibrary)) {
-    emit({ type: "not-found", question: planned.standalone, reason: "no-passages" })
+    emit({ type: "not-found", question: planned.standalone, reason: "no-passages", tried })
     tracer.log({
       agent: "retriever",
       step: "search",
       action: "not_in_library",
       verdict: "not_found",
+      detail: { tried, bestSimilarity: Number(best.toFixed(3)) },
     })
+    // Dynamic delegation with approval: the Scout searches open papers and the web only when the
+    // person chooses "Find sources" on the not-found card (it imports into their library).
+    tracer.log({ agent: "planner", step: "delegate", action: "offered_scout", detail: { tried } })
     await tracer.flush()
     return { status: "not-found" as const }
   }
@@ -856,7 +972,7 @@ export async function answer(input: AnswerInput) {
   let draft = parseAnswer(draftText)
   if (draft.notInLibrary || !draft.sentences.length) {
     closed = true
-    emit({ type: "not-found", question: planned.standalone, reason: "writer" })
+    emit({ type: "not-found", question: planned.standalone, reason: "writer", tried })
     tracer.log({ agent: "writer", step: "draft", action: "not_in_library", verdict: "not_found" })
     await tracer.flush()
     return { status: "not-found" as const }

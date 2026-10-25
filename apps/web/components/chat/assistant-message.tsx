@@ -91,6 +91,21 @@ export function AssistantMessage({
                 ? "Find sources searches open papers and the web, imports what you choose, and answers from it."
                 : "Add a source and ask again."}
             </p>
+            {notFound.tried && notFound.tried.length > 0 && (
+              <div className="mt-3">
+                <p className="text-snippet text-ash-gray">Searched your library for</p>
+                <ul className="mt-1.5 flex flex-wrap gap-1.5">
+                  {notFound.tried.map((query) => (
+                    <li
+                      key={query}
+                      className="rounded-full border border-border px-2.5 py-0.5 text-snippet text-silver-mist"
+                    >
+                      {query}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <div className="mt-4 flex flex-wrap gap-2">
               {onFindSources && (
                 <Button size="sm" onClick={onFindSources}>

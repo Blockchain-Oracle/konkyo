@@ -18,7 +18,7 @@ export type KonkyoData = {
   /** The verified answer: replaces the streamed draft once the Verifier is done. */
   final: { body: string; caveat?: string; citations: Citation[]; rewritten: string[] }
   receipt: Receipt
-  notFound: { question: string }
+  notFound: { question: string; tried?: string[] }
   /** Claims × sources with stance (F13), streamed "checking" then verified. */
   matrix: Matrix
   revising: { round: number; reasons: string[] }
