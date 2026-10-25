@@ -1,4 +1,4 @@
-import { index, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core"
+import { index, integer, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core"
 import { user } from "./auth"
 import { folders } from "./library"
 
@@ -8,7 +8,17 @@ import { folders } from "./library"
  * it), discarded, or sent to an address no space has. One row per Resend email, so a webhook
  * delivered twice is handled once.
  */
-export type InboundStatus = "received" | "imported" | "held" | "discarded" | "unknown" | "failed"
+export type InboundStatus =
+  | "received"
+  /** The owner said yes to held mail: the next job adds it. */
+  | "approved"
+  /** A job is working on it (claimedBy): another delivery or a second yes can't start it twice. */
+  | "importing"
+  | "imported"
+  | "held"
+  | "discarded"
+  | "unknown"
+  | "failed"
 
 export const inboundEmails = pgTable(
   "inbound_emails",
@@ -21,6 +31,10 @@ export const inboundEmails = pgTable(
     from: text().notNull(),
     subject: text().default("").notNull(),
     status: text().$type<InboundStatus>().default("received").notNull(),
+    /** The job working on it: its retries may carry on, another job may not start. */
+    claimedBy: text(),
+    /** Jobs that failed on it; past the queue's retries it's marked failed and the owner told. */
+    attempts: integer().default(0).notNull(),
     /** Why it was held, failed or went nowhere, in plain words. */
     reason: text(),
     /** The sources it became. */

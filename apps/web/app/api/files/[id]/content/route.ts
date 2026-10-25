@@ -17,7 +17,8 @@ export async function GET(request: Request, ctx: { params: Promise<{ id: string 
     const { key, name, mime } = await fileContentKey(session.user.id, (await ctx.params).id, as)
     const object = await streamObject(key, request.headers.get("range"))
     const headers = new Headers({
-      "Content-Type": object.contentType || mime || "application/octet-stream",
+      // the type the file's own name gives (lib/library.ts), never the stored object's
+      "Content-Type": mime || "application/octet-stream",
       "Accept-Ranges": "bytes",
       "Cache-Control": "private, max-age=3600",
       "X-Content-Type-Options": "nosniff",

@@ -112,6 +112,29 @@ export type FileKind =
   | "note"
   | "email"
 
+/**
+ * The type a stored original is served with, from its extension: never a type someone else
+ * chose (an upload's browser, an email's sender), so a ".pdf" can't arrive as HTML.
+ */
+export const FILE_MIME: Record<keyof typeof FILE_TYPES, string> = {
+  ".pdf": "application/pdf",
+  ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  ".md": "text/markdown; charset=utf-8",
+  ".markdown": "text/markdown; charset=utf-8",
+  ".txt": "text/plain; charset=utf-8",
+  ".mp3": "audio/mpeg",
+  ".m4a": "audio/mp4",
+  ".wav": "audio/wav",
+  ".mp4": "video/mp4",
+  ".mov": "video/quicktime",
+  ".webm": "video/webm",
+}
+
+export const mimeForName = (name: string): string =>
+  FILE_MIME[name.slice(name.lastIndexOf(".")).toLowerCase() as keyof typeof FILE_MIME] ??
+  "application/octet-stream"
+
 export const kindForName = (name: string): FileKind | undefined => {
   const ext = name.slice(name.lastIndexOf(".")).toLowerCase()
   return FILE_TYPES[ext as keyof typeof FILE_TYPES]
@@ -293,8 +316,13 @@ export const EMAIL = {
   codeAttempts: 5,
   /** Codes the server sends a day, for everyone: the free plan's 100 must leave room for the rest. */
   codesPerDay: 50,
-  /** Invites by email each person can send a day. */
+  /** Codes one network address may ask for a day, so nobody can spend everyone's. */
+  codesPerAddressPerDay: 8,
+  /** Invites by email each person can send a day, and everyone together. */
   invitesPerDay: 10,
+  invitesPerDayTotal: 30,
+  /** Held-mail notices a space's owner gets a day; past them, mail waits without a ping. */
+  heldNoticesPerDay: 10,
   /** Mail from someone who isn't in the space waits this long for a yes. */
   heldDays: 7,
   /** At most this many attachments become sources from one email. */

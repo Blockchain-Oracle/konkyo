@@ -15,6 +15,9 @@ import { sound } from "@/lib/sounds"
 
 type Stage = "email" | "code" | "done"
 
+/** An account made this recently was made by this sign-in. */
+const FRESH_MS = 60_000
+
 /** Better Auth's error codes, in the card's own words. */
 function sayError(error: { code?: string; message?: string; status?: number }) {
   switch (error.code) {
@@ -59,6 +62,8 @@ export function JoinForm({
   const [code, setCode] = useState("")
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  /** Signing in made a new account: the email had no library yet (a typo, or a first visit). */
+  const [fresh, setFresh] = useState(false)
 
   const sendCode = async () => {
     const address = email.trim()
@@ -86,7 +91,7 @@ export function JoinForm({
     if (value.length < EMAIL.codeLength || busy) return
     setBusy(true)
     setError(null)
-    const { error: failed } = await authClient.signIn.emailOtp({
+    const { data, error: failed } = await authClient.signIn.emailOtp({
       email: email.trim(),
       otp: value,
       ...(name?.trim() ? { name: name.trim() } : {}),
@@ -97,6 +102,8 @@ export function JoinForm({
       setError(sayError(failed))
       return
     }
+    const made = data?.user?.createdAt ? new Date(data.user.createdAt).getTime() : 0
+    setFresh(!name && Date.now() - made < FRESH_MS)
     sound("place")
     setStage("done")
   }
@@ -106,7 +113,11 @@ export function JoinForm({
       <div className="join-form is-done">
         <span className="join-stamp">you&apos;re in the book</span>
         <strong>{email.trim()}</strong>
-        <span>this browser, your phone, next week: same you.</span>
+        <span>
+          {fresh
+            ? "this email had no library yet, so this one starts fresh. a typo? sign out and try the right one."
+            : "this browser, your phone, next week: same you."}
+        </span>
         <button type="button" className="claim-done" onClick={onJoined}>
           keep going <span aria-hidden="true">→</span>
         </button>

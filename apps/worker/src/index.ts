@@ -9,7 +9,7 @@ import { makeBrief } from "./brief"
 import { syncConnections } from "./connectors"
 import { deepJob } from "./deep"
 import { sendDigests } from "./digest"
-import { handleInbound } from "./inbound"
+import { expireHeldMail, handleInbound, inboundFailed } from "./inbound"
 import { closeInterrupted } from "./interrupted"
 import { indexNote } from "./notes"
 import { ingestFile } from "./pipeline"
@@ -92,6 +92,8 @@ await queues.work(SWEEP, async () => {
   if (removed) console.info(`[trash] deleted ${removed} files kept past 30 days`)
   const guests = await purgeAbandonedGuests()
   if (guests) console.info(`[guests] deleted ${guests} guests whose last session ran out`)
+  const held = await expireHeldMail()
+  if (held) console.info(`[inbound] let go of ${held} held emails nobody said yes to`)
 })
 
 // Agents (F34): due ones are queued every five minutes; runs go a few at a time.
@@ -131,7 +133,14 @@ await queues.work(CONNECTORS_SYNC, async () => {
 await queues.work(QUEUES.inbound.name, { localConcurrency: 2 }, async ([job]) => {
   if (!job) return
   const { inboundId, approvedBy } = QUEUES.inbound.payload.parse(job.data)
-  await handleInbound(inboundId, approvedBy)
+  try {
+    // the job's id claims the email: its own retries carry on, a second job finds it taken
+    await handleInbound(inboundId, job.id, approvedBy)
+  } catch (error) {
+    // past the queue's retries it's marked failed and the owner told; before that, retried
+    if (await inboundFailed(inboundId, error as Error)) throw error
+    console.error(`[inbound] ${inboundId} failed: ${(error as Error).message}`)
+  }
 })
 
 // The weekly digest (F59): hourly, each person on Friday at their own hour, when they asked for it.

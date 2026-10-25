@@ -41,8 +41,11 @@ export type Outgoing = {
   replyTo?: string
 }
 
+/** Resend allows a few requests a second per team: one wait and one more try. */
+const RATE_LIMIT_WAIT_MS = 1_100
+
 /** Sends one email. Errors come back as EmailError with Resend's reason in plain words. */
-export async function sendEmail(mail: Outgoing): Promise<{ id: string }> {
+export async function sendEmail(mail: Outgoing, retried = false): Promise<{ id: string }> {
   const { data, error } = await resend().emails.send(
     {
       from: env.EMAIL_FROM ?? EMAIL.from,
@@ -55,6 +58,10 @@ export async function sendEmail(mail: Outgoing): Promise<{ id: string }> {
     },
     mail.idempotencyKey ? { idempotencyKey: mail.idempotencyKey } : undefined,
   )
+  if (error?.name === "rate_limit_exceeded" && !retried) {
+    await new Promise((resolve) => setTimeout(resolve, RATE_LIMIT_WAIT_MS))
+    return sendEmail(mail, true)
+  }
   if (error || !data)
     throw new EmailError(
       error?.name === "daily_quota_exceeded" || error?.name === "monthly_quota_exceeded"
@@ -113,30 +120,23 @@ export type Received = {
   subject: string
   html: string | null
   text: string | null
-  /** Whether the sender's own domain vouched for it (DMARC, else SPF or DKIM): never `from` alone. */
+  /**
+   * Whether the From address's own domain vouched for it: DMARC passed, or a DKIM signature of
+   * that domain did. Never SPF (it checks the envelope, not From) and never a header, which the
+   * sender can write themselves.
+   */
   authenticated: boolean
   attachments: { id: string; filename: string; contentType: string; size: number }[]
-}
-
-/** "dmarc=pass" and friends, from the Authentication-Results header the receiving server adds. */
-function passed(results: string, check: "dmarc" | "spf" | "dkim") {
-  return new RegExp(`\\b${check}=pass\\b`, "i").test(results)
 }
 
 /** A received email in full: its body, who vouched for it, and its attachments' metadata. */
 export async function receivedEmail(emailId: string): Promise<Received> {
   const { data, error } = await resend().emails.receiving.get(emailId)
   if (error || !data) throw new EmailError(`Couldn't read the email (${error?.name ?? "empty"})`)
-  // Resend's docs describe `authentication`; the SDK's type doesn't have it yet.
+  // Computed by Resend's receiving server (its docs; the SDK's type doesn't have it yet). Its DKIM
+  // result counts only a signature aligned with the From domain; missing means not vouched for.
   const auth = (data as { authentication?: Record<string, string> }).authentication
-  const header = Object.entries(data.headers ?? {}).find(
-    ([name]) => name.toLowerCase() === "authentication-results",
-  )?.[1]
-  const authenticated = auth
-    ? auth.dmarc === "pass" || auth.spf === "pass" || auth.dkim === "pass"
-    : header
-      ? passed(header, "dmarc") || passed(header, "spf") || passed(header, "dkim")
-      : false
+  const authenticated = auth?.dmarc === "pass" || auth?.dkim === "pass"
   return {
     id: data.id,
     from: data.from,
@@ -167,7 +167,17 @@ export async function attachmentBytes(emailId: string, attachmentId: string): Pr
   return new Uint8Array(await res.arrayBuffer())
 }
 
-/** The bare address in "Name <address>" or a plain address, lowercased. */
-export function addressOf(from: string) {
-  return (from.match(/<([^>]+)>/)?.[1] ?? from).trim().toLowerCase()
+const ADDRESS = /^[^\s@<>",;]+@[^\s@<>",;]+\.[^\s@<>",;]+$/
+
+/**
+ * The one mailbox in a From or To value, lowercased: "Name <address>" (the address is the last
+ * angle-address, so a display name like "<owner@uni.edu>" can't stand in for it) or a bare
+ * address. Null for anything holding more than one mailbox, or none.
+ */
+export function addressOf(value: string): string | null {
+  // quoted display names may hold anything, brackets and commas included: set them aside
+  const bare = value.replace(/"(?:\\.|[^"\\])*"/g, "").trim()
+  if ((bare.match(/</g) ?? []).length > 1 || bare.includes(",")) return null
+  const address = (bare.match(/<([^<>]+)>\s*$/)?.[1] ?? bare).trim().toLowerCase()
+  return ADDRESS.test(address) ? address : null
 }

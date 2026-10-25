@@ -1,5 +1,5 @@
 import "server-only"
-import { randomInt } from "node:crypto"
+import { createHash, randomInt } from "node:crypto"
 import { APP, EMAIL } from "@konkyo/config"
 import { db, schema } from "@konkyo/db"
 import { EmailError, emailReady, inboundDomain, sendEmail } from "@konkyo/email"
@@ -90,13 +90,14 @@ export async function decideHeld(userId: string, inboundId: string, add: boolean
   if (!row?.spaceId) throw new LibraryError("That email is gone", 404)
   if ((await roleIn(userId, row.spaceId)) !== "owner")
     throw new LibraryError("Only the space's owner can do that", 403)
-  if (row.status !== "held") throw new LibraryError("That email was already dealt with", 409)
-  if (add) await enqueue("inbound", { inboundId, approvedBy: userId }, `${inboundId}:yes`)
-  else
-    await db
-      .update(inboundEmails)
-      .set({ status: "discarded", decidedBy: userId, decidedAt: new Date() })
-      .where(and(eq(inboundEmails.id, inboundId), eq(inboundEmails.status, "held")))
+  // one answer, atomically: a double click or a second tab finds it already decided
+  const [decided] = await db
+    .update(inboundEmails)
+    .set({ status: add ? "approved" : "discarded", decidedBy: userId, decidedAt: new Date() })
+    .where(and(eq(inboundEmails.id, inboundId), eq(inboundEmails.status, "held")))
+    .returning({ id: inboundEmails.id })
+  if (!decided) throw new LibraryError("That email was already dealt with", 409)
+  if (add) await enqueue("inbound", { inboundId, approvedBy: userId })
   await db
     .update(inboxItems)
     .set({ dismissedAt: new Date() })
@@ -112,17 +113,60 @@ export async function decideHeld(userId: string, inboundId: string, add: boolean
 
 // ------------------------------------------------------------------ invite by email
 
-/** Invites sent today, per person, by this one web process (konkyo.xyz runs one). */
+/** Invites sent today, per person and in all, by this one web process (konkyo.xyz runs one). */
 const sentToday = new Map<string, { day: string; count: number }>()
+const sentByEveryone = { day: "", count: 0 }
+
+/** Takes a slot before anything is awaited, so parallel requests can't all see the same count. */
+function takeInviteSlot(userId: string, day: string) {
+  if (sentByEveryone.day !== day) Object.assign(sentByEveryone, { day, count: 0 })
+  const mine = sentToday.get(userId)
+  const used = mine?.day === day ? mine.count : 0
+  if (used >= EMAIL.invitesPerDay)
+    throw new LibraryError(
+      `That's ${EMAIL.invitesPerDay} invites today. Share the link instead.`,
+      429,
+    )
+  if (sentByEveryone.count >= EMAIL.invitesPerDayTotal)
+    throw new LibraryError(
+      "Konkyo has sent all the invites it can today. Share the link instead.",
+      429,
+    )
+  sentToday.set(userId, { day, count: used + 1 })
+  sentByEveryone.count++
+  return () => {
+    const now = sentToday.get(userId)
+    if (now?.day === day) sentToday.set(userId, { day, count: Math.max(0, now.count - 1) })
+    if (sentByEveryone.day === day) sentByEveryone.count = Math.max(0, sentByEveryone.count - 1)
+  }
+}
 
 /**
- * An invite to the space by email (plan F59): the space's link, from someone who may hand it on,
- * to an address that isn't in the space yet, a few a day. Resend's idempotency key keeps a
- * double click from sending twice.
+ * An invite to the space by email (plan F59): the space's link, from a kept account that may hand
+ * it on, to an address that isn't in the space yet, a few a day each and in all. Resend's
+ * idempotency key (the email's own content) keeps a double click from sending twice.
  */
 export async function inviteByEmail(userId: string, spaceId: string, to: string) {
   if (!emailReady()) throw new LibraryError("Email isn't set up on this server", 503)
   const address = to.trim().toLowerCase()
+  // a guest's invites would go out under any name they typed: keeping the account comes first
+  const sender = await db.query.user.findFirst({
+    where: eq(user.id, userId),
+    columns: { isAnonymous: true, name: true },
+  })
+  if (!sender || sender.isAnonymous)
+    throw new LibraryError("Keep your account first, then you can invite by email.", 403)
+  const refund = takeInviteSlot(userId, new Date().toISOString().slice(0, 10))
+  try {
+    await sendInvite(userId, spaceId, address, sender.name)
+    return { sent: true }
+  } catch (error) {
+    refund()
+    throw error
+  }
+}
+
+async function sendInvite(userId: string, spaceId: string, address: string, senderName: string) {
   const invite = await inviteFor(userId, spaceId)
   if (!invite) throw new LibraryError("Ask the owner for an invite link first", 409)
 
@@ -144,15 +188,6 @@ export async function inviteByEmail(userId: string, spaceId: string, to: string)
       throw new LibraryError("They're already in this space", 409)
   }
 
-  const day = new Date().toISOString().slice(0, 10)
-  const mine = sentToday.get(userId)
-  const used = mine?.day === day ? mine.count : 0
-  if (used >= EMAIL.invitesPerDay)
-    throw new LibraryError(
-      `That's ${EMAIL.invitesPerDay} invites today. Share the link instead.`,
-      429,
-    )
-
   const [space] = await db
     .select({ name: folders.name })
     .from(folders)
@@ -166,25 +201,25 @@ export async function inviteByEmail(userId: string, spaceId: string, to: string)
     .select({ n: count() })
     .from(spaceMembers)
     .where(eq(spaceMembers.spaceId, spaceId))
-  const [me] = await db.select({ name: user.name }).from(user).where(eq(user.id, userId))
-  const inviter = me?.name?.trim() || "Someone"
-
+  const mail = inviteEmail({
+    inviter: senderName.trim() || "Someone",
+    space: space?.name ?? "a space",
+    sources: sources?.n ?? 0,
+    members: (members?.n ?? 0) + 1,
+    url: `${APP.url}${invite.path}`,
+  })
+  // the same email twice (a double click) is sent once; a different email is a different key
+  const content = createHash("sha256")
+    .update(`${address}\n${mail.subject}\n${mail.html}`)
+    .digest("hex")
   await sendEmail({
     to: address,
-    ...inviteEmail({
-      inviter,
-      space: space?.name ?? "a space",
-      sources: sources?.n ?? 0,
-      members: (members?.n ?? 0) + 1,
-      url: `${APP.url}${invite.path}`,
-    }),
+    ...mail,
     kind: "invite",
-    idempotencyKey: `invite/${spaceId}/${address}/${day}`,
+    idempotencyKey: `invite/${spaceId}/${userId}/${content.slice(0, 32)}`,
   }).catch((error) => {
     if (error instanceof EmailError)
       throw new LibraryError(error.message, error.code?.includes("quota") ? 429 : 503)
     throw error
   })
-  sentToday.set(userId, { day, count: used + 1 })
-  return { sent: true }
 }

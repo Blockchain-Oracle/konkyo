@@ -5,6 +5,7 @@ import {
   type FileMeta,
   isYouTube,
   kindForName,
+  mimeForName,
   STORAGE,
 } from "@konkyo/config"
 import { db, schema } from "@konkyo/db"
@@ -437,7 +438,9 @@ export async function fileContentKey(
     as === "original"
       ? downloadName(file.title, key)
       : `${file.title.replace(/\.[a-z0-9]+$/i, "")}.pdf`
-  return { key, name, mime: as === "original" ? file.mime : "application/pdf" }
+  // An original is served as its extension says, never as the uploader or an email's sender
+  // declared it: a ".pdf" that arrived claiming to be HTML must not run on this origin.
+  return { key, name, mime: as === "original" ? mimeForName(name) : "application/pdf" }
 }
 
 const passageColumns = {

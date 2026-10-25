@@ -20,7 +20,8 @@ export async function GET(
     const { key, name, mime } = await publicContentKey(slug, z.uuid().parse(fileId), as, download)
     const object = await streamObject(key, request.headers.get("range"))
     const headers = new Headers({
-      "Content-Type": object.contentType || mime || "application/octet-stream",
+      // the type the file's own name gives (lib/library.ts), never the stored object's
+      "Content-Type": mime || "application/octet-stream",
       "Accept-Ranges": "bytes",
       // Not shared caches: unpublishing must stop the bytes too.
       "Cache-Control": "private, max-age=600",

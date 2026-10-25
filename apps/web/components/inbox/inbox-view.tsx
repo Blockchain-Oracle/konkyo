@@ -18,6 +18,7 @@ import {
 import type { Route } from "next"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useState } from "react"
 import { toast } from "sonner"
 import { EmptyState } from "@/components/empty-state"
 import { api } from "@/lib/fetcher"
@@ -88,13 +89,17 @@ function Row({ item }: { item: InboxItem }) {
     }
   }
   // Mail to a space from someone outside it (F59): the owner adds its sources, or lets it go.
+  const [deciding, setDeciding] = useState(false)
   const decide = async (add: boolean) => {
+    if (deciding) return
+    setDeciding(true)
     try {
       await api(`/api/inbound/${item.data.inboundId}`, { method: "POST", json: { add } })
       void refresh()
       toast.success(add ? "Adding it to the space" : "Discarded", { description: item.title })
     } catch (error) {
       toast.error((error as Error).message)
+      setDeciding(false)
     }
   }
   const primary =
@@ -148,7 +153,12 @@ function Row({ item }: { item: InboxItem }) {
       {(primary || !item.read || item.kind === "held-mail") && (
         <div className="mt-3 flex items-center gap-3">
           {primary && (
-            <button type="button" className="claim-done" onClick={() => void primary.run()}>
+            <button
+              type="button"
+              className="claim-done"
+              disabled={deciding}
+              onClick={() => void primary.run()}
+            >
               {primary.label.toLowerCase()} <span aria-hidden="true">→</span>
             </button>
           )}

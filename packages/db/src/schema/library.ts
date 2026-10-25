@@ -13,6 +13,7 @@ import {
   real,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
   vector,
 } from "drizzle-orm/pg-core"
@@ -178,6 +179,10 @@ export const files = pgTable(
     index("files_owner_created_idx").on(t.ownerId, t.createdAt),
     index("files_owner_sha_idx").on(t.ownerId, t.sha256),
     index("files_connection_idx").on(t.connectionId, t.externalId),
+    // a source from an email (F59) is made once, whatever retries or deliveries happen
+    uniqueIndex("files_mail_external_idx")
+      .on(t.ownerId, t.externalId)
+      .where(sql`${t.externalId} like 'mail:%'`),
   ],
 )
 
