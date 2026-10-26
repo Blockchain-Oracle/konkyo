@@ -56,7 +56,8 @@ export function HomeRoom() {
         kicker={
           files ? (
             <>
-              <b>{files.length}</b> sources · {spaces?.length ?? 0} spaces
+              <b>{files.length}</b> {files.length === 1 ? "source" : "sources"} ·{" "}
+              {spaces?.length ?? 0} {spaces?.length === 1 ? "space" : "spaces"}
               {needYou ? ` · ${needYou} need you` : ""}
             </>
           ) : (

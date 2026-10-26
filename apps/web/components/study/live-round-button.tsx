@@ -4,9 +4,10 @@ import type { Route } from "next"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { toast } from "sonner"
-import { api } from "@/lib/fetcher"
+import { ApiError, api } from "@/lib/fetcher"
 import { sound } from "@/lib/sounds"
 import { useQuery } from "@/lib/use-query"
+import { useStudyActions } from "@/lib/use-study"
 
 type ActiveRound = { code: string; title: string; phase: string; players: number } | null
 
@@ -14,8 +15,9 @@ type ActiveRound = { code: string; title: string; phase: string; players: number
  * A space's way into study together (plan F58): start a live round on its sources, or, while
  * one is going (someone started it), join it. The space's live events keep it current.
  */
-export function LiveRoundButton({ spaceId }: { spaceId: string }) {
+export function LiveRoundButton({ spaceId, name }: { spaceId: string; name?: string }) {
   const router = useRouter()
+  const study = useStudyActions()
   const [busy, setBusy] = useState(false)
   const { data } = useQuery({
     queryKey: ["space-round", spaceId],
@@ -31,8 +33,20 @@ export function LiveRoundButton({ spaceId }: { spaceId: string }) {
       sound("promote")
       router.push(`/study/live/${made.code}` as Route)
     } catch (error) {
-      toast.error((error as Error).message)
       setBusy(false)
+      // Not enough checked questions yet: the way forward is one tap, not a dead end.
+      if (error instanceof ApiError && error.status === 409)
+        return void toast("A round needs practice first", {
+          description: "It plays this space's checked questions. Make some, then start it.",
+          action: {
+            label: "make practice",
+            onClick: () =>
+              void study.quizMe({ fileIds: [], folderIds: [spaceId] }, name, (href) =>
+                router.push(href),
+              ),
+          },
+        })
+      toast.error((error as Error).message)
     }
   }
   return (

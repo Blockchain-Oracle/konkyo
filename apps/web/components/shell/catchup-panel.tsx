@@ -177,6 +177,7 @@ export function CatchupPanel({
   const lastAssistant = chat.messages.findLast((m) => m.role === "assistant")
   const thinking = chat.running && chat.messages.at(-1)?.role === "user"
 
+  const asked = chat.messages.length > 0
   return (
     <div
       ref={panelRef}
@@ -190,8 +191,9 @@ export function CatchupPanel({
           <span className="recap-badge" aria-hidden="true">
             ✦
           </span>
-          <span className="recap-title">what moved</span>
-          {isPending ? (
+          {/* once you ask, the panel is about your question, not the week's digest */}
+          <span className="recap-title">{asked ? "your question" : "what moved"}</span>
+          {asked ? null : isPending ? (
             <span className="recap-since is-reading">
               <i aria-hidden="true" />
               reading your library

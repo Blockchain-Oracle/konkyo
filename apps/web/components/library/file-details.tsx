@@ -60,7 +60,7 @@ export function FileDetailsSheet() {
       <SheetContent
         side="right"
         showCloseButton={false}
-        className="gap-0 border-l border-border bg-panel p-0 data-[side=right]:w-full data-[side=right]:sm:max-w-[440px]"
+        className="gap-0 border-l border-border bg-panel p-0 data-[side=right]:w-[calc(100%-1.5rem)] data-[side=right]:sm:max-w-[440px]"
       >
         {fileId && <Details key={fileId} fileId={fileId} />}
       </SheetContent>

@@ -199,13 +199,14 @@ export function LibraryView({ folderId, space = false }: { folderId?: string; sp
           space ? (
             <>
               <span aria-hidden>{`${spaceRow?.symbol ?? "✦"}\uFE0E`}</span> space ·{" "}
-              <b>{spaceRow?.sources ?? counts.all}</b> sources
+              <b>{spaceRow?.sources ?? counts.all}</b>{" "}
+              {(spaceRow?.sources ?? counts.all) === 1 ? "source" : "sources"}
             </>
           ) : folderId ? (
             <FolderPath folderId={folderId} />
           ) : (
             <>
-              <b>{counts.all}</b> sources · {counts.ready} ready
+              <b>{counts.all}</b> {counts.all === 1 ? "source" : "sources"} · {counts.ready} ready
               {counts.needs_you ? ` · ${counts.needs_you} need you` : ""}
             </>
           )
@@ -246,7 +247,7 @@ export function LibraryView({ folderId, space = false }: { folderId?: string; sp
                 {selectMode ? "done" : "select"}
               </Button>
             )}
-            {space && spaceRow && <LiveRoundButton spaceId={spaceRow.id} />}
+            {space && spaceRow && <LiveRoundButton spaceId={spaceRow.id} name={spaceRow.name} />}
             {space && spaceRow && (
               <InviteButton spaceId={spaceRow.id} name={spaceRow.name} role={spaceRow.role} />
             )}

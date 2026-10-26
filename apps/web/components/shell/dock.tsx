@@ -42,6 +42,8 @@ const NO_DOCK = [
   /^\/chats\/[^/]+/,
   /^\/write\/[^/]+/,
   /^\/study\/session/,
+  // a live round has the whole screen: its answers, the reveal and the passage
+  /^\/study\/live/,
   /^\/settings/,
   /^\/trash/,
   // a public space has the visitor's own ask

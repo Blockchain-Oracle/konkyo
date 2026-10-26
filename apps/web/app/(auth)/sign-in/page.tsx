@@ -1,8 +1,9 @@
 import { randomInt } from "node:crypto"
-import { LOOKS, ROUTES, SPACES, type SpaceWall } from "@konkyo/config"
+import { APP, LOOKS, ROUTES, SPACES, type SpaceWall } from "@konkyo/config"
 import { emailReady } from "@konkyo/email"
 import { env } from "@konkyo/env/server"
 import type { Metadata } from "next"
+import Link from "next/link"
 import { redirect } from "next/navigation"
 import { connection } from "next/server"
 import { type CSSProperties, Suspense } from "react"
@@ -112,6 +113,17 @@ export default function SignInPage(props: PageProps<"/sign-in">) {
       </Suspense>
       <div className="entry-gate-scrim" aria-hidden="true" />
       <h1 className="sr-only">Enter Konkyo</h1>
+      {/* the way back to what Konkyo is, for anyone who arrived here first */}
+      <nav className="gate-links" aria-label="About Konkyo">
+        <Link href="/" className="room-pill hover:bg-ink">
+          <span aria-hidden="true">←</span> konkyo
+        </Link>
+        {APP.docs && (
+          <a href={APP.docs} className="room-pill hover:bg-ink">
+            docs <span aria-hidden="true">↗</span>
+          </a>
+        )}
+      </nav>
       <Suspense fallback={null}>
         <Door {...props} />
       </Suspense>

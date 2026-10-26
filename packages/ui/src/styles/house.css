@@ -7168,3 +7168,16 @@ body.voice-stage-up .voice-found-pulse {
   pointer-events: none;
   color: var(--muted-foreground);
 }
+
+/* A modal is open: the dock and the live pill (stacked above page overlays for the voice stage)
+   sink behind its backdrop with everything else, so the dialog is the one bright thing. */
+body:has(
+  [data-slot="dialog-overlay"],
+  [data-slot="sheet-overlay"],
+  dialog[open],
+  .entry-gate-scrim,
+  .widget-picker-backdrop
+) :is(.action-dock, .status-pill) {
+  filter: brightness(0.4);
+  pointer-events: none;
+}

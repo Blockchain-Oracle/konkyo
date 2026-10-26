@@ -134,10 +134,7 @@ function PublicChat({ slug, share }: { slug: string; share: PublicShare }) {
       </div>
 
       {/* room at the bottom for the ask pill, so the last answer's receipt is never under it */}
-      <main
-        id="main"
-        className="mx-auto w-full max-w-[1100px] flex-1 px-4 pt-6 pb-40 md:px-8 md:pt-10"
-      >
+      <div className="mx-auto w-full max-w-[1100px] flex-1 px-4 pt-6 pb-40 md:px-8 md:pt-10">
         <RoomHeader
           title={share.name}
           kicker={
@@ -190,7 +187,7 @@ function PublicChat({ slug, share }: { slug: string; share: PublicShare }) {
             <div ref={end} />
           </section>
         )}
-      </main>
+      </div>
 
       {/* the dock's "ask", for a visitor: one black pill at the bottom of the room (beside an
           open source, not over it), answering from this space only */}

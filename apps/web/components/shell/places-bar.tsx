@@ -4,7 +4,8 @@ import { cn } from "@konkyo/ui/lib/utils"
 import type { Route } from "next"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { isActive, MAIN_NAV } from "@/lib/navigation"
+import { useEffect, useRef } from "react"
+import { isActive, MAIN_NAV, MOBILE_TABS } from "@/lib/navigation"
 import { usePreview } from "@/lib/preview"
 import { sound } from "@/lib/sounds"
 import { useUnread } from "@/lib/use-inbox"
@@ -21,8 +22,17 @@ export function PlacesBar() {
   // A source docked beside the page owns the top right (its tabs and tools); the rail and ⌘K
   // still go everywhere.
   const { active: sourceOpen } = usePreview()
+  // On a phone the bar scrolls: the place you're in is kept in view.
+  const bar = useRef<HTMLElement>(null)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-runs when the place changes
+  useEffect(() => {
+    bar.current
+      ?.querySelector<HTMLElement>("[aria-current=page]")
+      ?.scrollIntoView({ block: "nearest", inline: "nearest" })
+  }, [pathname])
   return (
     <nav
+      ref={bar}
       aria-label="Places"
       className={cn(
         sourceOpen && "lg:hidden",
@@ -41,6 +51,9 @@ export function PlacesBar() {
             className={cn(
               "relative inline-flex min-h-9 shrink-0 items-center rounded-full px-3.5 text-[12px] font-extrabold whitespace-nowrap text-white/70 transition-[translate,color,background-color] duration-(--dur-quick) ease-(--ease-glide) hover:-translate-y-0.5 hover:text-white",
               active && "bg-white text-ink hover:text-ink",
+              // phones: the five most used first, so the inbox and its count are in view
+              !MOBILE_TABS.includes(item.href as (typeof MOBILE_TABS)[number]) &&
+                "max-[800px]:order-last",
             )}
           >
             {item.label.toLowerCase()}

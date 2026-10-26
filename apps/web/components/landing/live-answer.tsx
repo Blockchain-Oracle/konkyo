@@ -76,7 +76,7 @@ function SourceSheet() {
       <SheetContent
         side="right"
         showCloseButton={false}
-        className="gap-0 border-l border-border p-0 data-[side=right]:w-full data-[side=right]:sm:max-w-[640px]"
+        className="gap-0 border-l border-border p-0 data-[side=right]:w-[calc(100%-1.5rem)] data-[side=right]:sm:max-w-[640px]"
       >
         <SheetTitle className="sr-only">Source</SheetTitle>
         {active && <SourcePane />}

@@ -7,7 +7,7 @@
  * guest's sign-out that says what it deletes.
  */
 
-import { PEOPLE, ROUTES } from "@konkyo/config"
+import { APP, PEOPLE, ROUTES } from "@konkyo/config"
 import { Button } from "@konkyo/ui/components/button"
 import {
   Dialog,
@@ -131,6 +131,20 @@ function SettingsCard({ me, onClose }: { me: Me; onClose: () => void }) {
           </Link>
           <Link href={ROUTES.trash as Route} onClick={onClose}>
             trash
+          </Link>
+          <Link href={"/briefs" as Route} onClick={onClose}>
+            briefs
+          </Link>
+          <Link href={"/knows" as Route} onClick={onClose}>
+            what konkyo knows
+          </Link>
+          {APP.docs && (
+            <a href={APP.docs} target="_blank" rel="noreferrer">
+              docs <span aria-hidden="true">↗</span>
+            </a>
+          )}
+          <Link href={"/made-with/zetaris" as Route} onClick={onClose}>
+            made with
           </Link>
           <button
             type="button"

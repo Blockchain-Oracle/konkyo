@@ -51,6 +51,16 @@
   }
 }
 
+/* The door's way back: the landing and the docs, top left, above the scrim. */
+.gate-links {
+  position: fixed;
+  z-index: 73;
+  top: 16px;
+  left: 16px;
+  display: flex;
+  gap: 6px;
+}
+
 .entry-gate-scrim {
   position: fixed;
   z-index: 71;
