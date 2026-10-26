@@ -19,7 +19,7 @@ flowchart TB
     direction TB
     HM["H-MEM<br/>your corrections"]
     WM["World Model<br/>which source says what"]
-    MK["Markovian<br/>long deep searches"]
+    MK["Markovian<br/>screens deep-search finds"]
   end
 
   subgraph AI["Models"]
@@ -29,6 +29,6 @@ flowchart TB
   end
 
   YOU --> APP
-  APP -->|"publish files ·<br/>one SQL check per answer"| Z
+  APP -->|"publish files ·<br/>SQL checks every quote"| Z
   APP -->|"memory · world state ·<br/>bounded steps"| M
-  APP -->|"every call has a<br/>fallback and a reserve"| AI
+  APP -->|"every agent role has a<br/>fallback and a reserve"| AI

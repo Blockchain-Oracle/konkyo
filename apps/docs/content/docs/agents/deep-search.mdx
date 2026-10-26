@@ -1,0 +1,79 @@
+---
+title: Deep search
+description: When your library runs out, the Scout searches open papers and the web, screens what it finds in Markovian steps, and answers from what you import.
+icon: Telescope
+---
+
+<Shot
+  src="/shots/wide/deep-search.webp"
+  alt="A deep search on whether sleep helps consolidate memories: 4:23, 34 papers and 4 pages, found 38 and imported 7 into Sleep Memory Consolidation, then an answer naming Miyamoto, Hirai and Murayama, Wei, Krishnan and Bazhenov, and Barnes and Wilson with ticked citations, and a table of 3 claims across 6 sources."
+  caption="The Research starter's deep search, testing: found 38, imported 7, answered from them."
+  eager
+/>
+
+## Where it starts
+
+The **Deep search** toggle in the chat box, **Find sources** on a *This isn't in your library yet.*
+answer, a folder's **Find sources on this topic**, **find sources** in a space's add tray, the
+Research starter, a space template, or the orb.
+
+## What it does
+
+<Steps>
+<Step>
+
+### Plan
+
+The Scout turns the question into a topic (the new space's name), up to three paper searches and
+one web search. In this run Nemotron 3.5 Lightning gave no answer within 12 s, so `gpt-6-luna`
+planned it: *Sleep Memory Consolidation*, with searches like `sleep replay synaptic plasticity
+memory consolidation`.
+
+</Step>
+<Step>
+
+### Search
+
+Each paper search asks OpenAlex for open-access articles, preprints and reviews with a PDF, 12 at a
+time, skipping DOIs already in your library. The web search uses OpenAI's `gpt-5-nano` with web
+search (up to four pages, bot-check pages dropped), or Wikipedia's own search when that fails.
+
+</Step>
+<Step>
+
+### Screen, in Markovian steps
+
+Nemotron 3 Ultra reads the finds in batches of eight (title and abstract), and only a shortlist of
+up to eight, with a score and a one-line reason each, carries from one step to the next. This run
+screened **38 sources in 5 steps**. Markovian reports what that saved against one long prompt:
+6,569 tokens used, about 12,472 saved (an estimate it labels as such).
+
+</Step>
+<Step>
+
+### You choose, or it imports
+
+**Import N sources?** lists the shortlist with each reason. Pick, steer it (*only human studies,
+after 2015…*), **Stop** it, or let it import without asking (the Research starter does, and so does
+**Import sources without asking** in settings). Papers go into a new space named for the topic, or
+into the folder you asked from.
+
+</Step>
+<Step>
+
+### Read, then answer
+
+Each import is read like an upload, open PDF first, into Zetaris. Once they're ready (it waits up
+to 8 minutes), the question is answered from them with Compare on, every quote checked. This run
+took 4:23 and imported 7.
+
+</Step>
+</Steps>
+
+<Callout title="Open papers only">
+Deep search reads only papers it can download; a paywalled paper becomes *This paper has no free
+copy online. Upload its PDF to read it here.* A failed deep search isn't retried, because its calls
+are paid.
+</Callout>
+
+How Markovian is used, and the rest of Meterless: [Meterless](/docs/partners/meterless).

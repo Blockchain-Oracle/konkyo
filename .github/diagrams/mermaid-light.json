@@ -18,7 +18,21 @@
     "lineColor": "#5b3df0",
     "textColor": "#111114",
     "edgeLabelBackground": "#fffaf7",
-    "titleColor": "#111114"
+    "titleColor": "#111114",
+    "actorBkg": "#fff1f7",
+    "actorBorder": "#7853ff",
+    "actorTextColor": "#111114",
+    "actorLineColor": "#c9bfd6",
+    "signalColor": "#5b3df0",
+    "signalTextColor": "#111114",
+    "noteBkgColor": "#f3eefe",
+    "noteTextColor": "#111114",
+    "noteBorderColor": "#7853ff",
+    "sequenceNumberColor": "#ffffff",
+    "labelBoxBkgColor": "#fff1f7",
+    "labelTextColor": "#111114",
+    "activationBkgColor": "#f3eefe",
+    "activationBorderColor": "#7853ff"
   },
   "flowchart": {
     "htmlLabels": false,
@@ -26,5 +40,15 @@
     "nodeSpacing": 40,
     "rankSpacing": 56,
     "padding": 14
+  },
+  "sequence": {
+    "showSequenceNumbers": true,
+    "mirrorActors": false,
+    "actorMargin": 34,
+    "boxMargin": 8,
+    "messageMargin": 30,
+    "noteMargin": 10,
+    "wrap": true,
+    "width": 170
   }
 }

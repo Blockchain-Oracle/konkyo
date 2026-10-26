@@ -1,0 +1,49 @@
+---
+title: Zetaris
+description: The evidence store every claim is checked against. Remove Zetaris and nothing can be marked verified.
+icon: Database
+---
+
+<Shot
+  src="/shots/wide/ask-receipt.webp"
+  alt="An answer's receipt opened: the steps, the models, and the two SQL statements that checked the answer's quotes and the agree/disagree table's quotes against konkyo_pdf_text in Zetaris."
+  caption="Every answer's receipt carries the SQL Zetaris ran (two statements with Compare)."
+  eager
+/>
+
+## The evidence store
+
+When a file is read, the worker publishes its passages as JSON to a Zetaris `FILESTORE` table,
+hands Zetaris the file's PDF, and keeps Zetaris's own reading of it in `konkyo_pdf_text`: a second
+extraction, independent of Konkyo's. A file is marked **Ready** only once Zetaris holds every one
+of its passages; if the counts don't match, it isn't. (`packages/zetaris/src/evidence.ts`)
+
+## The check
+
+Every quote an answer keeps is checked in **one** Spark SQL statement: a `VALUES` list of quotes,
+each reduced to its letters and digits, joined to Zetaris's text of each document.
+
+```sql
+SELECT q.qid
+FROM VALUES
+    ('1', '<document>', '<passage>', 'aclearpredictiverelationshipemergedbetweenresiduallocalspindleactivity…'),
+    ('2', '<document>', '<passage>', 'thetightprecisionofsofastspcouplingpromotesmemoryconsolidation…')
+  AS q(qid, doc, pid, qkey)
+JOIN konkyo.konkyo_pdf_text t ON t.doc_id = q.doc
+WHERE instr(t.p, q.qkey) > 0
+```
+
+A quote counts only if it's there word for word. Recordings and notes have no PDF, so their quotes
+are matched against their passages as published to Zetaris. A rewrite round looks up only the new
+quotes. While the Writer writes, a pre-check confirms Zetaris holds every document the passages
+came from. (`packages/zetaris/src/checks.ts`)
+
+The same check covers the Compare table, practice questions, lecture notes, Check my draft, Find a
+source, audio briefs and published articles. [The same check, everywhere](/docs/agents/one-check-everywhere)
+
+## Topic watches
+
+A watch is a Zetaris `REST` table over the OpenAlex API (open-access papers on your topic, newest
+first). Each run refreshes it, and new papers are found with one `LEFT ANTI JOIN` against the DOIs
+you already have or have seen. If Zetaris can't answer, that run asks OpenAlex directly and its
+trace says so (`zetaris_unavailable`). (`packages/zetaris/src/watch.ts`)

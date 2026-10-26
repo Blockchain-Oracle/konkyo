@@ -1,0 +1,42 @@
+---
+title: Traces and receipts
+description: Every run writes a trace, one line per step, with the agent, the model, the Zetaris statement and the verdict.
+icon: ScrollText
+---
+
+The app shows a run as its receipt under the answer. The same run is written, step by step, to
+`logs/<runId>.jsonl`.
+
+```json
+{"ts":"2026-10-23T15:43:41.657Z","runId":"378f6e5f-…","agent":"scout","step":"screen","action":"markovian_run","rowsReturned":8,"detail":{"steps":5,"screened":38,"tokensUsed":6569,"tokensSaved":12472,"label":"estimated","status":"completed"}}
+```
+
+| Field | Meaning |
+|---|---|
+| `agent` | `planner`, `retriever`, `writer`, `verifier`, `analyst`, `scout`, `tutor` or `system` |
+| `step`, `action` | What it did: `read_hmem`, `planned`, `hybrid_search`, `broadened_search`, `not_in_library`, `offered_scout`, `queried_zetaris`, `drafted_answer`, `reattributed_quote`, `rejected_to_writer`, `revised_sentences`, `approved`, `asserted_world_model`, `escalated_to_fallback`, `planned_search`, `searched_openalex`, `web_search`, `searched_wikipedia`, `markovian_run`, `finding_agrees`, `finding_disagrees`, `finding_new` |
+| `model`, `tokens`, `latencyMs` | Which model, at what cost and speed |
+| `sqlHash`, `rowsReturned` | Which Zetaris statement (by hash) and what came back |
+| `verdict` | The decision: `approved`, `rejected`, `not_found`, `3/3 quotes found`, `6/8 supported`… |
+| `detail` | Its reasons and numbers |
+
+## Which file
+
+| Run | Trace |
+|---|---|
+| A chat answer, the API, the CLI | `logs/<uuid>.jsonl` |
+| A question in a public space | `logs/public-<uuid>.jsonl` |
+| A deep search (its search and its answer) | `logs/<runId>.jsonl` |
+| A practice set | `logs/study-<setId>.jsonl` |
+| An audio brief | `logs/brief-<id>.jsonl` |
+| An agent's run | `logs/agent-<runId>.jsonl` |
+
+Writing a trace never fails an answer. Some small model calls aren't traced: voice intent, the
+suggested questions, file summaries, embeddings, and the safety checks on profiles and articles.
+
+## In the terminal
+
+`pnpm konkyo ask` prints each step as it settles (`✓ Searching your library · 16 passages from 3
+files`, `↺ The Verifier sent back 1 sentence; rewriting (round 1)`), then the answer, its sources
+with their quotes, what the Verifier sent back, the table, the checks and the models, and the
+trace's path. [CLI and API](/docs/build/cli-and-api)

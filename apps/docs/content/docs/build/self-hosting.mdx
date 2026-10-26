@@ -1,0 +1,71 @@
+---
+title: Self-hosting
+description: Run the whole stack on your own machine, or all of it in Docker.
+icon: Server
+---
+
+You need Node 22.18+, pnpm (`corepack enable`), Docker, a Zetaris instance, an OpenAI API key, an
+NVIDIA API key (free at [build.nvidia.com](https://build.nvidia.com/settings/api-keys)), an
+ElevenLabs API key and a Google OAuth client.
+
+```bash
+cp .env.example .env            # every variable is described there
+pnpm install
+pnpm services:up                # Postgres + pgvector, RustFS (S3), Gotenberg, in Docker
+pnpm services:check
+pnpm db:migrate
+pnpm dev                        # the web app on :3210, the worker, and these docs on :3211
+```
+
+## All in Docker
+
+`infra/compose.prod.yaml` is the production stack: the web app, the worker (with OCRmyPDF and
+yt-dlp) and these docs, built from their Dockerfiles, beside Postgres, RustFS and Gotenberg.
+Migrations run first, in a one-shot container; web and worker share one `/data` volume for
+traces and each person's memory and World Model.
+
+```bash
+docker compose -f infra/compose.prod.yaml up -d --build
+```
+
+Browsers upload straight to S3 with presigned URLs, so `S3_PUBLIC_ENDPOINT` must be an address
+browsers can reach (a domain in front of the `s3` service).
+
+## Zetaris
+
+Set `ZETARIS_REST_URL`, then either `ZETARIS_API_KEY` (the hackathon's instance) or a local
+bundle's `ZETARIS_LOGIN_URL`, `ZETARIS_USERNAME`, `ZETARIS_PASSWORD` and `ZETARIS_ORG_ID`. `EVIDENCE_DIR`
+is where the worker writes evidence files, and `ZETARIS_EVIDENCE_URI` is the same folder as
+Zetaris sees it.
+
+## Other services
+
+| Variable | For | Needed |
+|---|---|---|
+| `OPENAI_API_KEY` | The Writer, Verifier, Analyst, Tutor and Grader, and deep search's web search | Yes |
+| `NVIDIA_API_KEY` | Embeddings, planning, deep-search screening, safety checks and every fallback (Nemotron on NVIDIA's API) | Yes |
+| `MODEL_BASE_URL` | A self-hosted NVIDIA NIM serving the same Nemotron ids, instead of NVIDIA's API | No |
+| `MODEL_REQUESTS_PER_MINUTE` | This process's share of each model's rate limit (web and worker split about 40 a minute; half each by default) | No |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Sign-in with Google (guests work without) | Yes |
+| `ELEVENLABS_API_KEY` | Transcribing recordings, audio briefs | Yes |
+| `OPENALEX_API_KEY` | OpenAlex's own PDF copies for deep search (without it, other open links are tried) | No |
+| `COMPOSIO_*` | Gmail, Drive and Notion connectors | No |
+| `VAPID_*` | Web Push notifications | No |
+| `DEMO_SHARE_SLUG` | The landing page's live demo folder | No |
+| `ADMIN_USER_IDS` | Who receives reports of articles, in their Inbox | No |
+| `RESEND_API_KEY` | Email: sign-in codes, invites, the digest (a full-access key: receiving needs it) | No |
+| `RESEND_WEBHOOK_SECRET` | Mail to a space's address: the signing secret of Resend's `email.received` webhook, pointed at `/api/inbound/email` | No |
+| `EMAIL_FROM`, `INBOUND_EMAIL_DOMAIN` | Your own sending address and inbound host, when not konkyo.xyz's | No |
+
+## Email
+
+Add your domain in Resend for sending and a subdomain for receiving (Konkyo uses `in.`), put the
+DNS records Resend gives you at your registrar (the receiving one is an MX on the subdomain, so
+the root domain's mail is untouched), and point an `email.received` webhook at
+`https://<your domain>/api/inbound/email`. Without the keys the email features switch off (the
+add tray's *email this space* tile still shows, and can't give an address).
+
+## These docs
+
+`pnpm --filter @konkyo/docs build` writes a static site to `apps/docs/out`, which any static
+file server can serve.

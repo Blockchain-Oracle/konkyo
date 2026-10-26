@@ -1,0 +1,36 @@
+---
+title: Meterless
+description: Three Meterless engines in working features, your corrections, who said what, and deep searches in bounded steps.
+icon: Layers
+---
+
+<Shot
+  src="/shots/wide/made-with-meterless.webp"
+  path="konkyo.xyz/made-with/meterless"
+  alt="The made with Meterless page: Tell it once. It remembers., one correction followed into the code."
+  caption="konkyo.xyz/made-with/meterless"
+  eager
+/>
+
+The engines are vendored under Apache-2.0 in `packages/meterless` and driven from
+`packages/agents`.
+
+## H-MEM: your corrections
+
+A **not right** with a reason, a 👎 on **Right passage?**, a practice question you mark **This is
+wrong**, or anything you **tell it** becomes a memory, with where it came from. The Planner reads
+the ones that matter before every answer, and the Tutor before it writes practice. 👍 and 👎 on an
+answer adjust the confidence of the memories it used. You see them all on
+[What Konkyo knows](/docs/guide/knows); cross one out and it's forgotten. (`packages/agents/src/memory.ts`)
+
+## World Model: who said what
+
+Each comparison is recorded as sources, claims and `supports` / `contradicts` / `qualifies`
+relations, each with the passage it was read from, in your World Model and, when you asked in one
+space, the space's. That's **where your sources stand** on the knows page. (`packages/agents/src/analyst.ts`)
+
+## Markovian: long searches in bounded steps
+
+Deep search screens what it found in steps of eight, carrying only the shortlist forward, instead
+of one long prompt. Its own report of tokens saved is shown and traced (`markovian_run`): on testing it screened 38 sources in 5 steps, 6,569 tokens used, about 12,472 saved, labelled as an
+estimate. (`packages/agents/src/scout.ts`) [How deep search works](/docs/agents/deep-search)

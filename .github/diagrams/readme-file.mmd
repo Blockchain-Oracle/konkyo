@@ -1,0 +1,10 @@
+flowchart LR
+  IN["Upload, link or DOI,<br/>YouTube, a recorded lecture,<br/>email to a space,<br/>Gmail · Drive · Notion"] --> KIND{"What is it?"}
+  KIND -->|"PDF"| PAGES["Pages with<br/>positions"]
+  KIND -->|"scanned PDF"| OCR["OCR"] --> PAGES
+  KIND -->|"Word, slides,<br/>web page, email"| GOT["Gotenberg<br/>to PDF"] --> PAGES
+  KIND -->|"recording, YouTube<br/>without captions"| SCRIBE["ElevenLabs Scribe<br/>cited to the second"] --> PAS
+  KIND -->|"YouTube captions"| PAS
+  PAGES --> PAS["Passages<br/>Nemotron Embed vectors<br/>+ full text<br/>+ Lightning summary"]
+  PAS --> Z[("Zetaris<br/>the passages, and its own<br/>reading of the PDF")]
+  Z -->|"counts match"| READY["Ready<br/>every quote from it<br/>is checked in Zetaris"]

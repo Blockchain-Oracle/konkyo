@@ -1,0 +1,37 @@
+---
+title: ElevenLabs, Composio, OpenAlex, OpenAI
+description: Speech in and out, Gmail, Drive and Notion imports, open papers, and the models that write and judge.
+icon: Plug
+---
+
+## ElevenLabs
+
+- **Recordings, lectures and YouTube without captions** are transcribed with Scribe (`scribe_v2`),
+  word timings and speakers kept, so a citation plays the moment it quotes.
+  (`packages/ingest/src/transcript.ts`)
+- **Audio briefs**: two voices talk a space through in one Text-to-Dialogue request (`eleven_v3`);
+  every line's quote was checked first. (`packages/ingest/src/dialogue.ts`)
+- **The orb** hears you through Scribe realtime (`scribe_v2_realtime`), and **▶ listen** reads
+  answers with `eleven_flash_v2_5`, word-synced. (`apps/web/lib/voice-server.ts`)
+- **Study sounds** (right, try again, hint, round done, day seven) were made once with its sound
+  effects model and ship as small files.
+
+## Composio
+
+Gmail, Google Drive and Notion connect through Composio: each person links their own account, and
+every tool call is pinned to a measured toolkit version. Konkyo only reads. Attachments, documents
+and pages import through the same pipeline as an upload, and Drive and Notion items are re-read
+every 15 minutes when they change. (`packages/connectors/src/index.ts`)
+
+## OpenAlex
+
+- **Deep search** looks up open-access papers on OpenAlex when your library runs out.
+  (`packages/agents/src/scout.ts`)
+- **Citation records**: a DOI, arXiv id or title is matched on OpenAlex for authors and venue.
+  (`packages/ingest/src/metadata.ts`)
+- **Topic watches** are Zetaris `REST` tables over the OpenAlex API. [Zetaris](/docs/partners/zetaris#topic-watches)
+
+## OpenAI
+
+`gpt-6-luna` is the Writer, Verifier, Analyst, Tutor and Grader, and the fallback for Nemotron's
+roles. `gpt-5-nano` runs deep search's web search, with Wikipedia's own search when it fails.

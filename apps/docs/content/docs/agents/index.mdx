@@ -1,0 +1,53 @@
+---
+title: The agents
+description: A team of research agents with separate jobs, each on its own model with a fallback, checking each other's work.
+icon: Bot
+---
+
+Konkyo's answers come from agents that disagree with each other on purpose: the Writer drafts,
+the Verifier checks its quotes in Zetaris and its claims against the passages, and anything that
+doesn't hold goes back. The same team makes practice, checks drafts, writes briefs and runs deep
+searches.
+
+<Diagram
+  name="answer"
+  width={520}
+  alt="One answer: the Planner reads H-MEM and plans searches, the Retriever finds passages, the Writer drafts one finding per sentence, the Verifier checks every quote in Zetaris in one SQL statement and sends unsupported sentences back, the Analyst records agreement in the World Model, and only what passed is answered, with its receipt."
+  caption="The path one answer takes."
+/>
+
+## Who does what
+
+| Role | Its job | Primary model | Fallback | Reserve |
+|---|---|---|---|---|
+| **Planner** | Rewrites the question to stand alone, plans 1–3 searches, flags a comparison; replans when results are thin | Nemotron 3 Ultra | `gpt-6-luna` | Nemotron 3.5 Lightning |
+| **Retriever** | Searches your passages by meaning (Nemotron 3.5 Embed vectors in pgvector) and by words (Postgres full text), fused by rank | Nemotron 3.5 Embed | | |
+| **Writer** | The cited draft, one finding per sentence; rewrites; brief scripts; lecture notes; claims in a draft | `gpt-6-luna` | Nemotron 3 Ultra | Nemotron 3.5 Super VL |
+| **Verifier** | Judges whether quotes support each sentence; checks practice answer keys, brief lines and draft claims | `gpt-6-luna` | Nemotron 3 Ultra | Nemotron 3.5 Lightning |
+| **Analyst** | Claims × sources with stances; places papers a watch finds | `gpt-6-luna` | Nemotron 3 Ultra | Nemotron 3.5 Super VL |
+| **Scout** | Plans a deep search | Nemotron 3.5 Lightning | `gpt-6-luna` | Nemotron 3 Ultra |
+| **Screener** | Screens what deep search found, in Markovian steps | Nemotron 3 Ultra | `gpt-6-luna` | Nemotron 3.5 Lightning |
+| **Tutor** | Drafts practice questions | `gpt-6-luna` | Nemotron 3 Ultra | Nemotron 3.5 Super VL |
+| **Grader** | Judges a typed answer the code check couldn't settle | `gpt-6-luna` | Nemotron 3 Ultra | Nemotron 3.5 Lightning |
+| **Voice intent** | Reads a spoken ask no rule placed | Nemotron 3.5 Lightning | `gpt-6-luna` | Nemotron 3 Ultra |
+
+Outside the roles: Nemotron 3.5 Embed makes every vector, Nemotron 3.5 Lightning summarises each
+file, Nemotron 3.5 Content Safety checks public questions, profiles and articles, and deep search's
+web search is OpenAI's `gpt-5-nano` with Wikipedia when it fails. These have no model fallback.
+
+## When a model doesn't answer
+
+Each role tries its models in turn, the ones answering first. A call moves on after an error, a
+reply it can't use, or a stall: no answer within 45 seconds, or no first word of a stream within
+25 (12 seconds for the Planner on Nemotron and for every Scout model, 8 for voice intent, 90 for
+the Tutor). On NVIDIA's free tier
+a slow call is also asked again, and the first answer wins. A model that answers "busy" goes to the
+back of the line for a minute; an account out of credit, for ten. Every switch in a traced run is
+written to the trace as `escalated_to_fallback`.
+
+<Cards>
+  <Card title="How an answer is checked" href="/docs/agents/how-answers-are-checked" description="Step by step, with the SQL." />
+  <Card title="A real run" href="/docs/agents/a-real-run" description="22 steps from a recorded trace." />
+  <Card title="Deep search" href="/docs/agents/deep-search" description="The Scout, Markovian screening, and the import." />
+  <Card title="The same check, everywhere" href="/docs/agents/one-check-everywhere" description="Practice, drafts, briefs and articles." />
+</Cards>

@@ -14,3 +14,7 @@ mmdc -i .github/diagrams/readme-answer.mmd -o .github/assets/answer-light.png -c
 
 Mermaid CLI needs a local Chromium. Where Puppeteer can't find one, add
 `-p .github/diagrams/puppeteer.json` and set its `executablePath` to your Chrome.
+
+`readme-journey.mmd` (the judged journey, a sequence with the values of a real run) and
+`readme-file.mmd` (where a file goes) render the same way. The docs use the same PNGs: copy them
+to `apps/docs/public/diagrams/` after rendering.

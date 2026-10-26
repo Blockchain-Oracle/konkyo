@@ -1,0 +1,14 @@
+{
+  "title": "The agents",
+  "description": "How every answer is checked",
+  "icon": "Bot",
+  "root": true,
+  "pages": [
+    "index",
+    "how-answers-are-checked",
+    "a-real-run",
+    "deep-search",
+    "one-check-everywhere",
+    "traces"
+  ]
+}

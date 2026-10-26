@@ -1,0 +1,13 @@
+{
+  "title": "Partners",
+  "description": "Zetaris, Meterless and NVIDIA, doing real work",
+  "icon": "Handshake",
+  "root": true,
+  "pages": [
+    "index",
+    "zetaris",
+    "meterless",
+    "nvidia",
+    "more"
+  ]
+}

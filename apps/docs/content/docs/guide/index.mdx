@@ -1,0 +1,58 @@
+---
+title: What Konkyo is
+description: Everything you study, in one library. Agents check every answer.
+icon: Compass
+---
+
+**Every answer shows its grounds.** Konkyo is one library for everything you study: papers,
+lectures, notes, slides and recordings, in spaces you can share. Ask it anything, practise from it,
+write with it, or listen to it. Behind every answer, a team of research agents works across your
+sources: they answer only from them, check every quote word for word in Zetaris, remember your
+corrections with Meterless engines, and show where your sources disagree. Anything they can't back
+is rewritten; what still fails is dropped. *Konkyo* (根拠) means "grounds" or "evidence".
+
+<Shot
+  src="/shots/wide/ask-answer.webp"
+  alt="A Konkyo chat: the question about sleep spindles, an answer naming Nishida and Walker, Muehlroth et al. and Diekelmann with ticked citations, and an agree/disagree table across the three papers; the three cited papers are pinned on the right."
+  caption="One question across three papers: every citation ticked, and where the papers agree."
+  eager
+/>
+
+## Everything in one library
+
+| Part | What you do there | Read |
+|---|---|---|
+| **Library and spaces** | Bring in PDFs, Word, slides, web pages, YouTube, recordings, email and Gmail, Drive or Notion; keep a space per subject and share it | [Bring anything in](/docs/guide/library) · [Spaces and sharing](/docs/guide/spaces) |
+| **Ask and compare** | Answers from your sources only, each citation opening its passage; Compare lines the sources up claim by claim; deep search finds open papers | [Ask and compare](/docs/guide/ask) |
+| **Practise** | Quizzes and five games whose answer keys were checked against their passages, spaced review, live rounds with friends | [Practise](/docs/guide/practise) |
+| **Write** | Cite as you write, check a draft against your sources, export in any citation style, publish an article | [Write and publish](/docs/guide/write) |
+| **Listen and talk** | Two-voice audio briefs of a space, every fact cited; ask out loud through the orb | [Listen and talk](/docs/guide/listen) |
+| **Agents and Inbox** | Watches for new papers, a quiz on a schedule, a brief remade when a space changes, all reporting to your Inbox | [Agents and your Inbox](/docs/guide/agents-and-inbox) |
+| **What it knows** | Your corrections, who said what across a space, what it held back; cross out a correction it has wrong | [What Konkyo knows](/docs/guide/knows) |
+
+## How it works
+
+<Diagram
+  name="system"
+  alt="Konkyo's system: the web app and worker on one server, with Postgres and pgvector, publish every file to Zetaris, use three Meterless engines, and call NVIDIA Nemotron and OpenAI with a fallback and a reserve for every agent role."
+  caption="The web app and the worker, the evidence store every quote is checked in, and the models behind each agent."
+/>
+
+The agents and how they check an answer: [The agents](/docs/agents). The partners doing the
+work: [Zetaris, Meterless and NVIDIA](/docs/partners).
+
+## Why it checks
+
+Citations make an answer look trustworthy whether or not anyone opens them: in one study, only 23
+of 319 knowledge workers checked the sources an AI gave them
+([Lee et al., CHI 2025](https://doi.org/10.1145/3706598.3713778)). So Konkyo opens every citation
+for you before it ticks it, and one click on a citation opens the source at the passage,
+highlighted.
+
+<Cards>
+  <Card title="Start in a minute" href="/docs/guide/quickstart" description="Walk in as a guest; a starter fills a space for you." />
+  <Card title="A real run, step by step" href="/docs/agents/a-real-run" description="Every step one answer took, from the trace." />
+  <Card title="Try it with no keys" href="/docs/build/sample-mode" description="Replay recorded runs from a fresh clone." />
+</Cards>
+
+Konkyo was built for the Open Agent Hackathon 2026, Track 02: *The Agent That Can Explain Why*.

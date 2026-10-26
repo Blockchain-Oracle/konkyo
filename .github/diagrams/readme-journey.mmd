@@ -1,0 +1,24 @@
+sequenceDiagram
+  autonumber
+  participant Y as You
+  participant P as Planner<br/>Nemotron 3 Ultra
+  participant R as Retriever<br/>Nemotron Embed
+  participant W as Writer<br/>gpt-6-luna
+  participant V as Verifier<br/>gpt-6-luna
+  participant A as Analyst<br/>gpt-6-luna
+  participant Z as Zetaris
+  participant M as Meterless
+
+  Y->>P: "What role do sleep spindles play in memory, and do these papers agree?" · Compare on
+  P->>M: H-MEM: your corrections, read first
+  P->>R: 1–3 searches, by meaning and by words
+  R-->>W: 14 passages from 5 files
+  R->>Z: pre-check: are these files in Zetaris?
+  Z-->>R: 5 of 5 files confirmed
+  W->>V: one finding per sentence, each with its exact quote
+  V->>Z: one SQL statement: is each quote in Zetaris's own reading of its PDF?
+  Z-->>V: every quote found word for word
+  A->>Z: the table's quotes, checked the same way
+  A->>M: World Model: 3 claims × 3 sources · 6 agree · 1 partly
+  V-->>Y: 3 ticked citations, the table and the receipt with the SQL · 19 s
+  Note over W,Z: A sentence the Verifier can't back goes back to the Writer, at most twice, then is dropped.

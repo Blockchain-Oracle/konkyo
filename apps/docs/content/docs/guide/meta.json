@@ -1,0 +1,22 @@
+{
+  "title": "Guide",
+  "description": "What Konkyo is, and every screen",
+  "icon": "Compass",
+  "root": true,
+  "pages": [
+    "index",
+    "quickstart",
+    "---Your library---",
+    "library",
+    "spaces",
+    "---Use it---",
+    "ask",
+    "practise",
+    "write",
+    "listen",
+    "agents-and-inbox",
+    "knows",
+    "---You---",
+    "account"
+  ]
+}

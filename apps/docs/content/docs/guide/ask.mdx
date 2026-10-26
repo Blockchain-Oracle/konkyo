@@ -1,0 +1,90 @@
+---
+title: Ask and compare
+description: Answers only from your sources, every citation ticked once its quote is found, and where your sources disagree.
+icon: MessageSquareQuote
+---
+
+<Shot
+  src="/shots/wide/ask-answer.webp"
+  alt="A chat answering what role sleep spindles play in memory: each finding names its paper's authors with a ticked citation, and an agree/disagree table of three claims across three papers below."
+  caption="Compare on: the answer names each paper, and the table lines the papers up claim by claim."
+  eager
+/>
+
+## Ask
+
+Ask from Home, a space's dock (**ask this space**), a file or folder's **Chat with…**, or a chat.
+The box above the answer chooses what it reads: **Whole library**, or **Focus** on any mix of
+folders and files; type `@` to name one.
+
+You see the draft as the Writer writes it. A citation shows as **being checked** until its quote
+is found word for word in Zetaris; then it gets its tick. A sentence the Verifier can't back is
+rewritten, at most twice, or dropped. [How an answer is checked](/docs/agents/how-answers-are-checked)
+
+## Every citation opens its passage
+
+<Shot
+  src="/shots/wide/ask-citation.webp"
+  alt="Citation 1 opened: the Nishida and Walker paper at page 4 beside the answer, the quoted lines highlighted in amber, and a Right passage? bar with thumbs up and down at the bottom."
+  caption="Click a citation: the paper opens at the page, the quoted lines highlighted."
+/>
+
+The source opens beside the chat, at the page, with the quoted lines marked. **Right passage?**
+asks if it pointed at the right place; a 👎 is saved as a correction that the Planner and Writer
+read before a similar question. A recording opens at the second the quote was spoken.
+
+## The receipt
+
+<Shot
+  src="/shots/wide/ask-receipt.webp"
+  alt="The receipt opened under the answer: steps from Planning through Verified 3 citations, the models (Planner Nemotron 3 Ultra, Writer, Verifier and Analyst gpt-6-luna), and the two SQL statements that checked the answer's quotes and the table's."
+  caption="Checked 10 quotes against 3 sources in Zetaris · 19 s, and the SQL that did it."
+/>
+
+Under every answer, one line says what was checked: `Checked N quotes against M sources in
+Zetaris`, how many sentences were rewritten or dropped, and how many of your corrections were read
+first. Open it for the steps, the models behind the Planner, Writer, Verifier and Analyst, every
+source used, and **Show SQL** (two statements with Compare: the answer's quotes and the table's).
+
+## Compare
+
+Turn on **Compare** and the Analyst lines your sources up: up to six claims down the side, each
+source's stance across (**Agrees**, **Disagrees**, **Partly**, **Not addressed**), each stance with
+its quote and page, every quote checked in Zetaris. **Copy CSV** takes the table with you, and
+what it found stays on the space's [knows page](/docs/guide/knows). It also runs when the Planner
+sees a question that compares sources, as long as the passages come from two or more files.
+
+## When your library runs out
+
+<Shot
+  src="/shots/wide/deep-search.webp"
+  alt="A deep search on whether sleep helps consolidate memories: 4:23, 34 papers and 4 pages, found 38 and imported 7 into Sleep Memory Consolidation, then an answer naming Miyamoto, Hirai and Murayama, Wei, Krishnan and Bazhenov, and Barnes and Wilson with ticked citations, and a table of 3 claims across 6 sources."
+  caption="A deep search: found 38, imported 7 into a new space, then answered from them with every quote checked."
+/>
+
+If nothing you've added is close enough, the answer is **This isn't in your library yet.**, never a
+guess: it lists every search it tried and offers **Find sources**, **Upload files** and **Import
+by URL or DOI** (that dialog takes a link, including a `https://doi.org/…` one; paste a bare DOI
+into ⌘K). **Find sources** (or the **Deep search** toggle) sends the Scout to open papers on
+OpenAlex and the web; you choose what to import, then the question is answered from them.
+You can **Stop** an answer or a deep search while it runs. [How deep search works](/docs/agents/deep-search)
+
+## From a passage
+
+Select text in a PDF you own and a toolbar offers **Ask** (quote it into the chat), **Explain** (a
+new chat explaining it in plain words, and what it rests on), **Highlight** (kept in the file's
+**Details**), **Flashcard**, **Cite** (copied in your citation style) and **Copy**.
+
+## What you can do with an answer
+
+| Action | What it does |
+|---|---|
+| **▶ listen** | Reads it aloud, the spoken sentence underlined |
+| **copy** | With its sources |
+| **good** / **not right** | **not right** asks *What was wrong?* and Konkyo remembers it before the next answer |
+| **to a note** | Into a note, with its citations |
+| **pin** | Onto a space's wall |
+| **ask again** | A fresh answer to the same question |
+
+Chats are saved in **Chats**, grouped by space, and export as PDF, Word or Markdown with every
+quote and the line saying what was checked.

@@ -1,0 +1,80 @@
+---
+title: A real run, step by step
+description: One question across three papers, as the app showed it, and the same question recorded step by step from its trace.
+icon: ListChecks
+---
+
+## As the app shows it
+
+Asked on 2026 in a guest's library, with **Compare** on. Copied from the app: the
+answer, its receipt, and the statement Zetaris ran.
+
+<Run
+  ask="What role do sleep spindles play in memory, and do these papers agree about it?"
+  checked="Checked 10 quotes against 3 sources in Zetaris · 19 s"
+  models="Planner nvidia/nemotron-3-ultra-550b-a55b · Writer gpt-6-luna · Verifier gpt-6-luna · Analyst gpt-6-luna"
+  steps={[
+    { label: "Planning" },
+    { label: "Searching your library", detail: "14 passages from 5 files" },
+    { label: "Checking sources in Zetaris", detail: "5 of 5 files confirmed" },
+    { label: "Comparing sources", detail: "3 claims across 3 sources" },
+    { label: "Writing" },
+    { label: "Verified 3 citations" },
+  ]}
+  sql={`-- The answer's quotes
+SELECT q.qid
+FROM VALUES
+    ('1', '19d73ff5-…', '19d73ff5-…:p4:2', 'aclearpredictiverelationshipemergedbetweenresiduallocalspindleactivityinthelearninghemisphereandtheextentofofflineconsolidationimprovement'),
+    ('2', 'aa059722-…', 'aa059722-…:p1:0', 'thetightprecisionofsofastspcouplingpromotesmemoryconsolidationacrossyoungerandolderadults'),
+    ('3', 'ac7ca270-…', 'ac7ca270-…:p5:0', 'whethertherelationshipbetweenspindlesandmemoryisacausaloneisunclear')
+  AS q(qid, doc, pid, qkey)
+JOIN konkyo.konkyo_pdf_text t ON t.doc_id = q.doc
+WHERE instr(t.p, q.qkey) > 0`}
+>
+
+Nishida and Walker report that, after a motor-skill task, greater spindle activity in the learning
+hemisphere relative to the non-learning hemisphere was associated with greater offline memory
+improvement during a nap <sup>1 ✓</sup>. Muehlroth et al. report that precise coupling of fast
+spindles to slow-oscillation peaks promotes declarative-memory consolidation across younger and
+older adults <sup>2 ✓</sup>. Diekelmann describes spindles as associated with memory consolidation,
+but says it remains unclear whether their relationship with memory is causal or whether externally
+triggered spindles enhance memory <sup>3 ✓</sup>. Thus, the papers support an association between
+spindles and memory consolidation, but the passages do not establish that spindles themselves cause
+the improvement <sup>1 ✓</sup> <sup>2 ✓</sup> <sup>3 ✓</sup>.
+
+</Run>
+
+The table under it held 3 claims across the 3 papers: 6 **agrees**, 1 **partly**, 0 **disagrees**,
+each stance with its quote, all 7 checked in a second statement. The 10 quotes in the receipt line
+are the answer's 3 and the table's 7.
+
+## The same question, from its trace
+
+[Example 02](https://github.com/Blockchain-Oracle/konkyo/tree/main/examples/02-agree-disagree)
+recorded the same question on the same three papers, and this time the Verifier sent a sentence
+back twice. Every value below is copied from its trace (`trace.jsonl`, 22 lines).
+
+| # | Agent · action | What happened |
+|---|---|---|
+| 1 | planner · `read_hmem` | Read the person's corrections first: none yet (0 rows) |
+| 2 | planner · `planned` | Nemotron 3 Ultra, 7.7 s: three searches (`sleep spindles memory consolidation`, `… declarative memory procedural memory`, `… hippocampus neocortex transfer reactivation`), `compare: true` |
+| 3 | retriever · `hybrid_search` | 40 rows by meaning and words, best similarity 0.631 |
+| 4 | verifier · `queried_zetaris` | Pre-check: all 3 documents present, none missing |
+| 5 | writer · `drafted_answer` | `gpt-6-luna`, 4.0 s |
+| 6–8 | verifier · `reattributed_quote` ×3 | Three quotes were real but labelled with the wrong passage; each citation moved to the passage that holds the words (p5 → p2, p1 → p4, p4 → p7) |
+| 9 | verifier · `queried_zetaris` | "3/3 quotes found" |
+| 10 | verifier · `rejected_to_writer` | *"The cited passage does not state that the activity was measured during a daytime nap."* |
+| 11 | writer · `revised_sentences` | Sentence 1 rewritten |
+| 12 | analyst · `extracted_claims` | 3 claims, 14.6 s |
+| 13 | analyst · `queried_zetaris` | 8 of 8 stance quotes found |
+| 14–15 | analyst · `asserted_world_model` | 8 relations, into the person's World Model, then the space's |
+| 16 | verifier · `queried_zetaris` | "3/3 quotes found", 2 already found before |
+| 17 | verifier · `rejected_to_writer` | *"The passage does not identify Nishida and Walker as the reporters."* |
+| 18 | writer · `revised_sentences` | Sentence 1 rewritten again |
+| 19 | verifier · `queried_zetaris` | Nothing new to look up (3 already found) |
+| 20 | verifier · `approved` | Approved, its earlier verdicts reused |
+| 21 | verifier · `queried_zetaris` | The final statement over every quote the answer keeps: "3/3 quotes found" |
+| 22 | system · `answered` | 3 quotes, 3 sources, 1 rewritten, 0 dropped, 2 rounds; verified in 19.6 s, answered in 34.5 s |
+
+Its answer marks citation 1 as *sentence rewritten after the Verifier's check*. Replay it yourself
+with no keys: `SAMPLE_MODE=true pnpm konkyo ask --sample 2` ([Sample mode](/docs/build/sample-mode)).
