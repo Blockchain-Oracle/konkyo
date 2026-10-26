@@ -3,7 +3,7 @@ import { ImageResponse } from "next/og"
 import { Mark, Tick } from "@/components/og-mark"
 import { OG, ogFonts } from "@/lib/og"
 
-export const alt = `${APP.name}: ${APP.tagline}`
+export const alt = `${APP.name}: ${APP.headline} ${APP.tagline}`
 export const size = { width: 1200, height: 630 }
 export const contentType = "image/png"
 
@@ -30,7 +30,7 @@ export default async function OpenGraphImage() {
           <div style={{ fontSize: 34, fontWeight: 800 }}>konkyo</div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", fontWeight: 800 }}>
-          {["your sources.", "your questions.", "your grounds."].map((line, i) => (
+          {["research agents", "that check", "every quote."].map((line, i) => (
             <div
               key={line}
               style={{
@@ -45,7 +45,7 @@ export default async function OpenGraphImage() {
           ))}
         </div>
         <div style={{ fontSize: 24, fontWeight: 600, color: "#b4a9b1" }}>
-          every answer quotes the passage it came from · konkyo.xyz
+          every answer shows its grounds · konkyo.xyz
         </div>
       </div>
       <div

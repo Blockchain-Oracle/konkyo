@@ -5,7 +5,7 @@
 </p>
 
 <h1 align="center">Konkyo · 根拠</h1>
-<p align="center">Every answer shows its grounds.<br/>Agents that answer from your papers and check every quote.</p>
+<p align="center"><b>Every answer shows its grounds.</b><br/>Research agents that check every quote.</p>
 
 <p align="center">
   <a href="https://konkyo.xyz"><b>Open Konkyo</b></a>

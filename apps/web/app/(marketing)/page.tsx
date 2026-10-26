@@ -16,7 +16,7 @@ import { LibraryError } from "@/lib/library"
 import { openShare } from "@/lib/shares"
 
 export const metadata: Metadata = {
-  title: { absolute: `${APP.name}: ${APP.tagline}` },
+  title: { absolute: `${APP.name}: ${APP.headline.replace(/\.$/, "")}` },
   description: APP.description,
 }
 
@@ -143,8 +143,10 @@ async function demoShare() {
   try {
     return { slug, share: await openShare(slug) }
   } catch (error) {
-    if (error instanceof LibraryError) return null
-    throw error
+    // A missing space or a database blip: the section says where to look instead of the page
+    // failing to load (the front door must never go down with the database).
+    if (!(error instanceof LibraryError)) console.error("[landing] demo space", error)
+    return null
   }
 }
 
@@ -166,7 +168,12 @@ async function LiveDemo() {
 /** Real totals across Konkyo (cached for a minute), at request time. */
 async function LiveTotals() {
   await connection()
-  return <LiveCounts totals={await liveTotals()} />
+  // The counters are extra: if the database can't answer, they hide and the page still loads.
+  const totals = await liveTotals().catch((error: unknown) => {
+    console.error("[landing] live totals", error)
+    return null
+  })
+  return totals ? <LiveCounts totals={totals} /> : null
 }
 
 function Brand() {
@@ -210,17 +217,17 @@ export default function LandingPage() {
       <main id="main">
         <section className="about-wrap about-hero">
           <div className="about-hero-copy">
-            <p className="about-intro">research agents that check every quote.</p>
+            <p className="about-intro">every answer shows its grounds.</p>
             <h1>
-              Your sources.
+              Research agents
               <br />
-              Your questions.
+              that check
               <br />
-              <span>Your grounds.</span>
+              <span>every quote.</span>
             </h1>
             <p className="about-lede">
-              Papers, lectures, notes. Ask anything: agents answer from them and show{" "}
-              <em>the exact passage</em>, every quote checked word for word before you see it.
+              Ask your papers, lectures and notes anything. Agents answer only from them, check{" "}
+              <em>every quote word for word</em> in Zetaris, and show where your sources disagree.
             </p>
             <div className="about-hero-actions">
               <Link href="/sign-in" className="about-button is-lime">
