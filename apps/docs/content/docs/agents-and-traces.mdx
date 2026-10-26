@@ -17,7 +17,7 @@ Every role's fallback is on the other provider (OpenAI's roles fall back to Nemo
 Nemotron's to `gpt-6-luna`), with a reserve on a third model; they're tried in turn, the ones
 answering first, so an outage, an empty account or NVIDIA's free tier filling up doesn't stop an
 answer while any of them can answer. A call falls back on an error, a malformed reply, or a stall (no answer within
-45 seconds, or no first word of a stream within 25; 12 for the Planner, 90 for the Tutor's
+45 seconds, or no first word of a stream within 25; 12 for the Planner and a deep search's plan, 90 for the Tutor's
 drafts); the switch is logged as `escalated_to_fallback`. On NVIDIA's free tier a call that runs
 past its usual time is also asked again (a hedged request: the first answer wins), and a model
 that answers 429 is tried second for the next minute; an account out of credit, for ten.

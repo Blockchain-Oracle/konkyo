@@ -319,9 +319,11 @@ export const MODELS = {
   },
   /** Deep search: plans the paper and web queries. */
   scout: {
-    primary: { ...LIGHTNING("none"), hedgeAfterMs: 4_000 },
-    fallback: LUNA("none"),
-    reserve: ULTRA("none"),
+    // A search plan is a few short queries: a stalled model is dropped at 12 s, not the default 45
+    // (in testing).
+    primary: { ...LIGHTNING("none"), deadlineMs: 12_000, hedgeAfterMs: 4_000 },
+    fallback: { ...LUNA("none"), deadlineMs: 12_000 },
+    reserve: { ...ULTRA("none"), deadlineMs: 12_000, hedgeAfterMs: 5_000 },
   },
   /** Screens found sources against the question, batch by batch (Markovian steps). */
   screener: {

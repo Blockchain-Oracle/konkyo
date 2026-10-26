@@ -19,8 +19,12 @@ import { sendReminders } from "./reminders"
 import { makeSet } from "./study"
 import { backfillThumbs, makeThumb } from "./thumb"
 
-/** Files processed at once in this worker (OCR, conversion and transcription are heavy). */
-const INGEST_CONCURRENCY = 2
+/**
+ * Files processed at once in this worker (OCR, conversion and transcription are heavy). Four: a
+ * deep search imports about eight papers and answers once they're read; at two at a time,
+ * reading them was 2.5 of its 4.5 minutes (in testing), and the worker used 185 MiB of 2.5 GiB.
+ */
+const INGEST_CONCURRENCY = 4
 
 // The schema first (the worker is the one writer that applies migrations), then the bucket a fresh
 // install doesn't have yet: no manual step on a new server.

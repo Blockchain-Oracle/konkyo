@@ -1,6 +1,20 @@
 import { spawn } from "node:child_process"
 import { INGEST } from "@konkyo/config"
 
+/** OCRmyPDF's exit codes for a file it can't take: not a PDF it can read, or encrypted. */
+export const OCR_EXIT = { badInput: 2, encrypted: 8 } as const
+
+/** OCR exited with an error; `code` says whether the file itself is the problem. */
+export class OcrError extends Error {
+  constructor(
+    readonly code: number | null,
+    detail: string,
+  ) {
+    super(`OCR failed (${code}): ${detail}`)
+    this.name = "OcrError"
+  }
+}
+
 function runPiped(
   command: string,
   args: string[],
@@ -18,7 +32,7 @@ function runPiped(
     child.on("close", (code) => {
       clearTimeout(timer)
       if (code === 0) resolve(new Uint8Array(Buffer.concat(out)))
-      else reject(new Error(`OCR failed (${code}): ${Buffer.concat(err).toString().slice(-400)}`))
+      else reject(new OcrError(code, Buffer.concat(err).toString().slice(-400)))
     })
     child.stdin.end(Buffer.from(input))
   })

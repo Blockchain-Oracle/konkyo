@@ -35,7 +35,7 @@ const TASKS: {
     title: "Research a question",
     about:
       "“Does sleep help consolidate memories?” Konkyo searches open papers, imports them into a folder and answers with checked citations.",
-    meta: "A real deep search · a minute or two",
+    meta: "A real deep search · a few minutes",
   },
   {
     path: "write",

@@ -69,6 +69,7 @@ export async function GET(request: Request, ctx: { params: Promise<{ runId: stri
       // A run that ended before this connection has nothing more to send.
       const run = await deepRunFor(session.user.id, runId.data)
       if (TERMINAL.has(run.status)) await drain().then(close)
+      if (closed) return
       // Proxies close quiet connections; a comment line every 15 s keeps this one open.
       ping = setInterval(() => {
         if (!closed) controller.enqueue(encoder.encode(": ping\n\n"))

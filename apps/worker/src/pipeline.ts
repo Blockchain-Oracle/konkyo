@@ -19,6 +19,8 @@ import {
   LockedPdfError,
   looksLikeFileName,
   markdownToPdf,
+  OCR_EXIT,
+  OcrError,
   ocrPdf,
   officeToPdf,
   openAccessPdfs,
@@ -168,7 +170,13 @@ async function fromPdf(
     )
     const before = extracted.text.length
     await pdf.loadingTask.destroy()
-    bytes = await ocrPdf(bytes)
+    // A file OCR refuses fails the same way every time: tell the person now, don't retry it.
+    bytes = await ocrPdf(bytes).catch((error: unknown) => {
+      if (error instanceof OcrError && error.code === OCR_EXIT.encrypted) throw new LockedPdfError()
+      if (error instanceof OcrError && error.code === OCR_EXIT.badInput)
+        throw new ProblemError("no_text", "Its scanned pages couldn't be read for text.")
+      throw error
+    })
     pdf = await openPdf(bytes)
     lap(file.id, "Reading OCR text")
     extracted = await extractPassages(pdf, file.id, {
