@@ -79,7 +79,7 @@ const PAGE_GAP = 12
 export type PdfTarget = { page?: number; passage?: SourcePassage; quote?: string; nonce: number }
 
 /**
- * The source viewer (plan F07): EmbedPDF renders only the pages near the viewport, so a 500-page
+ * The source viewer: EmbedPDF renders only the pages near the viewport, so a 500-page
  * PDF scrolls like a short one. Cited passages are marked on top of the page in amber, and a
  * selection offers the toolbar's actions.
  */

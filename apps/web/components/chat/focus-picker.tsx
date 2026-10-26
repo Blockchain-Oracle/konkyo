@@ -27,7 +27,7 @@ const isIn = (focus: Focus, item: FocusItem) =>
   (item.type === "file" ? focus.fileIds : focus.folderIds).includes(item.id)
 
 /**
- * Choose what a chat looks at (plan F10): any mix of folders and files, or the whole library.
+ * Choose what a chat looks at: any mix of folders and files, or the whole library.
  * Opens from the composer's focus pill; `@` in the text opens the same list inline.
  */
 export function FocusPicker({

@@ -3,7 +3,7 @@ import { CONNECTORS } from "@konkyo/config"
 import { env } from "@konkyo/env/server"
 
 /**
- * Connectors (plan F35) through Composio: Gmail, Google Drive and Notion. Each person is a
+ * Connectors through Composio: Gmail, Google Drive and Notion. Each person is a
  * Composio user (their Konkyo id); each connection is one Composio connected account. Every
  * tool call is pinned to the toolkit version measured in S00.
  */

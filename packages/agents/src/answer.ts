@@ -146,7 +146,7 @@ function spread(candidates: Candidate[], perFile: number, limit: number) {
     .slice(0, limit)
 }
 
-/** Runs one model call on the role's models in turn (plan §2 Escalation): `models.ts`. */
+/** Runs one model call on the role's models in turn: `models.ts`. */
 const withFallback = <T>(
   role: Role,
   tracer: Tracer,
@@ -266,8 +266,7 @@ const ReplanSchema = z.object({
 })
 
 /**
- * The Planner revises its plan when the Retriever reports thin coverage (plan §2 "Retry": 0 hits
- * → it broadens). It sees what the first search turned up, so it can borrow the library's own
+ * The Planner revises its plan when the Retriever reports thin coverage (0 hits → it broadens). It sees what the first search turned up, so it can borrow the library's own
  * words: a paper may say "post-lunch dip" where the person asked about "afternoon tiredness".
  */
 async function replan(
@@ -535,7 +534,7 @@ const FixSchema = z.object({
 })
 
 /**
- * The critique loop's rewrite (plan F12): only the sentences the Verifier rejected go back to
+ * The critique loop's rewrite: only the sentences the Verifier rejected go back to
  * the Writer, with its reasons; every other sentence stays word for word. The Writer returns a
  * corrected sentence with its own quotes, or nothing, which drops it.
  */
@@ -1044,7 +1043,7 @@ function finalise(
 }
 
 /**
- * One answer (plan §3 "Answer flow"): Planner → Retriever (hybrid, RRF) → Zetaris pre-check →
+ * One answer: Planner → Retriever (hybrid, RRF) → Zetaris pre-check →
  * Writer (streams) → Verifier (code + one Zetaris statement + support check) → at most two
  * rewrites → whatever still fails is dropped. Nothing unverified is presented as verified.
  */

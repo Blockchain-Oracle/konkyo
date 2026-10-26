@@ -114,7 +114,7 @@ export function usePanelChat(spaceId: string | null) {
 }
 
 /**
- * Example asks for where you are (plan §16.5, "or tap one to hear it said"): the space's own
+ * Example asks for where you are: the space's own
  * suggested questions (F16) and what voice can do there, each said by a real recorded voice
  * (made once by ElevenLabs, cached by its text) so the orb, waveform and words move to it.
  */
@@ -163,7 +163,7 @@ function useStageExamples(spaceId: string | null, spaceName: string | null, want
  * The dock (markup and CSS in house.css). The orb leads: tap it
  * and it lifts out of the dock into the voice stage (S16), where you talk and Konkyo builds what
  * you said (components/voice). The quiet "ask this space" beside it opens the say strip for typing
- * instead. ✦ opens catch me up, which is also where answers land (plan F48); the bubble is your
+ * instead. ✦ opens catch me up, which is also where answers land; the bubble is your
  * chats; ♪ opens the sounds menu (interface sounds, reading answers aloud, the voice).
  */
 export function Dock() {
@@ -306,7 +306,7 @@ export function Dock() {
     },
     [queryClient],
   )
-  // A typed question from the say strip is answered in the panel, in place (plan F48).
+  // A typed question from the say strip is answered in the panel, in place.
   const ask = () => {
     const question = text.trim()
     if (!question || chat.running) return

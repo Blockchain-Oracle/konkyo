@@ -1,5 +1,5 @@
 /*
- * People: the enter card, looks, the settings card and your page (plan F53, F54).
+ * People: the enter card, looks, the settings card and your page.
  * The claim card, the entry gate, the look row, the settings sheet and your page. Rules already in
  * house.css (.claim-done, .join-stamp, .rail-you,
  * the faces inside looks) are not repeated here. Konkyo's own additions are marked.
@@ -1442,7 +1442,7 @@ textarea.claim-name-input {
   }
 }
 
-/* ---- Konkyo: the Settings page (plan §16.8): a section nav beside you and the paper ---- */
+/* ---- Konkyo: the Settings page: a section nav beside you and the paper ---- */
 .settings-layout {
   display: grid;
   grid-template-columns: 196px minmax(0, 1fr);

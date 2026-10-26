@@ -4,7 +4,7 @@ import type { SourcePassage } from "@/lib/use-source"
 const PAD = 1.5
 
 /**
- * The cited passage, marked line by line in amber (plan §7.4 #2). Boxes are PDF points in the
+ * The cited passage, marked line by line in amber. Boxes are PDF points in the
  * page's unrotated frame, so they only need the zoom applied; `Rotate` turns them with the page.
  * Multiply blending keeps the printed text fully dark under the mark.
  */

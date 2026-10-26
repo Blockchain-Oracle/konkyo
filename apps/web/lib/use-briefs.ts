@@ -17,7 +17,7 @@ export type BriefSummary = {
 
 export const briefKeys = { folder: (id: string) => ["briefs", "folder", id] as const }
 
-/** A folder's audio briefs (plan F37), newest first; refreshed while one is being made. */
+/** A folder's audio briefs, newest first; refreshed while one is being made. */
 export function useFolderBriefs(folderId: string) {
   return useQuery({
     queryKey: briefKeys.folder(folderId),

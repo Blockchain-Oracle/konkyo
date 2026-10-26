@@ -3,7 +3,7 @@ import { env } from "@konkyo/env/server"
 import { Resend } from "resend"
 
 /**
- * Email through Resend (plan F59): codes to sign in, invites, the weekly digest out; mail to a
+ * Email through Resend: codes to sign in, invites, the weekly digest out; mail to a
  * space's address in. Without RESEND_API_KEY the server says email isn't set up, and every
  * place that offers it hides the offer (emailReady).
  */

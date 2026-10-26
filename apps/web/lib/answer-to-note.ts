@@ -9,7 +9,7 @@ type PMNode = {
 }
 
 /**
- * A verified answer as note content (plan F17 "Save to note"): its question as a heading, its
+ * A verified answer as note content: its question as a heading, its
  * paragraphs with each [n] marker turned into a citation (the same passage and quote), and its
  * caveat in italics. Plain text comes with it, for chat.
  */

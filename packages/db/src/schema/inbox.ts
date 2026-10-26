@@ -2,7 +2,7 @@ import { index, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-cor
 import { owner } from "./library"
 
 /**
- * What lands in the Inbox (plan F41): review reminders, sources a watch found, finished agent
+ * What lands in the Inbox: review reminders, sources a watch found, finished agent
  * runs, practice an agent made, and mail to a space that waits for its owner.
  */
 export type InboxKind =

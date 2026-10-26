@@ -1,4 +1,4 @@
-// The worker's production build (plan S11, after the coolify skill's Node recipe): our TypeScript (the
+// The worker's production build: our TypeScript (the
 // worker and every @konkyo package) bundled to JavaScript once, so production runs `node` on it: one
 // process as PID 1, no TypeScript compiled at runtime by tsx. Every npm package stays an import,
 // installed as usual. Code that finds files from its own folder (`new URL("../…", import.meta.url)`,

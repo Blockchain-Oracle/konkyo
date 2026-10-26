@@ -10,10 +10,10 @@ const DEMO_DESCRIPTION =
   "Three open-access papers on sleep and memory (CC BY). Ask anything: every quote in the answer is checked against the paper before you see it."
 
 /**
- * A sample library to record examples against (plan S09): the onboarding starters' sources, all
+ * A sample library to record examples against: the onboarding starters' sources, all
  * openly licensed (three CC BY papers; OpenStax and MIT OpenCourseWare under CC BY-NC-SA), in
  * two folders. The worker reads them like any import. The account has no sign-in: it is for the
- * command line. The essay folder is published (plan F36) as the landing page's live demo.
+ * command line. The essay folder is published as the landing page's live demo.
  */
 export async function seed(email: string) {
   let owner = await db.query.user.findFirst({ where: eq(user.email, email) })

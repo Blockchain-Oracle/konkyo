@@ -4,7 +4,7 @@ import { cn } from "@konkyo/ui/lib/utils"
 import type * as React from "react"
 
 /**
- * Konkyo's house objects (plan §16.4) as components: black sticker
+ * Konkyo's house objects as components: black sticker
  * pills for chrome, paper objects pinned on walls, reply slips, outlined "knows" cards, and the
  * coloured wall a space lives on. Styles live in tokens.css (`@layer components`).
  */

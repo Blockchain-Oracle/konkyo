@@ -1,7 +1,7 @@
 import { APP, EMAIL } from "@konkyo/config"
 
 /**
- * Konkyo's emails (plan F59), in the app's look as far as mail clients allow: a clean wall, the
+ * Konkyo's emails, in the app's look as far as mail clients allow: a clean wall, the
  * message on cream paper with ink words, one lime button. Tables and inline styles because Gmail
  * and Outlook drop <style> and flexbox; the mark is the app icon PNG because Gmail drops SVG.
  * Every string a person typed (a name, a space) is escaped.

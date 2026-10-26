@@ -5,7 +5,7 @@ import { useMemo } from "react"
 import { useFolders } from "./use-folders"
 import { useFiles } from "./use-library"
 
-/** What a chat looks at (plan F10): nothing chosen means the whole library. */
+/** What a chat looks at: nothing chosen means the whole library. */
 export type Focus = { fileIds: string[]; folderIds: string[] }
 
 export const WHOLE_LIBRARY: Focus = { fileIds: [], folderIds: [] }

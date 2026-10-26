@@ -21,7 +21,7 @@ function ago(iso: string) {
   return relative.format(Math.round(hours / 24), "day")
 }
 
-/** Every chat (plan F17): pinned first, then grouped by space, newest first; search by name. */
+/** Every chat: pinned first, then grouped by space, newest first; search by name. */
 export function ChatsList() {
   const { data: chats, isPending } = useChats()
   const [query, setQuery] = useState("")

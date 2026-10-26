@@ -1,5 +1,5 @@
 /**
- * How one answer is made and checked (plan §3), in the app's colours: each step a paper slip,
+ * How one answer is made and checked, in the app's colours: each step a paper slip,
  * teal where Zetaris checks (its colour on the made-with pages), lime for what reaches you, and
  * the Verifier's rewrite loop on the right.
  */

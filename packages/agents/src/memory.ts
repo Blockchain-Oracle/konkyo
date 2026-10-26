@@ -6,7 +6,7 @@ import { freshCache } from "./fresh"
 import { embedQueries } from "./retrieve"
 
 /**
- * Each person's corrections memory (plan §2 "Memory", F33), on Meterless H-MEM as published:
+ * Each person's corrections memory, on Meterless H-MEM as published:
  * its own file persistence (state.json + ledger.jsonl per person) and trust ledger. A 👎 with a
  * reason becomes a `user_correction` memory; the Planner and Writer read the relevant ones on
  * every run, and feedback on an answer adjusts the confidence of the memories it used.
@@ -103,7 +103,7 @@ export function recordCorrection(
   })
 }
 
-/** "Tell it something" on the knows page (plan F51): a line the person wrote themselves. */
+/** "Tell it something" on the knows page: a line the person wrote themselves. */
 export function tellMemory(userId: string, content: string): MemoryRecord {
   return memoryFor(userId).add({
     content: content.replace(/\s+/g, " ").trim(),

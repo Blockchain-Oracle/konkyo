@@ -13,7 +13,7 @@ import { getSession } from "@/lib/session"
 const REPLAY = 200
 
 /**
- * One live stream per tab (plan §16.9): what happens in the spaces you're in (ids only; the page
+ * One live stream per tab: what happens in the spaces you're in (ids only; the page
  * refetches through checked routes) and who's looking at the one you're in (`?here=`). A dropped
  * connection reconnects with Last-Event-ID and replays what it missed.
  */

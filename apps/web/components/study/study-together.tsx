@@ -12,7 +12,7 @@ import { useSpaceList } from "@/lib/use-spaces"
 import { JoinWithCode } from "./live-round"
 
 /**
- * Study together (plan F58) on the study board: start a live round from a space (or everything)
+ * Study together on the study board: start a live round from a space (or everything)
  * and share its code, or type someone else's code to walk into theirs.
  */
 export function StudyTogether() {

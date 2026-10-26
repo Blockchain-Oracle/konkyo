@@ -19,7 +19,7 @@ import { holdQuestion } from "@/lib/pending-question"
 import { useHighlightActions } from "@/lib/use-highlights"
 
 /**
- * The pill over a text selection in a source (plan F08, Matter's pattern): short text labels,
+ * The pill over a text selection in a source: short text labels,
  * placed above the selection unless there is no room. Ask hands the quote to the composer, or to
  * the dock's panel where the page has none.
  */

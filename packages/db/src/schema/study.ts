@@ -16,7 +16,7 @@ import { files, owner } from "./library"
 export type StudySetStatus = "generating" | "ready" | "failed"
 export type StudyScope = { fileIds: string[]; folderIds: string[] }
 
-/** A practice set (plan F27): items made from some files or folders, in one run. */
+/** A practice set: items made from some files or folders, in one run. */
 export const studySets = pgTable(
   "study_sets",
   {

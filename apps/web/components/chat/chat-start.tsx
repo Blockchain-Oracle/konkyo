@@ -4,7 +4,7 @@ import { type Focus, isWholeLibrary, useFocusItems } from "@/lib/focus"
 import { SuggestedQuestions } from "./suggested-questions"
 
 /**
- * A chat before its first question (plan F10, F16): what it looks at, and questions those files
+ * A chat before its first question: what it looks at, and questions those files
  * can answer. Opened from a file or folder, it is already focused there.
  */
 export function ChatStart({ focus, onAsk }: { focus: Focus; onAsk: (question: string) => void }) {

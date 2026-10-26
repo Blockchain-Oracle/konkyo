@@ -46,7 +46,7 @@ function reasonOf(raw: string) {
 }
 
 /**
- * What Konkyo knows (plan F51): the cream other side of the
+ * What Konkyo knows: the cream other side of the
  * wall. Every line comes from rows: where your sources agree and disagree (the Analyst's World
  * Model, each source chip opens its passage), what you told it (H-MEM; cross a line out to make
  * it forget), the words your sources share, what's coming up, what it made, what it held back.

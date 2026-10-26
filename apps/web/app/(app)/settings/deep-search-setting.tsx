@@ -3,7 +3,7 @@
 import { useSettings } from "@/lib/use-settings"
 import { SwitchRow } from "./setting-rows"
 
-/** Deep search asks before importing what it found, unless this is on (plan F18). */
+/** Deep search asks before importing what it found, unless this is on. */
 export function DeepSearchSetting() {
   const { settings: data, save } = useSettings()
   return (

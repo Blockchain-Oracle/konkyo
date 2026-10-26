@@ -11,7 +11,7 @@ const QUOTE =
 const TRY = "Does sleep help memory the same way in older adults?"
 
 /**
- * The landing's tilted space (plan §16.8, section 2): the real
+ * The landing's tilted space: the real
  * public sample space ("Essay starter: Sleep and learning") as a wall. The polaroid is page one of
  * one of its papers, the answer card quotes that page, and its citation opens the passage on paper
  * with the highlighter. The note asks the live demo further down the page.

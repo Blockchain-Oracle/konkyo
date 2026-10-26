@@ -23,7 +23,7 @@ const Body = z.object({
 const error = (message: string, status: number) => NextResponse.json({ error: message }, { status })
 
 /**
- * The HTTP entry point (plan S09): ask your library from a script, with a key from Settings →
+ * The HTTP entry point: ask your library from a script, with a key from Settings →
  * API keys. The question and answer land in Chats like any other.
  *
  *   curl -X POST $KONKYO_URL/api/v1/ask -H "Authorization: Bearer $KONKYO_API_KEY" \

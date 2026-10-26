@@ -1,4 +1,4 @@
-// The made-with pages (plan F61): what
+// The made-with pages: what
 // each partner does in Konkyo, in steps you can follow into the code. Every claim here is read
 // from the code each step names; `pnpm made-with:code` copies those functions for the page and
 // fails if one is gone. Plain data only: scripts/made-with-code.ts imports this file under Node.

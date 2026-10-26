@@ -30,7 +30,7 @@ const {
 } = schema
 
 /*
- * Published articles (plan F57): a note frozen with its citations at /a/<slug>. Publishing needs a
+ * Published articles: a note frozen with its citations at /a/<slug>. Publishing needs a
  * kept account with a page, a current "Check my draft" (its counts go on the article, not-founds
  * included) and a clean moderation read; every quote is re-checked in Zetaris at publish.
  */

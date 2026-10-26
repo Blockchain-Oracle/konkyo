@@ -19,7 +19,7 @@ import { sound } from "@/lib/sounds"
 import { useQuery } from "@/lib/use-query"
 import { useSpaceList } from "@/lib/use-spaces"
 
-/** What a 👎 can say (plan F17); the reason is what H-MEM remembers. */
+/** What a 👎 can say; the reason is what H-MEM remembers. */
 const REASONS = ["Not in the source", "Wrong source", "Missed something", "Not what I asked"]
 
 type Rating = "up" | "down" | null
@@ -72,7 +72,7 @@ function Action({
 }
 
 /**
- * Under a finished answer (plan F17): copy it with its sources, rate it, ask again. A 👎 asks
+ * Under a finished answer: copy it with its sources, rate it, ask again. A 👎 asks
  * what was wrong; that reason becomes a correction Konkyo reads next time (H-MEM).
  */
 export function MessageActions({

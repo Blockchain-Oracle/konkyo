@@ -17,7 +17,7 @@ export type Settings = {
   dailyNew: number
   reviewReminders: boolean
   reminderHour: number
-  /** Taps, places and checks (§16.5). */
+  /** Taps, places and checks. */
   interfaceSounds: boolean
   /** Konkyo says the short answer out loud after a spoken ask (S16). */
   readAloud: boolean

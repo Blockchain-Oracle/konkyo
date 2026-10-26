@@ -7,7 +7,7 @@ import { useEffect, useState } from "react"
 const HIDDEN_FLUSH_MS = 250
 
 /**
- * A deep run's live state (plan F19), rebuilt from its event stream. The browser's EventSource
+ * A deep run's live state, rebuilt from its event stream. The browser's EventSource
  * reconnects by itself and sends Last-Event-ID, so the server resumes exactly where it left;
  * a reload replays from the start. Updates land once per frame however fast events arrive; a
  * hidden tab gets no frames, so there they land on a short timer instead, and someone who left

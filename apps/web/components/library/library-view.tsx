@@ -74,14 +74,14 @@ const FILTERS: { value: Filter; label: string; match: (f: LibraryFile) => boolea
 ]
 
 /**
- * Library (plan F01–F05): the whole library, or one folder with its subfolders. Drop anything
+ * Library: the whole library, or one folder with its subfolders. Drop anything
  * anywhere, watch each file get read, fix what needs you, file things into folders.
  */
 export function LibraryView({ folderId, space = false }: { folderId?: string; space?: boolean }) {
   const { data: files, isPending } = useFiles(folderId)
   const router = useRouter()
   const params = useSearchParams()
-  // A space opens as its wall; "list" is the same files as rows (plan F46 wall · list).
+  // A space opens as its wall; "list" is the same files as rows.
   const view: "wall" | "list" = space && params.get("view") !== "list" ? "wall" : "list"
   const spaceRow = useSpaceList().data?.find((s) => s.id === folderId)
   const { pickFiles, pickFolder, upload, uploads, retryUpload } = useUploads()

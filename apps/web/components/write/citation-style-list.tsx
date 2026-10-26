@@ -10,8 +10,8 @@ import { useQuery } from "@/lib/use-query"
 export type CitationStyle = { id: string; name: string }
 
 /**
- * The searchable list of citation styles (plan §7.5: common ones pinned, 2,000+ from the CSL
- * repository), shared by Export and Settings.
+ * The searchable list of citation styles (common ones pinned, 2,000+ from the CSL repository),
+ * shared by Export and Settings.
  */
 export function CitationStyleList({
   chosen,

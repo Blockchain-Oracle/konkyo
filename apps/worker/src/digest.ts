@@ -92,7 +92,7 @@ async function weekOf(userId: string): Promise<DigestSection[]> {
 }
 
 /**
- * The weekly digest (plan F59), hourly: everyone who turned it on gets one on Friday at their
+ * The weekly digest, hourly: everyone who turned it on gets one on Friday at their
  * reminder hour in their own time zone (UTC when Konkyo doesn't know it yet), once a week, and
  * only when the week held something. Sent through Resend with the week as its idempotency key.
  */

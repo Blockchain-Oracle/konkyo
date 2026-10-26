@@ -7,7 +7,7 @@ import { OPENALEX_TOPICS, ZETARIS_EXAMPLE } from "@/lib/made-with-examples"
 import { openShare, visitorOf } from "@/lib/shares"
 
 /**
- * The made-with pages' live examples (plan F61): a real Zetaris check and a real OpenAlex search,
+ * The made-with pages' live examples: a real Zetaris check and a real OpenAlex search,
  * for anyone. Zetaris is the engine every answer's checks run on, so the example shares one
  * check at a time and keeps its result for half a minute; both are capped per visitor and per
  * server in memory (one web process serves konkyo.xyz; a restart only resets the windows).

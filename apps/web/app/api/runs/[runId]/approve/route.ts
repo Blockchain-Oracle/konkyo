@@ -4,7 +4,7 @@ import { approveDeep } from "@/lib/deep"
 
 type Body = { keys: string[]; folderName: string; always?: boolean }
 
-/** Import the chosen sources (plan F18). */
+/** Import the chosen sources. */
 export const POST = route<{ runId: string }, Body>(
   async ({ userId, params, body }) => approveDeep(userId, z.uuid().parse(params.runId), body),
   z.object({

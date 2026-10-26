@@ -35,7 +35,7 @@ const PdfViewer = dynamic(() => import("./pdf-viewer").then((m) => m.PdfViewer),
   loading: () => <div className="flex-1 bg-muted" />,
 })
 
-/** The right pane (plan §7.3): every open source as a tab, the active one below. */
+/** The right pane: every open source as a tab, the active one below. */
 export function SourcePane({ className }: { className?: string }) {
   const { tabs, active } = usePreview()
   const { owner } = useSourceAccess()
@@ -192,7 +192,7 @@ function SourceBody({ tab }: { tab: SourceTab }) {
   )
 }
 
-/** A public folder's file, when its owner lets visitors download (plan F36). */
+/** A public folder's file, when its owner lets visitors download. */
 function VisitorDownload({ fileId }: { fileId: string }) {
   const { data: file } = useFileDetail(fileId)
   if (!file?.downloadUrl) return null
@@ -217,7 +217,7 @@ function VisitorDownload({ fileId }: { fileId: string }) {
   )
 }
 
-/** Quiz me and Make notes on the open source (plan F27, F32). */
+/** Quiz me and Make notes on the open source. */
 function StudyMenu({ tab }: { tab: SourceTab }) {
   const study = useStudyActions()
   const router = useRouter()

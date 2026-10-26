@@ -185,7 +185,7 @@ function NameDialog({
   )
 }
 
-/** A web page, a link to a PDF, or a YouTube video, into the library or a folder (plan F02). */
+/** A web page, a link to a PDF, or a YouTube video, into the library or a folder. */
 function ImportUrlDialog({
   open,
   folderId,

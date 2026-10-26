@@ -45,7 +45,7 @@ function Glyph({ verdict }: { verdict: Row["verdict"] }) {
 }
 
 /**
- * Check my draft's side list (plan F23, §7.5: one card open at a time, marks in the text). Each
+ * Check my draft's side list. Each
  * claim is supported, partly supported or not found, with its passage and quote, or a way to
  * find a source. Your own notes are never counted as evidence.
  */

@@ -15,7 +15,7 @@ import { sound } from "@/lib/sounds"
 import { useQuery } from "@/lib/use-query"
 
 /*
- * Publish a note (plan F57; Hashnode's draft settings in the house's dark card): title, the link
+ * Publish a note: title, the link
  * it'll have, a cover from a cited source's page one, a summary, whether pages of sources that
  * aren't openly licensed may show, and what Check my draft found, not-founds included. Publishing
  * needs a check of the note as it is now; the sheet runs one if there isn't.

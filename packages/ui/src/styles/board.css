@@ -954,7 +954,7 @@ button.board-object:hover,
   font-weight: 700;
 }
 
-/* A pinned answer (plan F52): the reply slip on the wall — cream, a 2px ink edge, a hard
+/* A pinned answer: the reply slip on the wall — cream, a 2px ink edge, a hard
    ink shadow — holding the question, the verified answer and its receipt. */
 .pin-slip {
   display: grid;

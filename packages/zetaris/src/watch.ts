@@ -18,7 +18,7 @@ export type WatchedWork = {
 const SELECT = "id,doi,display_name,publication_date,authorships,primary_location"
 
 /**
- * The OpenAlex search a watch runs (plan F34): papers whose title or abstract match the topic
+ * The OpenAlex search a watch runs: papers whose title or abstract match the topic
  * (plain `search=` also matches full text, which let loosely related papers through: checked
  * testing), newest first, open access with a PDF copy so Import can read it, trimmed with
  * `select=` (5–10× faster in Zetaris, S00). Commas would split OpenAlex's filter list.

@@ -14,7 +14,7 @@ import { useMe } from "@/lib/use-me"
 import { useCurrentSpaceId } from "./rail"
 
 /*
- * Live (plan §16.9, S19): one stream per tab. Events name what changed in a space; the queries that
+ * Live: one stream per tab. Events name what changed in a space; the queries that
  * show it refetch, a burst coalesced into one refetch per query. Presence says who's looking at a
  * space now; someone new walking in gets a toast.
  */

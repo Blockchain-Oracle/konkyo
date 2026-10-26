@@ -29,7 +29,7 @@ import { KIND_LABEL, KindIcon } from "./kind-icon"
 
 let openId: string | null = null
 const listeners = new Set<() => void>()
-/** Opens a file's details (plan F06) from anywhere: a row, the source pane, ⌘K. */
+/** Opens a file's details from anywhere: a row, the source pane, ⌘K. */
 export function openDetails(fileId: string | null) {
   openId = fileId
   for (const l of listeners) l()

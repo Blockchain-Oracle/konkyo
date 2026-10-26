@@ -62,7 +62,7 @@ function SourceCard({ file, i }: { file: PublicFile; i: number }) {
 }
 
 /**
- * A public folder (plan F36, §7.5 after Perplexity's Spaces): its name and sources, and a chat
+ * A public folder: its name and sources, and a chat
  * that answers only from them with the same agents and checks as the owner's. Nothing here can
  * change the owner's library; files open read-only beside the answer.
  */

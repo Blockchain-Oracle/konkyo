@@ -48,7 +48,7 @@ const TASKS: {
 ]
 
 /**
- * The starter tasks (plan F39): one click runs each for real with openly licensed material. The
+ * The starter tasks: one click runs each for real with openly licensed material. The
  * first run of Home leads with them; an empty library offers them again later.
  */
 export function StarterTasks({ className }: { className?: string }) {

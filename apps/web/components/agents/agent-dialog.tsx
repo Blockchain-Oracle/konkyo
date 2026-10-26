@@ -64,7 +64,7 @@ const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Frida
 const hourLabel = (h: number) => `${String(h).padStart(2, "0")}:00`
 const HOURS = Array.from({ length: 24 }, (_, h) => h)
 
-/** Create → Agent (plan F34, Perplexity's scheduled task): four fields, the schedule in one row. */
+/** Create → Agent: four fields, the schedule in one row. */
 export function AgentDialog({
   open,
   onOpenChange,

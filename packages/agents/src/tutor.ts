@@ -522,7 +522,7 @@ async function confirmInZetaris(drafts: Draft[], tracer: Tracer | undefined, ste
 export type WindowResult = { items: MadeItem[]; dropped: number; usable: boolean }
 
 /**
- * One window → its items (plan F27): the Tutor drafts them; code checks every quote, sentence
+ * One window → its items: the Tutor drafts them; code checks every quote, sentence
  * and blank against the passage; the Verifier checks every answer key; Zetaris confirms every
  * quote in its own reading of the source. Only items that pass all three are kept.
  */

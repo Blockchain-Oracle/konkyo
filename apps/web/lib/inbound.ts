@@ -13,7 +13,7 @@ import { inviteFor, roleIn } from "./members"
 const { folders, inboundEmails, inboxItems, fileFolders, files, spaceMembers, user } = schema
 
 /*
- * Email and spaces (plan F59): each space has an address (<token>@in.konkyo.xyz) that its owner
+ * Email and spaces: each space has an address (<token>@in.konkyo.xyz) that its owner
  * and the people who add to it can mail papers to, and anyone who can invite can invite by email.
  * The worker reads what arrives (apps/worker/src/inbound.ts); this side gives out addresses,
  * hears the owner's yes or no on held mail, and sends invites.
@@ -150,7 +150,7 @@ function takeInviteSlot(userId: string, day: string) {
 }
 
 /**
- * An invite to the space by email (plan F59): the space's link, from a kept account that may hand
+ * An invite to the space by email: the space's link, from a kept account that may hand
  * it on, to an address that isn't in the space yet, a few a day each and in all. Resend's
  * idempotency key (the email's own content) keeps a double click from sending twice.
  */

@@ -23,7 +23,7 @@ export function useChats() {
   })
 }
 
-/** Rename, pin and delete (plan F17); each shows at once and rolls back if the server says no. */
+/** Rename, pin and delete; each shows at once and rolls back if the server says no. */
 export function useChatActions() {
   const queryClient = useQueryClient()
   const patch = async (fn: (chats: ChatListItem[]) => ChatListItem[]) => {

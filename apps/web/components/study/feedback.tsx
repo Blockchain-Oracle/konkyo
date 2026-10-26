@@ -122,7 +122,7 @@ export type FeedbackState =
   | { kind: "shown"; answer: React.ReactNode }
 
 /**
- * The bar under an answer (Brilliant's pattern, plan §7.5): verdant "Right" with Why?; amber
+ * The bar under an answer: verdant "Right" with Why?; amber
  * "Not quite" with the hint ladder (Hint → Another hint → See answer). Never red.
  */
 export function FeedbackBar({

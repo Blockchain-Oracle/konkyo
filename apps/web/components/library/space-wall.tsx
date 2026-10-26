@@ -284,7 +284,7 @@ function PinnedAnswers({ spaceId, pins }: { spaceId: string; pins: Pin[] }) {
 /** One source on the wall, as the paper object its kind is. */
 function WallObject({ file }: { file: LibraryFile }) {
   const router = useRouter()
-  // An answer in the panel is reading or citing this source (plan F48's reading scan).
+  // An answer in the panel is reading or citing this source.
   const lit = useLitSource(file.id)
   const ready = file.status === "ready"
   const open = () => ready && openFile(file, (href) => router.push(href as Route))

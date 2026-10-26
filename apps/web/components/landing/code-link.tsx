@@ -29,7 +29,7 @@ function excerptsOf(partner: string) {
 }
 
 /**
- * "follow it in the code ↗" (plan F61): the repo is private, so instead of a GitHub link the
+ * "follow it in the code ↗": the repo is private, so instead of a GitHub link the
  * function itself opens on paper, highlighted, numbered as in its file. The excerpts are copied
  * from the source by `pnpm made-with:code`.
  */

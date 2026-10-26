@@ -2,7 +2,7 @@ import type { UIMessage } from "ai"
 import type { Matrix } from "./analyst"
 import type { Citation, Receipt, SourceRef } from "./answer"
 
-/** An agent step as the chat shows it live (plan F15); one part per step, updated in place. */
+/** An agent step as the chat shows it live; one part per step, updated in place. */
 export type StepData = {
   id: string
   label: string

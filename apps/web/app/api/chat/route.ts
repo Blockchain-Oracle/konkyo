@@ -7,7 +7,7 @@ import { answerLimit } from "@/lib/chats"
 import { LibraryError } from "@/lib/library"
 import { getSession } from "@/lib/session"
 
-/** An answer is planned, written and verified in this request (plan §3: the fast path). */
+/** An answer is planned, written and verified in this request. */
 export const maxDuration = 120
 
 const Body = z.object({

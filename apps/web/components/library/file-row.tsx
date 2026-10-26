@@ -50,7 +50,7 @@ function details(file: LibraryFile): string {
   return parts.join(" · ")
 }
 
-/** The one action that fixes each problem (plan F03: "each with a fix-it action"). */
+/** The one action that fixes each problem. */
 function FixIt({
   file,
   onPick,

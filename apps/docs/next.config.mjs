@@ -3,7 +3,7 @@ import { createMDX } from "fumadocs-mdx/next"
 const withMDX = createMDX()
 
 /**
- * Konkyo's docs (plan §8): a static export (`out/`), served by one small static container, so
+ * Konkyo's docs: a static export (`out/`), served by one small static container, so
  * the site costs almost no memory on the server.
  */
 /** @type {import('next').NextConfig} */

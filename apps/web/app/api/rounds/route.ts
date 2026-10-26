@@ -2,7 +2,7 @@ import { z } from "zod"
 import { route } from "@/lib/api"
 import { createRound, roundSources } from "@/lib/rounds"
 
-/** Start a live round (plan F58) from a practice set, a space, or the whole library. */
+/** Start a live round from a practice set, a space, or the whole library. */
 export const POST = route<Record<string, never>, { setId?: string; spaceId?: string }>(
   async ({ userId, body }) => createRound(userId, body),
   z.object({ setId: z.uuid().optional(), spaceId: z.uuid().optional() }),

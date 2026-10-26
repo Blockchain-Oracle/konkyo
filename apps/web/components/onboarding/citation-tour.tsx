@@ -42,7 +42,7 @@ function useBox(selector: string | null) {
 }
 
 /**
- * The first-run tour (plan F39, §7.5 after Attio's): once the starter's answer has a verified
+ * The first-run tour: once the starter's answer has a verified
  * citation, a spotlight asks for a click on it, and moves on only after a real click; then it
  * points at the passage that opened. Two steps, Esc to leave; shown once per browser.
  */

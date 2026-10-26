@@ -42,7 +42,7 @@ export type SpaceEventKind =
   | "mail_arrived"
 
 /**
- * The durable activity log of a space (plan §16.9): written with a NOTIFY in the same transaction,
+ * The durable activity log of a space: written with a NOTIFY in the same transaction,
  * replayed by Last-Event-ID, pruned after 30 days. Rows carry ids only, never content.
  */
 export const spaceEvents = pgTable(
@@ -106,7 +106,7 @@ export const spacePins = pgTable(
   ],
 )
 
-/** What a member of someone else's space may do (plan F56): add sources, or only read and ask. */
+/** What a member of someone else's space may do: add sources, or only read and ask. */
 export type SpaceRole = "add" | "read"
 
 /**
@@ -155,7 +155,7 @@ export const spaceInvites = pgTable(
 )
 
 /**
- * Takes (plan F56): a short thread per source in a shared space ("your take…"), each pinned to the
+ * Takes: a short thread per source in a shared space ("your take…"), each pinned to the
  * passage or page it's about when there is one. The author edits or removes theirs; the space's
  * owner removes anything.
  */
@@ -192,7 +192,7 @@ export type SpaceAnswerParts = {
 }
 
 /**
- * The space chat (plan F56): members talk; "@konkyo …" asks inside the thread and Konkyo's one
+ * The space chat: members talk; "@konkyo …" asks inside the thread and Konkyo's one
  * verified answer posts for everyone (`answer`, no author, the asker on `askerId`). Removing is
  * soft, so a reply never dangles.
  */

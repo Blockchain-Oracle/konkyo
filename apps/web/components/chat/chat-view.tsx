@@ -115,7 +115,7 @@ function UserMessage({
 }
 
 /**
- * One chat (plan F10–F15): questions and their verified answers, the composer below. A plain
+ * One chat: questions and their verified answers, the composer below. A plain
  * chat sees the whole library; a chat started from a file or folder sees only that.
  */
 export function ChatView({
@@ -169,7 +169,7 @@ export function ChatView({
       onFinish: () => void queryClient.invalidateQueries({ queryKey: ["chats"] }),
     })
   const running = status === "submitted" || status === "streaming"
-  // Stop ends the run on the server (plan F15), not just this page's connection to it.
+  // Stop ends the run on the server, not just this page's connection to it.
   const stopRun = () => {
     const runId = messages.findLast((m) => m.role === "assistant")?.metadata?.runId
     if (runId) void fetch(`/api/runs/${runId}/stop`, { method: "POST" })
@@ -177,7 +177,7 @@ export function ChatView({
   }
 
   /**
-   * A deep search (plan F18): the worker runs it; the chat shows its message, which follows the
+   * A deep search: the worker runs it; the chat shows its message, which follows the
    * run's events. With a question (Deep search on), the question is saved first.
    */
   const startDeep = async (

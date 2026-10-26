@@ -3,7 +3,7 @@ import { Bricolage_Grotesque, IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/goo
 import { Provider } from "@/components/provider"
 import "./global.css"
 
-// The app's faces (plan §16.4): Bricolage Grotesque for titles, IBM Plex for reading and code.
+// The app's faces: Bricolage Grotesque for titles, IBM Plex for reading and code.
 const display = Bricolage_Grotesque({
   subsets: ["latin"],
   axes: ["opsz"],

@@ -1,7 +1,7 @@
 "use client"
 
 /**
- * Read aloud (plan §16.5): an answer said by ElevenLabs with word timings, the sentence being read
+ * Read aloud: an answer said by ElevenLabs with word timings, the sentence being read
  * underlined lime wherever that answer is on screen. One reader for the app: a new reading, a new
  * ask, or your voice over it (barge-in) stops the one before.
  *

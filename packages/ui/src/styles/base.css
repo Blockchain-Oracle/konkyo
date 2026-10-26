@@ -1,5 +1,5 @@
 /* Tailwind, the tokens and the shadcn bridge: what every page needs. globals.css adds the app's
-   component sheets; marketing.css adds only the landing's (plan §16.8: the landing stays light). */
+   component sheets; marketing.css adds only the landing's, so the landing stays light. */
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -11,7 +11,7 @@
 @source "../../../apps/**/*.{ts,tsx}";
 @source "../**/*.{ts,tsx}";
 
-/* shadcn bridge: component tokens → the house palette (plan §16.4). */
+/* shadcn bridge: component tokens → the house palette. */
 @theme inline {
   --font-heading: var(--font-display);
   --font-sans: var(--font-sans);

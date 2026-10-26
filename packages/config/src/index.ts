@@ -95,7 +95,7 @@ export const ZETARIS = {
   },
 } as const
 
-/** Supported uploads (plan F02): extension → file kind. Anything else is "Unsupported". */
+/** Supported uploads: extension → file kind. Anything else is "Unsupported". */
 export const FILE_TYPES = {
   ".pdf": "pdf",
   ".docx": "docx",
@@ -370,7 +370,7 @@ export const MODELS = {
 export const WEB_SEARCH: ModelChoice = { id: OPENAI.nano, reasoning: "low" }
 
 /**
- * Rate limits (plan §3 "Model calls"). Each model has one token bucket per server process
+ * Rate limits. Each model has one token bucket per server process
  * (MODEL_API: OpenAI's, or a share of NVIDIA's free tier, which the web app and the worker split:
  * MODEL_REQUESTS_PER_MINUTE, half each by default). Each person has a cap on answers, so a public
  * guest sign-in can't use up everyone's budget.
@@ -391,7 +391,7 @@ export const LIMITS = {
 } as const
 
 /**
- * Public folders (plan F36): anyone with the link can ask, so each visitor and each folder has a
+ * Public folders: anyone with the link can ask, so each visitor and each folder has a
  * cap (the owner's account pays for the answers), and only the last few turns travel back.
  */
 export const PUBLIC = {
@@ -405,7 +405,7 @@ export const PUBLIC = {
 } as const
 
 /**
- * Connectors (plan F35) through Composio. Tool calls need pinned toolkit versions (S00); our own
+ * Connectors through Composio. Tool calls need pinned toolkit versions (S00); our own
  * poll resyncs every 15 minutes, which is Composio-managed auth's fastest trigger anyway, and
  * covers Notion, whose triggers would need a Notion integration of our own.
  */
@@ -421,7 +421,7 @@ export const CONNECTORS = {
 } as const
 
 /**
- * Email through Resend (plan F59). The free plan sends and receives 100 a day and 3,000 a month
+ * Email through Resend. The free plan sends and receives 100 a day and 3,000 a month
  * in total, so every kind of mail here is capped well under that.
  */
 export const EMAIL = {
@@ -454,7 +454,7 @@ export const EMAIL = {
 } as const
 
 /**
- * Audio briefs (plan F37): two voices talk through a folder. One Text-to-Dialogue request stays
+ * Audio briefs: two voices talk through a folder. One Text-to-Dialogue request stays
  * reliable to about 2,000 characters (S00), so a brief is one request of about two minutes.
  * Voices and the model are the ones the S00 spike measured.
  */
@@ -474,7 +474,7 @@ export const BRIEF = {
 } as const
 
 /**
- * Talking to Konkyo (plan S16, §16.5). Scribe realtime hears you ($0.39 an hour); ElevenLabs
+ * Talking to Konkyo. Scribe realtime hears you ($0.39 an hour); ElevenLabs
  * Flash reads answers back with timestamps ($0.04 per 1K characters), every clip cached by its
  * text and voice. The ElevenLabs plan has no overage, so both have a daily fair-use cap.
  */
@@ -510,13 +510,13 @@ export const VOICE = {
   guestSpeakCharsPerDay: 1_500,
 } as const
 
-/** Deep search (plan F18): how long it waits for imports before answering from what's ready. */
+/** Deep search: how long it waits for imports before answering from what's ready. */
 export const DEEP = {
   importWaitMs: 8 * 60_000,
   pollMs: 2_500,
 } as const
 
-/** Notes (plan F21, F24): how often the editor saves, and how often a version is kept. */
+/** Notes: how often the editor saves, and how often a version is kept. */
 export const NOTES = {
   autosaveMs: 1_200,
   /** An autosave starts a new version once the last one is this old. */
@@ -525,7 +525,7 @@ export const NOTES = {
   indexAfterMs: 20_000,
 } as const
 
-/** Study (plan F27–F31): how much a set reads, how big a round is, how many sets a day. */
+/** Study: how much a set reads, how big a round is, how many sets a day. */
 export const STUDY = {
   /** Passage windows a set reads: one file, then two more per extra file, up to the cap. */
   windowsForOneFile: 6,
@@ -545,7 +545,7 @@ export const STUDY = {
 } as const
 
 /**
- * Study together (plan F58): a live round of checked questions, played at once by everyone in its
+ * Study together: a live round of checked questions, played at once by everyone in its
  * lobby. Codes skip look-alike characters (0/O, 1/I/L) so they can be read out loud.
  */
 export const ROUNDS = {
@@ -584,7 +584,7 @@ export const BREAKPOINTS = {
 } as const
 
 /**
- * Spaces (plan §16.4, F45): a top-level folder owns one identity colour and one wall. Colours and
+ * Spaces: a top-level folder owns one identity colour and one wall. Colours and
  * walls are the house values; `text` is the lighter step used when the colour is text on the
  * plum room (≥4.5:1). Ink on a wall comes from the preset, never from guesswork.
  */
@@ -629,7 +629,7 @@ export const SPACES = {
 } as const
 
 /**
- * Looks (plan §16.4, F53): the twelve faces from scripts/make-images.mjs, in its order, each on its
+ * Looks: the twelve faces from scripts/make-images.mjs, in its order, each on its
  * space colour. A look carries a placeholder name that the next look may
  * replace; a name someone typed is theirs and stays.
  */
@@ -711,7 +711,7 @@ export const PEOPLE = {
 export type SpaceColor = keyof typeof SPACES.colors
 export type SpaceWall = keyof typeof SPACES.walls
 
-/** Interface sounds (plan §16.5): Mixkit free licence, trimmed. */
+/** Interface sounds: Mixkit free licence, trimmed. */
 export const SOUNDS = {
   files: {
     tap: "/sounds/tap.mp3",

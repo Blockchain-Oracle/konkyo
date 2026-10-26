@@ -10,7 +10,7 @@ async function SpaceKnows({ params }: { params: PageProps<"/spaces/[id]/knows">[
   return <KnowsView spaceId={id} />
 }
 
-/** What one space knows (plan F51): the other side of its wall. */
+/** What one space knows: the other side of its wall. */
 export default function SpaceKnowsPage({ params }: PageProps<"/spaces/[id]/knows">) {
   return (
     <Suspense>

@@ -30,7 +30,7 @@ import { sound } from "@/lib/sounds"
 import { useQuery } from "@/lib/use-query"
 
 /*
- * Study together (plan F58), played on the space's colour: the lobby with its code (Around's
+ * Study together, played on the space's colour: the lobby with its code (Around's
  * "who's in"), one question at a time face down with a soft timer,
  * then the bars with everyone's faces on what they picked and the passage behind the answer,
  * a team score, and a recap that offers the ones the team missed.

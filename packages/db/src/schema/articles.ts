@@ -14,7 +14,7 @@ import {
 import { user } from "./auth"
 import { files } from "./library"
 
-/** What publishing's check found (Check my draft, plan F23), shown on the article as it is. */
+/** What publishing's check found, shown on the article as it is. */
 export type ArticleCheck = {
   supported: number
   partly: number
@@ -28,7 +28,7 @@ export type ArticleCheck = {
 export type ArticleLicence = { name: string | null; url: string | null; open: boolean }
 
 /**
- * A published note (plan F57): a frozen snapshot of its words and citations at publish, at
+ * A published note: a frozen snapshot of its words and citations at publish, at
  * /a/<slug> for anyone. Republishing replaces the snapshot (`version` goes up, the slug stays);
  * unpublishing kills the link but keeps the row, so publishing again revives the same address.
  */

@@ -4,7 +4,7 @@ import { useQuery } from "@/lib/use-query"
 import { api } from "./fetcher"
 import type { Focus } from "./focus"
 
-/** Suggested questions for a focus (plan F16); the same focus asks the server once. */
+/** Suggested questions for a focus; the same focus asks the server once. */
 export function useSuggestions(focus: Focus, enabled = true) {
   const fileIds = [...focus.fileIds].sort()
   const folderIds = [...focus.folderIds].sort()

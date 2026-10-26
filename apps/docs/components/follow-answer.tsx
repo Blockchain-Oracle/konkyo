@@ -63,7 +63,7 @@ const STEPS: { title: string; body: string; by: Partner[]; file: string }[] = [
 ]
 
 /**
- * "Follow one answer" (plan F61's journey, for the docs home): the eight steps of one answer, each
+ * "Follow one answer": the eight steps of one answer, each
  * tagged with the partners doing the work, linked to their made-with pages, and the file it lives in.
  */
 export function FollowAnswer() {

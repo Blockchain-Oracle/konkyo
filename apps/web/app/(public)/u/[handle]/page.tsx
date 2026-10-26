@@ -213,7 +213,7 @@ async function Profile({ params, searchParams }: Props) {
 }
 
 /**
- * Someone's page (plan F54, Literal's profile): their face, name, @handle and bio, the articles
+ * Someone's page: their face, name, @handle and bio, the articles
  * they published and the spaces they chose to list. Open to anyone, signed in or not.
  */
 export default function ProfilePage({ params, searchParams }: Props) {

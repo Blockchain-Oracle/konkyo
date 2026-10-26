@@ -12,7 +12,7 @@ import { type Face, faceOf } from "./profiles"
 const { folders, spaceInvites, spaceMembers, profiles, user } = schema
 
 /*
- * Who's in a space (plan F56). The owner is the folder's owner; everyone else is a member with a
+ * Who's in a space. The owner is the folder's owner; everyone else is a member with a
  * role: "add" (bring sources) or "read" (read, ask, pin, take). One invite link per space at a time.
  */
 

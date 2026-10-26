@@ -17,7 +17,7 @@ import { deleteMyAccount } from "@/lib/use-account"
 
 const CONFIRM = "delete"
 
-/** Sign out and Delete account (plan F42). Deleting asks for the word, then can't be undone. */
+/** Sign out and Delete account. Deleting asks for the word, then can't be undone. */
 export function AccountActions({ guest }: { guest: boolean }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)

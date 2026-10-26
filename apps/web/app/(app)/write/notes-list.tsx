@@ -32,7 +32,7 @@ function ago(iso: string) {
   return relative.format(Math.round(hours / 24), "day")
 }
 
-/** Write (plan F21): every note, newest edit first, and a new one. */
+/** Write: every note, newest edit first, and a new one. */
 export function NotesList() {
   const router = useRouter()
   const { data: notes, isPending } = useQuery({

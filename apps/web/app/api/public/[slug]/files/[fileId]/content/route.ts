@@ -5,7 +5,7 @@ import { LibraryError } from "@/lib/library"
 import { publicContentKey } from "@/lib/shares"
 
 /**
- * A public folder's file bytes for the viewer (plan F36), with Range passthrough like the
+ * A public folder's file bytes for the viewer, with Range passthrough like the
  * owner's route. `&download=1` works only when the owner allowed downloads.
  */
 export async function GET(

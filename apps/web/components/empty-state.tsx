@@ -1,5 +1,5 @@
 /**
- * What appears here, how it gets filled, and the action that fills it (plan §7.6): a slip of
+ * What appears here, how it gets filled, and the action that fills it: a slip of
  * paper with a black tag, so it reads on a wall or a sheet alike (words never sit on the wall).
  */
 export function EmptyState({

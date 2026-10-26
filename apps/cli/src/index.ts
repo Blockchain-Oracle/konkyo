@@ -1,5 +1,5 @@
 /**
- * Konkyo from the terminal (plan S09): the same agents the app runs.
+ * Konkyo from the terminal: the same agents the app runs.
  *
  *   pnpm konkyo ask --sample                       replay a recorded run: no keys, no services
  *   SAMPLE_MODE=true pnpm konkyo                    the same, as the hackathon's validation runs it

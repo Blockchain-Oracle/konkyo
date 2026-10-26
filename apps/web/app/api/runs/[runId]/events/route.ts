@@ -8,7 +8,7 @@ import { getSession } from "@/lib/session"
 const TERMINAL = new Set(["answered", "not-found", "failed", "stopped"])
 
 /**
- * A deep run's progress as Server-Sent Events (plan F19). Every event is replayed from the one
+ * A deep run's progress as Server-Sent Events. Every event is replayed from the one
  * after `Last-Event-ID` (the browser sends it when it reconnects), then new ones follow as the
  * worker writes them (LISTEN run_events). So a reload, a dropped connection or a second tab all
  * see the same run, from where they left it.

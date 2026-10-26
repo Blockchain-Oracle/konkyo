@@ -12,7 +12,7 @@ import {
 import { user } from "./auth"
 import { owner, timestamps } from "./library"
 
-/** What a chat looks at (plan F10): empty means the whole library. */
+/** What a chat looks at: empty means the whole library. */
 export type ChatScope = { fileIds?: string[]; folderIds?: string[] }
 
 export const chats = pgTable(
@@ -40,7 +40,7 @@ export const messages = pgTable(
     role: text().$type<"user" | "assistant">().notNull(),
     parts: jsonb().$type<unknown[]>().notNull(),
     runId: uuid(),
-    /** 👍/👎 on an answer (plan F17); a 👎 carries the person's reason. */
+    /** 👍/👎 on an answer; a 👎 carries the person's reason. */
     feedback: text().$type<"up" | "down">(),
     feedbackNote: text(),
     createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
@@ -86,7 +86,7 @@ export const runs = pgTable(
 )
 
 /**
- * A deep run's progress, one row per event (plan F19). The run view replays them from any point
+ * A deep run's progress, one row per event. The run view replays them from any point
  * (SSE Last-Event-ID), so a reload or a second tab picks up where it is.
  */
 export const runEvents = pgTable(
@@ -113,7 +113,7 @@ export const userSettings = pgTable("user_settings", {
   autoImportSources: boolean().default(false).notNull(),
   /** The citation style exports start with (F26); each export can pick another. CSL id. */
   citationStyle: text().default("apa").notNull(),
-  /** Study sounds (plan §7.8): on by default, and only ever in Study. */
+  /** Study sounds: on by default, and only ever in Study. */
   studySound: boolean().default(true).notNull(),
   /** New items a day's review brings in, beside the ones already due (F29). */
   dailyNew: integer().default(15).notNull(),
@@ -128,7 +128,7 @@ export const userSettings = pgTable("user_settings", {
   onboardedAt: timestamp({ withTimezone: true }),
   /** Catch me up (F50) reads what moved after this: the last time the person closed it. */
   catchupFrom: timestamp({ withTimezone: true }),
-  /** Taps, places and checks (§16.5); the browser keeps a copy so a page plays it at once. */
+  /** Taps, places and checks; the browser keeps a copy so a page plays it at once. */
   interfaceSounds: boolean().default(true).notNull(),
   /** After a spoken ask Konkyo says the short answer out loud (S16); off = it only shows it. */
   readAloud: boolean().default(true).notNull(),

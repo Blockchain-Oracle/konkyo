@@ -28,7 +28,7 @@ async function ownRun(ownerId: string, runId: string) {
 const ACTIVE = new Set(["queued", "searching", "awaiting", "importing", "answering"])
 
 /**
- * Starts a deep search (plan F18) in a chat: from "Find sources" on an answer the library
+ * Starts a deep search in a chat: from "Find sources" on an answer the library
  * couldn't give, or a question asked with Deep search on. The run lives in the worker; this
  * saves the message that shows it and returns it for the chat to add.
  */

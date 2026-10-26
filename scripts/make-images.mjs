@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Makes Konkyo's own imagery once with OpenAI gpt-image-2 (stickers: gpt-image-1, the model
- * that returns a transparent background) (plan §16.4): the 12 "looks" a guest
+ * that returns a transparent background): the 12 "looks" a guest
  * picks on the enter card, 8 decorative stickers, and 5 landing photos. Outputs are committed (apps/web/public/{looks,stickers,landing}); re-run only to
  * replace a set.
  *

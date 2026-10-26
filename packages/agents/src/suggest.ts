@@ -19,7 +19,7 @@ cache.__konkyoSuggest ??= new Map()
 const TTL_MS = 6 * 60 * 60 * 1000
 
 /**
- * Questions worth asking of what's in focus (plan F16), written from the files' own summaries,
+ * Questions worth asking of what's in focus, written from the files' own summaries,
  * so each one is something those files can answer. The whole library uses its newest files.
  * Cached per set of files until one of them changes.
  */

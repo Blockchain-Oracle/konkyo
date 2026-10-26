@@ -1,4 +1,4 @@
-// The made-with pages' code (plan F61). Every step on a partner's page names a file and a
+// The made-with pages' code. Every step on a partner's page names a file and a
 // function; this finds that function in the source, highlights it and writes one file per
 // partner to apps/web/public/made-with/<partner>.json, which the page fetches when someone opens
 // "follow it in the code". Found by name, not by line, so moving code doesn't break a step, and a

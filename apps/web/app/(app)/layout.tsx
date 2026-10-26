@@ -24,7 +24,7 @@ async function Shell({ children }: { children: React.ReactNode }) {
   const me = await getMe(session.user.id)
   const shellUser = { name: me.name, isGuest: me.isGuest, face: me.face }
 
-  // The floating chrome (plan §16.6): the rail of spaces (a bottom bar on phones), the
+  // The floating chrome: the rail of spaces (a bottom bar on phones), the
   // places as words top right, the dock with the orb, the live pill bottom left.
   return (
     <UploadsProvider>

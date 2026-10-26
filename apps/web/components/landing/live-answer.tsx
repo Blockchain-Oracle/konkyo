@@ -27,7 +27,7 @@ const SourcePane = dynamic(
 )
 
 /**
- * The landing's live answer (plan §8 section 3): a real public folder (F36) asked from the page,
+ * The landing's live answer: a real public folder (F36) asked from the page,
  * through the same route, agents and checks as any shared folder. No recording: what you see is
  * being planned, written and checked as you watch. Citations open the passage in a sheet. It sits
  * on the page's paper sheet (R4); the board above can hand it a question (ASK_EVENT). It loads

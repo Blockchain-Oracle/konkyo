@@ -4,7 +4,7 @@ import type { CSSProperties, ReactNode } from "react"
 import type { PartValue, StageCardData, StagePart, StageSource } from "@/lib/voice-stage"
 
 /**
- * The cards a spoken ask builds on the voice stage (plan §16.5, "Cards per intent"): Konkyo's own
+ * The cards a spoken ask builds on the voice stage: Konkyo's own
  * paper objects, each with a skeleton row for every part that hasn't landed. A part shows once the
  * stage's reveal has let it in (`shown`), so rows arrive one per beat even when the pipeline hands
  * over several at once. The wrapper classes are the ones the ported stage CSS sizes and lands

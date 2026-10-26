@@ -65,7 +65,7 @@ function KindIcon({ kind }: { kind: AgentDraft["kind"] }) {
   return <Icon strokeWidth={1.5} />
 }
 
-/** Ready-made agents for an empty page: the plan's own examples. */
+/** Ready-made agents for an empty page. */
 const STARTERS: { label: string; draft: AgentDraft }[] = [
   {
     label: "Watch for new papers on a topic",
@@ -240,7 +240,7 @@ function AgentRow({ agent, onEdit }: { agent: AgentView; onEdit: () => void }) {
   )
 }
 
-/** Agents (plan F34): standing tasks with their schedule, last result and run history. */
+/** Agents: standing tasks with their schedule, last result and run history. */
 export function AgentsView() {
   const router = useRouter()
   const params = useSearchParams()

@@ -14,7 +14,7 @@ import type { Route } from "next"
 
 export type NavItem = { href: Route; label: string; icon: typeof HouseIcon }
 
-/** The sidebar's main destinations (plan §7.3): every object in the product has a home. */
+/** The sidebar's main destinations: every object in the product has a home. */
 export const MAIN_NAV: NavItem[] = [
   { href: "/home", label: "Home", icon: HouseIcon },
   { href: "/library", label: "Library", icon: LibraryBigIcon },

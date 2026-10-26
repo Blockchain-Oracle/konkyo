@@ -5,7 +5,7 @@ import type { ReactNode } from "react"
 import { BrandMark } from "@/components/brand-mark"
 
 /**
- * The 404 and error pages (plan §16.8, system pages): a black page, a paper sticker with what
+ * The 404 and error pages: a black page, a paper sticker with what
  * happened, one big lowercase line, one sentence, and one lime way on. The mark leads home.
  */
 export function SystemPage({

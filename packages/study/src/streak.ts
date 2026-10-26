@@ -1,7 +1,7 @@
 import { addDays, daysBetween } from "./day"
 
 /**
- * A streak day (plan F31): "done" is a finished review set or game round with real recall,
+ * A streak day: "done" is a finished review set or game round with real recall,
  * "freeze" a missed day a freeze covered, "repair" a missed day won back by two rounds.
  */
 export type DayKind = "done" | "freeze" | "repair"

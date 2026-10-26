@@ -4,7 +4,7 @@ import { citePassage } from "@/lib/export-note"
 import { LibraryError } from "@/lib/library"
 import { getSettings } from "@/lib/settings"
 
-/** A passage cited in the person's own style (the source pane's Cite, plan F08). */
+/** A passage cited in the person's own style. */
 export const POST = route<{ id: string }, { page?: number }>(
   async ({ userId, params, body }) => {
     const { citationStyle } = await getSettings(userId)

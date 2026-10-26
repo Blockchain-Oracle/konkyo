@@ -17,7 +17,7 @@ type Line = { at: string; what: string; details: string[] }
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`
 
 /**
- * The process record (plan F25): what the writer did with Konkyo's help, in order, and the
+ * The process record: what the writer did with Konkyo's help, in order, and the
  * version history. Written to be handed in as an appendix (IB IA / EE style): it shows which
  * claims were checked, which sources were suggested and cited, and how the draft grew.
  */

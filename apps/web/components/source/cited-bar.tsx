@@ -8,7 +8,7 @@ import { toast } from "sonner"
 import { api } from "@/lib/fetcher"
 
 /**
- * "Right passage?" on a passage opened from a citation (plan §7.4 #2, F11). A 👎
+ * "Right passage?" on a passage opened from a citation. A 👎
  * is remembered as a correction (H-MEM) and read before citing for a similar question again.
  */
 export function CitedBar({ messageId, n }: { messageId: string; n: number }) {

@@ -12,10 +12,10 @@ import type { SpaceRow } from "@/lib/use-spaces"
 import { KIND_LABEL } from "./kind-icon"
 
 /*
- * A space as a folder you can open (plan F47): @kedhareswer/glass-folder-cards (21st.dev, MIT),
+ * A space as a folder you can open: @kedhareswer/glass-folder-cards (21st.dev, MIT),
  * adapted. Its generated-art painter is gone: the back panel is the space's colour holding its
  * real cover, and the files are its newest sources' first pages. The frosted front is the one
- * glass in Konkyo (§16.3), tinted in the space's colour and strongest where the label sits so
+ * glass in Konkyo, tinted in the space's colour and strongest where the label sits so
  * the label reads. Rest: closed, the tops of the pages showing. Hover or focus: the front leans
  * and the pages lift. Click, Enter or Space: the pages fan out, each one opens its source. The
  * key goes into the space. Escape or a press outside closes it. Styles: space-folder.css.

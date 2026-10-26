@@ -16,7 +16,7 @@ export function useMemories() {
   })
 }
 
-/** Edit, forget, forget all (plan F33); each shows at once and rolls back if the server says no. */
+/** Edit, forget, forget all; each shows at once and rolls back if the server says no. */
 export function useMemoryActions() {
   const queryClient = useQueryClient()
   const patch = async (fn: (all: MemoryItem[]) => MemoryItem[]) => {

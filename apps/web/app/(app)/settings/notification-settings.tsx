@@ -16,7 +16,7 @@ const HOURS = Array.from({ length: 24 }, (_, h) => ({
 }))
 
 /**
- * Notifications (plan F41, F42): Web Push on this device (asked only on the person's click), and
+ * Notifications: Web Push on this device (asked only on the person's click), and
  * the daily review reminder at their chosen hour, sent only when something is due.
  */
 export function NotificationSettings() {

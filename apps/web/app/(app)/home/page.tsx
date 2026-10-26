@@ -18,7 +18,7 @@ async function Home() {
   )
 }
 
-/** Home is a room: the ask sheet leads, then the board of what's yours (plan F40, §16 S14). */
+/** Home is a room: the ask sheet leads, then the board of what's yours. */
 export default function HomePage() {
   return (
     <Suspense>

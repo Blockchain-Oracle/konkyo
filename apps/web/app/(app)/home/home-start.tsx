@@ -25,7 +25,7 @@ const PIECES = {
 }
 
 /**
- * First run (plan F39 → F53): "what are you here for?" is the chooser for your first space. A
+ * First run: "what are you here for?" is the chooser for your first space. A
  * template opens the space maker on it; below, the three starters run for real on open material.
  * Making a space, a starter, or skip ends first run for good.
  */

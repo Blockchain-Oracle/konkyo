@@ -24,7 +24,7 @@ export const cn: CnFunction = createCn({
             "heading",
             "heading-lg",
             "display",
-            // app scale (plan §7.2)
+            // app scale
             "micro",
             "meta",
             "snippet",

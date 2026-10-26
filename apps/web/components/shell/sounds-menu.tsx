@@ -1,7 +1,7 @@
 "use client"
 
 /*
- * The ♪ on the dock opens the sound menu: its rows are the interface sounds, whether answers are read aloud, and the voice Konkyo answers in (plan F62).
+ * The ♪ on the dock opens the sound menu: its rows are the interface sounds, whether answers are read aloud, and the voice Konkyo answers in.
  */
 
 import { VOICE } from "@konkyo/config"

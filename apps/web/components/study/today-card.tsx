@@ -27,7 +27,7 @@ function whenNext(at: string) {
 }
 
 /**
- * Today's review (plan F29, Home and Study): what's due, from how many files, one button; when
+ * Today's review: what's due, from how many files, one button; when
  * nothing's due, when the next review is. A broken streak's repair is a neutral line here.
  */
 export function TodayCard({

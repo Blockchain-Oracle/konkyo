@@ -12,7 +12,7 @@ import { qk } from "@/lib/query-keys"
 import { sound } from "@/lib/sounds"
 
 /*
- * Make a space (plan F45). Pick a starting point, name it on
+ * Make a space. Pick a starting point, name it on
  * the little board, change its colour, wall and symbol under "customize", and choose the pieces
  * it starts with. Every piece is real: finding sources runs a deep search that files what it finds
  * into the new space, a watch is a weekly agent, a quiz is a Monday agent, a brief is a Friday

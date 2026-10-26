@@ -1,6 +1,6 @@
 /* biome-ignore-all lint/complexity/noImportantStyles: the reduced-motion block must beat every animation and transition. */
 /*
- * Konkyo design tokens (plan §16.4), for a library: a plum-black room, flat loud identity colours per space, cream paper for
+ * Konkyo design tokens, for a library: a plum-black room, flat loud identity colours per space, cream paper for
  * everything you read, black sticker pills for chrome, lime as the one pop.
  * Spacing stays on Tailwind's default 4px scale: never define numeric --spacing-N names.
  */
@@ -173,7 +173,7 @@
   --animate-word-in: word-in var(--dur-base) var(--ease-glide) both;
   --animate-blink: blink 1.1s ease-in-out infinite;
   --animate-lime-pulse: lime-pulse 1.1s ease-out infinite;
-  /* Evidence (kept from §7.4, now in the new palette) */
+  /* Evidence */
   --animate-sweep: sweep 280ms var(--ease-glide) both;
   --animate-pane-in: pane-in var(--duration-pane) var(--ease-drawer) both;
   --animate-checking: checking 1.4s ease-in-out infinite;
@@ -573,7 +573,7 @@
   }
 }
 
-/* ------------------------------------------------------------------ notes (plan F21–F23) */
+/* ------------------------------------------------------------------ notes */
 .note-prose {
   font-size: 16px;
   line-height: 1.7;

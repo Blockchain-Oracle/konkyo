@@ -21,7 +21,7 @@ export type PickedFile = { file: File; relativePath?: string }
 export type UploadState = { percent: number; failed: boolean }
 
 /**
- * Direct-to-storage uploads (plan F01): each file is registered first, so it appears in the library
+ * Direct-to-storage uploads: each file is registered first, so it appears in the library
  * at once and its storage key is fixed by the server; Uppy then uploads straight to S3 with
  * presigned URLs, resumably for large files, and the worker starts reading it on arrival.
  */

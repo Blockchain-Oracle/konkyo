@@ -14,7 +14,7 @@ export type NoteDoc = { type: "doc"; content?: unknown[] }
 
 export const EMPTY_DOC: NoteDoc = { type: "doc", content: [{ type: "paragraph" }] }
 
-/** A new note (plan F21), in a folder if one is given; it's a file, so it's in the library too. */
+/** A new note, in a folder if one is given; it's a file, so it's in the library too. */
 export async function createNote(
   ownerId: string,
   input: { title?: string; folderId?: string; content?: NoteDoc; text?: string },
@@ -99,7 +99,7 @@ export async function getNote(ownerId: string, fileId: string) {
 export type NoteDetail = Awaited<ReturnType<typeof getNote>>
 
 /**
- * Someone else's note filed in a space you're in (plan F56): read-only, with who wrote it. Its
+ * Someone else's note filed in a space you're in: read-only, with who wrote it. Its
  * history, autosave and checks stay its author's.
  */
 export async function readNote(userId: string, fileId: string) {
@@ -299,7 +299,7 @@ export async function listNotes(ownerId: string) {
 }
 
 /**
- * "Save to note" (plan F17): an answer, with its citations, added to the end of a note. Its
+ * "Save to note": an answer, with its citations, added to the end of a note. Its
  * text is re-read for chat like any edit.
  */
 export async function appendToNote(

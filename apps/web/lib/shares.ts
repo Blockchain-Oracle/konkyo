@@ -18,7 +18,7 @@ import {
 
 const { folderShares, shareAnswers, folders, files, fileFolders } = schema
 
-/** The page a share's link opens (plan F36). */
+/** The page a share's link opens. */
 export const sharePath = (slug: string) => `/s/${slug}`
 
 // ------------------------------------------------------------------ the owner's side

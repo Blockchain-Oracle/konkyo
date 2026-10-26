@@ -49,7 +49,7 @@ export function openDocToast(url: string) {
 }
 
 /**
- * Export a note (plan F26, §7.5: a searchable style list with the common ones pinned): Word,
+ * Export a note: Word,
  * its citations and reference list in the chosen CSL style. The style can be the default for
  * every export.
  */

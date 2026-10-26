@@ -8,7 +8,7 @@ import { and, eq, sql } from "drizzle-orm"
 const { articles, articleCitations, files } = schema
 
 /**
- * An article's pictures (plan F57). The cover is copied (a deleted source mustn't break a
+ * An article's pictures. The cover is copied (a deleted source mustn't break a
  * published article). A cited page is drawn only for an openly licensed source, or for any
  * source when the author chose to show pages; recordings and web pages have no pages to draw.
  * A page the last version already drew is kept. Every write is tied to this job's version, so a

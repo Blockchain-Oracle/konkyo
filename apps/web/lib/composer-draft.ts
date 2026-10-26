@@ -28,7 +28,7 @@ export function useComposerQuote() {
 /**
  * Who on the page can take a quote: a composer, or the dock's panel. With a composer there it
  * goes to the composer; without one (a space wall, the library, the knows page) the dock's panel
- * opens with it (plan F48, gap #2). With neither, "Ask" goes to Home's composer.
+ * opens with it. With neither, "Ask" goes to Home's composer.
  */
 let composers = 0
 let docks = 0

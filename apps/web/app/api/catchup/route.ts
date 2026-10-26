@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { catchup, markCaughtUp } from "@/lib/catchup"
 import { getSession } from "@/lib/session"
 
-/** What moved (plan F50); `?here=<spaceId>` sorts that space's lines first. */
+/** What moved; `?here=<spaceId>` sorts that space's lines first. */
 export async function GET(request: Request) {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: "Sign in first" }, { status: 401 })

@@ -37,7 +37,7 @@ function onStep(event: AnswerEvent) {
 }
 
 /**
- * One question through the same pipeline the chat runs (plan §3): Planner, Retriever, Zetaris
+ * One question through the same pipeline the chat runs: Planner, Retriever, Zetaris
  * pre-check, Writer, Verifier with rewrites, the Analyst's matrix; the trace in logs/.
  */
 export async function ask(options: Options) {

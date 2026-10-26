@@ -8,7 +8,7 @@ export const size = { width: 1200, height: 630 }
 export const contentType = "image/png"
 
 /**
- * The link preview (plan §16.8): the landing's black, its three lines (the last in pink), and a
+ * The link preview: the landing's black, its three lines (the last in pink), and a
  * tilted violet card with a quote on paper and its lime check.
  */
 export default async function OpenGraphImage() {

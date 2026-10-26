@@ -19,7 +19,7 @@ function youTubeId(url: string): string | null {
 }
 
 /**
- * A source's polaroid for the wall (plan §16.4, real covers only): a video's own thumbnail, a web
+ * A source's polaroid for the wall: a video's own thumbnail, a web
  * page's og:image, else page one of its PDF. Audio and plain text get none (the wall draws them).
  */
 export async function makeThumb(fileId: string) {

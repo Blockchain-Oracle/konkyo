@@ -3,7 +3,7 @@
  * (21st.dev, MIT), adapted to Konkyo. Flat identity colour instead of gradients and sheen, a black
  * sticker rim and a hard offset shadow, Bricolage lowercase title, a lime focus, cream pages with a
  * readable name band, and one stylesheet instead of a <style> per card. The frosted front is the
- * plan's one glass exception (§16.3): it shows the space's real pages through it.
+ * design's one glass exception: it shows the space's real pages through it.
  */
 .gf-root {
   --gf-px: 0;

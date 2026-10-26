@@ -1,5 +1,5 @@
 /*
- * The house component CSS (plan §16): walls, the rail, the dock and its voice seat, the room header, the chat thread,
+ * The house component CSS: walls, the rail, the dock and its voice seat, the room header, the chat thread,
  * the catch-me-up panel, widget paper, and the voice stage. The wall grain is an inline SVG
  * and textures live in /os/.
  */
@@ -6946,7 +6946,7 @@ body.voice-stage-up .voice-found-pulse {
   }
 }
 
-/* Konkyo: the sounds menu's voice list (plan F62), in the dock menu's own terms. */
+/* Konkyo: the sounds menu's voice list, in the dock menu's own terms. */
 .sounds-menu {
   width: 264px;
 }

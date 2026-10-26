@@ -38,7 +38,7 @@ type Line = Brief["lines"][number]
 /** How long the delete button waits for its second tap. */
 const CONFIRM_MS = 4000
 /**
- * An audio brief (plan F37, §7.5 after Around and Krisp): the player with a speaker-coloured scrub
+ * An audio brief: the player with a speaker-coloured scrub
  * bar, speed and download, and the transcript beside it: the line being heard is lit, a timestamp
  * seeks, and each citation opens its passage in the source pane.
  */

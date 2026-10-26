@@ -85,7 +85,7 @@ const Judged = z.object({
 })
 
 /**
- * Check my draft (plan F23): every factual claim in the draft is looked for in the library's
+ * Check my draft: every factual claim in the draft is looked for in the library's
  * sources (never the person's own notes, which would be circular). A claim is "supported" only
  * when a passage states it and an exact quote from that passage is found in code and in
  * Zetaris; "partly" when the passage supports part of it; "contradicted" when a passage says
@@ -261,7 +261,7 @@ export type CitationMatch = FoundPassage & {
 }
 
 /**
- * Search citation (plan F22): passages in the library's sources that support the selected text,
+ * Search citation: passages in the library's sources that support the selected text,
  * each with the exact words to cite, checked in code and in Zetaris before they're offered.
  */
 export async function findCitations(ownerId: string, text: string, tracer: Tracer) {

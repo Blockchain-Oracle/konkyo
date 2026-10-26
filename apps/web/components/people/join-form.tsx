@@ -3,7 +3,7 @@
 /*
  * The join form: email in, six digits back, inside the claim card.
  * Every line is about keeping what you already have, never about unlocking the app. Konkyo's codes
- * are Better Auth's email OTP, sent through Resend (plan F59); Google stays one tap away.
+ * are Better Auth's email OTP, sent through Resend; Google stays one tap away.
  */
 
 import { EMAIL } from "@konkyo/config"

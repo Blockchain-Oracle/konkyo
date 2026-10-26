@@ -24,7 +24,7 @@ export function readBackup(id: string, serverUpdatedAt: string): Payload | null 
 }
 
 /**
- * Autosave (plan F24, §7.6): changes are sent a moment after typing stops. If the save fails
+ * Autosave: changes are sent a moment after typing stops. If the save fails
  * the copy stays in this browser and the save retries; the badge says "Not saved, retrying".
  */
 export function useAutosave(id: string) {

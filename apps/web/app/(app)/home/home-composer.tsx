@@ -10,7 +10,7 @@ import { holdQuestion } from "@/lib/pending-question"
 import { useFiles } from "@/lib/use-library"
 
 /**
- * Home's question box (plan F40): a question starts a new chat, which sends it as soon as it
+ * Home's question box: a question starts a new chat, which sends it as soon as it
  * opens, with whatever focus was chosen here. "A file" and "a folder" open the composer's focus
  * list, so you pick what to ask about first.
  */

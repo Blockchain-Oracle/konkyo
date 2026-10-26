@@ -2,7 +2,7 @@ import { z } from "zod"
 import { route } from "@/lib/api"
 import { listPins, pinAnswer } from "@/lib/pins"
 
-/** A space's pinned answers, newest first (plan F52). */
+/** A space's pinned answers, newest first. */
 export const GET = route<{ id: string }>(async ({ userId, params }) => ({
   pins: await listPins(userId, params.id),
 }))

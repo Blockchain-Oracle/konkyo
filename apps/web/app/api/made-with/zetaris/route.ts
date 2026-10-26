@@ -3,7 +3,7 @@ import { LibraryError } from "@/lib/library"
 import { checkExample, freshCheck, liveAllowed } from "@/lib/made-with-live"
 
 /**
- * The Zetaris page's live check (plan F61): three quotes, one statement, the real engine. A
+ * The Zetaris page's live check: three quotes, one statement, the real engine. A
  * check made in the last half minute is shown again (with when it ran) without touching Zetaris.
  */
 export async function POST(request: Request) {

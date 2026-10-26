@@ -18,7 +18,7 @@ const Described = z.object({
 })
 
 /**
- * Two or three plain sentences on what a file is and what it finds (plan F06), and, for a file
+ * Two or three plain sentences on what a file is and what it finds, and, for a file
  * still called by its file name (a recording, a scan), a plain title from its content. Written
  * only from the file's own text; the details panel says it was written by a model.
  */

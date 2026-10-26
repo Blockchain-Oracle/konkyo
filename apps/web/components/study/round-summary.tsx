@@ -72,7 +72,7 @@ const GLYPH: Record<Outcome, { mark: string; className: string; label: string }>
 }
 
 /**
- * The end of a round (plan §7.5): the score, the streak, one row per item with its source, and
+ * The end of a round: the score, the streak, one row per item with its source, and
  * the ones to try again. Wrong is never red.
  */
 export function RoundSummary({

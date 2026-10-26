@@ -60,7 +60,7 @@ async function save(setId: string, ownerId: string, items: MadeItem[], dropped: 
 }
 
 /**
- * A practice set (plan F27): pick passage windows, then for each one the Tutor drafts items, code
+ * A practice set: pick passage windows, then for each one the Tutor drafts items, code
  * checks their quotes, the Verifier checks every answer key and Zetaris confirms every quote.
  * Items are saved as they pass, so the first round can start before the set is finished.
  */

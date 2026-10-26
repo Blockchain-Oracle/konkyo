@@ -18,7 +18,7 @@ import { MessageActions } from "./message-actions"
 import { LiveSteps, RunReceipt } from "./run-receipt"
 
 /**
- * An answer (plan F11–F15): live steps and the streaming draft while the run works, then the
+ * An answer: live steps and the streaming draft while the run works, then the
  * verified answer with its citations, caveat and receipt. A question the library can't answer
  * says so plainly (F14), with ways to add what is missing; nothing is invented.
  */
@@ -47,7 +47,7 @@ export function AssistantMessage({
   // read aloud (▶ listen in its actions): the sentence being said is underlined in place
   const said = useRef<HTMLDivElement>(null)
   useSpokenHighlight(said, message.id)
-  // The receipt lands with its sound (plan §16.5), once, while you watch it arrive.
+  // The receipt lands with its sound, once, while you watch it arrive.
   const announced = useRef(false)
   useEffect(() => {
     if (receipt && running && !announced.current) {

@@ -15,7 +15,7 @@ import { useQuery } from "@/lib/use-query"
 import { sessionHref, useStudyActions } from "@/lib/use-study"
 
 /*
- * The wall's side cards (plan F46): what the space is doing besides its sources. Practice made
+ * The wall's side cards: what the space is doing besides its sources. Practice made
  * from it, the agents that watch or brief it, and the people in it, each a black sticker card
  * like "listen to this space", each with its one action.
  */

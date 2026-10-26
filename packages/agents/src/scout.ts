@@ -145,7 +145,7 @@ async function pageTitle(url: string): Promise<string | null | typeof BLOCKED_PA
   }
 }
 
-/** Web pages for a query from OpenAI's built-in web_search tool (plan F18). */
+/** Web pages for a query from OpenAI's built-in web_search tool. */
 async function searchOpenWeb(query: string, tracer: Tracer, abortSignal?: AbortSignal) {
   const started = performance.now()
   const choice = WEB_SEARCH
@@ -356,7 +356,7 @@ function describeSource(s: FoundSource) {
 }
 
 /**
- * Screens what was found against the question in Markovian RESEARCH steps (plan §2): each step
+ * Screens what was found against the question in Markovian RESEARCH steps: each step
  * reads one batch of abstracts plus the shortlist so far (the carryover), never the whole pile,
  * so the context stays the same size however many sources come back. Returns at most 8 sources,
  * at most 2 of them web pages, best first, and Markovian's own estimate of the tokens saved.

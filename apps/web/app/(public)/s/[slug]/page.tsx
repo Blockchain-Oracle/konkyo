@@ -46,7 +46,7 @@ async function SharedFolder({ params }: Props) {
   return <PublicFolder slug={slug} share={share} />
 }
 
-/** A public folder (plan F36), open to anyone with the link; read at request time. */
+/** A public folder, open to anyone with the link; read at request time. */
 export default function PublicFolderPage({ params }: Props) {
   return (
     <Suspense fallback={<main className="system-page" aria-busy />}>

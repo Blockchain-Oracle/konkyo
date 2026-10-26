@@ -1,5 +1,5 @@
 /**
- * The one capture behind a spoken ask (plan §16.5, "Safari/iOS double capture"): a single
+ * The one capture behind a spoken ask: a single
  * `getUserMedia` stream feeds both the analyser the orb and waveform read and the worklet that
  * turns it into 16 kHz PCM for Scribe. Never two captures of the same mic.
  *

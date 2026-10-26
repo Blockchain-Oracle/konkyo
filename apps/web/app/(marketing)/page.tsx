@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 
 const DOCS = APP.docs ?? "https://docs.konkyo.xyz"
 
-/** Who Konkyo is built on (plan F61), each opening its made-with page. */
+/** Who Konkyo is built on, each opening its made-with page. */
 const MAKERS: { vendor: Vendor; body: string }[] = [
   {
     vendor: "zetaris",
@@ -62,7 +62,7 @@ const AGENTS = [
   ["Tutor", "Makes practice whose answer keys are checked against their passages."],
 ] as const
 
-/** What it does, only what is built (plan §16.8, section 5). */
+/** What it does, only what is built. */
 const WAYS = [
   {
     mark: "1",
@@ -103,7 +103,7 @@ const WAYS = [
   },
 ]
 
-/** "Every kind of reader": each opens a space template (plan F45). */
+/** "Every kind of reader": each opens a space template. */
 const READERS = [
   {
     name: "students",
@@ -186,7 +186,7 @@ function Brand() {
 }
 
 /**
- * The landing page (plan §16.8), told with Konkyo's own
+ * The landing page, told with Konkyo's own
  * story and real data: the hero board is the public sample space, the counters are live, the
  * partners link to the docs that show their use, and the demo asks three real papers.
  */

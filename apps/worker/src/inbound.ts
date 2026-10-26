@@ -222,7 +222,7 @@ async function heldNoticesToday(spaceId: string) {
 }
 
 /**
- * One email sent to a space's address (plan F59). Claimed by this job, read in full from Resend,
+ * One email sent to a space's address. Claimed by this job, read in full from Resend,
  * routed by address, and then: a sender who may add to the space, whose own domain vouched for
  * the mail, has its sources added at once; anyone else's waits in the owner's Inbox. `approvedBy`
  * is the owner saying yes to a held one.

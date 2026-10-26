@@ -17,7 +17,7 @@ import { openSource } from "@/lib/preview"
 import { useSpaceFiles } from "@/lib/use-library"
 
 /**
- * Search citation (plan F22): the selected words (or any words) against the library's sources.
+ * Search citation: the selected words (or any words) against the library's sources.
  * Only passages whose quote was found in code and in Zetaris are offered; Insert puts the
  * citation where the selection ends.
  */

@@ -513,7 +513,7 @@ export function StudySession({
     setA(fresh(following.item))
   }
 
-  // ---------------------------------------------------------------- keys (plan §7.7)
+  // ---------------------------------------------------------------- keys
 
   const keyRef = useRef<(e: KeyboardEvent) => void>(() => {})
   keyRef.current = (e: KeyboardEvent) => {

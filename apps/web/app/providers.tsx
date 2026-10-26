@@ -21,7 +21,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     if (document.readyState === "complete") void register()
     else window.addEventListener("load", register, { once: true })
   }, [])
-  // The first tap anywhere unlocks audio and fetches the interface sounds (plan §16.5).
+  // The first tap anywhere unlocks audio and fetches the interface sounds.
   useEffect(() => {
     const prime = () => primeSounds()
     window.addEventListener("pointerdown", prime, { once: true, capture: true })

@@ -14,7 +14,7 @@ export const QUEUES = {
     send: { heartbeatSeconds: 30 },
   },
   /**
-   * A deep search (plan F18), in two phases: "search" finds and screens sources and waits for
+   * A deep search, in two phases: "search" finds and screens sources and waits for
    * the person's choice; "import" brings the chosen ones in, waits until they're read, answers.
    */
   deep: {
@@ -54,7 +54,7 @@ export const QUEUES = {
     send: { heartbeatSeconds: 30 },
   },
   /**
-   * An article's pictures (plan F57): its cover, copied from a cited source's page one, and the
+   * An article's pictures: its cover, copied from a cited source's page one, and the
    * cited pages of openly licensed sources (or every source, when the author allowed it).
    */
   articleAssets: {
@@ -68,7 +68,7 @@ export const QUEUES = {
     send: {},
   },
   /**
-   * A live round's question timer (plan F58): at its end the question turns face up, even if no
+   * A live round's question timer: at its end the question turns face up, even if no
    * player's page is open to do it. A stale tick (the round moved on) changes nothing.
    */
   roundTick: {
@@ -78,7 +78,7 @@ export const QUEUES = {
     send: {},
   },
   /**
-   * Mail sent to a space's address (plan F59): read from Resend, routed, its sources added or
+   * Mail sent to a space's address: read from Resend, routed, its sources added or
    * held for the owner. `approvedBy` is the owner's yes to a held one. Retried: a Resend hiccup
    * shouldn't lose a paper, and the row's status keeps a retry from adding it twice.
    */
@@ -88,7 +88,7 @@ export const QUEUES = {
     options: { retryLimit: 3, retryDelay: 30, retryBackoff: true, expireInSeconds: 10 * 60 },
     send: {},
   },
-  /** A source's polaroid (plan §16.4): page one, its og:image, or its video thumbnail, as WebP. */
+  /** A source's polaroid: page one, its og:image, or its video thumbnail, as WebP. */
   thumb: {
     name: "thumb",
     payload: z.object({ fileId: z.uuid() }),

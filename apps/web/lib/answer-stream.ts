@@ -3,7 +3,7 @@ import type { AnswerEvent, KonkyoMessage, Receipt } from "@konkyo/agents"
 import type { UIMessageStreamWriter } from "ai"
 
 /**
- * Writes the answer pipeline's events into a chat stream (plan F11–F15): one part per step,
+ * Writes the answer pipeline's events into a chat stream: one part per step,
  * rewritten in place; the draft as text; then the verified answer, the matrix and the receipt.
  * Shared by the signed-in chat and a public folder's chat.
  */

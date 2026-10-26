@@ -7,7 +7,7 @@ import { toBibtex } from "@/lib/citation"
 const { files } = schema
 
 /**
- * A BibTeX file for the chosen files (plan F05 "export bibliography"). Files with no citation
+ * A BibTeX file for the chosen files. Files with no citation
  * record yet are counted, so the person knows which to fill in.
  */
 export const POST = route(

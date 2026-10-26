@@ -36,7 +36,7 @@ async function check(text: string, timeoutMs: number): Promise<Moderation | null
 const QUESTION_TIMEOUT_MS = 8_000
 
 /**
- * A public folder's question goes through Nemotron Content Safety first (plan F36). If it can't be
+ * A public folder's question goes through Nemotron Content Safety first. If it can't be
  * reached the question goes on, and the result says it wasn't checked: the Writer answers only
  * from the folder's own passages either way.
  */

@@ -1,5 +1,5 @@
 /**
- * The five Study sounds (plan §7.8), made once with ElevenLabs Sound Effects and kept in
+ * The five Study sounds, made once with ElevenLabs Sound Effects and kept in
  * apps/web/public/sounds. Run again only to remake them:
  *   node ../../scripts/with-env.mjs tsx scripts/make-sounds.ts
  */

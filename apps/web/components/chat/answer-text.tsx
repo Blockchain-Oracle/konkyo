@@ -24,7 +24,7 @@ function WithChips({ text, citations }: { text: string; citations?: Map<number, 
 /**
  * The answer's paragraphs. While streaming, chips read "checking"; once verified they carry
  * their source. Sentences the Verifier sent back and the Writer rewrote resolve from a blur
- * (plan §7.4 #1), so the correction is seen, not hidden.
+ *so the correction is seen, not hidden.
  */
 export function AnswerText({
   body,

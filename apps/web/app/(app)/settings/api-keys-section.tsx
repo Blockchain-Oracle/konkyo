@@ -30,7 +30,7 @@ const day = (iso: string) =>
   new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })
 
 /**
- * Settings → API keys (plan S09): keys for scripts calling POST /api/v1/ask. A key is shown once,
+ * Settings → API keys: keys for scripts calling POST /api/v1/ask. A key is shown once,
  * when it's made; afterwards only its first characters, to tell keys apart.
  */
 export function ApiKeysSection({ guest }: { guest: boolean }) {

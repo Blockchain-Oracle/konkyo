@@ -28,7 +28,7 @@ const spaceColumns = {
   spaceWall: space.wall,
 }
 
-/** Make an audio brief of a folder or some files (plan F37); the worker does the rest. */
+/** Make an audio brief of a folder or some files; the worker does the rest. */
 export async function startBrief(
   ownerId: string,
   input: { folderId?: string; fileIds?: string[] },

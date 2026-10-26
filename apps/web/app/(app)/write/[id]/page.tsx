@@ -27,7 +27,7 @@ async function Note({ params }: { params: PageProps<"/write/[id]">["params"] }) 
   }
 }
 
-/** One note (plan F21): the id is URL data, read inside the boundary. */
+/** One note: the id is URL data, read inside the boundary. */
 export default function NotePage({ params }: PageProps<"/write/[id]">) {
   return (
     <Suspense fallback={null}>

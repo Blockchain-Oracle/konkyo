@@ -9,7 +9,7 @@ import { LibraryError } from "./library"
 export const DRIVE_FILE_SCOPE = "https://www.googleapis.com/auth/drive.file"
 
 /**
- * A note in Google Docs (plan F26): the same Word file as the download, uploaded to the
+ * A note in Google Docs: the same Word file as the download, uploaded to the
  * person's Drive with conversion, so Docs keeps the headings, citations and reference list.
  * The drive.file scope lets Konkyo see only the files it creates there.
  */

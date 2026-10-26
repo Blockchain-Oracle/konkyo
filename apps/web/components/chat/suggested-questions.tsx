@@ -6,7 +6,7 @@ import type { Focus } from "@/lib/focus"
 import { useSuggestions } from "@/lib/use-suggestions"
 
 /**
- * Questions worth asking of what's in focus (plan F16), written from the files' own contents.
+ * Questions worth asking of what's in focus, written from the files' own contents.
  * One click asks it; nothing shows when there's nothing to suggest.
  */
 export function SuggestedQuestions({

@@ -3,7 +3,7 @@ import { user } from "./auth"
 import { folders } from "./library"
 
 /**
- * What became of one email sent to a space's address (plan F59): received, its sources added,
+ * What became of one email sent to a space's address: received, its sources added,
  * held for the space's owner (a sender who isn't in the space, or whose domain didn't vouch for
  * it), discarded, or sent to an address no space has. One row per Resend email, so a webhook
  * delivered twice is handled once.

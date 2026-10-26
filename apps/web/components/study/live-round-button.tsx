@@ -12,7 +12,7 @@ import { useStudyActions } from "@/lib/use-study"
 type ActiveRound = { code: string; title: string; phase: string; players: number } | null
 
 /**
- * A space's way into study together (plan F58): start a live round on its sources, or, while
+ * A space's way into study together: start a live round on its sources, or, while
  * one is going (someone started it), join it. The space's live events keep it current.
  */
 export function LiveRoundButton({ spaceId, name }: { spaceId: string; name?: string }) {

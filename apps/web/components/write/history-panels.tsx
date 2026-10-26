@@ -29,7 +29,7 @@ type NoteEvent = { id: string; type: string; data: Record<string, unknown>; crea
 const time = new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" })
 const day = new Intl.DateTimeFormat(undefined, { weekday: "short", day: "numeric", month: "short" })
 
-/** A version, read-only, with Restore (plan F24, §7.5: "Viewing … · Restore"). */
+/** A version, read-only, with Restore. */
 function VersionPreview({
   noteId,
   version,

@@ -1,4 +1,4 @@
-// The live examples on the made-with pages (plan F61), shared by the page and its API routes.
+// The live examples on the made-with pages, shared by the page and its API routes.
 /**
  * The Zetaris page's live example: one sentence from a sample paper as written, and two
  * versions a careless writer might produce. Pressing check sends all three to Zetaris in one

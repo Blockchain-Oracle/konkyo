@@ -20,7 +20,7 @@ const passageRows = (docIds: string[]) => `
   WHERE d.doc_id IN (${inList(docIds)})`
 
 /**
- * Pre-check (plan §3 answer flow, step 3): which documents Zetaris holds right now. Passages of a
+ * Pre-check: which documents Zetaris holds right now. Passages of a
  * document missing here (re-processed, deleted, never confirmed) are dropped before the Writer
  * sees them. Document-level on purpose: exploding every passage cost 2.5 s; this costs about 1.
  */
@@ -45,7 +45,7 @@ export type QuoteCheck = {
 }
 
 /**
- * The Verifier's evidence check (plan F12): every quote of an answer in **one** statement, as a
+ * The Verifier's evidence check: every quote of an answer in **one** statement, as a
  * VALUES list. Documents are checked against Zetaris's own PDFBox reading of the PDF (a second,
  * independent extraction); recordings against the stored transcript passage. A quote counts
  * only if its normalised words appear verbatim.

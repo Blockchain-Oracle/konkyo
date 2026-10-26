@@ -3,7 +3,7 @@ import { db } from "./index"
 import type { SpaceRole } from "./schema"
 
 /*
- * Who can read and add what (plan §16.9 / architecture §2). Ownership stays the rule everywhere:
+ * Who can read and add what. Ownership stays the rule everywhere:
  * every existing `owner_id = me` filter stays. Reading someone else's files happens only through
  * these functions, and only because you're a member of a space they're filed in. Each returns null
  * (or false) when there's no access; the web wraps null into a 404, so a stranger can't tell a

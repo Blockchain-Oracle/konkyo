@@ -1,7 +1,7 @@
 import "server-only"
 
 /**
- * Runs in progress in this server process, so Stop can end one (plan F15). A run is not tied to
+ * Runs in progress in this server process, so Stop can end one. A run is not tied to
  * its HTTP request: leaving the page mid-answer lets it finish and save, and the answer is there
  * on return. Only an explicit Stop aborts it.
  */

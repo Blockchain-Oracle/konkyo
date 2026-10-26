@@ -9,7 +9,7 @@ async function Brief({ params }: { params: PageProps<"/briefs/[id]">["params"] }
   return <BriefView id={id} />
 }
 
-/** One audio brief (plan F37): its progress while it's made, then the player and transcript. */
+/** One audio brief: its progress while it's made, then the player and transcript. */
 export default function BriefPage({ params }: PageProps<"/briefs/[id]">) {
   return (
     <Suspense fallback={null}>

@@ -81,7 +81,7 @@ function Tool({
 }
 
 /**
- * A note (plan F21–F25): the writing on the left, the library on the right. Sources finds a
+ * A note: the writing on the left, the library on the right. Sources finds a
  * passage for what you've selected and inserts it as a citation; Check marks every claim
  * supported, partly or not found; Versions and Record keep the history of the draft.
  */

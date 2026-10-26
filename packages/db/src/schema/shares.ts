@@ -2,7 +2,7 @@ import { boolean, index, integer, pgTable, text, timestamp, uuid } from "drizzle
 import { folders, owner } from "./library"
 
 /**
- * A public folder (plan F36): a read-only link anyone can open, read and ask. Unpublishing
+ * A public folder: a read-only link anyone can open, read and ask. Unpublishing
  * deletes the row, so its link stops working; publishing again makes a new link.
  */
 export const folderShares = pgTable("folder_shares", {

@@ -9,7 +9,7 @@ import { LiveSteps, RunReceipt } from "@/components/chat/run-receipt"
 import { partsOf } from "@/lib/message-parts"
 
 /**
- * An answer on a public folder's page (plan F36): the same live steps, verified citations,
+ * An answer on a public folder's page: the same live steps, verified citations,
  * agree/disagree matrix and Grounds receipt as the owner's, without the owner's actions (save,
  * rate, regenerate). Citations open the passage in this page's source pane.
  */

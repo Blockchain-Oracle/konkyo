@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { LibraryError } from "@/lib/library"
 import { freshSearch, liveAllowed, searchExample } from "@/lib/made-with-live"
 
-/** The OpenAlex page's live search (plan F61): the search deep search runs, for one topic. */
+/** The OpenAlex page's live search: the search deep search runs, for one topic. */
 export async function GET(request: Request) {
   const raw = new URL(request.url).searchParams.get("topic")
   const topic = raw === null || raw === "" ? Number.NaN : Number(raw)

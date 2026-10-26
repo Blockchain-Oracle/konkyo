@@ -1,4 +1,4 @@
-# Konkyo worker (plan S11): ingest, deep search, study sets, agents, briefs, connector sync.
+# Konkyo worker: ingest, deep search, study sets, agents, briefs, connector sync.
 # Build from the repository root:   docker build -f apps/worker/Dockerfile .
 #
 #   build:   install the worker's workspace, bundle its TypeScript (it and every @konkyo package) to

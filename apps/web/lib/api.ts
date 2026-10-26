@@ -42,7 +42,7 @@ export function route<P = Record<string, never>, B = undefined>(
 }
 
 /**
- * A route anyone may call (a public folder, plan F36): no session; what it serves is limited by
+ * A route anyone may call: no session; what it serves is limited by
  * the link it's asked through.
  */
 export function publicRoute<P = Record<string, never>, B = undefined>(

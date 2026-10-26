@@ -4,7 +4,7 @@ import { route } from "@/lib/api"
 import { LibraryError } from "@/lib/library"
 import { inVoiceSession } from "@/lib/voice-server"
 
-/** Words no pattern placed, read by the cheap model while you are still talking (plan §16.5). */
+/** Words no pattern placed, read by the cheap model while you are still talking. */
 export const POST = route(
   async ({ userId, body, request }) => {
     // a model call per ask: only for someone talking now (a voice session, already capped)

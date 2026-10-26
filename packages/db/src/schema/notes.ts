@@ -2,7 +2,7 @@ import { boolean, index, integer, jsonb, pgTable, text, timestamp, uuid } from "
 import { files, owner } from "./library"
 
 /**
- * A note's content (plan F21). A note is a file of kind "note", so it lives in folders, the
+ * A note's content. A note is a file of kind "note", so it lives in folders, the
  * library table, Trash and search like any file; this row holds what the editor writes.
  */
 export const notes = pgTable("notes", {

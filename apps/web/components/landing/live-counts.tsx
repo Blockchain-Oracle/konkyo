@@ -11,7 +11,7 @@ const ROWS = [
 ] as const
 
 /**
- * The live counters (plan §16.8, section 4): real totals, rolling up from zero when they scroll
+ * The live counters: real totals, rolling up from zero when they scroll
  * into view (the 21st number ticker, `@shadcnspace/number-ticker-05`, on NumberFlow). The server
  * renders the real numbers; only counters still below the fold are zeroed on mount to roll up.
  * NumberFlow follows prefers-reduced-motion by itself.

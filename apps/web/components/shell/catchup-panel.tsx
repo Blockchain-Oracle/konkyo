@@ -63,7 +63,7 @@ type Chat = {
 }
 
 /**
- * Catch me up and the AI panel (plan F48 + F50): the recap panel, grown out of the dock.
+ * Catch me up and the AI panel: the recap panel, grown out of the dock.
  * What waits on you and what moved since you last closed it land one line at a time, each with
  * chips that take you there; below, ask your library (or the space you're in) and the answer
  * streams in with its citations, while the sources it reads ring lime on the wall behind.
@@ -459,7 +459,7 @@ function PanelAnswer({
     else if (running && readKey) setLitSources(readKey.split("|"))
   }, [latest, running, citedKey, readKey])
 
-  // The receipt lands with its sound (plan §16.5).
+  // The receipt lands with its sound.
   const quotes = receipt?.quotes
   const announced = useRef(false)
   useEffect(() => {

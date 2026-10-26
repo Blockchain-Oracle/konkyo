@@ -8,7 +8,7 @@ let client: ElevenLabsClient | undefined
 export type SpokenLine = { voiceId: string; text: string }
 
 /**
- * A two-voice script → one mp3 (ElevenLabs Text-to-Dialogue, plan F37). The response's own line
+ * A two-voice script → one mp3. The response's own line
  * timings drift up to 1.8 s after 30 s (S00), so they're kept only as a fallback: the brief's
  * times come from a Scribe pass over this audio (`timeLines`).
  */

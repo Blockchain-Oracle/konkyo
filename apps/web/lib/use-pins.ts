@@ -6,7 +6,7 @@ import { api } from "./fetcher"
 import type { Pin } from "./pins"
 import { qk } from "./query-keys"
 
-/** A space's pinned answers (plan F52), newest first. */
+/** A space's pinned answers, newest first. */
 export function usePins(spaceId: string) {
   return useQuery({
     queryKey: qk.spaces.pins(spaceId),

@@ -45,20 +45,20 @@ await queues.work(
   },
 )
 
-// Polaroids for the wall (plan §16.4): light work, a few at a time; older sources get theirs once.
+// Polaroids for the wall: light work, a few at a time; older sources get theirs once.
 await queues.work(QUEUES.thumb.name, { localConcurrency: 3 }, async ([job]) => {
   if (job) await makeThumb(QUEUES.thumb.payload.parse(job.data).fileId)
 })
 void backfillThumbs().then((n) => n && console.info(`[thumb] queued ${n} older sources`))
 
-// A live round's question timer ran out (plan F58): turn it face up.
+// A live round's question timer ran out: turn it face up.
 await queues.work(QUEUES.roundTick.name, { localConcurrency: 4 }, async ([job]) => {
   if (!job) return
   const { roundId, version } = QUEUES.roundTick.payload.parse(job.data)
   await revealRound(roundId, version)
 })
 
-// An article's cover and cited pages (plan F57), drawn after it's published.
+// An article's cover and cited pages, drawn after it's published.
 await queues.work(QUEUES.articleAssets.name, { localConcurrency: 2 }, async ([job]) => {
   if (job) await makeArticleAssets(QUEUES.articleAssets.payload.parse(job.data))
 })

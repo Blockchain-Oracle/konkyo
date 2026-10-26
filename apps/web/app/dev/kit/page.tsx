@@ -21,7 +21,7 @@ import { interfaceSoundsOn, setInterfaceSounds, sound } from "@/lib/sounds"
 import { CheckIcon, CircleDashedIcon, CircleHelpIcon, HalfIcon, XIcon } from "./icons"
 
 /**
- * The design kit (plan S12 "done when"): every token, house object, wall and sound on one page,
+ * The design kit: every token, house object, wall and sound on one page,
  * so the system can be checked in one look. Development only.
  */
 export default function KitPage() {

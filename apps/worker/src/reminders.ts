@@ -8,7 +8,7 @@ const hourIn = (date: Date, timeZone: string) =>
     new Intl.DateTimeFormat("en-GB", { timeZone, hour: "numeric", hourCycle: "h23" }).format(date),
   )
 
-/** Few, varied reminders (plan F31): the wording changes from day to day, and never nags. */
+/** Few, varied reminders: the wording changes from day to day, and never nags. */
 const PHRASES: ((n: number, streak: number) => string)[] = [
   (n) => `${n} ${n === 1 ? "card is" : "cards are"} ready for today's review`,
   (n, streak) =>

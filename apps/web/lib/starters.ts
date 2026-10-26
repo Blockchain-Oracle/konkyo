@@ -11,7 +11,7 @@ import { markOnboarded } from "./settings"
 export type StarterPath = keyof typeof STARTERS
 
 /**
- * Runs a starter for real (plan F39): Study imports a sample course into a folder (Quiz me
+ * Runs a starter for real: Study imports a sample course into a folder (Quiz me
  * starts once it's read); Research runs a deep search that imports and answers; Write imports
  * three papers and opens an essay note beside them. First run is over either way.
  */

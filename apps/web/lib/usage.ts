@@ -8,7 +8,7 @@ const { user } = schema
 const DAY_MS = 86_400_000
 
 /**
- * Fair-use allowances (plan F38): each one is a count over the last 24 hours, lower for guests.
+ * Fair-use allowances: each one is a count over the last 24 hours, lower for guests.
  * The same rules stop a request and fill Settings → Usage, so the page never disagrees with
  * what the app does.
  */

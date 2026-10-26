@@ -22,7 +22,7 @@ async function knownTokens(to: string[]) {
 }
 
 /**
- * Resend's webhook for mail sent to a space's address (plan F59). The signature is checked on the
+ * Resend's webhook for mail sent to a space's address. The signature is checked on the
  * raw body; the email is recorded once (Resend's id is unique) and handed to the worker, which
  * reads it in full. Mail to an address no space has is recorded and goes no further: no job, no
  * Resend call. Answers fast: Resend retries what's slow.

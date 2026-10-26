@@ -98,7 +98,7 @@ async function Door({ params }: Props) {
   )
 }
 
-/** An invite into a space (plan F56): the enter card for that space. */
+/** An invite into a space: the enter card for that space. */
 export default function JoinPage(props: Props) {
   return (
     <main className="gate-page">

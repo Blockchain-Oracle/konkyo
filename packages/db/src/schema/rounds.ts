@@ -41,7 +41,7 @@ export type RoundQuestion = {
 }
 
 /**
- * A live round (plan F58): a lobby with a join code, then one question at a time. Every phase
+ * A live round: a lobby with a join code, then one question at a time. Every phase
  * change is `update … where version = $v`, so two players moving it at once move it once.
  */
 export const liveRounds = pgTable(

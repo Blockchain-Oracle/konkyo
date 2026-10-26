@@ -2,7 +2,7 @@
 
 /*
  * The space chat. "@konkyo …" asks the space: the ask goes in the thread, and Konkyo's one verified answer
- * posts for everyone, its steps live, with Stop and pin (plan F56).
+ * posts for everyone, its steps live, with Stop and pin.
  */
 
 import type { Citation } from "@konkyo/agents"

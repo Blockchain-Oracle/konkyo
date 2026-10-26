@@ -40,7 +40,7 @@ function set(next: State) {
 }
 
 /**
- * Opens a source in the preview pane (plan F07), reusing its tab if it is already open. Callable
+ * Opens a source in the preview pane, reusing its tab if it is already open. Callable
  * from anywhere: library rows, citation chips, the command palette.
  */
 export function openSource(

@@ -6,7 +6,7 @@ import { cacheLife } from "next/cache"
 export type LiveTotals = { spaces: number; sources: number; quotes: number }
 
 /**
- * The landing's live counters (plan §16.8, section 4): running totals across Konkyo (the most
+ * The landing's live counters: running totals across Konkyo (the most
  * each has reached), cached for a minute. "Quotes checked" counts every quote an answer's receipt verified (in chats and on public
  * spaces) plus every practice question whose quote Zetaris confirmed: each was found word for word
  * in its source.

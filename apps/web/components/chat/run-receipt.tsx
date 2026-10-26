@@ -13,7 +13,7 @@ import { openSource } from "@/lib/preview"
 
 const seconds = (ms: number) => `${(ms / 1000).toFixed(ms < 10_000 ? 1 : 0)} s`
 
-/** The live agent steps (plan F15): what the run is doing right now. */
+/** The live agent steps: what the run is doing right now. */
 export function LiveSteps({ steps }: { steps: StepData[] }) {
   return (
     <ol className="space-y-1.5" aria-live="polite" aria-label="What Konkyo is doing">
@@ -41,7 +41,7 @@ export function LiveSteps({ steps }: { steps: StepData[] }) {
 }
 
 /**
- * The Grounds receipt (plan §7.4 #3): the run's steps collapse into one grey line saying what
+ * The Grounds receipt: the run's steps collapse into one grey line saying what
  * was checked; opened, it shows the steps, every source used, and the Zetaris statement that
  * checked the quotes (Show SQL). This is where the grounds (根拠) behind an answer are seen.
  */

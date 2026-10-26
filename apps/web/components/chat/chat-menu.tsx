@@ -23,7 +23,7 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { useChatActions } from "@/lib/use-chats"
 
-/** Rename, pin and delete one chat (plan F17), from its row or its own header. */
+/** Rename, pin and delete one chat, from its row or its own header. */
 export function ChatMenu({
   chat,
   leaveOnDelete = false,

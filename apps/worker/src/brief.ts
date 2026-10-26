@@ -9,7 +9,7 @@ import { eq } from "drizzle-orm"
 const { briefs } = schema
 
 /**
- * An audio brief (plan F37): the script is written and checked from the folder's most central
+ * An audio brief: the script is written and checked from the folder's most central
  * passages, spoken by two voices in one request, then timed by a Scribe pass over the real audio
  * so each line's citation lands on the moment it's said.
  */

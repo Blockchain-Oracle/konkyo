@@ -3,7 +3,7 @@ import { createIsomorphicCanvasFactory } from "unpdf"
 import { openPdf } from "./pdf/load"
 
 /**
- * Real covers for sources (plan §16.4: never stock or generated). Page one of a document, or the
+ * Real covers for sources. Page one of a document, or the
  * image a web page or video chose for itself, as a small WebP for the wall's polaroids.
  */
 export const THUMB = { width: 480, quality: 82, maxImageBytes: 5 * 1024 * 1024 } as const
@@ -16,7 +16,7 @@ export function pdfThumb(pdf: Uint8Array, width: number = THUMB.width): Promise<
   return pdfPage(pdf, 1, width)
 }
 
-/** Any page of a PDF as a WebP this wide (an article's cited page, plan F57). */
+/** Any page of a PDF as a WebP this wide. */
 export async function pdfPage(
   pdf: Uint8Array,
   pageNumber: number,

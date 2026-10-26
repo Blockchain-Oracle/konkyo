@@ -49,7 +49,7 @@ function useElapsed(since: string | undefined, endedAt: string | undefined) {
 }
 
 /**
- * One outlined triangle per source found (plan §7.4 #6): the brand's particle field, here
+ * One outlined triangle per source found: the brand's particle field, here
  * counting real sources. Positions are fixed per index, so it grows without reshuffling.
  */
 function Constellation({ count }: { count: number }) {
@@ -282,7 +282,7 @@ function Imports({ state }: { state: DeepState }) {
 }
 
 /**
- * A deep search in the chat (plan F18–F19, §7.4 #6): live steps, every source as it's found,
+ * A deep search in the chat: live steps, every source as it's found,
  * the shortlist to approve, each import as it's read, then the cited answer. Rebuilt from the
  * run's event stream, so a reload lands back here mid-run. Once answered, the run folds into one
  * line above its answer.

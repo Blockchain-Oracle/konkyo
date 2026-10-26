@@ -44,7 +44,7 @@ function useSettled(value: string, ms = 400) {
 }
 
 /**
- * Import from a connected account (plan F35): pick emails, Drive files or Notion pages; each is
+ * Import from a connected account: pick emails, Drive files or Notion pages; each is
  * fetched and read like an upload, into the folder it was opened from.
  */
 export function ConnectorImportDialog({

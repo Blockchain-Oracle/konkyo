@@ -3,7 +3,7 @@
 import { SOUNDS, type UiSound } from "@konkyo/config"
 
 /**
- * Konkyo's sound engine (plan §16.5). One Web Audio context, unlocked by the first tap anywhere
+ * Konkyo's sound engine. One Web Audio context, unlocked by the first tap anywhere
  * (browsers allow audio only after a gesture), buffers decoded once and played with no latency.
  * Interface sounds are soft, short, optional, `tap` by default, `place` when
  * something lands, `check` when a receipt lands, `promote` for pin, publish and day 7.

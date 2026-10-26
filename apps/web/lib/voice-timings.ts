@@ -107,7 +107,7 @@ export const VOICE_TIMINGS = {
   followUpListen: t(
     8000,
     "code",
-    "plan §16.5",
+    "design",
     "Konkyo: after an answer the orb keeps listening this long for a follow-up",
   ),
   bargeIn: t(

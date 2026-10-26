@@ -16,7 +16,7 @@ import { allowanceLeft } from "./usage"
 
 const { chats, messages, runs } = schema
 
-/** A first question becomes the chat's title, cut at a word (plan F17 rename can change it). */
+/** A first question becomes the chat's title, cut at a word. */
 function titleFrom(question: string) {
   const clean = question.replace(/\s+/g, " ").trim()
   if (clean.length <= 64) return clean
@@ -118,7 +118,7 @@ export async function dropAfter(chatId: string, messageId: string) {
 }
 
 /**
- * Whether this person may ask now (plan §3 rate limits): a cap per ten minutes and per day, lower
+ * Whether this person may ask now: a cap per ten minutes and per day, lower
  * for guests. Returns the reason in plain words when they can't.
  */
 export async function answerLimit(ownerId: string): Promise<string | null> {
@@ -149,7 +149,7 @@ export async function finishRun(
     .where(eq(runs.id, runId))
 }
 
-/** The sidebar's and Chats page's list (plan F17): pinned first, then most recent. */
+/** The sidebar's and Chats page's list: pinned first, then most recent. */
 export async function listChats(ownerId: string) {
   return db
     .select({
@@ -209,7 +209,7 @@ async function ownChat(ownerId: string, chatId: string) {
   return chat
 }
 
-/** Rename or pin a chat (plan F17). */
+/** Rename or pin a chat. */
 export async function editChat(
   ownerId: string,
   chatId: string,
@@ -240,7 +240,7 @@ export async function trashChat(ownerId: string, chatId: string) {
 export type Rating = { rating: "up" | "down" | null; reason?: string; note?: string }
 
 /**
- * 👍 / 👎 on an answer (plan F17, §2 Memory). Every rating reaches the H-MEM memories that shaped
+ * 👍 / 👎 on an answer. Every rating reaches the H-MEM memories that shaped
  * the answer (their confidence goes up or down); a 👎 with a reason becomes a new correction the
  * Planner and Writer read next time a similar question comes up.
  */
@@ -278,7 +278,7 @@ export async function rateMessage(ownerId: string, messageId: string, input: Rat
 }
 
 /**
- * "Right passage?" on a cited passage (plan F11, F33). A 👎 becomes a correction the Writer reads
+ * "Right passage?" on a cited passage. A 👎 becomes a correction the Writer reads
  * before citing for a similar question again; a 👍 needs nothing remembered.
  */
 export async function rateCitation(ownerId: string, messageId: string, n: number, right: boolean) {

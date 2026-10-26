@@ -5,7 +5,7 @@ import Link from "next/link"
 import { clock } from "@/lib/format"
 import { useFolderBriefs } from "@/lib/use-briefs"
 
-/** A folder's audio briefs as a row above its files (plan F37), so they're found where they're about. */
+/** A folder's audio briefs as a row above its files, so they're found where they're about. */
 export function FolderBriefs({ folderId }: { folderId: string }) {
   const { data: briefs } = useFolderBriefs(folderId)
   const shown = (briefs ?? []).filter((b) => b.status !== "failed").slice(0, 3)

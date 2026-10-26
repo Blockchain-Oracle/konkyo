@@ -14,7 +14,7 @@ import { DockArea } from "../shell/dock"
 import { SourcePane } from "./source-pane"
 
 /**
- * The centre and the source side by side (plan §7.3). At 1024px and up the source is a resizable
+ * The centre and the source side by side. At 1024px and up the source is a resizable
  * pane (360px to 65%, 44% by default); below that it is a sheet over the page. The panel group is
  * always rendered, so opening a source never remounts the page underneath it.
  */

@@ -54,7 +54,7 @@ const SPOTS = [
 ]
 
 /**
- * The public sample space, blurred behind the door (plan F53): its real name, colour and first
+ * The public sample space, blurred behind the door: its real name, colour and first
  * pages. A server without a sample space shows the bare wall.
  */
 async function SampleSpace() {
@@ -102,7 +102,7 @@ async function SampleSpace() {
 }
 
 /**
- * Enter Konkyo (plan F53): the door over the blurred sample space. A name and a look in
+ * Enter Konkyo: the door over the blurred sample space. A name and a look in
  * two taps; keeping it on other devices is one quiet line under the way in.
  */
 export default function SignInPage(props: PageProps<"/sign-in">) {

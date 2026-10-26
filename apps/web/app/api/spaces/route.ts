@@ -8,7 +8,7 @@ import { createSpace, listSpaces } from "@/lib/spaces"
 /** Your spaces with their identity and real covers (the rail, Home, Library). */
 export const GET = route(async ({ userId }) => ({ spaces: await listSpaces(userId) }))
 
-/** Make a space (plan F45): a name, its colour, wall and symbol, and the template it came from. */
+/** Make a space: a name, its colour, wall and symbol, and the template it came from. */
 export const POST = route(
   async ({ userId, body }) => {
     const space = await createSpace(userId, body)

@@ -3,7 +3,7 @@ import { route } from "@/lib/api"
 import { getSettings } from "@/lib/settings"
 import { speak } from "@/lib/voice-server"
 
-/** Read aloud (plan §16.5): the clip's address and its word timings, made once and cached. */
+/** Read aloud: the clip's address and its word timings, made once and cached. */
 export const POST = route(
   async ({ userId, body }) => {
     const voiceId = body.voice === "speaker" ? (await getSettings(userId)).voiceId : undefined

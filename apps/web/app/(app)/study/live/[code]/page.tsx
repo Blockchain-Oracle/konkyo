@@ -11,7 +11,7 @@ async function Room({ params }: Props) {
   return <RoundRoom code={code.toUpperCase()} />
 }
 
-/** A live round (plan F58): its lobby, its questions and its recap, for everyone in it. */
+/** A live round: its lobby, its questions and its recap, for everyone in it. */
 export default function LiveRoundPage({ params }: Props) {
   return (
     <Suspense fallback={<div className="round-wall" aria-busy />}>

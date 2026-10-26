@@ -11,7 +11,7 @@ const TYPES = {
   docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 } as const
 
-/** The process record (plan F25) as Markdown, PDF or Word: GET ?format=md|pdf|docx. */
+/** The process record as Markdown, PDF or Word: GET ?format=md|pdf|docx. */
 export async function GET(request: Request, ctx: { params: Promise<{ id: string }> }) {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: "Sign in first" }, { status: 401 })

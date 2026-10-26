@@ -10,7 +10,7 @@ const { articles, profiles, user } = schema
 const SITEMAP_MAX = 5_000
 
 /**
- * What search engines may index (plan F57): the landing, demo, pitch, legal pages, every published
+ * What search engines may index: the landing, demo, pitch, legal pages, every published
  * article and every person's page. Public spaces stay out (they're `noindex`). Read at request
  * time, so a new article is listed at once.
  */

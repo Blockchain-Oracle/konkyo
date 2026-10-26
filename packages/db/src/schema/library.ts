@@ -19,7 +19,7 @@ import {
 } from "drizzle-orm/pg-core"
 import { user } from "./auth"
 
-/** Embedding width: Nemotron Embed (INGEST.embeddingModel) shortened by the API (plan §4). */
+/** Embedding width: Nemotron Embed (INGEST.embeddingModel) shortened by the API. */
 export const EMBEDDING_DIMENSIONS = INGEST.embeddingDimensions
 
 const tsvector = customType<{ data: string }>({ dataType: () => "tsvector" })
@@ -42,7 +42,7 @@ export const timestamps = {
 }
 
 /**
- * A folder. A top-level folder is a **space** (plan §16.6, F45): it owns an identity colour, a wall,
+ * A folder. A top-level folder is a **space**: it owns an identity colour, a wall,
  * a symbol and a cover; folders inside a space are plain folders. `spaceId` (the top-level id of
  * every folder) is maintained by a database trigger (migration 0019), so access checks are a join.
  */
@@ -90,7 +90,7 @@ export const fileKind = pgEnum("file_kind", [
   "email",
 ])
 
-/** Where a file is in its life (plan F03): one word the UI can show, plus a stage while working. */
+/** Where a file is in its life: one word the UI can show, plus a stage while working. */
 export const fileStatus = pgEnum("file_status", ["queued", "processing", "ready", "needs_you"])
 
 /** Why a file needs the person, each with its own fix-it action in the UI. */
@@ -104,7 +104,7 @@ export const fileProblem = pgEnum("file_problem", [
 ])
 
 /**
- * A connected account (plan F35): Gmail, Google Drive or Notion through Composio. What's
+ * A connected account: Gmail, Google Drive or Notion through Composio. What's
  * imported from it keeps its link (files.connectionId) for resync and for Disconnect.
  */
 export const connections = pgTable(
@@ -249,7 +249,7 @@ export const embeddingCache = pgTable("embedding_cache", {
   createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
 })
 
-/** Text the person marked in a source (plan F08 Highlight): rects in the page's frame, like passages. */
+/** Text the person marked in a source: rects in the page's frame, like passages. */
 export const highlights = pgTable(
   "highlights",
   {

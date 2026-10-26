@@ -4,7 +4,7 @@ import { exportToGoogleDocs } from "@/lib/google-docs"
 import { getSettings } from "@/lib/settings"
 
 /**
- * Export to Google Docs (plan F26): { url } when done, or { needsScope } when the person has
+ * Export to Google Docs: { url } when done, or { needsScope } when the person has
  * to allow Drive access first (the editor then asks Google, and comes back to finish).
  */
 export const POST = route<{ id: string }, { style?: string }>(

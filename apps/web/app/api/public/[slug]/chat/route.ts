@@ -32,7 +32,7 @@ const Body = z.object({
 })
 
 /**
- * Ask a public folder (plan F36). Anyone with the link: the question is moderated, each visitor
+ * Ask a public folder. Anyone with the link: the question is moderated, each visitor
  * and the folder have daily caps, and the answer runs the same agents and checks as the owner's,
  * over the folder's sources only, without the owner's memory.
  */

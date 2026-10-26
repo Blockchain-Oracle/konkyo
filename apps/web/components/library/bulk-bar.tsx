@@ -16,7 +16,7 @@ function saveText(name: string, text: string, type: string) {
 }
 
 /**
- * What to do with the selected files (plan F05): move, export their bibliography, download them
+ * What to do with the selected files: move, export their bibliography, download them
  * as one .zip, or move them to Trash. It floats above the list while anything is selected.
  */
 export function BulkBar({ ids, onClear }: { ids: string[]; onClear: () => void }) {

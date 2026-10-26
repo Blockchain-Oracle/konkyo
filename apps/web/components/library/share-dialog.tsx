@@ -29,7 +29,7 @@ type Share = {
 }
 
 /**
- * Share a folder (plan F36): a read-only link where anyone can read its sources and ask about
+ * Share a folder: a read-only link where anyone can read its sources and ask about
  * them. Downloads are off unless turned on; stopping sharing turns the link off at once.
  */
 export function ShareDialog({

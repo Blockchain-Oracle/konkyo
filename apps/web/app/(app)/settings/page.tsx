@@ -52,7 +52,7 @@ function Section({
 }
 
 /**
- * Settings (plan §16.8): a section nav beside the sections; you first, as the same card the rail
+ * Settings: a section nav beside the sections; you first, as the same card the rail
  * opens; then everything else on paper, with switches and real selects.
  */
 export default function SettingsPage() {

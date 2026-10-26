@@ -6,7 +6,7 @@ import "@citation-js/plugin-csl"
 import { LibraryError } from "./library"
 
 /**
- * Citation styles (plan F26): any style in the Citation Style Language's own repository, by its
+ * Citation styles: any style in the Citation Style Language's own repository, by its
  * id. The common ones are listed first; the rest are found by name. A style is fetched once and
  * kept on disk.
  */

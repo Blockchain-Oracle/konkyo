@@ -99,7 +99,7 @@ function asCsv(matrix: Matrix) {
 }
 
 /**
- * Where the sources agree and where they disagree (plan F13, §7.4 #4): claims down the side,
+ * Where the sources agree and where they disagree: claims down the side,
  * sources across, each cell a stance and the words that show it. Only quotes found in their
  * passage and in Zetaris reach a cell; a cell opens its passage in the source pane. There is no
  * consensus score: one number would hide the disagreement, which is the point.

@@ -6,7 +6,7 @@ import { cn } from "@konkyo/ui/lib/utils"
 import type { StreakView } from "@/lib/study"
 
 /**
- * The streak and the freezes held (plan F31), in words on a white sticker (no icons): "3-day
+ * The streak and the freezes held, in words on a white sticker (no icons): "3-day
  * streak · 2 freezes". It sits on the black scoreboard.
  */
 export function StreakPill({ streak, className }: { streak: StreakView; className?: string }) {

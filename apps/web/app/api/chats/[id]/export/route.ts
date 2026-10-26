@@ -14,7 +14,7 @@ const fileName = (title: string, ext: string) =>
       .slice(0, 80) || "Konkyo chat"
   }.${ext}`
 
-/** Download a chat as Markdown, PDF or Word (plan F17): GET ?format=md|pdf|docx. */
+/** Download a chat as Markdown, PDF or Word: GET ?format=md|pdf|docx. */
 export async function GET(request: Request, ctx: { params: Promise<{ id: string }> }) {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: "Sign in first" }, { status: 401 })

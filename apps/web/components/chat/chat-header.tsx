@@ -4,7 +4,7 @@ import { useChats } from "@/lib/use-chats"
 import { ChatMenu } from "./chat-menu"
 
 /**
- * The chat's name and its menu (plan F17), as a room header over the conversation: a black kicker
+ * The chat's name and its menu, as a room header over the conversation: a black kicker
  * pill, the question itself in the wall's ink. The list is the live copy, so a rename or pin shows
  * here at once; a chat whose first answer is still being written is "new chat" until it's saved.
  */

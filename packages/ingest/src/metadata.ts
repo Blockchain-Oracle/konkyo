@@ -267,7 +267,7 @@ export async function openAccessPdfs(doi: string): Promise<string[]> {
 export const looksLikeFileName = (title: string) =>
   /\.[a-z0-9]{2,5}$/i.test(title) || /^(arxiv|doi|scan|document|untitled)[\s_.-]/i.test(title)
 
-// ------------------------------------------------------------------ deep search (plan F18)
+// ------------------------------------------------------------------ deep search
 
 /** A paper OpenAlex found for a deep search, with what's needed to screen and cite it. */
 export type FoundWork = {
@@ -360,7 +360,7 @@ export async function openAlexIdWithPdf(doi: string): Promise<string | null> {
 }
 
 /**
- * A work's open-access licence (an article's page images, plan F57): OpenAlex's best open
+ * A work's open-access licence: OpenAlex's best open
  * location. Open means a Creative Commons or public-domain licence; unknown is closed.
  */
 export async function openAccessLicence(

@@ -3,7 +3,7 @@ import { readdir, readFile } from "node:fs/promises"
 import path from "node:path"
 
 /**
- * The recorded examples (plan S09): each folder in examples/ holds the question (input.json),
+ * The recorded examples: each folder in examples/ holds the question (input.json),
  * what Konkyo answered (output.md), the agents' trace (trace.jsonl) and the replies from the
  * outside services that sample mode replays (tape.jsonl).
  */

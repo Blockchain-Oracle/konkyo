@@ -41,7 +41,7 @@ export const KIND_LABEL: Record<FileKind, string> = {
 
 export function KindIcon({ kind, className }: { kind: FileKind; className?: string }) {
   if (kind === "youtube") {
-    // A real logo, not a generic icon (plan §7.9).
+    // A real logo, not a generic icon.
     return (
       // biome-ignore lint/performance/noImgElement: static brand SVG
       <img src="/logos/youtube.svg" alt="" className={cn("h-3.5 w-5 object-contain", className)} />

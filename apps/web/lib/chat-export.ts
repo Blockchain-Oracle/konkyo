@@ -64,7 +64,7 @@ function answerBlock(message: KonkyoMessage) {
 }
 
 /**
- * A chat as Markdown (plan F17 export): each question, its verified answer with the [n] markers
+ * A chat as Markdown: each question, its verified answer with the [n] markers
  * kept, the exact quote behind every number, and the agree/disagree table where there was one.
  */
 export async function chatMarkdown(ownerId: string, chatId: string) {

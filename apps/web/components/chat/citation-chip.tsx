@@ -15,7 +15,7 @@ export const CitedIn = createContext<string | null>(null)
 /** Lights a source on the chat's wall while its chip is pointed at. */
 export const LitSource = createContext<((fileId: string | null) => void) | null>(null)
 
-/** The verified tick, drawn in once (plan §7.4 #1). */
+/** The verified tick, drawn in once. */
 function Tick({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 12 12" aria-hidden className={cn("size-2.5", className)}>
@@ -34,7 +34,7 @@ function Tick({ className }: { className?: string }) {
 }
 
 /**
- * A numbered citation (plan F11): "checking" while the Verifier works (amber outline, pulsing in
+ * A numbered citation: "checking" while the Verifier works (amber outline, pulsing in
  * place), then verified (verdant tick). Hover shows the source and the exact quote; a click
  * opens the passage in the source pane, highlighted.
  */

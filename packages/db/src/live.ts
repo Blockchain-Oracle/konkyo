@@ -3,7 +3,7 @@ import { type Db, db } from "./index"
 import { type SpaceEventKind, spaceEvents } from "./schema"
 
 /*
- * Live updates (plan §16.9, architecture §0.6): one Postgres channel, `live`. Durable things that
+ * Live updates: one Postgres channel, `live`. Durable things that
  * happened in a space are rows in `space_events` (catch me up reads them, a reconnecting tab
  * replays them by id); every row is announced on the channel in the same transaction, so a
  * listener never hears of a row it can't read yet. Payloads carry ids only: a tab that hears one

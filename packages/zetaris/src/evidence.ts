@@ -5,7 +5,7 @@ import { env } from "@konkyo/env/server"
 import { literal, run, ZetarisError } from "./client"
 
 /**
- * Konkyo's evidence store in Zetaris (plan §3 "Where data lives"):
+ * Konkyo's evidence store in Zetaris:
  *   konkyo.konkyo_passages: one JSON file per document with every passage's text.
  *   konkyo.konkyo_pdf_text: one JSON file per PDF with Zetaris's *own* PDFBox text, normalised.
  * The Verifier checks every quote against these before it reaches anyone.

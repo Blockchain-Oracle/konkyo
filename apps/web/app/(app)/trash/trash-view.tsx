@@ -46,7 +46,7 @@ function deletedLabel(item: TrashItem) {
 
 type Confirm = { kind: "one"; item: TrashItem } | { kind: "all" } | null
 
-/** Trash (plan F04): 30 days to change your mind, then deleted for good. */
+/** Trash: 30 days to change your mind, then deleted for good. */
 export function TrashView() {
   const { data: items, isPending } = useTrash()
   const { restore, deleteForever, empty } = useTrashActions()

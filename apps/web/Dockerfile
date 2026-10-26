@@ -1,5 +1,5 @@
 # check=skip=SecretsUsedInArgOrEnv (BETTER_AUTH_URL is the public address, not a secret)
-# Konkyo web (plan S11): the Next.js standalone server. Build from the repository root:
+# Konkyo web: the Next.js standalone server. Build from the repository root:
 #   docker build -f apps/web/Dockerfile --build-arg BETTER_AUTH_URL=https://… -t konkyo-web .
 FROM node:22.23.3-bookworm-slim AS base
 ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH COREPACK_ENABLE_DOWNLOAD_PROMPT=0 NEXT_TELEMETRY_DISABLED=1

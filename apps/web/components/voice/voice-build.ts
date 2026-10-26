@@ -1,7 +1,7 @@
 "use client"
 
 /**
- * The build behind a spoken ask (plan §16.5, S16): what turns words into a card on the stage and
+ * The build behind a spoken ask: what turns words into a card on the stage and
  * the card into the real thing. While you talk, code reads the intent from every new word
  * (`guessIntent`, 0 ms) and the card is dealt as soon as the kind is known; words no pattern
  * places go to the cheap model (`/api/voice/intent`, two calls in flight at most). Anything
@@ -506,8 +506,8 @@ export function useVoiceBuild(room: VoiceRoom): {
     card.quotes = receipt?.quotes ?? null
     card.notFound = Boolean(notFound)
     if ((receipt || notFound || (final && !chat.running)) && !run.complete) {
-      // On a space wall the answer lands on the source it cites most, taped there and read aloud
-      // (plan §16.5); anywhere else it lands in the AI panel.
+      // On a space wall the answer lands on the source it cites most, taped there and read aloud;
+      // anywhere else it lands in the AI panel.
       const cited = final?.citations[0]?.fileId
       const onWall = cited && document.querySelector(`[data-file-id="${CSS.escape(cited)}"]`)
       if (onWall)

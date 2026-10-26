@@ -9,7 +9,7 @@ import { quoteKey } from "./citations"
 import { freshCache } from "./fresh"
 import { type ModelChoice, model, reasoning, withFallback } from "./models"
 
-/** A source's position on a claim (plan §7.4 #4): the stance glyph and its one word. */
+/** A source's position on a claim: the stance glyph and its one word. */
 export type Stance = "agrees" | "disagrees" | "partly"
 
 export type MatrixCell = {
@@ -27,7 +27,7 @@ export type MatrixCell = {
 
 export type MatrixSource = { fileId: string; title: string; byline?: string; kind: string }
 
-/** Claims × sources with stance (plan F13): where the library agrees and where it disagrees. */
+/** Claims × sources with stance: where the library agrees and where it disagrees. */
 export type Matrix = {
   state: "checking" | "done"
   claims: { id: string; text: string; cells: MatrixCell[] }[]
@@ -85,14 +85,14 @@ List 3-6 SPECIFIC claims (one finding, number, mechanism or condition each; neve
 For each passage that addresses a claim: "agrees" if it states the claim, "disagrees" if it states the opposite or a conflicting value, "partly" if it supports it only with a limit or condition. Skip passages that don't address it.
 Use only what the passages say. Each quote is 3-12 consecutive words copied exactly from that passage, nothing added. If the sources share no points, return no claims.`
 
-/** One World Model per person (plan §2 Memory), on its own event-sourced file. */
+/** One World Model per person, on its own event-sourced file. */
 const WORLD_DIR =
   process.env.KONKYO_WORLD_DIR ??
   path.resolve(process.env.KONKYO_ROOT ?? process.cwd(), ".data", "world")
 const cachedWorld = freshCache<WorldModel>("__konkyoWorld")
 
 /**
- * Whose World Model: a person's (`owner-<id>`), or a space's (`space-<id>`, plan §16.9) that grows
+ * Whose World Model: a person's (`owner-<id>`), or a space's that grows
  * from everyone's asks in it. Each is rebuilt when another process (web, worker) changed its file.
  */
 export type WorldKey = { owner: string } | { space: string }
@@ -111,7 +111,7 @@ function worldFor(key: WorldKey) {
   return { world, namespace }
 }
 
-/** One claim the World Model holds, with where each source stands on it (plan F51). */
+/** One claim the World Model holds, with where each source stands on it. */
 export type KnownClaim = {
   id: string
   text: string
@@ -149,7 +149,7 @@ type ShapeRelation = {
 }
 
 /**
- * What a person's World Model holds (the knows page, plan F51): every claim two or more sources
+ * What a person's World Model holds: every claim two or more sources
  * take a position on, each source's stance with the quote it was read from, newest first. Read
  * from the rows the Analyst wrote, never a model. `fileIds` keeps only those sources (a space's).
  */
@@ -258,7 +258,7 @@ function grouped(sources: SourceRef[]) {
 }
 
 /**
- * The Analyst (plan §2, F13): reads the retrieved passages alongside the Writer, extracts the
+ * The Analyst: reads the retrieved passages alongside the Writer, extracts the
  * claims several sources take a position on, and keeps a cell only when its quote is in its
  * passage (code) and in Zetaris's own reading of the document (one statement). Claims, sources
  * and stances go into the person's Meterless World Model with provenance.

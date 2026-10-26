@@ -195,7 +195,7 @@ function Row({ item }: { item: InboxItem }) {
 }
 
 /**
- * The Inbox (plan F41, Linear's pattern): review reminders, sources a watch found, finished agent
+ * The Inbox: review reminders, sources a watch found, finished agent
  * runs. Each row has its action in place: Import, Open or Start review, and Dismiss.
  */
 export function InboxView() {

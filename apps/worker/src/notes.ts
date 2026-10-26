@@ -16,7 +16,7 @@ type NewPassage = typeof passages.$inferInsert
 const PASSAGE_CHARS = 900
 
 /**
- * A note read for chat (plan F21): its paragraphs become passages (embedded, and published to
+ * A note read for chat: its paragraphs become passages (embedded, and published to
  * Zetaris like any document's, so a chat quote from the note is checked too). Chat cites it as
  * "your note"; Check my draft never counts notes as evidence.
  */

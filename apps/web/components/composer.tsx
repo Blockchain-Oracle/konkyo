@@ -57,7 +57,7 @@ function mentionAt(text: string, caret: number): Mention | null {
 
 /**
  * The chat box (AI Elements' Prompt Input pattern: input group + attachments + menus). It sees
- * the whole library unless it has a focus (plan F10): files and folders chosen from the focus
+ * the whole library unless it has a focus: files and folders chosen from the focus
  * pill or with `@`, shown as chips above the text.
  */
 export function Composer({
@@ -74,7 +74,7 @@ export function Composer({
   onSubmit: (value: ComposerSubmit) => void
   placeholder?: string
   className?: string
-  /** An answer is being written: the send button becomes Stop (plan F15). */
+  /** An answer is being written: the send button becomes Stop. */
   running?: boolean
   onStop?: () => void
   focus?: Focus
@@ -352,7 +352,7 @@ export function Composer({
               </span>
             )}
           </div>
-          {/* Violet only while there's text, so a view never shows two violet actions (§7.4 #9). */}
+          {/* Violet only while there's text, so a view never shows two violet actions. */}
           {running ? (
             <InputGroupButton
               type="button"

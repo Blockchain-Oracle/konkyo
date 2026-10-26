@@ -64,7 +64,7 @@ export async function listPins(ownerId: string, spaceId: string): Promise<Pin[]>
 }
 
 /**
- * Pins an answer to a space's wall (plan F52): a frozen snapshot of the run's question, its
+ * Pins an answer to a space's wall: a frozen snapshot of the run's question, its
  * verified answer and citations, so the wall never changes under it. Only a finished, verified
  * answer can be pinned; pinning it again returns the pin it already has.
  */

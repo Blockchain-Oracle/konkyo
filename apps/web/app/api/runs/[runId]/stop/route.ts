@@ -5,7 +5,7 @@ import { route } from "@/lib/api"
 import { stopDeep } from "@/lib/deep"
 import { stopRun } from "@/lib/run-registry"
 
-/** Stop (plan F15, F19): ends an answer in this process, or a deep search in the worker. */
+/** Stop: ends an answer in this process, or a deep search in the worker. */
 export const POST = route<{ runId: string }>(async ({ userId, params }) => {
   const runId = z.uuid().parse(params.runId)
   const run = await db.query.runs.findFirst({

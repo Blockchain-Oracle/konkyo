@@ -97,7 +97,7 @@ function CitationView({ node, deleteNode, selected }: ReactNodeViewProps) {
 }
 
 /**
- * An inline citation (plan F21–F22): an atom holding the passage and its exact quote, drawn as
+ * An inline citation: an atom holding the passage and its exact quote, drawn as
  * a chip. It adds no words to the note's plain text, so chat and Check my draft read only the
  * person's own writing; the export formats it in the chosen citation style.
  */

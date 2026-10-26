@@ -57,7 +57,7 @@ export type BriefCitation = {
 export type BriefLine = { speaker: "A" | "B"; text: string; citation: BriefCitation | null }
 
 /**
- * The audio brief's script (plan F37): the Writer drafts two hosts' lines from the folder's most
+ * The audio brief's script: the Writer drafts two hosts' lines from the folder's most
  * central passages; every quote is checked in code and in Zetaris, and the Verifier keeps a line
  * only if its passage supports it (a line with no citation only if it states no fact). What's
  * left is what gets spoken, so nothing unsupported is ever said aloud.

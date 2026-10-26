@@ -21,8 +21,8 @@ const time = (iso: string) =>
   new Date(iso).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
 
 /**
- * Settings → Usage (plan F38): no paywall, only fair-use allowances over the last 24 hours,
- * each a sentence, a number and a thin meter (§7.5, after Luma's quota screen).
+ * Settings → Usage: no paywall, only fair-use allowances over the last 24 hours,
+ * each a sentence, a number and a thin meter.
  */
 export function UsageSection() {
   const { data, isError, refetch, isRefetching } = useQuery({

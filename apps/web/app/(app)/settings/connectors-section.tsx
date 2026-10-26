@@ -66,7 +66,7 @@ function statusLine(row: ConnectionRow | undefined) {
 }
 
 /**
- * Settings → Connectors (plan F35, F42): Gmail, Google Drive and Notion through Composio's hosted
+ * Settings → Connectors: Gmail, Google Drive and Notion through Composio's hosted
  * sign-in. Connect opens the provider's consent screen in this tab and comes back here.
  */
 export function ConnectorsSection() {

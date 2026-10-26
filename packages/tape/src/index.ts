@@ -4,7 +4,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises"
 import path from "node:path"
 
 /**
- * Record and replay (plan S09, sample mode). A real run records what came back across each outside
+ * Record and replay. A real run records what came back across each outside
  * boundary: the model APIs' HTTP replies (OpenAI, Nemotron), the rows of each Zetaris statement,
  * the library search and the H-MEM recall. A replay hands those same bytes back instead of calling
  * the services, while every line of Konkyo's own logic (planning, citation parsing, the quote

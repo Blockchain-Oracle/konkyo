@@ -3,7 +3,7 @@ import type { FileMeta } from "./meta"
 type Licence = NonNullable<FileMeta["licence"]>
 
 /*
- * The starter packs (plan F39): real, openly licensed material, each licence read on its own
+ * The starter packs: real, openly licensed material, each licence read on its own
  * source page on 2026.
  * - OpenStax Psychology 2e is CC BY-NC-SA 4.0 (not CC BY, as first planned). For digital reuse
  *   OpenStax asks for "Access for free at <book URL>" on every page, and it is printed on each.

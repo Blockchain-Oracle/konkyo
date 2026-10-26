@@ -4,7 +4,7 @@ import { getShare, publishFolder, unpublishFolder } from "@/lib/shares"
 
 const folderId = (params: { id: string }) => z.uuid().parse(params.id)
 
-/** The folder's public link (plan F36), if it has one. */
+/** The folder's public link, if it has one. */
 export const GET = route<{ id: string }>(async ({ userId, params }) => ({
   share: await getShare(userId, folderId(params)),
 }))

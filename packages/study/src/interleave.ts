@@ -1,5 +1,5 @@
 /**
- * Mixes topics within a round (plan F30: interleaving, g = 0.42): items are dealt round-robin
+ * Mixes topics within a round: items are dealt round-robin
  * from their topic groups, largest group first, so two items in a row share a topic only when
  * nothing else is left.
  */

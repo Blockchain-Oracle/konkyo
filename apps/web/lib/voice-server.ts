@@ -93,7 +93,7 @@ function wordsOf(alignment: {
 }
 
 /**
- * Text read aloud with word timings (plan §16.5 "Read aloud"): ElevenLabs Flash with timestamps,
+ * Text read aloud with word timings: ElevenLabs Flash with timestamps,
  * cached in storage by hash(voice + model + text), so a clip is made once for everyone and a
  * cached one costs nothing. Only newly made characters count against the daily cap.
  */

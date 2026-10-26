@@ -5,7 +5,7 @@ import { PeopleView } from "@/components/people/people-view"
 
 export const metadata: Metadata = { title: "People" }
 
-/** Your people (plan F55): friends, who you follow, who follows you; an invite card first. */
+/** Your people: friends, who you follow, who follows you; an invite card first. */
 export default function PeoplePage() {
   return (
     <PageShell title="people" kicker="friends · following · followers">

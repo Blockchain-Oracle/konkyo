@@ -297,7 +297,7 @@ async function runBrief(agent: Agent, tracer: Tracer): Promise<RunResult> {
 }
 
 /**
- * A run with nothing to report still says so in the Inbox (plan F34: every run lands there), as
+ * A run with nothing to report still says so in the Inbox, as
  * one quiet slip per agent: each run clears the last one, so a weekly "nothing new" never piles
  * up and never outlives a run that did find something.
  */

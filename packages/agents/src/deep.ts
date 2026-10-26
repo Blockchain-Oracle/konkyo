@@ -1,4 +1,4 @@
-// Deep search (plan F18–F19): the events a run writes and the state the run view rebuilds from
+// Deep search: the events a run writes and the state the run view rebuilds from
 // them. Types and pure functions only, so the browser imports this file directly.
 import type { AnswerEvent } from "./answer"
 import type { ScreeningReport } from "./scout"

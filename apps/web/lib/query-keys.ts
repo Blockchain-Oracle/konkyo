@@ -1,4 +1,4 @@
-/** One query-key factory for every TanStack Query read (plan §3 "Data fetching and caching"). */
+/** One query-key factory for every TanStack Query read. */
 export const qk = {
   files: {
     all: ["files"] as const,

@@ -25,7 +25,7 @@ const Body = z.object({
     .optional(),
 })
 
-/** Starts a deep search in a chat (plan F18); returns the message that shows its progress. */
+/** Starts a deep search in a chat; returns the message that shows its progress. */
 export async function POST(request: Request) {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: "Sign in first" }, { status: 401 })

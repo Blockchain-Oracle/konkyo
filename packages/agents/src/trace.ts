@@ -2,7 +2,7 @@ import { appendFile, mkdir } from "node:fs/promises"
 import path from "node:path"
 
 /**
- * One line per agent step in `logs/<runId>.jsonl` (plan §2 "Traces"): the record judges and
+ * One line per agent step in `logs/<runId>.jsonl`: the record judges and
  * developers read to see which agent did what, with which model, against which source, and why.
  */
 export type TraceEvent = {

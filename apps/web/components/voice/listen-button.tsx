@@ -17,7 +17,7 @@ function readable(text: string) {
 }
 
 /**
- * ▶ listen on an answer (plan §16.5 "Read aloud"): ElevenLabs reads it, the sentence being read
+ * ▶ listen on an answer: ElevenLabs reads it, the sentence being read
  * underlined where the answer is shown (`useSpokenHighlight`). A second tap stops it.
  */
 export function ListenButton({

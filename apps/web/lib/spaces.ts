@@ -49,7 +49,7 @@ export type SpaceSource = {
 const thumbUrl = (fileId: string) => `/api/files/${fileId}/thumb`
 
 /**
- * The person's spaces (top-level folders, plan §16.6) with what the rail, Home and Library draw:
+ * The person's spaces with what the rail, Home and Library draw:
  * identity, a real cover photo and the newest polaroids, and how many sources each holds.
  */
 export async function listSpaces(ownerId: string): Promise<SpaceRow[]> {

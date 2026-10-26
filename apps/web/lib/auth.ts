@@ -92,7 +92,7 @@ export const auth = betterAuth({
         await moveWorld(anonymousUser.user.id, newUser.user.id)
       },
     }),
-    // Email codes (plan F59): sign in, or keep a guest's library, with six digits by email. The
+    // Email codes: sign in, or keep a guest's library, with six digits by email. The
     // anonymous plugin links a guest who signs in this way, like Google (onLinkAccount above).
     emailOTP({
       otpLength: EMAIL.codeLength,

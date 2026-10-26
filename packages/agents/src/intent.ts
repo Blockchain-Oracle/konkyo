@@ -1,5 +1,5 @@
 /**
- * What a spoken ask wants (plan §16.5, "What a spoken ask can do"). Code reads the words first, on
+ * What a spoken ask wants. Code reads the words first, on
  * every new word and in no time (patterns below); only words no pattern places go to the cheap
  * model (`intent-model.ts`, server). Pure: the browser imports this file (`@konkyo/agents/intent`).
  *

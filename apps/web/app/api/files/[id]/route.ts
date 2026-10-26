@@ -13,7 +13,7 @@ const name = z.object({
   literal: z.string().max(300).optional(),
 })
 
-/** The person's corrections to the title and citation details (plan F06). */
+/** The person's corrections to the title and citation details. */
 export const PATCH = route<{ id: string }, Parameters<typeof editDetails>[2]>(
   async ({ userId, params, body }) => editDetails(userId, params.id, body),
   z.object({

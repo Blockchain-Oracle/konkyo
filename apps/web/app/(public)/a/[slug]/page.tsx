@@ -45,7 +45,7 @@ async function Article({ params }: Props) {
   )
 }
 
-/** A published article (plan F57), open to anyone. */
+/** A published article, open to anyone. */
 export default function ArticlePage({ params }: Props) {
   return (
     <Suspense fallback={<main className="article-page" aria-busy />}>

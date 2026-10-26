@@ -26,7 +26,7 @@ export function MarkShapes({ small = false }: { small?: boolean }) {
 
 /**
  * The Konkyo mark: 木, the "tree/root" radical of 根 (the first character of 根拠, "grounds").
- * Lime by default (plan §16.4: lime is the brand pop); it takes `currentColor`, so a class can
+ * Lime by default; it takes `currentColor`, so a class can
  * recolour it. Inline so it inherits sizing and needs no request.
  */
 export function BrandMark({ className, small = false }: { className?: string; small?: boolean }) {

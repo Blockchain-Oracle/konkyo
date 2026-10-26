@@ -9,7 +9,7 @@ import { endRun, registerRun } from "./run-registry"
 export type RunStatus = "answered" | "not-found" | "failed" | "stopped"
 
 /**
- * One question in a chat (plan §3: the fast path), shared by the app's chat and the HTTP entry
+ * One question in a chat, shared by the app's chat and the HTTP entry
  * point: the question is saved, the answer planned, written and verified, and the reply saved
  * with its run. The returned stream must be read to the end (that is what saves the reply);
  * `tap` sees each answer event, and the outcome when it's saved.

@@ -5,7 +5,7 @@ import { briefAudio } from "@/lib/briefs"
 import { LibraryError } from "@/lib/library"
 import { getSession } from "@/lib/session"
 
-/** A brief's mp3 (plan F37), with Range so the player can seek; `?download=1` saves it. */
+/** A brief's mp3, with Range so the player can seek; `?download=1` saves it. */
 export async function GET(request: Request, ctx: { params: Promise<{ id: string }> }) {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: "Sign in first" }, { status: 401 })

@@ -1,4 +1,4 @@
-/** An agent's schedule (plan F34): every day, or every week on one weekday, at an hour. */
+/** An agent's schedule: every day, or every week on one weekday, at an hour. */
 export type Schedule = { every: "day" | "week"; weekday?: number; hour: number }
 
 const parts = (date: Date, timeZone: string) => {

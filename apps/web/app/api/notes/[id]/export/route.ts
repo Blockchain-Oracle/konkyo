@@ -13,7 +13,7 @@ const fileName = (title: string, ext: string) =>
       .slice(0, 80) || "Konkyo note"
   }.${ext}`
 
-/** A note as Word (plan F26): GET ?style=<CSL id>, or the default style from Settings. */
+/** A note as Word: GET ?style=<CSL id>, or the default style from Settings. */
 export async function GET(request: Request, ctx: { params: Promise<{ id: string }> }) {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: "Sign in first" }, { status: 401 })

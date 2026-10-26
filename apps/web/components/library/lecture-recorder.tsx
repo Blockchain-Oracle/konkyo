@@ -15,7 +15,7 @@ import { useUploads } from "@/components/library/uploads-provider"
 import { sound } from "@/lib/sounds"
 
 /**
- * Record a lecture (plan F60's "record a lecture" tile): the browser records the microphone, and
+ * Record a lecture: the browser records the microphone, and
  * the recording goes through the same upload as any file, so it's transcribed with who spoke when,
  * every answer can play the moment it cites, and Make notes works on it (F32). Chrome and Firefox
  * record WebM audio, Safari MP4 audio; both are audio files to Konkyo (.weba, .m4a).

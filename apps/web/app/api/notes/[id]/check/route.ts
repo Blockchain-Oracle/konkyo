@@ -13,7 +13,7 @@ export const maxDuration = 120
 const CHECK_MAX = 60_000
 
 /**
- * Check my draft (plan F23), streamed as one JSON event per line: the claims first, then each
+ * Check my draft, streamed as one JSON event per line: the claims first, then each
  * claim's verdict as it's found, so the marks appear claim by claim.
  */
 export async function POST(request: Request, ctx: { params: Promise<{ id: string }> }) {

@@ -17,7 +17,7 @@ import type { Relation } from "@/lib/people"
 import { sound, tapAudio } from "@/lib/sounds"
 
 /*
- * A published article (plan F57): Matter's reading header on cream paper, Perplexity-style source
+ * A published article: Matter's reading header on cream paper, Perplexity-style source
  * chips. The body is drawn from the note's document through a whitelist (never raw HTML); a chip
  * opens its passage card: the quote in its passage, the source, page, DOI or link, the licence,
  * the cited page when it may be shown, and whether the quote was found again at publish.

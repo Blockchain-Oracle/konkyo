@@ -12,7 +12,7 @@ import {
 import { user } from "./auth"
 
 /**
- * Who a person is to everyone else (plan F53, F54). The display name stays `user.name` and a
+ * Who a person is to everyone else. The display name stays `user.name` and a
  * Google photo stays `user.image`; this row holds the rest: the look they picked, a photo they
  * uploaded, and for a kept account a handle and a bio (their page at /u/<handle>).
  * `avatar` says which face shows: a look, their photo, or the photo Google gave.
@@ -40,7 +40,7 @@ export const profiles = pgTable(
 )
 
 /**
- * Who follows whom (plan F55). Counts are computed; two people who follow each other are friends.
+ * Who follows whom. Counts are computed; two people who follow each other are friends.
  * Only kept accounts follow or are followed (a page needs a handle).
  */
 export const follows = pgTable(

@@ -2,7 +2,7 @@
 @import "fumadocs-ui/css/neutral.css";
 @import "fumadocs-ui/css/preset.css";
 
-/* The app's look (plan §16.4): sticker black, cream words, lime only as a fill
+/* The app's look: sticker black, cream words, lime only as a fill
    for the one thing that's active, Bricolage Grotesque titles, IBM Plex for reading. */
 @theme {
   --font-sans: var(--font-plex), ui-sans-serif, system-ui, sans-serif;

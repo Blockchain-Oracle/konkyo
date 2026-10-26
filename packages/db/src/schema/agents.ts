@@ -11,7 +11,7 @@ import {
 import { owner } from "./library"
 
 /**
- * An agent (plan F34): a saved standing task. "watch" looks for new open-access papers on a
+ * An agent: a saved standing task. "watch" looks for new open-access papers on a
  * topic (an OpenAlex REST table in Zetaris); "quiz" makes practice from a folder on a schedule;
  * "brief" remakes a space's audio brief when its sources have changed since the last one.
  */

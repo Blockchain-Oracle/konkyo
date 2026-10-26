@@ -1,4 +1,4 @@
-/** A citation record in CSL-JSON, the format citation processors read (plan F06, F26). */
+/** A citation record in CSL-JSON, the format citation processors read. */
 export type CslName = { family?: string; given?: string; literal?: string }
 export type CslItem = {
   type: string

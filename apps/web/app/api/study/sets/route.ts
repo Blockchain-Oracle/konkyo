@@ -5,7 +5,7 @@ import { createSet, listSets } from "@/lib/study"
 
 export const GET = route(async ({ userId }) => ({ sets: await listSets(userId) }))
 
-/** Quiz me (plan F27): a practice set from files or folders, made in the background. */
+/** Quiz me: a practice set from files or folders, made in the background. */
 export const POST = route<Record<string, never>, { scope: StudyScope; title?: string }>(
   async ({ userId, body }) => createSet(userId, body),
   z.object({

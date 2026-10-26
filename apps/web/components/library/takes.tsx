@@ -10,7 +10,7 @@ import { sound } from "@/lib/sounds"
 import type { Take } from "@/lib/takes"
 import { useQuery } from "@/lib/use-query"
 
-/** Takes per source in a space (plan F56): the wall's chips read these counts. */
+/** Takes per source in a space: the wall's chips read these counts. */
 export function useTakeCounts(spaceId: string) {
   return useQuery({
     queryKey: ["takes", spaceId, "counts"],

@@ -19,7 +19,7 @@ export type BriefLineRow = {
   end: number
 }
 
-/** An audio brief (plan F37): two voices talking through a folder, every fact cited. */
+/** An audio brief: two voices talking through a folder, every fact cited. */
 export const briefs = pgTable(
   "briefs",
   {

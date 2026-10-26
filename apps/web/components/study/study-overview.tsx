@@ -28,7 +28,7 @@ import { useSpaceList } from "@/lib/use-spaces"
 import { sessionHref, studyKeys, useQuizMe, useSets } from "@/lib/use-study"
 import { GAME_LOOK, type GameId } from "./games"
 
-/** The five games (plan F30), each built from the same verified items. */
+/** The five games, each built from the same verified items. */
 export const GAMES = [
   {
     mode: "recall",

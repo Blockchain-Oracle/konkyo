@@ -8,7 +8,7 @@ import { useFiles } from "@/lib/use-library"
 import { useStudyActions } from "@/lib/use-study"
 
 /**
- * The Study starter's second half (plan F39): while the sample course is read the folder says
+ * The Study starter's second half: while the sample course is read the folder says
  * so, and once every file has settled, Quiz me starts on what's ready, with no second click.
  */
 export function StudyStarter({

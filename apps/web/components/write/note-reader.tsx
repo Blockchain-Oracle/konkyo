@@ -7,7 +7,7 @@ import type { SharedNote } from "@/lib/notes"
 import { Citation } from "./citation-node"
 
 /**
- * A note someone else wrote, filed in a space you're in (plan F56): on paper, read-only, its
+ * A note someone else wrote, filed in a space you're in: on paper, read-only, its
  * citations as they are. Editing, history and checks stay with its author.
  */
 export function NoteReader({ note }: { note: SharedNote }) {

@@ -6,7 +6,7 @@ import { and, eq, ne } from "drizzle-orm"
 import type { Face } from "./profiles"
 
 /*
- * The live hub (plan §16.9, S19): one LISTEN on the `live` channel for the whole web process, fanned
+ * The live hub: one LISTEN on the `live` channel for the whole web process, fanned
  * out to every open tab's stream (`/api/live`). A tab hears only about spaces it's in, and only ids:
  * it refetches through the routes that check access. Who's here now is kept right here, in memory:
  * the web app runs as one process, so every tab's connection passes through this hub.

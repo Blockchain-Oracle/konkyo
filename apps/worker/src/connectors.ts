@@ -130,7 +130,7 @@ async function importAttachments(
 }
 
 /**
- * Brings a connected item's content into Konkyo's storage (plan F35), the first time and after it
+ * Brings a connected item's content into Konkyo's storage, the first time and after it
  * changed at the source: an email becomes a page with its headers, a Drive file its own bytes
  * (Google's formats exported), a Notion page its Markdown. Then it's read like any upload.
  */
@@ -225,7 +225,7 @@ async function refresh(file: { id: string; originalKey: string | null }, version
 }
 
 /**
- * Resync (plan F35), every 15 minutes: Drive files and Notion pages that changed at the source
+ * Resync, every 15 minutes: Drive files and Notion pages that changed at the source
  * are read again; a Gmail connection with a watch search brings in its new matches. An account
  * whose access ran out is marked, once, with a Reconnect notice.
  */

@@ -8,7 +8,7 @@ const SEAT_RECHECK_MS = 1_000
 /**
  * Requests per minute as a sliding window (the starts of the last 60 s, never more than the
  * allowance: a refilling bucket let a full burst plus a minute's refill through), plus a cap on
- * calls in flight, for one model in this server process (plan §3). A call waits for room rather
+ * calls in flight, for one model in this server process. A call waits for room rather
  * than failing, and stops waiting when its signal aborts (its deadline, a hedge it lost, a stop).
  */
 class Limiter {

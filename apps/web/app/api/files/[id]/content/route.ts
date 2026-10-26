@@ -4,7 +4,7 @@ import { fileContentKey, LibraryError } from "@/lib/library"
 import { getSession } from "@/lib/session"
 
 /**
- * A file's bytes from the app's own origin (plan F07, F05): `?as=rendition` (default) is the
+ * A file's bytes from the app's own origin: `?as=rendition` (default) is the
  * readable PDF, `?as=original` the uploaded file; `&download=1` saves it under its own name.
  * Range requests pass through, so the PDF viewer loads big files page by page and players seek.
  */

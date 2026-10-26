@@ -7,7 +7,7 @@ import { useEffect, useState } from "react"
 import type { LibraryFile } from "@/lib/use-library"
 import type { UploadState } from "@/lib/use-uploader"
 
-/** Plain words for each problem (plan F03). */
+/** Plain words for each problem. */
 export const PROBLEM_LABEL: Record<NonNullable<LibraryFile["problem"]>, string> = {
   locked_pdf: "Locked PDF",
   unsupported: "Unsupported",
@@ -18,7 +18,7 @@ export const PROBLEM_LABEL: Record<NonNullable<LibraryFile["problem"]>, string> 
 }
 
 /**
- * One status per file, each with its own shape so colour is never the only signal (plan §7.7):
+ * One status per file, each with its own shape so colour is never the only signal:
  * Ready ✓ (verdant), working (spinner + stage), needs you (alert + what's wrong).
  */
 export function FileStatus({ file, upload }: { file: LibraryFile; upload?: UploadState }) {

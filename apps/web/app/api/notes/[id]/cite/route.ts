@@ -4,7 +4,7 @@ import { z } from "zod"
 import { route } from "@/lib/api"
 import { getNote, logNoteEvent } from "@/lib/notes"
 
-/** Search citation (plan F22): passages that support the selected text, with checked quotes. */
+/** Search citation: passages that support the selected text, with checked quotes. */
 export const POST = route<{ id: string }, { text: string }>(
   async ({ userId, params, body }) => {
     const id = z.uuid().parse(params.id)

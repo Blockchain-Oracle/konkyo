@@ -1,4 +1,4 @@
-// Konkyo's service worker (plan F41, §8): Web Push, and an offline page when a navigation can't
+// Konkyo's service worker: Web Push, and an offline page when a navigation can't
 // reach the server. Nothing else is cached: Konkyo reads and checks sources on the server.
 self.addEventListener("install", () => self.skipWaiting())
 self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()))

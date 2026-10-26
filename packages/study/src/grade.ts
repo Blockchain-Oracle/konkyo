@@ -1,5 +1,5 @@
 /**
- * Answers checked in code first (plan F28): an exact or near-exact match is right, a missing
+ * Answers checked in code first: an exact or near-exact match is right, a missing
  * number is wrong, and anything else goes to the Tutor to judge.
  */
 export type QuickGrade = "right" | "wrong" | "unsure"

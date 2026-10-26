@@ -139,7 +139,7 @@ const bibliographyHeading = (style: StyleInfo) =>
       : "References"
 
 /**
- * A note as Word (plan F26), its citations in the chosen CSL style: in-text styles cite in the
+ * A note as Word, its citations in the chosen CSL style: in-text styles cite in the
  * sentence, numeric styles number sources by first appearance, note styles become footnotes;
  * the reference list follows. Each citation's page or timestamp goes in as its locator.
  */

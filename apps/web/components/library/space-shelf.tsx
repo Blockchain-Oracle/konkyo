@@ -5,7 +5,7 @@ import { useSpaceList } from "@/lib/use-spaces"
 import { openNewFolder } from "../shell/app-dialogs"
 import { SpaceFolder } from "./space-folder"
 
-/** Your spaces as folders on the wall (plan F47), and a dashed one to make the next. */
+/** Your spaces as folders on the wall, and a dashed one to make the next. */
 export function SpaceShelf({ width = 280 }: { width?: number }) {
   const { data: spaces } = useSpaceList()
   if (!spaces) return null

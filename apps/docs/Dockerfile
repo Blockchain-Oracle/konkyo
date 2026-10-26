@@ -1,4 +1,4 @@
-# Konkyo docs (plan §8): the static export, served by nginx. Build from the repository root:
+# Konkyo docs: the static export, served by nginx. Build from the repository root:
 #   docker build -f apps/docs/Dockerfile -t konkyo-docs .
 FROM node:22.23.3-bookworm-slim AS build
 ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH COREPACK_ENABLE_DOWNLOAD_PROMPT=0 NEXT_TELEMETRY_DISABLED=1

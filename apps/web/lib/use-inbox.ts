@@ -27,7 +27,7 @@ export function useUnread() {
   })
 }
 
-/** Web Push for this browser (plan F41): permission is asked only when the person turns it on. */
+/** Web Push for this browser: permission is asked only when the person turns it on. */
 export async function pushState(): Promise<"unsupported" | "denied" | "on" | "off"> {
   if (
     typeof window === "undefined" ||

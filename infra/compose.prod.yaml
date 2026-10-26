@@ -1,4 +1,4 @@
-# Production stack (plan S11, e.g. on Coolify): every app service built from this repository's
+# Production stack: every app service built from this repository's
 # Dockerfiles, with Postgres + pgvector, RustFS (S3) and Gotenberg beside them. Zetaris is the
 # organizers' instance (ZETARIS_* in the environment), not part of this stack.
 #

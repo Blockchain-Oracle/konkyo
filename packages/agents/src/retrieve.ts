@@ -106,7 +106,7 @@ const RRF_K = 60
 const PER_LIST = 40
 
 /**
- * Hybrid search over the person's passages (plan §2 Retriever): pgvector cosine and Postgres full
+ * Hybrid search over the person's passages: pgvector cosine and Postgres full
  * text for each query, fused by Reciprocal Rank Fusion. Only Ready, non-deleted files count.
  */
 export const hybridSearch = taped(

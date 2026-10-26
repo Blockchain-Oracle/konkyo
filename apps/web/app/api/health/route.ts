@@ -3,7 +3,7 @@ import { sql } from "drizzle-orm"
 import { NextResponse } from "next/server"
 
 /**
- * Readiness for the platform's health check (plan S11): the app answers and its database does.
+ * Readiness for the platform's health check: the app answers and its database does.
  * Zetaris and the model providers are left out on purpose: they can be slow or down without
  * this container being unable to serve pages.
  */

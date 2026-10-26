@@ -56,7 +56,7 @@ function table(rows: string[]) {
 }
 
 /**
- * A chat's export Markdown (chat-export.ts) as a Word document (plan F17): the same headings,
+ * A chat's export Markdown (chat-export.ts) as a Word document: the same headings,
  * quotes, numbered sources and agree/disagree table, so every format says the same thing.
  */
 export async function chatDocx(markdown: string, title: string) {

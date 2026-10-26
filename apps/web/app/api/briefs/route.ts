@@ -8,7 +8,7 @@ export const GET = route(async ({ userId, request }) => {
   return { briefs: await listBriefs(userId, folder ? z.uuid().parse(folder) : undefined) }
 })
 
-/** Make an audio brief (plan F37) of a folder or some files. */
+/** Make an audio brief of a folder or some files. */
 export const POST = route<Record<string, never>, { folderId?: string; fileIds?: string[] }>(
   async ({ userId, body }) => startBrief(userId, body),
   z.object({ folderId: z.uuid().optional(), fileIds: z.array(z.uuid()).max(50).optional() }),

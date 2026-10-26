@@ -2,7 +2,7 @@ import { index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core"
 import { owner } from "./library"
 
 /**
- * API keys (plan S09): what scripts calling the HTTP entry point sign in with. The key
+ * API keys: what scripts calling the HTTP entry point sign in with. The key
  * is shown once when made; only its SHA-256 is kept, with a few characters to recognise it by.
  */
 export const apiKeys = pgTable(

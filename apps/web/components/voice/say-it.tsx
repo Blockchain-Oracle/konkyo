@@ -6,7 +6,7 @@ import { primeVoice, useVoice } from "@/lib/voice"
 import { VoiceOrb } from "./voice-orb"
 
 /**
- * Answer out loud in a study round (plan S16, "spoken answers in study rounds"): a small orb beside
+ * Answer out loud in a study round: a small orb beside
  * the answer field. Tap it and talk: the words fill the field as Scribe hears them, and the pause
  * checks the answer, the same as pressing check. No mic: it says so and the field stays.
  */

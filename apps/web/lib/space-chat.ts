@@ -15,7 +15,7 @@ import { allowanceLeft } from "./usage"
 const { spaceMessages, spacePins, user, profiles } = schema
 
 /*
- * The space chat (plan F56): members talk in one thread; "@konkyo …" asks the space. Konkyo's
+ * The space chat: members talk in one thread; "@konkyo …" asks the space. Konkyo's
  * answer is one message everyone sees: its named steps as they happen (a signal on the live
  * channel, ids only), then the verified answer with its receipt. The asker or the owner can stop
  * it; anyone in the space can pin it.

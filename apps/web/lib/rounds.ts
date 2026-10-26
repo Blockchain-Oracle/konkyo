@@ -30,7 +30,7 @@ const {
 } = schema
 
 /*
- * Study together (plan F58): a lobby with a join code, then one checked question at a time for
+ * Study together: a lobby with a join code, then one checked question at a time for
  * everyone at once. Answers stay face down until everyone has answered or the soft timer runs
  * out; then the bars show who picked what, with faces, and the passage the answer key was checked
  * against. The score is the team's, never a leaderboard. Questions come only from the host's own

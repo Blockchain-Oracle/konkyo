@@ -73,7 +73,7 @@ const matches = (title: string, words: string[]) => {
 }
 
 /**
- * ⌘K / Ctrl+K anywhere (plan F09, §16.6): find a file, space, chat or note, jump to a setting, run
+ * ⌘K / Ctrl+K anywhere: find a file, space, chat or note, jump to a setting, run
  * an action, or paste a URL or DOI to import it. It opens with no animation: it's used many times a
  * day.
  */

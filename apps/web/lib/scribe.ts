@@ -1,5 +1,5 @@
 /**
- * ElevenLabs Scribe v2 Realtime, spoken to directly (plan §16.5): one WebSocket, audio in as
+ * ElevenLabs Scribe v2 Realtime, spoken to directly: one WebSocket, audio in as
  * base64 PCM16 chunks, partial and committed transcripts out. The protocol is the one
  * `@elevenlabs/client` 1.26.0 speaks (`dist/scribe/connection.js`); speaking it here keeps that
  * package's WebRTC stack out of the app. The token is single-use and minted by `/api/voice/token`.

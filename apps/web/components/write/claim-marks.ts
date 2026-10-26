@@ -82,7 +82,7 @@ declare module "@tiptap/core" {
 }
 
 /**
- * Check my draft's underlines (plan F23, §7.5: claim underlines with a side list): decorations,
+ * Check my draft's underlines: decorations,
  * not marks, so they sit over the text without changing the note, and follow edits until the
  * next check. Clicking one opens its card in the side panel.
  */

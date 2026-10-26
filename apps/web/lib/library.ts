@@ -179,7 +179,7 @@ export async function registerUpload(
   if (input.folderId) await fileableFolder(ownerId, input.folderId)
   const kind = kindForName(input.name)
   if (!kind) {
-    // Shown in the library as "Unsupported" with Remove (plan F03), rather than vanishing.
+    // Shown in the library as "Unsupported" with Remove, rather than vanishing.
     await db.insert(files).values({
       ownerId,
       title: input.name,
@@ -332,7 +332,7 @@ async function ownFile(ownerId: string, fileId: string) {
   return file
 }
 
-/** The person's own corrections to a file's title and citation record (plan F06). */
+/** The person's own corrections to a file's title and citation record. */
 export async function editDetails(
   ownerId: string,
   fileId: string,

@@ -65,7 +65,7 @@ function youTubeId(url: string): string | null {
 }
 
 /**
- * Recordings and YouTube videos (plan F07): the player on top, the transcript below with the
+ * Recordings and YouTube videos: the player on top, the transcript below with the
  * passage being spoken marked. Clicking a passage plays from there; a citation opens at its moment.
  */
 export function MediaViewer({
