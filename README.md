@@ -1,6 +1,21 @@
-# Konkyo
+<p align="center">
+  <a href="https://konkyo.xyz">
+    <img src=".github/assets/banner.png" width="960" alt="Konkyo's landing page: Your sources. Your questions. Your grounds. A sample paper and its checked, cited answer appear on a purple space wall." />
+  </a>
+</p>
 
-**A research library whose agents answer only from your sources, and prove every quote.**
+<h1 align="center">Konkyo · 根拠</h1>
+<p align="center">Every answer shows its grounds.<br/>A research library whose agents answer from your sources and check every quote.</p>
+
+<p align="center">
+  <a href="https://konkyo.xyz"><b>Open Konkyo</b></a>
+  &nbsp;·&nbsp;
+  <a href="https://konkyo.xyz/demo"><b>Demo</b></a>
+  &nbsp;·&nbsp;
+  <a href="https://docs.konkyo.xyz"><b>Documentation</b></a>
+  &nbsp;·&nbsp;
+  <a href="https://konkyo.xyz/made-with/zetaris"><b>How quotes are checked</b></a>
+</p>
 
 Konkyo (根拠, "grounds" or "evidence") reads your papers, lecture recordings, slides and notes.
 Ask it a question and a team of agents finds the passages, writes a cited answer, checks every
@@ -8,9 +23,8 @@ quote word for word in Zetaris, sends unsupported sentences back to be rewritten
 where your sources agree and where they don't. Every answer comes with its receipt: the passages,
 the checks, and the SQL that ran them.
 
-**Live:** [konkyo.xyz](https://konkyo.xyz) (ask three real papers on the landing page; no
-account needed to walk in) · **Docs:** [docs.konkyo.xyz](https://docs.konkyo.xyz) ·
-**Made with:** [the partners, in the code](https://konkyo.xyz/made-with/zetaris)
+Ask three real papers on the [landing page](https://konkyo.xyz/#ask), or walk in as a guest and
+bring your own sources. No account is needed for the sample question.
 
 Open Agent Hackathon 2026, **Track 02: The Agent That Can Explain Why**:
 *"Build agents that investigate complex questions across multiple data sources, connect findings,
@@ -19,10 +33,11 @@ and produce evidence-backed answers or recommendations."*
 ## Try it in one minute (no keys, no services)
 
 ```bash
-git clone <this repo> konkyo && cd konkyo
 corepack enable && pnpm install
 pnpm konkyo ask --sample        # or: SAMPLE_MODE=true pnpm konkyo
 ```
+
+Run these commands from a checkout of this repository.
 
 No `.env`, keys, database or Docker are needed. Sample mode replays a run recorded against real
 services: the replies OpenAI, Nemotron (on NVIDIA's API), Zetaris and the library search gave are
@@ -71,6 +86,24 @@ problem is trust. General chat assistants answer fluently from memory, mix up so
 quotes; checking them takes as long as reading. Konkyo answers only from your library, says "Not
 in your library" when it can't, and makes every cited claim checkable in one click: the citation opens
 the source at the passage, highlighted.
+
+## Demo video
+
+<p align="center">
+  <a href="https://konkyo.xyz/demo">
+    <img src="apps/web/public/demo/cover.png" width="960" alt="Open the Konkyo demo page: a dated capture of the real landing page with a play symbol and a clear recording-coming-soon label." />
+  </a>
+</p>
+
+The walkthrough recording is in progress. [Open the demo page](https://konkyo.xyz/demo) to try
+the live three-paper question now; it links to the [recorded sample run](https://docs.konkyo.xyz/sample-mode)
+and explains what to inspect in the answer. The cover is based on an actual landing-page capture
+from 2026. It is an editorial cover, not a video frame or evidence that a new answer
+was verified.
+
+The [filming script](docs/demo/2026-10-22-konkyo-demo-script.md) follows a new guest from the
+sample question through a highlighted citation, the receipt, Study, Write, sharing and the
+underlying sponsor technology. It is a guide for recording, not a claim that the video is live.
 
 ## How an answer is made
 

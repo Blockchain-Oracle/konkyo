@@ -192,7 +192,10 @@ export default function LandingPage() {
       </a>
       <header className="about-wrap about-bar">
         <Brand />
-        <nav aria-label="Account" className="about-bar-links">
+        <nav aria-label="Main" className="about-bar-links">
+          <Link href="/demo" className="about-back">
+            demo
+          </Link>
           <a href={DOCS} className="about-back">
             docs
           </a>
@@ -414,6 +417,7 @@ export default function LandingPage() {
           <Brand />
           <span>Built for the Open Agent Hackathon 2026</span>
           <nav aria-label="Footer" className="about-footer-links">
+            <Link href="/demo">demo</Link>
             <a href={DOCS}>docs</a>
             {APP.repository && <a href={APP.repository}>code</a>}
             <Link href="/privacy">privacy</Link>
