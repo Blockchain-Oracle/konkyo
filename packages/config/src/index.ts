@@ -8,6 +8,9 @@ export * from "./starters"
 export const APP = {
   name: "Konkyo",
   tagline: "Every answer shows its grounds.",
+  /** The descriptive line beside the tagline: what the agents do, in the event's frame. */
+  description:
+    "Agents that answer from your papers and check every quote. They search your papers, lectures and notes, write a cited answer, check each quote word for word in Zetaris, and show where your sources disagree.",
   /** The public repository, once it exists (S11); links to it are hidden until then. */
   repository: null as string | null,
   /** The live app and its docs site (apps/docs). */

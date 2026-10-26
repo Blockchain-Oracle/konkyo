@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   // Absolute URLs for link previews (Open Graph images) come from the app's public address.
   metadataBase: new URL(env.BETTER_AUTH_URL),
   title: { default: APP.name, template: `%s · ${APP.name}` },
-  description: APP.tagline,
+  description: APP.description,
   applicationName: APP.name,
   // Added to an iPhone's home screen it opens full screen, its status bar over the room.
   appleWebApp: { capable: true, title: APP.name, statusBarStyle: "black-translucent" },

@@ -20,7 +20,7 @@ import { listExamples, pickExample } from "./examples"
 const root = path.resolve(import.meta.dirname, "../../..")
 process.env.KONKYO_ROOT ??= root
 
-const USAGE = `Konkyo: answers from your sources, every quote checked.
+const USAGE = `Konkyo: agents that answer from your papers and check every quote.
 
   pnpm konkyo ask --sample                      replay a recorded run (no keys, no services)
   SAMPLE_MODE=true pnpm konkyo                  the same (SAMPLE_MODE=true makes every ask a replay)

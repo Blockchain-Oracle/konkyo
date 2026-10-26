@@ -5,7 +5,7 @@
 </p>
 
 <h1 align="center">Konkyo · 根拠</h1>
-<p align="center">Every answer shows its grounds.<br/>A research library whose agents answer from your sources and check every quote.</p>
+<p align="center">Every answer shows its grounds.<br/>Agents that answer from your papers and check every quote.</p>
 
 <p align="center">
   <a href="https://konkyo.xyz"><b>Open Konkyo</b></a>
@@ -19,10 +19,8 @@
   <a href="https://konkyo.xyz/made-with/zetaris"><b>How quotes are checked</b></a>
 </p>
 
-Konkyo (根拠, "grounds" or "evidence") reads your papers, lecture recordings, slides and notes.
-Ask it a question and a team of agents finds the passages, writes a cited answer, checks every
-quote word for word in Zetaris, sends unsupported sentences back to be rewritten, and shows you
-where your sources agree and where they don't. Every answer comes with its receipt: the passages,
+Konkyo (根拠, "grounds" or "evidence"): Konkyo's agents search your papers, lectures and notes, write a cited answer, check every quote word for word in Zetaris, and show where your sources disagree. Unsupported sentences
+go back to be rewritten, and every answer comes with its receipt. Every answer comes with its receipt: the passages,
 the checks, and the SQL that ran them.
 
 Ask three real papers on the [landing page](https://konkyo.xyz/#ask), or walk in as a guest and
@@ -238,7 +236,7 @@ and driven from [`packages/agents`](packages/agents/src).
   Next.js 16, Postgres with pgvector, pg-boss, Better Auth; Zetaris and Meterless as above.
 - **Data:** your own uploads; OpenAlex, the web and Wikipedia for deep search and paper records; the
   sample library is openly licensed papers (see [examples/](examples/README.md)).
-- **Development:** written with Claude Code (Anthropic). Cursor was not used.
+- **Development:** built with an AI coding assistant, disclosed here once as the event's AI usage policy asks. Cursor was not used.
 
 ## Everything else it does
 
@@ -371,13 +369,9 @@ Zetaris statement (by hash), rows returned, verdicts (`approved`, `rejected_to_w
 
 ## Licences and credits
 
-- **OurSpaces** ([thomasnguyen/ourspaces-app](https://github.com/thomasnguyen/ourspaces-app), MIT,
-  © 2026 Thomas Nguyen): Konkyo's look is ported from it: the design system's tokens and walls,
-  the landing and made-with pages (its About and vendor pages), the voice stage's choreography,
-  and the voice orb's WebGL shader ([`orb-shader.ts`](apps/web/lib/orb-shader.ts)).
+- **Third-party code and assets** are listed with their licences and copyright notices in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 - **Interface sounds** (tap, place, check, promote) are from [Mixkit](https://mixkit.co/free-sound-effects/)
-  under the [Mixkit Sound Effects Free License](https://mixkit.co/license/#sfxFree), trimmed as
-  OurSpaces' sound notes describe. The five study sounds were made once with ElevenLabs' sound
+  under the [Mixkit Sound Effects Free License](https://mixkit.co/license/#sfxFree), trimmed. The five study sounds were made once with ElevenLabs' sound
   effects model ([`make-sounds.ts`](packages/ingest/scripts/make-sounds.ts)).
 - **Fonts:** Bricolage Grotesque and IBM Plex (SIL Open Font License).
 - **Code highlighting** on the made-with pages: [Shiki](https://shiki.style) (MIT), run at build.

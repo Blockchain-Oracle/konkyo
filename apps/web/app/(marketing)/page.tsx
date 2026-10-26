@@ -17,8 +17,7 @@ import { openShare } from "@/lib/shares"
 
 export const metadata: Metadata = {
   title: { absolute: `${APP.name}: ${APP.tagline}` },
-  description:
-    "A research library whose agents answer only from your sources, check every quote word for word, and show where your sources agree and where they don't.",
+  description: APP.description,
 }
 
 const DOCS = APP.docs ?? "https://docs.konkyo.xyz"
@@ -211,7 +210,7 @@ export default function LandingPage() {
       <main id="main">
         <section className="about-wrap about-hero">
           <div className="about-hero-copy">
-            <p className="about-intro">a library that checks itself.</p>
+            <p className="about-intro">research agents that check every quote.</p>
             <h1>
               Your sources.
               <br />
@@ -220,8 +219,8 @@ export default function LandingPage() {
               <span>Your grounds.</span>
             </h1>
             <p className="about-lede">
-              Papers, lectures, notes. Ask anything, and every answer shows{" "}
-              <em>the exact passage it came from</em>, checked word for word before you see it.
+              Papers, lectures, notes. Ask anything: agents answer from them and show{" "}
+              <em>the exact passage</em>, every quote checked word for word before you see it.
             </p>
             <div className="about-hero-actions">
               <Link href="/sign-in" className="about-button is-lime">
