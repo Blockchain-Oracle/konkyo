@@ -1,6 +1,8 @@
 {
   "name": "Konkyo",
-  "tagline": "Research agents that check every quote.",
+  "tagline": "Everything you study, in one library. Agents check every answer.",
+  "motto": "Every answer shows its grounds.",
+  "subheadline": "Add papers, lectures and notes; ask, practise, write and listen. Research agents answer only from them and check every quote word for word in Zetaris.",
   "url": "https://konkyo.xyz",
   "docs": "https://docs.konkyo.xyz",
   "event": "Open Agent Hackathon 2026",

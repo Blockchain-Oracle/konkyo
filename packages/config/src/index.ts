@@ -9,11 +9,11 @@ export const APP = {
   name: "Konkyo",
   /** The motto: banners, the video's close, the page title. */
   tagline: "Every answer shows its grounds.",
-  /** The headline: what it is, in the event's frame (Track 02, agents with evidence). */
-  headline: "Research agents that check every quote.",
-  /** The subheadline: who it's for and how it works, in one sentence. */
+  /** The headline: the whole product, with Track 02's agents as its engine. */
+  headline: "Everything you study, in one library. Agents check every answer.",
+  /** The subheadline: what you do in it, and how the agents back every answer. */
   description:
-    "Ask your papers, lectures and notes anything. Agents answer only from them, check every quote word for word in Zetaris, and show where your sources disagree.",
+    "Add papers, lectures and notes; ask, practise, write and listen. Research agents answer only from them and check every quote word for word in Zetaris.",
   /** The public repository, once it exists (S11); links to it are hidden until then. */
   repository: null as string | null,
   /** The live app and its docs site (apps/docs). */

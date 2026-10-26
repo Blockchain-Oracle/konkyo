@@ -22,7 +22,7 @@ export const PITCH = [
     label: "KONKYO",
     eyebrow: "THE PRODUCT",
     title: "Every answer shows its grounds.",
-    body: "Konkyo answers from your library, checks each quote against its source, and shows the passage and the receipt.",
+    body: "One library for everything you study: ask it, practise from it, write with it and listen to it. Research agents answer only from your sources and check every quote against its passage.",
   },
   {
     id: "milestones",
@@ -37,7 +37,7 @@ export const PITCH = [
 export const MILESTONES = [
   {
     label: "NOW · LIVE",
-    text: "Ask across three real papers and inspect the checked quotes.",
+    text: "The whole library is live: ask, practise, write, listen and share. Try three real papers without an account.",
   },
   {
     label: "NEXT · IN PROGRESS",

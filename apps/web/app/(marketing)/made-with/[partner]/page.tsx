@@ -177,7 +177,7 @@ export default async function MadeWithPage({ params }: Props) {
 
       <footer className="vendor-footer about-wrap">
         <div>
-          <span>One part of a library that checks itself.</span>
+          <span>One part of Konkyo: everything you study, in one library.</span>
           <h2>Meet the rest.</h2>
         </div>
         <Link

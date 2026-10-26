@@ -69,7 +69,7 @@ export default function DemoPage() {
               {/* The image is a dated capture of the real landing page, not a recording. */}
               <Image
                 src="/demo/landing-capture.jpg"
-                alt="Konkyo's landing page: research agents that check every quote, beside a real space of three papers with a checked, cited answer"
+                alt="Konkyo's landing page: everything you study, in one library, with agents that check every answer, beside a real space of three papers and a checked, cited answer"
                 width={1280}
                 height={820}
                 priority

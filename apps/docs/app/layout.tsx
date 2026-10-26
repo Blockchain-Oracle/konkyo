@@ -23,7 +23,7 @@ const mono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://docs.konkyo.xyz"),
   title: { default: "Konkyo docs", template: "%s · Konkyo docs" },
-  description: "How Konkyo answers only from your sources and checks every quote.",
+  description: "How Konkyo works: everything you study, in one library, with agents that check every answer.",
   openGraph: { siteName: "Konkyo docs", type: "website" },
   twitter: { card: "summary_large_image" },
 }

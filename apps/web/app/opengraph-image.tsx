@@ -8,7 +8,7 @@ export const size = { width: 1200, height: 630 }
 export const contentType = "image/png"
 
 /**
- * The link preview: the landing's black, its three lines (the last in pink), and a
+ * The link preview: the landing's black, its four lines (the last in pink), and a
  * tilted violet card with a quote on paper and its lime check.
  */
 export default async function OpenGraphImage() {
@@ -30,14 +30,14 @@ export default async function OpenGraphImage() {
           <div style={{ fontSize: 34, fontWeight: 800 }}>konkyo</div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", fontWeight: 800 }}>
-          {["research agents", "that check", "every quote."].map((line, i) => (
+          {["everything you study,", "in one library.", "agents check", "every answer."].map((line, i) => (
             <div
               key={line}
               style={{
-                fontSize: 92,
+                fontSize: 70,
                 lineHeight: 1,
                 letterSpacing: -4,
-                color: i === 2 ? OG.pink : OG.paper,
+                color: i === 3 ? OG.pink : OG.paper,
               }}
             >
               {line}

@@ -219,15 +219,17 @@ export default function LandingPage() {
           <div className="about-hero-copy">
             <p className="about-intro">every answer shows its grounds.</p>
             <h1>
-              Research agents
+              Everything you study,
               <br />
-              that check
+              in one library.
               <br />
-              <span>every quote.</span>
+              Agents check
+              <br />
+              <span>every answer.</span>
             </h1>
             <p className="about-lede">
-              Ask your papers, lectures and notes anything. Agents answer only from them, check{" "}
-              <em>every quote word for word</em> in Zetaris, and show where your sources disagree.
+              Add papers, lectures and notes; ask, practise, write and listen. Research agents answer
+              only from them and check <em>every quote word for word</em> in Zetaris.
             </p>
             <div className="about-hero-actions">
               <Link href="/sign-in" className="about-button is-lime">

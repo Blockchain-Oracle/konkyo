@@ -91,7 +91,8 @@
 }
 .about-hero h1 {
   margin-block: 22px 26px;
-  font-size: clamp(3.5rem, 6.35vw, 5.7rem);
+  /* Sized so "Everything you study," holds one line in its column at every width. */
+  font-size: clamp(2.9rem, 4.45vw, 3.75rem);
   letter-spacing: -0.04em;
   line-height: 1.02;
 }
@@ -693,7 +694,7 @@
     padding-top: 45px;
   }
   .about-hero h1 {
-    font-size: clamp(3.4rem, 6.2vw, 5rem);
+    font-size: clamp(2.6rem, 4.6vw, 3.4rem);
   }
   .about-hero-actions {
     gap: 14px;
@@ -719,7 +720,7 @@
     padding-block: 36px 45px;
   }
   .about-hero h1 {
-    font-size: clamp(3.4rem, 10.5vw, 5.5rem);
+    font-size: clamp(2rem, 7.4vw, 3.7rem);
   }
   .about-hero-copy {
     max-width: 580px;
@@ -829,7 +830,7 @@
     font-size: 12px;
   }
   .about-hero h1 {
-    font-size: clamp(2.65rem, 14vw, 3.4rem);
+    font-size: clamp(1.7rem, 8.9vw, 2.4rem);
   }
   .about-intro {
     font-size: 12px;

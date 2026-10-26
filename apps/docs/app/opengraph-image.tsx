@@ -56,9 +56,9 @@ export default async function OpenGraphImage() {
         </div>
       </div>
       <div style={{ display: "flex", flexDirection: "column", fontWeight: 800 }}>
-        <div style={{ fontSize: 88, lineHeight: 1, letterSpacing: -4 }}>every quote,</div>
-        <div style={{ fontSize: 88, lineHeight: 1, letterSpacing: -4, color: TEAL }}>
-          checked before you see it.
+        <div style={{ fontSize: 76, lineHeight: 1, letterSpacing: -3 }}>everything you study,</div>
+        <div style={{ fontSize: 76, lineHeight: 1, letterSpacing: -3, color: TEAL }}>
+          agents check every answer.
         </div>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
