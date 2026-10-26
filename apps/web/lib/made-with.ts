@@ -271,9 +271,9 @@ export const PARTNERS: Partner[] = [
     ],
     technical: [
       {
-        title: "A fallback for every role",
-        body: "A call that fails, or gives no answer within 45 seconds (a stream: no first word within 25), runs once more on the role's fallback model, and the switch is written to the run's trace. A stopped run doesn't fall back.",
-        code: { file: "packages/agents/src/models.ts", symbol: "withFallback" },
+        title: "Asked twice, then a fallback",
+        body: "A call that runs past its usual time is asked again and the first answer wins. One that fails, or gives nothing within 45 seconds (a stream: no first word within 25), runs on the role's fallback model, and the switch is written to the run's trace.",
+        code: { file: "packages/models/src/hedge.ts", symbol: "hedged" },
       },
       {
         title: "Inside the free tier",

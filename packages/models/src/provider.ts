@@ -1,9 +1,14 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible"
-import type { LanguageModelV4CallOptions, LanguageModelV4StreamPart } from "@ai-sdk/provider"
+import type {
+  LanguageModelV4CallOptions,
+  LanguageModelV4StreamPart,
+  LanguageModelV4StreamResult,
+} from "@ai-sdk/provider"
 import { MODEL_API, type ModelChoice, type ModelEffort } from "@konkyo/config"
 import { env } from "@konkyo/env/server"
 import { tapedFetch } from "@konkyo/tape"
 import { type LanguageModel, wrapLanguageModel } from "ai"
+import { hedged } from "./hedge"
 import { limiterFor } from "./limiter"
 
 /** Where the calls go: NVIDIA's API, or the self-hosted server MODEL_BASE_URL names. */
@@ -62,80 +67,100 @@ function deadline(params: LanguageModelV4CallOptions, ms: number) {
   }
 }
 
-/** Passes a stream through, ending the deadline at its first content and naming a timeout. */
-function untilFirstContent(
-  stream: ReadableStream<LanguageModelV4StreamPart>,
-  due: ReturnType<typeof deadline>,
-  timeout: () => Error,
-): ReadableStream<LanguageModelV4StreamPart> {
-  const reader = stream.getReader()
+/** A stream that has begun: its first content read, the rest still to come. */
+type Started = {
+  result: LanguageModelV4StreamResult
+  reader: ReadableStreamDefaultReader<LanguageModelV4StreamPart>
+  head: LanguageModelV4StreamPart[]
+}
+
+/** Opens a stream and reads up to its first content (text, reasoning or a tool call). */
+async function begin(open: () => PromiseLike<LanguageModelV4StreamResult>): Promise<Started> {
+  const result = await open()
+  const reader = result.stream.getReader()
+  const head: LanguageModelV4StreamPart[] = []
+  for (;;) {
+    const { value, done } = await reader.read()
+    if (done) break
+    head.push(value)
+    if (value.type !== "stream-start" && value.type !== "response-metadata") break
+  }
+  return { result, reader, head }
+}
+
+/** The begun stream again, from its first part. */
+function resume({ reader, head }: Started): ReadableStream<LanguageModelV4StreamPart> {
   return new ReadableStream({
+    start(controller) {
+      for (const part of head) controller.enqueue(part)
+    },
     async pull(controller) {
-      try {
-        const { value, done } = await reader.read()
-        if (done) {
-          due.clear()
-          controller.close()
-          return
-        }
-        if (value.type !== "stream-start" && value.type !== "response-metadata") due.clear()
-        controller.enqueue(value)
-      } catch (error) {
-        due.clear()
-        controller.error(due.timedOut() ? timeout() : error)
-      }
+      const { value, done } = await reader.read()
+      if (done) controller.close()
+      else controller.enqueue(value)
     },
-    cancel(reason) {
-      due.clear()
-      return reader.cancel(reason)
-    },
+    cancel: (reason) => reader.cancel(reason),
   })
 }
+
+const hedgeLog = (id: string, ms: number) => () =>
+  console.info(`[hedge] ${id}: no answer after ${ms} ms, asked again`)
 
 /** A failure a fallback model can't fix: the person stopped it, or the key is out of credit. */
 export const noFallback = (error: unknown) =>
   ["AbortError", "OutOfCreditError"].includes((error as Error)?.name)
 
 /**
- * Every model call goes through its model's rate limiter (a stream holds its slot until it
- * starts) and a deadline: an answer within MODEL_API.answerTimeoutMs (or the role's own
- * deadlineMs), a stream's first content within firstTokenTimeoutMs, or a ModelTimeoutError the
- * role's fallback picks up.
+ * Every model call goes through its model's rate limiter, a hedge and a deadline. The hedge: when
+ * the role sets hedgeAfterMs and nothing has come back by then (for a stream, its first content),
+ * the same request goes out again and the first to answer wins. The deadline: an answer within
+ * MODEL_API.answerTimeoutMs (or the role's deadlineMs), a stream's first content within
+ * firstTokenTimeoutMs, or a ModelTimeoutError the role's fallback picks up.
  */
 export function model(choice: ModelChoice): LanguageModel {
   const limiter = limiterFor(choice.id)
   const answerMs = choice.deadlineMs ?? MODEL_API.answerTimeoutMs
   const firstTokenMs = Math.min(answerMs, MODEL_API.firstTokenTimeoutMs)
+  const after = choice.hedgeAfterMs
+  const onHedge = after === undefined ? undefined : hedgeLog(choice.id, after)
   return wrapLanguageModel({
     model: nvidia(choice.id),
     middleware: {
-      wrapGenerate: ({ params, model: inner }) =>
-        limiter
-          .run(async () => {
-            const due = deadline(params, answerMs)
-            try {
-              return await inner.doGenerate({ ...params, abortSignal: due.signal })
-            } catch (error) {
-              throw due.timedOut() ? new ModelTimeoutError(choice.id, answerMs) : error
-            } finally {
-              due.clear()
-            }
+      wrapGenerate: async ({ params, model: inner }) => {
+        const due = deadline(params, answerMs)
+        try {
+          return await hedged({
+            after,
+            signal: due.signal,
+            onHedge,
+            attempt: (signal) =>
+              limiter.run(() => inner.doGenerate({ ...params, abortSignal: signal })),
           })
-          .catch(failFast),
-      wrapStream: ({ params, model: inner }) =>
-        limiter
-          .run(async () => {
-            const due = deadline(params, firstTokenMs)
-            const timeout = () => new ModelTimeoutError(choice.id, firstTokenMs)
-            try {
-              const result = await inner.doStream({ ...params, abortSignal: due.signal })
-              return { ...result, stream: untilFirstContent(result.stream, due, timeout) }
-            } catch (error) {
-              due.clear()
-              throw due.timedOut() ? timeout() : error
-            }
+        } catch (error) {
+          return failFast(due.timedOut() ? new ModelTimeoutError(choice.id, answerMs) : error)
+        } finally {
+          due.clear()
+        }
+      },
+      wrapStream: async ({ params, model: inner }) => {
+        const due = deadline(params, firstTokenMs)
+        try {
+          const started = await hedged({
+            after,
+            signal: due.signal,
+            onHedge,
+            attempt: (signal) =>
+              begin(() => limiter.run(() => inner.doStream({ ...params, abortSignal: signal }))),
+            discard: ({ reader }) => void reader.cancel().catch(() => undefined),
           })
-          .catch(failFast),
+          return { ...started.result, stream: resume(started) }
+        } catch (error) {
+          return failFast(due.timedOut() ? new ModelTimeoutError(choice.id, firstTokenMs) : error)
+        } finally {
+          // The deadline is for the first content; once it has come, the stream runs its course.
+          due.clear()
+        }
+      },
     },
   })
 }

@@ -238,6 +238,11 @@ export type ModelChoice = {
    * on, longer for background work that writes a lot.
    */
   deadlineMs?: number
+  /**
+   * When to send the same request again if nothing has come back (for a stream, its first
+   * content): a little past the call's usual time, so only a stalled call is asked twice.
+   */
+  hedgeAfterMs?: number
 }
 
 const ULTRA = (reasoning: ModelEffort): ModelChoice => ({ id: NEMOTRON.ultra, reasoning })
@@ -254,30 +259,36 @@ const LIGHTNING = (reasoning: ModelEffort): ModelChoice => ({ id: NEMOTRON.light
  */
 export const MODELS = {
   /** Plans the run: whether it needs the library, which queries, whether to compare. */
-  planner: { primary: { ...ULTRA("off"), deadlineMs: 15_000 }, fallback: LIGHTNING("off") },
+  planner: {
+    primary: { ...ULTRA("off"), deadlineMs: 15_000, hedgeAfterMs: 5_000 },
+    fallback: { ...LIGHTNING("off"), hedgeAfterMs: 4_000 },
+  },
   /** Writes the cited answer: 9/9 quotes verbatim, refused the planted figure 3/3. */
-  writer: { primary: ULTRA("off"), fallback: SUPER("off") },
+  writer: { primary: { ...ULTRA("off"), hedgeAfterMs: 8_000 }, fallback: SUPER("off") },
   /** Support checks: 0/10 false rejections, 6/6 planted errors (Lightning thinking: the same). */
-  verifier: { primary: ULTRA("off"), fallback: LIGHTNING("low") },
+  verifier: { primary: { ...ULTRA("off"), hedgeAfterMs: 15_000 }, fallback: LIGHTNING("low") },
   /** Deep search: plans the paper and encyclopedia queries. */
-  scout: { primary: LIGHTNING("off"), fallback: ULTRA("off") },
+  scout: { primary: { ...LIGHTNING("off"), hedgeAfterMs: 4_000 }, fallback: ULTRA("off") },
   /** Screens found sources against the question, batch by batch (Markovian steps). */
-  screener: { primary: ULTRA("off"), fallback: LIGHTNING("low") },
+  screener: { primary: { ...ULTRA("off"), hedgeAfterMs: 12_000 }, fallback: LIGHTNING("low") },
   /** Claims and agreement across sources: the same strict-support judgement as the Verifier. */
-  analyst: { primary: ULTRA("off"), fallback: LIGHTNING("low") },
+  analyst: { primary: { ...ULTRA("off"), hedgeAfterMs: 15_000 }, fallback: LIGHTNING("low") },
   /**
    * Makes practice items from passages (F27); every answer key then goes to the Verifier. In the
    * background, and a draft is 600–950 tokens (13–27 s on Ultra, testing), so it gets longer.
    * Lightning drafted none that passed: vague keys, sentences not copied exactly.
    */
   tutor: {
-    primary: { ...ULTRA("off"), deadlineMs: 90_000 },
+    primary: { ...ULTRA("off"), deadlineMs: 90_000, hedgeAfterMs: 35_000 },
     fallback: { ...SUPER("off"), deadlineMs: 90_000 },
   },
   /** Reads a spoken ask that no pattern placed (S16): a one-line pick while you are still talking. */
-  intent: { primary: { ...LIGHTNING("off"), deadlineMs: 8_000 }, fallback: ULTRA("off") },
+  intent: {
+    primary: { ...LIGHTNING("off"), deadlineMs: 8_000, hedgeAfterMs: 3_000 },
+    fallback: ULTRA("off"),
+  },
   /** Judges a typed answer the code check couldn't settle, with feedback that never gives it away. */
-  grader: { primary: ULTRA("off"), fallback: LIGHTNING("low") },
+  grader: { primary: { ...ULTRA("off"), hedgeAfterMs: 10_000 }, fallback: LIGHTNING("low") },
 } as const satisfies Record<string, { primary: ModelChoice; fallback: ModelChoice }>
 
 /**

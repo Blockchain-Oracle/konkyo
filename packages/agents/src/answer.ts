@@ -299,7 +299,7 @@ function mergeCandidates(first: Candidate[], second: Candidate[], limit: number)
 const WRITER_INSTRUCTIONS = `You are the Writer in a research assistant. Answer ONLY from the given passages from the user's library.
 Every sentence must carry at least one numbered citation [n], placed before the sentence's final punctuation, and for each citation number a quote that is an EXACT verbatim substring of its passage (copy the characters exactly, no ellipses): the shortest span that states the claim, at least five words and at most 30, never the whole passage.
 Choose each quote so that it, on its own, states what its sentence claims: the reader is shown the quote as proof. So write one finding per sentence; never pack several findings behind one citation. Quotes go only on the Sources lines: never paste a quotation into the answer as a sentence of its own.
-When passages come from several sources, say what each relevant source found (with its own citation), and where they differ.
+When passages come from several sources, say what each relevant source found (with its own citation), and where they differ, each side in its own cited sentence. Never add an uncited sentence that sums up whether the sources agree: let each source's own cited sentence show it.
 Keep a comparison whole: say what was compared with what ("no difference between taking it at bedtime and 3 h before"), never only one side of it.
 If the question contains a claim the passages do not support, answer it directly in a cited sentence ("No: the paper reports … [1].") and say what the passages actually report. Be direct and plain. Use 2-7 sentences; start a new paragraph for a new idea.
 If the passages do not answer the question at all, reply with exactly: ${NOT_IN_LIBRARY}
@@ -463,10 +463,27 @@ async function reviseSentences(
       local.set(q.marker, next)
       lines.push({ n: next, label: q.passage.toLowerCase(), quote: q.quote })
     }
-    texts[i] = fix.text.replace(/\[(\d+)\]/g, (m, k: string) =>
-      local.has(Number(k)) ? `[${local.get(Number(k))}]` : m,
-    )
-    rewritten.push(texts[i] as string)
+    // Models number the markers loosely: one that is neither this fix's own nor an existing
+    // citation takes the next quote the fix gave and the text didn't use, rather than costing a
+    // whole round as "no source line"; a fix with quotes but no markers gets them at its end.
+    const markers = [...fix.text.matchAll(/\[(\d+)\]/g)].map((m) => Number(m[1]))
+    const spare = [...local.entries()]
+      .filter(([marker]) => !markers.includes(marker))
+      .map(([, n]) => n)
+    const existing = new Set(draft.sources.map((l) => l.n))
+    let text = fix.text.replace(/\[(\d+)\]/g, (m, k: string) => {
+      const marker = Number(k)
+      if (local.has(marker)) return `[${local.get(marker)}]`
+      if (existing.has(marker)) return m
+      const n = spare.shift()
+      return n ? `[${n}]` : m
+    })
+    if (!markers.length && local.size) {
+      const cites = [...local.values()].map((n) => `[${n}]`).join("")
+      text = text.replace(/\s*([.!?]?)\s*$/, (_m, end: string) => ` ${cites}${end || "."}`)
+    }
+    texts[i] = text
+    rewritten.push(text)
   }
   // The body again from its sentences, in their paragraphs, with the fixes in place.
   const paragraphs: string[][] = []
@@ -522,12 +539,37 @@ type Verdict = {
   model: string
 }
 
+/**
+ * What earlier rounds settled, kept for the next: a sentence with the same words and the same
+ * quoted evidence keeps its verdict, and a quote Zetaris found stays found (a miss is checked
+ * again: it may have been a passing failure). A rewrite round then judges only what changed,
+ * which is faster and can't overturn a sentence that already passed.
+ */
+type VerifyMemo = {
+  support: Map<string, { supported: boolean; reason: string }>
+  found: Set<string>
+  sql: string
+  zetarisMs: number
+  model: string
+}
+
+const newMemo = (): VerifyMemo => ({
+  support: new Map(),
+  found: new Set(),
+  sql: "",
+  zetarisMs: 0,
+  model: MODELS.verifier.primary.id,
+})
+
+const foundKey = (passageId: string, quote: string) => `${passageId}\u0000${quoteKey(quote)}`
+
 async function verify(
   input: AnswerInput,
   draft: ParsedAnswer,
   sources: SourceRef[],
   round: number,
   missingDocs: Set<string>,
+  memo: VerifyMemo,
 ): Promise<Verdict> {
   const started = performance.now()
   const byLabel = new Map(sources.map((s) => [s.label, s]))
@@ -587,18 +629,25 @@ async function verify(
     const source = line && byLabel.get(line.label)
     return line && source && !badQuotes.has(n) ? [{ n, line, source }] : []
   })
-  const claims = draft.sentences.map((s, i) => ({
-    i,
-    text: s.text,
-    evidence: s.cites.flatMap((n) => {
+  const claims = draft.sentences.map((s, i) => {
+    const evidence = s.cites.flatMap((n) => {
       const line = lineByN.get(n)
       const source = line && byLabel.get(line.label)
       return line && source ? [{ n, quote: line.quote, source }] : []
-    }),
-  }))
+    })
+    const key = [
+      plainKey(s.text),
+      ...evidence.map((e) => foundKey(e.source.passageId, e.quote)).sort(),
+    ].join("\u0001")
+    return { i, text: s.text, evidence, key }
+  })
+  const unchecked = toCheck.filter(
+    ({ line, source }) => !memo.found.has(foundKey(source.passageId, line.quote)),
+  )
+  const unjudged = claims.filter((c) => !memo.support.has(c.key))
   const [zetaris, support] = await Promise.all([
     checkQuotes(
-      toCheck.map(({ n, line, source }) => ({
+      unchecked.map(({ n, line, source }) => ({
         qid: String(n),
         fileId: source.fileId,
         passageId: source.passageId,
@@ -607,43 +656,58 @@ async function verify(
         transcript: source.page == null,
       })),
     ),
-    withFallback("verifier", input.tracer, "support", (c) =>
-      generateText({
-        model: model(c),
-        providerOptions: reasoning(c),
-        output: Output.object({ schema: SupportSchema }),
-        instructions: VERIFIER_INSTRUCTIONS,
-        prompt: `${claims
-          .map(
-            (c) =>
-              `Claim ${c.i + 1}: "${c.text}"\n${
-                c.evidence.length
-                  ? c.evidence
-                      .map(
-                        (e) =>
-                          `  [${e.n}] quote: "${e.quote}"\n      passage ${e.source.label} (context): ${e.source.text}`,
-                      )
-                      .join("\n")
-                  : "  (no citation: an uncited sentence must be a transition, not a fact)"
-              }`,
-          )
-          .join("\n")}\n\nFor every claim, say whether its cited passages support it.`,
-        abortSignal: input.abortSignal,
-      }),
-    ),
+    unjudged.length
+      ? withFallback("verifier", input.tracer, "support", (c) =>
+          generateText({
+            model: model(c),
+            providerOptions: reasoning(c),
+            output: Output.object({ schema: SupportSchema }),
+            instructions: VERIFIER_INSTRUCTIONS,
+            prompt: `${unjudged
+              .map(
+                (c) =>
+                  `Claim ${c.i + 1}: "${c.text}"\n${
+                    c.evidence.length
+                      ? c.evidence
+                          .map(
+                            (e) =>
+                              `  [${e.n}] quote: "${e.quote}"\n      passage ${e.source.label} (context): ${e.source.text}`,
+                          )
+                          .join("\n")
+                      : "  (no citation: an uncited sentence must be a transition, not a fact)"
+                  }`,
+              )
+              .join("\n")}\n\nFor every claim, say whether its cited passages support it.`,
+            abortSignal: input.abortSignal,
+          }),
+        )
+      : null,
   ])
 
-  for (const { n, line } of toCheck) {
-    if (!zetaris.found.has(String(n))) {
+  for (const { n, line, source } of toCheck) {
+    const key = foundKey(source.passageId, line.quote)
+    if (zetaris.found.has(String(n))) memo.found.add(key)
+    else if (!memo.found.has(key)) {
       failQuote(n, `[${n}] quote was not found in the document in Zetaris: "${line.quote}"`)
     }
   }
+  if (zetaris.sql) Object.assign(memo, { sql: zetaris.sql, zetarisMs: zetaris.ms })
+  if (support) {
+    memo.model = support.choice.id
+    // A claim the model left out isn't held against it, and isn't remembered either.
+    const byClaim = new Map(support.result.output.results.map((r) => [r.claim - 1, r]))
+    for (const c of unjudged) {
+      const r = byClaim.get(c.i)
+      if (r) memo.support.set(c.key, { supported: r.supported, reason: r.reason })
+    }
+  }
   const unsupported = new Set<number>()
-  for (const r of support.result.output.results) {
-    if (!r.supported) {
-      unsupported.add(r.claim - 1)
-      supportReasons.set(r.claim - 1, r.reason || "not supported by its passages")
-      reasons.push(`unsupported: "${claims[r.claim - 1]?.text ?? ""}" (${r.reason})`)
+  for (const c of claims) {
+    const judged = memo.support.get(c.key)
+    if (judged && !judged.supported) {
+      unsupported.add(c.i)
+      supportReasons.set(c.i, judged.reason || "not supported by its passages")
+      reasons.push(`unsupported: "${c.text}" (${judged.reason})`)
     }
   }
   input.tracer.log({
@@ -654,19 +718,29 @@ async function verify(
     rowsReturned: zetaris.rows,
     latencyMs: zetaris.ms,
     verdict: `${toCheck.length - [...badQuotes].length}/${used.length} quotes found`,
+    detail:
+      unchecked.length < toCheck.length
+        ? { alreadyFound: toCheck.length - unchecked.length }
+        : undefined,
   })
+  const reused = claims.length - unjudged.length
   input.tracer.log({
     agent: "verifier",
     step: `verify_${round}`,
     action: reasons.length ? "rejected_to_writer" : "approved",
-    model: support.choice.id,
+    model: support?.choice.id ?? memo.model,
     latencyMs: Math.round(performance.now() - started),
-    tokens: {
-      input: support.result.usage.inputTokens,
-      output: support.result.usage.outputTokens,
-    },
+    tokens: support
+      ? {
+          input: support.result.usage.inputTokens,
+          output: support.result.usage.outputTokens,
+        }
+      : undefined,
     verdict: reasons.length ? "rejected" : "approved",
-    detail: reasons.length ? { reasons } : undefined,
+    detail:
+      reasons.length || reused
+        ? { ...(reasons.length ? { reasons } : {}), ...(reused ? { reused } : {}) }
+        : undefined,
   })
   const reasonsBySentence = new Map<number, string[]>()
   draft.sentences.forEach((sn, i) => {
@@ -684,9 +758,9 @@ async function verify(
     badQuotes,
     unsupported,
     reasonsBySentence,
-    sql: zetaris.sql,
-    zetarisMs: zetaris.ms,
-    model: support.choice.id,
+    sql: zetaris.sql || memo.sql,
+    zetarisMs: zetaris.sql ? zetaris.ms : memo.zetarisMs,
+    model: support?.choice.id ?? memo.model,
   }
 }
 
@@ -998,12 +1072,13 @@ export async function answer(input: AnswerInput) {
   let verdict!: Verdict
   let rounds = 0
   const rewrittenTexts = new Set<string>()
+  const memo = newMemo()
   // A later round can fail more than an earlier one; the answer keeps the round that verified most.
   let bestRound: { draft: ParsedAnswer; verdict: Verdict; passing: number } | null = null
   for (let round = 0; ; round++) {
     const count = [...new Set(draft.sentences.flatMap((s) => s.cites))].length
     step("verify", `Verifying ${count} citation${count === 1 ? "" : "s"}`, "running")
-    verdict = await verify(input, draft, sources, round, missingDocs)
+    verdict = await verify(input, draft, sources, round, missingDocs, memo)
     const passing = draft.sentences.length - verdict.reasonsBySentence.size
     if (!bestRound || passing > bestRound.passing) bestRound = { draft, verdict, passing }
     if (verdict.ok || round >= MAX_ROUNDS) break

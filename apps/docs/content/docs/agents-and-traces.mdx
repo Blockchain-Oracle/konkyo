@@ -13,9 +13,10 @@ description: Who does what, with which model, and how to read the trace.
 | Scout | Deep search over OpenAlex and Wikipedia, screened in Markovian steps | Nemotron 3.5 Lightning plans; Ultra screens |
 | Tutor | Practice items; every answer key checked by the Verifier, every quote in Zetaris | Nemotron 3 Ultra, thinking off |
 
-Every role has a fallback model for errors, stalls (no answer within 45 seconds, or no first word
-of a stream within 25; 15 for the Planner, 90 for the Tutor's drafts) and malformed replies; the
-switch is logged as `escalated_to_fallback`. Judgement roles fall back to Lightning with thinking
+A call that runs past its usual time is asked again (a hedged request: the first answer wins, the
+other is cancelled), and every role has a fallback model for errors, stalls (no answer within 45
+seconds, or no first word of a stream within 25; 15 for the Planner, 90 for the Tutor's drafts)
+and malformed replies; the switch is logged as `escalated_to_fallback`. Judgement roles fall back to Lightning with thinking
 on, the Planner to Lightning, the Writer and Tutor to Nemotron 3.5 Super. The models were picked by a measured benchmark on NVIDIA's API: Ultra with thinking off
 was the only setup to pass every test (0/10 false rejections, 6/6 planted errors caught, 9/9
 quotes verbatim); Lightning judged as well only when thinking, and never kept the cited format.

@@ -40,22 +40,19 @@ What role do sleep spindles play in memory, and do these papers agree about it?
   ✓ Planning · What role do sleep spindles play in memory, and do these papers agree about it?
   ✓ Searching your library · 16 passages from 3 files
   ✓ Checking sources in Zetaris · 3 of 3 files confirmed
-  ✓ Comparing sources · 4 claims across 3 sources
+  ✓ Comparing sources · 3 claims across 3 sources
   ✓ Writing
-  ↺ The Verifier sent back 1 sentence; rewriting (round 1)
-  ↺ The Verifier sent back 1 sentence; rewriting (round 2)
-  ✓ Verified 3 citations
+  ✓ Verified 2 citations
 
-Sleep spindles are associated with memory consolidation, particularly in non-REM sleep, and their
-activity correlates with offline memory improvements in motor and declarative tasks [1].
+Sleep spindles are associated with memory consolidation during sleep, but it is unclear whether
+the relationship is causal [1].
 …
-Sources (3)
+Sources (2)
 Each quote was found word for word in Zetaris's own reading of the source.
 
-[1] Nishida and Walker · 2007, Daytime Naps, Motor Memory Consolidation and Regionally Specific
-    Sleep Spindles, p. 1
-    “spindle activity is highest late in the night [13], this latter correlation was hypothesized
-    to reflected an association between spindle activity and offline memory improvement”
+[1] Diekelmann · 2014, Sleep for cognitive enhancement, p. 5
+    “Although spindles have frequently been associated with memory consolidation during sleep, it
+    is unclear whether sleep spindles can be externally manipulated.”
 …
 ```
 

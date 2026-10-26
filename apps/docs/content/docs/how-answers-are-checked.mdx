@@ -24,7 +24,8 @@ description: The path from a question to an answer where every quote was found i
    in **one** Zetaris statement against Zetaris's own reading of the source PDF, a second
    extraction independent of Konkyo's. A model then judges whether each sentence's quotes support
    it. Rejected sentences go back to the Writer with reasons, at most twice; whatever still fails
-   is dropped.
+   is dropped. A later round judges only the rewritten sentences: one already approved, with the
+   same words and quotes, keeps its verdict, and a quote Zetaris found isn't looked up again.
 6. **Answer.** Only what passed. The receipt shows the steps, sources, memories used and the SQL;
    the full trace is written to `logs/<runId>.jsonl`.
 

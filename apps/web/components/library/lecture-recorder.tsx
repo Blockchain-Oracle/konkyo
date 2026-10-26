@@ -86,6 +86,7 @@ export function LectureRecorder({
     live.current = null
   }
   // Closing the page or the app's shell mid-recording lets the microphone go.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: release reads only a ref; unmount only
   useEffect(() => release, [])
 
   const start = async () => {
