@@ -1,5 +1,6 @@
 import { markdownToPdf } from "@konkyo/ingest/convert"
 import { NextResponse } from "next/server"
+import { chatDocx } from "@/lib/chat-docx"
 import { chatMarkdown } from "@/lib/chat-export"
 import { LibraryError } from "@/lib/library"
 import { getSession } from "@/lib/session"
@@ -13,11 +14,12 @@ const fileName = (title: string, ext: string) =>
       .slice(0, 80) || "Konkyo chat"
   }.${ext}`
 
-/** Download a chat as Markdown or PDF (plan F17): GET ?format=md|pdf. */
+/** Download a chat as Markdown, PDF or Word (plan F17): GET ?format=md|pdf|docx. */
 export async function GET(request: Request, ctx: { params: Promise<{ id: string }> }) {
   const session = await getSession()
   if (!session) return NextResponse.json({ error: "Sign in first" }, { status: 401 })
-  const format = new URL(request.url).searchParams.get("format") === "pdf" ? "pdf" : "md"
+  const asked = new URL(request.url).searchParams.get("format")
+  const format = asked === "pdf" || asked === "docx" ? asked : "md"
   try {
     const { title, markdown } = await chatMarkdown(session.user.id, (await ctx.params).id)
     const name = fileName(title, format)
@@ -26,6 +28,13 @@ export async function GET(request: Request, ctx: { params: Promise<{ id: string 
       return new Response(markdown, {
         headers: {
           "content-type": "text/markdown; charset=utf-8",
+          "content-disposition": disposition,
+        },
+      })
+    if (format === "docx")
+      return new Response(new Uint8Array(await chatDocx(markdown, title)), {
+        headers: {
+          "content-type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
           "content-disposition": disposition,
         },
       })

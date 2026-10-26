@@ -6,6 +6,7 @@ import { LibraryError } from "./library"
 
 const where = (c: { page: number | null; tStart: number | null }) =>
   c.page != null ? `p. ${c.page}` : c.tStart != null ? clock(c.tStart) : ""
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`
 /** Table cells can't hold pipes or line breaks. */
 const cell = (s: string) => s.replace(/\|/g, "\\|").replace(/\s+/g, " ")
 
@@ -48,7 +49,7 @@ function answerBlock(message: KonkyoMessage) {
     return "_This answer didn't finish, so nothing in it was verified._"
   const checked =
     receipt?.type === "data-receipt"
-      ? `_Checked ${receipt.data.quotes + (receipt.data.analyst?.relations ?? 0)} quotes against ${receipt.data.sources} sources in Zetaris._`
+      ? `_Checked ${plural(receipt.data.quotes + (receipt.data.analyst?.relations ?? 0), "quote")} against ${plural(receipt.data.sources, "source")} in Zetaris._`
       : ""
   return [
     final.data.body,
