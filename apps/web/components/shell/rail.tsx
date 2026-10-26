@@ -10,7 +10,7 @@ import { sound } from "@/lib/sounds"
 import { useFolders } from "@/lib/use-folders"
 import { type SpaceRow, useSpaceList } from "@/lib/use-spaces"
 import { BrandMark } from "../brand-mark"
-import { type ShellUser, YouTile } from "../people/settings-card"
+import { type ShellUser, YouTile } from "../people/account-menu"
 import { openNewFolder } from "./app-dialogs"
 
 /** The space a page belongs to: `/spaces/:id`, or the top of the folder it shows. */
