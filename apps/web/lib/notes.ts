@@ -63,13 +63,17 @@ async function ownNote(ownerId: string, fileId: string) {
   return file
 }
 
-/** The space a note is filed in, as its card and its editor show it. */
+/**
+ * The space a note is filed in, as its card and its editor show it. The outer file is named in
+ * full: Drizzle writes `files.id` as a bare "id" in a one-table select, which inside this
+ * subquery is ambiguous (folders have ids too) and broke every note's editor (in testing).
+ */
 const spaceOfNote = (ownerId: string) =>
   sql<{ id: string; name: string; color: SpaceColor | null } | null>`(
     select json_build_object('id', s.id, 'name', s.name, 'color', s.color)
     from file_folders ff join folders fo on fo.id = ff.folder_id
     join folders s on s.id = fo.space_id
-    where ff.file_id = ${files.id} and s.deleted_at is null and fo.deleted_at is null
+    where ff.file_id = "files"."id" and s.deleted_at is null and fo.deleted_at is null
       -- only a space this person is still in (a note can stay filed in one they left)
       and (s.owner_id = ${ownerId} or exists (select 1 from space_members m
         where m.space_id = s.id and m.user_id = ${ownerId}))

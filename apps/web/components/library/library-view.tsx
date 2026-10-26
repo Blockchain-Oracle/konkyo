@@ -164,10 +164,13 @@ export function LibraryView({ folderId, space = false }: { folderId?: string; sp
 
   const path = useFolderPath(folderId ?? "").data
   const here = folderId ? path?.at(-1) : undefined
-  // A top-level folder is a space: its old folder address opens the space.
+  // A top-level folder is a space: its old folder address opens the space, flags and all (the
+  // study starter's ?starter=study was lost here, and its quiz never started).
+  const query = params.toString()
   useEffect(() => {
-    if (!space && folderId && path?.length === 1) router.replace(`/spaces/${folderId}` as Route)
-  }, [space, folderId, path, router])
+    if (!space && folderId && path?.length === 1)
+      router.replace(`/spaces/${folderId}${query ? `?${query}` : ""}` as Route)
+  }, [space, folderId, path, router, query])
 
   return (
     <section
@@ -266,12 +269,19 @@ export function LibraryView({ folderId, space = false }: { folderId?: string; sp
         <SpaceChat spaceId={spaceRow.id} name={spaceRow.name.toLowerCase()} />
       )}
       {view === "wall" && folderId ? (
-        <SpaceWall
-          spaceId={folderId}
-          name={spaceRow?.name ?? "this space"}
-          subfolders={subfolders}
-          shared={(spaceRow?.people ?? 1) > 1}
-        />
+        <>
+          <StudyStarter
+            folderId={folderId}
+            title={spaceRow?.name ?? "Sample course"}
+            className="mb-6"
+          />
+          <SpaceWall
+            spaceId={folderId}
+            name={spaceRow?.name ?? "this space"}
+            subfolders={subfolders}
+            shared={(spaceRow?.people ?? 1) > 1}
+          />
+        </>
       ) : (
         <div className="surface-paper paper-sheet min-h-[50vh]">
           {isPending ? (

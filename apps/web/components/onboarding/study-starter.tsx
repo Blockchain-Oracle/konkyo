@@ -1,5 +1,6 @@
 "use client"
 
+import { cn } from "@konkyo/ui/lib/utils"
 import type { Route } from "next"
 import { useRouter } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
@@ -10,7 +11,15 @@ import { useStudyActions } from "@/lib/use-study"
  * The Study starter's second half (plan F39): while the sample course is read the folder says
  * so, and once every file has settled, Quiz me starts on what's ready, with no second click.
  */
-export function StudyStarter({ folderId, title }: { folderId: string; title: string }) {
+export function StudyStarter({
+  folderId,
+  title,
+  className,
+}: {
+  folderId: string
+  title: string
+  className?: string
+}) {
   const [on, setOn] = useState(false)
   // Read once on the client: the starter link carries ?starter=study.
   useEffect(() => {
@@ -35,7 +44,7 @@ export function StudyStarter({ folderId, title }: { folderId: string; title: str
 
   if (!on || !total) return null
   return (
-    <div className="mt-6 rounded-card border border-border bg-panel p-4">
+    <div className={cn("mt-6 rounded-card border border-border bg-panel p-4", className)}>
       <p className="text-ui text-bone-white">
         {done
           ? ready

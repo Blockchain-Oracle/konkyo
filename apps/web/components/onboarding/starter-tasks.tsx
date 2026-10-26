@@ -61,7 +61,7 @@ export function StarterTasks({ className }: { className?: string }) {
       void queryClient.invalidateQueries({ queryKey: qk.files.all })
       const href =
         started.path === "study"
-          ? `/library/folders/${started.folderId}?starter=study`
+          ? `/spaces/${started.folderId}?starter=study`
           : started.path === "research"
             ? `/chats/${started.chatId}?tour=1`
             : `/write/${started.noteId}`

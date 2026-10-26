@@ -486,25 +486,52 @@ const cardOf = (c: typeof studyCards.$inferSelect): CardState => ({
 
 const SENTENCE = /(?<=[.!?…])\s+(?=[A-Z0-9“"(‘'])/
 
-/** A short window of a passage: around its quote, or its opening, cut at sentence ends. */
+/**
+ * A short window of a passage: around its quote, or its opening, cut at sentence ends. The window
+ * always holds the whole quote: it opens at the quote's own sentence (with the one before when
+ * both fit) and closes at the last sentence end after it. Opening at the previous sentence
+ * instead once let a long, citation-heavy sentence fill the window and push the quote out, so a
+ * Find the Evidence answer showed none of its evidence (in testing).
+ */
 function excerptOf(text: string, quote?: string, size = 340) {
   const flat = text.replace(/\s+/g, " ").trim()
   if (flat.length <= size) return flat
-  let at = 0
-  if (quote) {
-    const index = flat
-      .toLowerCase()
-      .indexOf(quote.replace(/\s+/g, " ").trim().toLowerCase().slice(0, 40))
-    if (index > 0) at = Math.max(0, index - Math.round((size - Math.min(quote.length, size)) / 2))
+  const lower = flat.toLowerCase()
+  const q = quote?.replace(/\s+/g, " ").trim().toLowerCase() ?? ""
+  const whole = q ? lower.indexOf(q) : -1
+  const at = whole >= 0 ? whole : q ? lower.indexOf(q.slice(0, 40)) : -1
+  const quoteEnd = at < 0 ? 0 : at + (whole >= 0 ? q.length : Math.min(q.length, 40))
+  const sentenceStarts = [
+    0,
+    ...Array.from(flat.matchAll(/[.!?]\s+/g), (m) => m.index + m[0].length),
+  ]
+  let start = 0
+  if (at > 0) {
+    const before = sentenceStarts.filter((i) => i <= at)
+    start = before.at(-1) ?? 0
+    const lead = before.at(-2)
+    if (lead !== undefined && quoteEnd - lead <= size * 0.8) start = lead
+    // A quote deep inside one long sentence: open close enough before it to keep all of it.
+    if (quoteEnd - start > size) start = Math.max(0, quoteEnd - size)
   }
-  let start = at
-  if (start > 0) {
-    const boundary = flat.slice(0, start).search(/[.!?]\s+[^.!?]*$/)
-    start = boundary === -1 ? start : boundary + 2
+  // Near the passage's end, open earlier (at a sentence if one fits, else a word), so every
+  // option shows about as much text: a short one would give the answer away.
+  const earliest = Math.max(0, flat.length - size)
+  if (earliest < start) {
+    const sentence = sentenceStarts.find((i) => i >= earliest && i < start)
+    const word = flat.indexOf(" ", earliest)
+    start = earliest === 0 ? 0 : (sentence ?? (word >= 0 && word < start ? word + 1 : start))
   }
   const out = flat.slice(start, start + size)
-  const end = out.search(/[.!?](?=[^.!?]*$)/)
-  return `${start > 0 ? "… " : ""}${end > size * 0.6 ? out.slice(0, end + 1) : `${out.trimEnd()} …`}`
+  const ends = Array.from(out.matchAll(/[.!?](?=\s|$)/g), (m) => m.index + 1)
+  const last = ends.at(-1) ?? -1
+  const body =
+    start + size >= flat.length
+      ? out
+      : last >= Math.max(quoteEnd - start, size * 0.6)
+        ? out.slice(0, last)
+        : `${out.trimEnd()} …`
+  return `${start > 0 ? "… " : ""}${body}`
 }
 
 const wordsOf = (text: string) => new Set(text.toLowerCase().match(/\p{L}{4,}/gu) ?? [])
