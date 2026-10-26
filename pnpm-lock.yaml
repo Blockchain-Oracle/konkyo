@@ -384,9 +384,6 @@ importers:
 
   packages/agents:
     dependencies:
-      '@ai-sdk/openai':
-        specifier: 4.0.94
-        version: 4.0.94(zod@4.6.7)
       '@konkyo/config':
         specifier: workspace:*
         version: link:../config
@@ -402,6 +399,9 @@ importers:
       '@konkyo/meterless':
         specifier: workspace:*
         version: link:../meterless
+      '@konkyo/models':
+        specifier: workspace:*
+        version: link:../models
       '@konkyo/tape':
         specifier: workspace:*
         version: link:../tape
@@ -530,9 +530,6 @@ importers:
 
   packages/ingest:
     dependencies:
-      '@ai-sdk/openai':
-        specifier: 4.0.94
-        version: 4.0.94(zod@4.6.7)
       '@elevenlabs/elevenlabs-js':
         specifier: 2.72.0
         version: 2.72.0
@@ -542,6 +539,9 @@ importers:
       '@konkyo/env':
         specifier: workspace:*
         version: link:../env
+      '@konkyo/models':
+        specifier: workspace:*
+        version: link:../models
       '@mozilla/readability':
         specifier: 0.6.0
         version: 0.6.0
@@ -611,6 +611,37 @@ importers:
       '@types/node':
         specifier: 24.19.2
         version: 24.19.2
+
+  packages/models:
+    dependencies:
+      '@ai-sdk/openai-compatible':
+        specifier: 3.0.69
+        version: 3.0.69(zod@4.6.7)
+      '@ai-sdk/provider':
+        specifier: 4.0.27
+        version: 4.0.27
+      '@konkyo/config':
+        specifier: workspace:*
+        version: link:../config
+      '@konkyo/env':
+        specifier: workspace:*
+        version: link:../env
+      '@konkyo/tape':
+        specifier: workspace:*
+        version: link:../tape
+      ai:
+        specifier: 7.0.141
+        version: 7.0.141(zod@4.6.7)
+    devDependencies:
+      '@konkyo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/node':
+        specifier: 24.19.2
+        version: 24.19.2
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
 
   packages/notify:
     dependencies:
@@ -795,8 +826,8 @@ packages:
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
-  '@ai-sdk/openai@4.0.94':
-    resolution: {integrity: sha512-HvatBrRebLTJo9HBybdN/LY8QgW2n8XYZXUt57ZJoxTOI4Y981fnnC/qfv1YFx+lfJ4Y+VdRgCW90UIxRBO4WA==}
+  '@ai-sdk/openai-compatible@3.0.69':
+    resolution: {integrity: sha512-ZPlhJrmmaOTsOvHbiM34FNC9f3tovn6vDZHNzsFOUHOKFlXh3nk+0k4lOe43Yb0Di7MdAyi70wkDPfzfP2lodw==}
     engines: {node: '>=22'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
@@ -6296,7 +6327,7 @@ snapshots:
       pkce-challenge: 5.0.1
       zod: 4.6.7
 
-  '@ai-sdk/openai@4.0.94(zod@4.6.7)':
+  '@ai-sdk/openai-compatible@3.0.69(zod@4.6.7)':
     dependencies:
       '@ai-sdk/provider': 4.0.27
       '@ai-sdk/provider-utils': 5.0.60(zod@4.6.7)

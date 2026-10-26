@@ -34,8 +34,8 @@ const MAKERS: { vendor: Vendor; body: string }[] = [
     body: "Remembers your corrections and which source said what.",
   },
   {
-    vendor: "openai",
-    body: "The models that plan, write, check and make your practice.",
+    vendor: "nvidia",
+    body: "The Nemotron models that plan, write, check and make your practice.",
   },
   {
     vendor: "elevenlabs",

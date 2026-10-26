@@ -24,8 +24,8 @@ corepack enable && pnpm install
 pnpm konkyo ask --sample
 ```
 
-Sample mode replays a run recorded against real services: the replies OpenAI, Zetaris and the
-library search gave are handed back, and every step of Konkyo's own logic runs again on them
+Sample mode replays a run recorded against real services: the replies Nemotron (on NVIDIA's API),
+Zetaris and the library search gave are handed back, and every step of Konkyo's own logic runs again on them
 (planning, citation parsing, the quote checks, the Verifier's verdicts and rewrites, the
 agree/disagree matrix, the World Model, the trace). It prints the cited answer and the path of the
 new trace in `logs/`. `pnpm konkyo samples` lists the five recorded questions; see
@@ -33,28 +33,29 @@ new trace in `logs/`. `pnpm konkyo samples` lists the five recorded questions; s
 
 ```
 $ pnpm konkyo ask --sample 2
-Sample mode: replaying the replies OpenAI, Zetaris and the library search gave on 2026-10-17.
+Sample mode: replaying the replies Nemotron, Zetaris and the library search gave on 2026-10-21.
 No keys and no services: every agent step below runs again on those replies.
 
 What role do sleep spindles play in memory, and do these papers agree about it?
-  ✓ Planning · What role do sleep spindles play in memory, and do the papers in my library agree about it?
-  ✓ Searching your library · 9 passages from 3 files
+  ✓ Planning · What role do sleep spindles play in memory, and do these papers agree about it?
+  ✓ Searching your library · 16 passages from 3 files
   ✓ Checking sources in Zetaris · 3 of 3 files confirmed
-  ✓ Comparing sources · 1 claim across 2 sources
+  ✓ Comparing sources · 4 claims across 3 sources
   ✓ Writing
-  ✓ Verified 4 citations
+  ↺ The Verifier sent back 1 sentence; rewriting (round 1)
+  ↺ The Verifier sent back 1 sentence; rewriting (round 2)
+  ✓ Verified 3 citations
 
-Sleep spindles are associated with memory consolidation, and one review describes them as seeming
-to prime cortical networks for neuronal plasticity [1]. The nap study found that motor-memory
-improvement correlated more precisely with region-specific spindle activity than with global
-sleep-stage measures [2].
+Sleep spindles are associated with memory consolidation, particularly in non-REM sleep, and their
+activity correlates with offline memory improvements in motor and declarative tasks [1].
 …
-Sources (4)
+Sources (3)
 Each quote was found word for word in Zetaris's own reading of the source.
 
-[1] Diekelmann · 2014, Sleep for cognitive enhancement, p. 4
-    “Spindles are characteristic waxing and waning oscillations (∼10–15 Hz) that seem to prime
-    cortical networks for neuronal plasticity.”
+[1] Nishida and Walker · 2007, Daytime Naps, Motor Memory Consolidation and Regionally Specific
+    Sleep Spindles, p. 1
+    “spindle activity is highest late in the night [13], this latter correlation was hypothesized
+    to reflected an association between spindle activity and offline memory improvement”
 …
 ```
 
@@ -89,25 +90,28 @@ flowchart LR
   F --> T[Receipt + trace in logs/]
 ```
 
-| Agent | Does | Model |
+| Agent | Does | Model (NVIDIA Nemotron) |
 |---|---|---|
-| Planner | Rewrites the question to stand alone, plans 1–3 searches, flags comparisons, reads the person's corrections from H-MEM first; when the first search comes back thin, replans from what it found and searches again before saying "Not in your library" | `gpt-6-luna` (low reasoning) |
-| Retriever | Hybrid search: pgvector cosine and Postgres full text per query, fused by Reciprocal Rank Fusion | `text-embedding-3-small` |
-| Writer | One finding per sentence, each with a citation and an exact quote from its passage | `gpt-6-luna` |
-| Verifier | Checks each quote in code, then all of them in **one Zetaris statement** against Zetaris's own reading of the PDF; judges whether each sentence's quotes support it; sends failures back with reasons (at most two rewrite rounds); anything that still fails is dropped, never shown as verified | `gpt-6-luna` (low) |
-| Analyst | When a question weighs several sources: 3–6 specific claims × sources with agrees / disagrees / partly, each stance quoted and checked in Zetaris, recorded in the World Model. Also places each paper a watch finds: agrees with, disagrees with, or new to your sources, your passage quoted | `gpt-6-luna` (low) |
-| Scout | Deep search: OpenAlex and web search, screened in Markovian steps, imported and read before answering | `gpt-5-nano` |
-| Tutor | Practice items from your passages, every answer key checked by the Verifier and every quote in Zetaris | `gpt-6-luna` |
+| Planner | Rewrites the question to stand alone, plans 1–3 searches, flags comparisons, reads the person's corrections from H-MEM first; when the first search comes back thin, replans from what it found and searches again before saying "Not in your library" | Nemotron 3 Ultra |
+| Retriever | Hybrid search: pgvector cosine and Postgres full text per query, fused by Reciprocal Rank Fusion; questions embedded as queries, passages as passages | Nemotron 3.5 Embed |
+| Writer | One finding per sentence, each with a citation and an exact quote from its passage | Nemotron 3 Ultra |
+| Verifier | Checks each quote in code, then all of them in **one Zetaris statement** against Zetaris's own reading of the PDF; judges whether each sentence's quotes support it; sends failures back with reasons (at most two rewrite rounds); anything that still fails is dropped, never shown as verified | Nemotron 3 Ultra |
+| Analyst | When a question weighs several sources: 3–6 specific claims × sources with agrees / disagrees / partly, each stance quoted and checked in Zetaris, recorded in the World Model. Also places each paper a watch finds: agrees with, disagrees with, or new to your sources, your passage quoted | Nemotron 3 Ultra |
+| Scout | Deep search: OpenAlex papers and Wikipedia articles, screened in Markovian steps, imported and read before answering | Nemotron 3.5 Lightning plans, Ultra screens |
+| Tutor | Practice items from your passages, every answer key checked by the Verifier and every quote in Zetaris | Nemotron 3 Ultra |
 
-Each role has a fallback model for outages and malformed replies; the switch is logged.
-Models were chosen by a measured cost and quality benchmark per role.
+Public questions, profiles and articles go through Nemotron 3.5 Content Safety first. Each role has
+a fallback model for errors, stalls (no answer within 45 s) and malformed replies; the switch is
+logged. The models and their thinking switch were picked by a measured benchmark on NVIDIA's API:
+Ultra with thinking off was the only setup to pass every test (0/10 false rejections, 6/6 planted
+errors caught, 9/9 quotes verbatim).
 
 ## Sponsor technology
 
 Each partner has a page on konkyo.xyz that follows one action into the code, with a live
 example: [Zetaris](https://konkyo.xyz/made-with/zetaris) (three quotes checked in one statement
 as you watch), [Meterless](https://konkyo.xyz/made-with/meterless),
-[OpenAI](https://konkyo.xyz/made-with/openai), [ElevenLabs](https://konkyo.xyz/made-with/elevenlabs)
+[NVIDIA Nemotron](https://konkyo.xyz/made-with/nvidia), [ElevenLabs](https://konkyo.xyz/made-with/elevenlabs)
 (a real two-voice brief), [Composio](https://konkyo.xyz/made-with/composio) and
 [OpenAlex](https://konkyo.xyz/made-with/openalex) (a live search). Their "follow it in the code"
 excerpts are copied from this repository by `pnpm made-with:code`.
@@ -208,7 +212,8 @@ like any other.
 
 ## Run it yourself
 
-Needs Node 22.18+, pnpm (via `corepack enable`), Docker, a Zetaris instance and an OpenAI key.
+Needs Node 22.18+, pnpm (via `corepack enable`), Docker, a Zetaris instance and an NVIDIA API key
+(free at [build.nvidia.com](https://build.nvidia.com/settings/api-keys)).
 
 ```bash
 cp .env.example .env            # fill it in; every variable is described there
@@ -263,8 +268,9 @@ Zetaris statement (by hash), rows returned, verdicts (`approved`, `rejected_to_w
 
 ## Limits
 
-- **Models are OpenAI only** (a deliberate cost choice). Without credit, live answers stop with a
-  plain message; sample mode still works.
+- **Models run on NVIDIA's free API tier**: about 40 requests a minute for each model, split
+  between the web app and the worker. A busy minute queues calls rather than failing them, so
+  answers slow down under load; sample mode needs no key.
 - **Live use needs Zetaris.** Nothing is marked verified without it, by design.
 - **Sample mode replays recorded questions only.** Any other question is refused, not invented.
 - **Fair-use caps** (no paywall): 300 answers, 20 deep searches and 300 files a day per account;

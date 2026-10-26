@@ -133,7 +133,7 @@ export function render(run: Run, style: Style) {
       style.heading("Checks"),
       `${md ? "- " : ""}${r.quotes} quote${r.quotes === 1 ? "" : "s"} from ${r.sources} source${
         r.sources === 1 ? "" : "s"
-      } checked in one Zetaris statement (${r.verifyMs} ms); ${r.rewritten} rewritten, ${r.dropped} dropped; ${(
+      } checked in one Zetaris statement; verifying, rewrites included, took ${(r.verifyMs / 1000).toFixed(1)} s; ${r.rewritten} rewritten, ${r.dropped} dropped; ${(
         r.totalMs / 1000
       ).toFixed(1)} s in all${
         run.recordedMs != null

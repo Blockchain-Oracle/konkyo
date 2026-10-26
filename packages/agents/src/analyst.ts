@@ -60,17 +60,20 @@ const AnalystSchema = z.object({
                 ),
             }),
           )
-          .min(1)
-          .max(8),
+          .min(2)
+          .max(8)
+          .describe(
+            "Every passage that takes a position on this claim: at least two, from different sources (different titles)",
+          ),
       }),
     )
     .max(6),
 })
 
 /**
- * How long each Analyst model gets. The primary usually answers in 10–17 s for ~4k tokens in and
- * ~900 out, but OpenAI's slow tail reached 88 s and 127 s for the same work (traces, 17 and 19
- * Oct), and the receipt waits for the comparison. Past its budget the fast fallback takes over;
+ * How long each Analyst model gets. A comparison is ~4k tokens in and ~900 out; models have a
+ * slow tail (88 s and 127 s for the same work on 17 and testing; the free tier stalls for minutes
+ * now and then), and the receipt waits for the comparison. Past its budget the fast fallback takes over;
  * past that, the answer lands without a comparison (the step shows failed).
  */
 const ANALYST_BUDGET_MS = { primary: 25_000, fallback: 20_000 }

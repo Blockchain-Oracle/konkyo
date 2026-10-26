@@ -1,15 +1,15 @@
-import { BOT_CHECK } from "@konkyo/config"
+import { INGEST } from "@konkyo/config"
 import { type FoundWork, searchWorks } from "@konkyo/ingest/metadata"
 import { Markovian } from "@konkyo/meterless/markovian"
 import { generateText, Output } from "ai"
 import { z } from "zod"
-import { MODELS, type ModelChoice, model, noFallback, openai, reasoning } from "./models"
+import { MODELS, type ModelChoice, model, noFallback, reasoning } from "./models"
 import type { Tracer } from "./trace"
 
-/** A source deep search found: a paper OpenAlex holds a PDF of, or a page from web search. */
+/** A source deep search found: a paper OpenAlex holds a PDF of, or a Wikipedia article. */
 export type FoundSource =
   | ({ key: string; kind: "paper" } & Omit<FoundWork, "id"> & { workId: string })
-  | { key: string; kind: "web"; title: string; url: string; site: string }
+  | { key: string; kind: "web"; title: string; url: string; site: string; summary?: string }
 
 export type Shortlisted = FoundSource & { why: string; score: number }
 
@@ -54,7 +54,9 @@ const SearchPlan = z.object({
     .min(1)
     .max(3)
     .describe("1-3 keyword queries for an academic search engine: the terms papers use"),
-  webQuery: z.string().describe("One web search query for explainers, reviews or reports"),
+  webQuery: z
+    .string()
+    .describe("One encyclopedia search: the topic's plain name in 1-4 words, as an article title"),
 })
 
 export type SearchPlan = z.infer<typeof SearchPlan>
@@ -67,7 +69,7 @@ export async function planSearch(question: string, tracer: Tracer, abortSignal?:
       providerOptions: reasoning(c),
       output: Output.object({ schema: SearchPlan }),
       instructions:
-        "You plan a literature search for a question someone's own library couldn't answer. Write keyword queries an academic search engine matches (the terms papers use, not a question), one web query, and a short folder name for what will be found.",
+        "You plan a literature search for a question someone's own library couldn't answer. Write keyword queries an academic search engine matches (the terms papers use, not a question), one encyclopedia search (the topic's plain name, as a Wikipedia article would title it), and a short folder name for what will be found.",
       prompt: `Question: ${question}`,
       abortSignal,
     }),
@@ -86,132 +88,57 @@ export async function planSearch(question: string, tracer: Tracer, abortSignal?:
 
 // ------------------------------------------------------------------ find
 
-/** Sites whose pages block servers or sit behind paywalls: their papers come through OpenAlex. */
-const BLOCKED = [
-  "youtube.com",
-  "tiktok.com",
-  "facebook.com",
-  "instagram.com",
-  "x.com",
-  "twitter.com",
-  "pinterest.com",
-  "researchgate.net",
-  "doi.org",
-  "academia.edu",
-  "sciencedirect.com",
-  "cell.com",
-  "nature.com",
-  "link.springer.com",
-  "onlinelibrary.wiley.com",
-  "tandfonline.com",
-  "jstor.org",
-]
+/** Wikipedia's search API (free, no key): reputable explainers anyone can read and import. */
+const WIKIPEDIA_SEARCH = "https://en.wikipedia.org/w/rest.php/v1/search/page"
+const WIKIPEDIA_PAGE = "https://en.wikipedia.org/wiki/"
+const WEB_PAGES = 4
+const WEB_TIMEOUT_MS = 8_000
 
-const ENTITIES: Record<string, string> = {
-  amp: "&",
-  lt: "<",
-  gt: ">",
-  quot: '"',
-  "#39": "'",
-  nbsp: " ",
-}
+type WikipediaPage = { key: string; title: string; description?: string | null; excerpt?: string }
 
-const BLOCKED_PAGE = Symbol("blocked")
-
-/**
- * A page's <title> (first 64 KB, 4 s at most), without the " | Site name" tail. `blocked` when
- * the site answered with a bot check instead: Konkyo couldn't read that page either.
- */
-async function pageTitle(url: string): Promise<string | null | typeof BLOCKED_PAGE> {
-  try {
-    const res = await fetch(url, {
-      headers: { "user-agent": "KonkyoBot/1.0 (+https://konkyo.xyz)", accept: "text/html" },
-      redirect: "follow",
-      signal: AbortSignal.timeout(4000),
-    })
-    if (!res.ok || !res.headers.get("content-type")?.includes("html") || !res.body) return null
-    const reader = res.body.getReader()
-    let html = ""
-    while (html.length < 65_536) {
-      const { value, done } = await reader.read()
-      if (done) break
-      html += new TextDecoder().decode(value)
-      if (/<\/title>/i.test(html)) break
-    }
-    void reader.cancel()
-    const raw = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]
-    if (!raw) return null
-    if (BOT_CHECK.test(raw)) return BLOCKED_PAGE
-    const title = raw
-      .replace(/&(#?\w+);/g, (m, e: string) => ENTITIES[e] ?? m)
-      .replace(/\s+/g, " ")
-      .split(/\s[|–—-]\s/)[0]
-      ?.trim()
-    return title && title.length > 3 ? title.slice(0, 200) : null
-  } catch {
-    return null
-  }
-}
-
-/** Web pages for a query from OpenAI's built-in web_search tool (plan F18). */
+/** Encyclopedia articles for a query from Wikipedia's own search (plan F18), with their gist. */
 async function searchWeb(query: string, tracer: Tracer, abortSignal?: AbortSignal) {
   const started = performance.now()
-  const { result, choice } = await withFallback("scout", tracer, "web", (c) =>
-    generateText({
-      model: model(c),
-      providerOptions: reasoning(c),
-      tools: {
-        web_search: openai.tools.webSearch({
-          searchContextSize: "low",
-          filters: { blockedDomains: BLOCKED },
-        }),
-      },
-      toolChoice: { type: "tool", toolName: "web_search" },
-      instructions:
-        "Find up to 4 reputable pages that are free to read: reviews, university or institute explainers, encyclopedia articles, reputable science journalism. Then name them in one line each.",
-      prompt: query,
-      abortSignal,
-    }),
-  )
-  const seen = new Set<string>()
-  const pages = result.sources.flatMap((s) => {
-    if (s.sourceType !== "url") return []
-    const url = new URL(s.url)
-    url.searchParams.delete("utm_source")
-    const key = url.href
-    if (seen.has(key) || /\.pdf$/i.test(url.pathname)) return []
-    seen.add(key)
-    const site = url.hostname.replace(/^www\./, "")
-    return [{ key: `web:${key}`, kind: "web" as const, title: s.title || site, url: key, site }]
+  const url = new URL(WIKIPEDIA_SEARCH)
+  url.searchParams.set("q", query)
+  url.searchParams.set("limit", String(WEB_PAGES))
+  const timeout = AbortSignal.timeout(WEB_TIMEOUT_MS)
+  const res = await fetch(url, {
+    headers: { "user-agent": INGEST.userAgent, accept: "application/json" },
+    signal: abortSignal ? AbortSignal.any([abortSignal, timeout]) : timeout,
   })
-  // web_search gives addresses without titles: read each page's own <title>, quickly. A page
-  // that answers with a bot check is dropped: it couldn't be imported either.
-  const blocked = new Set<string>()
-  await Promise.all(
-    pages.slice(0, 4).map(async (page) => {
-      if (page.title !== page.site && !BOT_CHECK.test(page.title)) return
-      const title = await pageTitle(page.url)
-      if (title === BLOCKED_PAGE || BOT_CHECK.test(page.title)) blocked.add(page.key)
-      else if (title) page.title = title
-    }),
-  )
-  const readable = pages.filter((page) => !blocked.has(page.key))
+  if (!res.ok) throw new Error(`Wikipedia search failed (${res.status})`)
+  const { pages } = (await res.json()) as { pages: WikipediaPage[] }
+  const found = pages.map((page) => {
+    const href = `${WIKIPEDIA_PAGE}${encodeURIComponent(page.key)}`
+    // The excerpt marks the matched words with <span class="searchmatch">: plain text only.
+    const excerpt = page.excerpt
+      ?.replace(/<[^>]+>/g, "")
+      .replace(/\s+/g, " ")
+      .trim()
+    return {
+      key: `web:${href}`,
+      kind: "web" as const,
+      title: page.title,
+      url: href,
+      site: "en.wikipedia.org",
+      summary: [page.description, excerpt].filter(Boolean).join(" · ") || undefined,
+    }
+  })
   tracer.log({
     agent: "scout",
     step: "web",
-    action: "web_search",
-    model: choice.id,
-    toolCalls: ["web_search"],
-    rowsReturned: readable.length,
+    action: "searched_wikipedia",
+    toolCalls: ["wikipedia_search"],
+    rowsReturned: found.length,
     latencyMs: Math.round(performance.now() - started),
-    tokens: { input: result.usage.inputTokens, output: result.usage.outputTokens },
-    detail: { query, botChecks: blocked.size },
+    detail: { query },
   })
-  return readable.slice(0, 4)
+  return found
 }
 
 /**
- * Papers (OpenAlex, open access with a PDF copy) and web pages (web_search), deduplicated and
+ * Papers (OpenAlex, open access with a PDF copy) and Wikipedia articles, deduplicated and
  * without what's already in the library. Each one is reported as it's found.
  */
 export async function findSources(
@@ -290,7 +217,7 @@ const SHORTLIST = 8
 function describeSource(s: FoundSource) {
   return s.kind === "paper"
     ? `[${s.key}] PAPER · ${s.title} (${[s.authors[0], s.year, s.venue].filter(Boolean).join(", ")}; cited ${s.cited}×)\n${s.abstract.slice(0, 700) || "(no abstract)"}`
-    : `[${s.key}] WEB PAGE · ${s.title} (${s.site})`
+    : `[${s.key}] WEB PAGE · ${s.title} (${s.site})${s.summary ? `\n${s.summary.slice(0, 300)}` : ""}`
 }
 
 /**

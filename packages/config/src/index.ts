@@ -155,6 +155,44 @@ export const LIBRARY = {
   pageSize: 100,
 } as const
 
+/**
+ * Where Konkyo's models run: NVIDIA's API (build.nvidia.com), OpenAI-compatible. MODEL_BASE_URL
+ * points the same calls at a self-hosted server with the same model ids instead.
+ */
+export const MODEL_API = {
+  baseURL: "https://integrate.api.nvidia.com/v1",
+  /**
+   * NVIDIA's free tier: about 40 requests a minute for each model on a key, shared by the web app
+   * and the worker (measured testing: 41 calls to one model went through, then 429s).
+   */
+  requestsPerMinute: 40,
+  /**
+   * Most tokens a model may think for before it must answer (Nemotron's reasoning_budget). Without
+   * a cap, Lightning thinking at low effort spent a whole 2,500-token reply thinking (in testing).
+   */
+  thinkingBudget: { low: 512, high: 2048 },
+  /**
+   * How long a call may go unanswered before its role's fallback takes over. The free tier
+   * usually answers in seconds but sometimes stalls for minutes (in testing). A stream only has to start in time.
+   */
+  answerTimeoutMs: 45_000,
+  firstTokenTimeoutMs: 25_000,
+} as const
+
+/** The Nemotron models Konkyo calls, each for what NVIDIA built it for. */
+export const NEMOTRON = {
+  /** 120B (12B active) hybrid Mamba-MoE that also reads images: judgement, planning, checking. */
+  super: "nvidia/nemotron-3.5-super-vl-120b-a12b",
+  /** 550B (55B active): the largest Nemotron, for the hardest judgement. */
+  ultra: "nvidia/nemotron-3-ultra-550b-a55b",
+  /** 30B (3B active): fast steps, high volume, first token quickly. */
+  lightning: "nvidia/nemotron-3.5-lightning-30b-a3b",
+  /** Text and page-image embeddings, asked as a query or a passage. */
+  embed: "nvidia/nemotron-3.5-embed-1b",
+  /** Labels a text safe or unsafe, with the categories it breaks. */
+  safety: "nvidia/nemotron-3.5-content-safety",
+} as const
+
 export const INGEST = {
   /** A page with fewer characters than this (and an image) is a scan and gets OCR (S00 rule). */
   scanCharsPerPage: 20,
@@ -168,12 +206,17 @@ export const INGEST = {
   /** Transcript passages close at a speaker change, a pause, or this length. */
   transcriptPassageSeconds: 45,
   transcriptPauseSeconds: 2.5,
-  embeddingModel: "text-embedding-3-small",
+  embeddingModel: NEMOTRON.embed,
+  /**
+   * Nemotron's vectors are 2048 wide; the API shortens and re-normalises them (Matryoshka). 1536
+   * keeps most of the detail and stays under pgvector's 2000-dimension HNSW limit.
+   */
+  embeddingDimensions: 1536,
   embeddingBatch: 96,
   embeddingParallel: 2,
   transcriptionModel: "scribe_v2",
-  /** Short file summaries (cost benchmark: Luna with no reasoning writes grounded text cheaply). */
-  summaryModel: "gpt-6-luna",
+  /** Short file summaries: grounded writing, no reasoning needed. */
+  summaryModel: NEMOTRON.lightning,
   /** OpenAlex lookups are a nicety; a slow answer must not hold a file back. */
   metadataTimeoutMs: 8_000,
 } as const
@@ -185,83 +228,67 @@ export const QUERY = {
   retries: 3,
 } as const
 
-export type ModelEffort = "none" | "minimal" | "low" | "medium"
-export type ModelChoice = { id: string; reasoning: ModelEffort }
+/** How much a model thinks before it answers: Nemotron's reasoning off, low effort, or full. */
+export type ModelEffort = "off" | "low" | "high"
+export type ModelChoice = {
+  id: string
+  reasoning: ModelEffort
+  /**
+   * Its own deadline instead of MODEL_API.answerTimeoutMs: shorter for a small call someone waits
+   * on, longer for background work that writes a lot.
+   */
+  deadlineMs?: number
+}
+
+const ULTRA = (reasoning: ModelEffort): ModelChoice => ({ id: NEMOTRON.ultra, reasoning })
+const SUPER = (reasoning: ModelEffort): ModelChoice => ({ id: NEMOTRON.super, reasoning })
+const LIGHTNING = (reasoning: ModelEffort): ModelChoice => ({ id: NEMOTRON.lightning, reasoning })
 
 /**
- * Each agent's OpenAI model (packages/agents/src/models.ts calls them), picked from the measured cost benchmark (gen-ai/.spikes/costs/BENCHMARK.md):
- * the cheapest OpenAI model that met each role's bar, with a fallback for outages and rate limits.
+ * Each agent's Nemotron model (packages/models calls them), with a fallback on another model for an
+ * outage or a malformed reply. Picked by the measured benchmark of testing on NVIDIA's API
+ * (gen-ai/.spikes/costs/BENCHMARK.md, the same cases as the earlier models' run): Ultra with
+ * thinking off was the only setup to pass everything (0/10 false rejections, 6/6 planted errors
+ * caught, 9/9 quotes verbatim, citation format 3/3). Lightning reads and returns JSON well and
+ * judges well when it thinks, but never wrote the cited format; Super 3.5 often answered 500.
  */
 export const MODELS = {
-  /** Plans the run; the best support judgement among cheap models (0 false rejections). */
-  planner: {
-    primary: { id: "gpt-6-luna", reasoning: "low" },
-    fallback: { id: "gpt-5-mini", reasoning: "minimal" },
-  },
-  /** Query rewriting and rerank: mechanical work, tool and JSON 3/3. */
-  retriever: {
-    primary: { id: "gpt-5-nano", reasoning: "minimal" },
-    fallback: { id: "gpt-6-luna", reasoning: "none" },
-  },
-  /** Writes the cited answer: 9/9 quotes verbatim, first token in about 1 s. */
-  writer: {
-    primary: { id: "gpt-6-luna", reasoning: "none" },
-    fallback: { id: "gpt-5-mini", reasoning: "minimal" },
-  },
-  /** Support checks: 0/10 false rejections, 6/6 planted errors caught. */
-  verifier: {
-    primary: { id: "gpt-6-luna", reasoning: "low" },
-    fallback: { id: "gpt-5-mini", reasoning: "minimal" },
-  },
-  /** Deep search: plans queries and runs OpenAI's web_search (needs reasoning above minimal). */
-  scout: {
-    primary: { id: "gpt-5-nano", reasoning: "low" },
-    fallback: { id: "gpt-5-mini", reasoning: "low" },
-  },
+  /** Plans the run: whether it needs the library, which queries, whether to compare. */
+  planner: { primary: { ...ULTRA("off"), deadlineMs: 15_000 }, fallback: LIGHTNING("off") },
+  /** Writes the cited answer: 9/9 quotes verbatim, refused the planted figure 3/3. */
+  writer: { primary: ULTRA("off"), fallback: SUPER("off") },
+  /** Support checks: 0/10 false rejections, 6/6 planted errors (Lightning thinking: the same). */
+  verifier: { primary: ULTRA("off"), fallback: LIGHTNING("low") },
+  /** Deep search: plans the paper and encyclopedia queries. */
+  scout: { primary: LIGHTNING("off"), fallback: ULTRA("off") },
   /** Screens found sources against the question, batch by batch (Markovian steps). */
-  screener: {
-    primary: { id: "gpt-6-luna", reasoning: "none" },
-    fallback: { id: "gpt-5-mini", reasoning: "minimal" },
-  },
+  screener: { primary: ULTRA("off"), fallback: LIGHTNING("low") },
   /** Claims and agreement across sources: the same strict-support judgement as the Verifier. */
-  analyst: {
-    primary: { id: "gpt-6-luna", reasoning: "low" },
-    fallback: { id: "gpt-5-mini", reasoning: "minimal" },
-  },
+  analyst: { primary: ULTRA("off"), fallback: LIGHTNING("low") },
   /**
-   * Makes practice items from passages (F27); every answer key then goes to the Verifier.
-   * Measured testing, 3 runs × 12 windows: Luna (none) kept 35 items at $0.00025 each (65% pass,
-   * ~4 s median draft, but a tail of 28-39 s calls); nano (low) kept 40 at $0.00059 each (60%
-   * pass, ~11 s per draft): its reasoning tokens cost more than Luna's higher price. After hints
-   * were told never to restate the answer, Luna passed 81-83% at $0.0002 per kept item.
+   * Makes practice items from passages (F27); every answer key then goes to the Verifier. In the
+   * background, and a draft is 600–950 tokens (13–27 s on Ultra, testing), so it gets longer.
+   * Lightning drafted none that passed: vague keys, sentences not copied exactly.
    */
   tutor: {
-    primary: { id: "gpt-6-luna", reasoning: "none" },
-    fallback: { id: "gpt-5-nano", reasoning: "low" },
+    primary: { ...ULTRA("off"), deadlineMs: 90_000 },
+    fallback: { ...SUPER("off"), deadlineMs: 90_000 },
   },
-  /**
-   * Reads a spoken ask that no pattern placed (S16): a one-line JSON pick while you are still
-   * talking, so it runs with no reasoning on the fast writer model.
-   */
-  intent: {
-    primary: { id: "gpt-6-luna", reasoning: "none" },
-    fallback: { id: "gpt-5-nano", reasoning: "minimal" },
-  },
+  /** Reads a spoken ask that no pattern placed (S16): a one-line pick while you are still talking. */
+  intent: { primary: { ...LIGHTNING("off"), deadlineMs: 8_000 }, fallback: ULTRA("off") },
   /** Judges a typed answer the code check couldn't settle, with feedback that never gives it away. */
-  grader: {
-    primary: { id: "gpt-6-luna", reasoning: "low" },
-    fallback: { id: "gpt-5-mini", reasoning: "minimal" },
-  },
+  grader: { primary: ULTRA("off"), fallback: LIGHTNING("low") },
 } as const satisfies Record<string, { primary: ModelChoice; fallback: ModelChoice }>
 
 /**
- * Rate limits (plan §3 "Model calls"). Model calls share one token bucket per server process,
- * set below the OpenAI account's tier; each person has a cap on answers, so a public guest
- * sign-in can't run up the bill.
+ * Rate limits (plan §3 "Model calls"). Each model has one token bucket per server process; the web
+ * app and the worker each take a share of MODEL_API.requestsPerMinute (MODEL_REQUESTS_PER_MINUTE
+ * sets it, half each by default). Each person has a cap on answers, so a public guest sign-in
+ * can't use up everyone's budget.
  */
 export const LIMITS = {
-  modelRequestsPerMinute: 400,
-  modelCallsInFlight: 24,
+  modelRequestsPerMinute: MODEL_API.requestsPerMinute / 2,
+  modelCallsInFlight: 8,
   answersPerTenMinutes: 20,
   guestAnswersPerDay: 60,
   answersPerDay: 300,
@@ -285,7 +312,9 @@ export const PUBLIC = {
   answersPerDayPerVisitor: 20,
   answersPerDayPerFolder: 300,
   historyTurns: 6,
-  moderationModel: "omni-moderation-latest",
+  moderationModel: NEMOTRON.safety,
+  /** Text per safety check: a whole article (12 pieces of 4,000 characters) fits in one. */
+  moderationChars: 60_000,
 } as const
 
 /**

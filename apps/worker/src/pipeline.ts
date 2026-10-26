@@ -331,7 +331,9 @@ async function readSource(file: FileRow): Promise<DocResult> {
 // ------------------------------------------------------------------ embeddings
 
 /** Embeds passages, reusing cached vectors for text already embedded anywhere. */
-export async function embed(rows: NewPassage[]): Promise<number> {
+export async function embed(
+  rows: { text: string; embedding?: number[] | null }[],
+): Promise<number> {
   const hashes = rows.map((r) => embeddingHash(r.text))
   const cached = new Map<string, number[]>()
   for (let i = 0; i < hashes.length; i += 500) {

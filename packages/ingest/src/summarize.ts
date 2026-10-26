@@ -1,10 +1,10 @@
-import { createOpenAI } from "@ai-sdk/openai"
-import { INGEST } from "@konkyo/config"
-import { env } from "@konkyo/env/server"
+import { INGEST, type ModelChoice } from "@konkyo/config"
+import { model, reasoning } from "@konkyo/models"
 import { generateText, Output } from "ai"
 import { z } from "zod"
 
-const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY })
+/** Short grounded writing: the fast model, no thinking. */
+const SUMMARY: ModelChoice = { id: INGEST.summaryModel, reasoning: "off" }
 
 /** Enough of a document to say what it is: its opening, where abstracts and introductions are. */
 const SUMMARY_CHARS = 12_000
@@ -30,7 +30,7 @@ export async function summarize(
   const source = text.slice(0, SUMMARY_CHARS).trim()
   if (source.length < 200) return {}
   const { output } = await generateText({
-    model: openai(INGEST.summaryModel),
+    model: model(SUMMARY),
     output: Output.object({ schema: Described }),
     instructions: `You describe a document in someone's research library. Write two or three plain sentences: what it is and its main finding, argument or content. Use only the text given; if it is unclear, say less rather than guess. No preamble, no lists, no markdown.${
       opts.wantTitle
@@ -39,8 +39,7 @@ export async function summarize(
     }`,
     prompt: `Title: ${title}\n\n${source}`,
     maxOutputTokens: 300,
-    // The cost benchmark's pick for short grounded writing (gpt-6-luna, no reasoning).
-    providerOptions: { openai: { reasoningEffort: "none" } },
+    providerOptions: reasoning(SUMMARY),
     abortSignal: AbortSignal.timeout(INGEST.metadataTimeoutMs * 3),
   })
   return {

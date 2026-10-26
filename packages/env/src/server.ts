@@ -27,7 +27,12 @@ export const env = createEnv({
 
     GOTENBERG_URL: z.url(),
 
-    OPENAI_API_KEY: z.string().min(1),
+    /** NVIDIA's API (build.nvidia.com): every Nemotron model Konkyo calls. */
+    NVIDIA_API_KEY: z.string().min(1),
+    /** Where the models are served, when not NVIDIA's API: a self-hosted NIM with the same ids. */
+    MODEL_BASE_URL: z.url().optional(),
+    /** This process's share of each model's rate limit (web and worker split one key's budget). */
+    MODEL_REQUESTS_PER_MINUTE: z.coerce.number().int().positive().optional(),
     ELEVENLABS_API_KEY: z.string().min(1),
     OPENALEX_API_KEY: z.string().min(1).optional(),
 

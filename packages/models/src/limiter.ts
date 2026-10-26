@@ -1,9 +1,10 @@
 import { LIMITS } from "@konkyo/config"
+import { env } from "@konkyo/env/server"
 
 /**
- * One token bucket for model requests per minute, plus a cap on calls in flight, shared by every
- * agent in this server process (plan §3). A call waits for a token rather than failing; the AI
- * SDK's own retries with backoff handle the provider's 429s on top.
+ * A token bucket for requests per minute, plus a cap on calls in flight, for one model in this
+ * server process (plan §3). A call waits for a token rather than failing; retries with backoff
+ * handle the provider's 429s on top.
  */
 class Limiter {
   private tokens: number
@@ -58,6 +59,21 @@ class Limiter {
   }
 }
 
-const shared = globalThis as typeof globalThis & { __konkyoLimiter?: Limiter }
-shared.__konkyoLimiter ??= new Limiter(LIMITS.modelRequestsPerMinute, LIMITS.modelCallsInFlight)
-export const limiter = shared.__konkyoLimiter
+const shared = globalThis as typeof globalThis & { __konkyoLimiters?: Map<string, Limiter> }
+shared.__konkyoLimiters ??= new Map()
+const limiters = shared.__konkyoLimiters
+
+/**
+ * NVIDIA limits each model separately (in testing), so every model has its own bucket, shared by every call to it here.
+ */
+export function limiterFor(modelId: string): Limiter {
+  let limiter = limiters.get(modelId)
+  if (!limiter) {
+    limiter = new Limiter(
+      env.MODEL_REQUESTS_PER_MINUTE ?? LIMITS.modelRequestsPerMinute,
+      LIMITS.modelCallsInFlight,
+    )
+    limiters.set(modelId, limiter)
+  }
+  return limiter
+}

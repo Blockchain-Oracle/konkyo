@@ -3,18 +3,23 @@ title: The agents and their trace
 description: Who does what, with which model, and how to read the trace.
 ---
 
-| Agent | Does | Model |
+| Agent | Does | Model (NVIDIA Nemotron) |
 |---|---|---|
-| Planner | Stand-alone question, 1–3 searches, comparison flag; reads H-MEM corrections first; replans more broadly when the first search is thin | `gpt-6-luna` (low reasoning) |
-| Retriever | Hybrid search: pgvector and Postgres full text, fused by Reciprocal Rank Fusion | `text-embedding-3-small` |
-| Writer | Cited draft, one finding per sentence; rewrites rejected sentences | `gpt-6-luna` |
-| Verifier | Code check, one Zetaris statement, support judgement; at most two rewrite rounds | `gpt-6-luna` (low) |
-| Analyst | Claims × sources with stances, quotes checked in Zetaris, World Model; places each paper a watch finds against your sources (agrees, disagrees or new, your passage quoted) | `gpt-6-luna` (low) |
-| Scout | Deep search over OpenAlex and the web, screened in Markovian steps | `gpt-5-nano` |
-| Tutor | Practice items; every answer key checked by the Verifier, every quote in Zetaris | `gpt-6-luna` |
+| Planner | Stand-alone question, 1–3 searches, comparison flag; reads H-MEM corrections first; replans more broadly when the first search is thin | Nemotron 3 Ultra, thinking off |
+| Retriever | Hybrid search: pgvector and Postgres full text, fused by Reciprocal Rank Fusion | Nemotron 3.5 Embed (question as a query, passages as passages) |
+| Writer | Cited draft, one finding per sentence; rewrites rejected sentences | Nemotron 3 Ultra, thinking off |
+| Verifier | Code check, one Zetaris statement, support judgement; at most two rewrite rounds | Nemotron 3 Ultra, thinking off |
+| Analyst | Claims × sources with stances, quotes checked in Zetaris, World Model; places each paper a watch finds against your sources (agrees, disagrees or new, your passage quoted) | Nemotron 3 Ultra, thinking off |
+| Scout | Deep search over OpenAlex and Wikipedia, screened in Markovian steps | Nemotron 3.5 Lightning plans; Ultra screens |
+| Tutor | Practice items; every answer key checked by the Verifier, every quote in Zetaris | Nemotron 3 Ultra, thinking off |
 
-Every role has a fallback model for outages and malformed replies; the switch is logged as
-`escalated_to_fallback`. The models were chosen by a measured cost and quality benchmark per role.
+Every role has a fallback model for errors, stalls (no answer within 45 seconds, or no first word
+of a stream within 25; 15 for the Planner, 90 for the Tutor's drafts) and malformed replies; the
+switch is logged as `escalated_to_fallback`. Judgement roles fall back to Lightning with thinking
+on, the Planner to Lightning, the Writer and Tutor to Nemotron 3.5 Super. The models were picked by a measured benchmark on NVIDIA's API: Ultra with thinking off
+was the only setup to pass every test (0/10 false rejections, 6/6 planted errors caught, 9/9
+quotes verbatim); Lightning judged as well only when thinking, and never kept the cited format.
+On real practice sets Ultra's drafts passed every check 17 times in 19.
 
 ## Reading a trace
 

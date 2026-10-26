@@ -13,12 +13,12 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@ai-sdk/openai": "4.0.94",
     "@konkyo/config": "workspace:*",
     "@konkyo/db": "workspace:*",
     "@konkyo/env": "workspace:*",
     "@konkyo/ingest": "workspace:*",
     "@konkyo/meterless": "workspace:*",
+    "@konkyo/models": "workspace:*",
     "@konkyo/tape": "workspace:*",
     "@konkyo/zetaris": "workspace:*",
     "ai": "7.0.141",

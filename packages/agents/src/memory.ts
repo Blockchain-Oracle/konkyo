@@ -33,7 +33,9 @@ export function memoryFor(userId: string): HMEM {
 export type Recalled = { id: string; content: string; relevance: number }
 
 /**
- * Below this cosine (text-embedding-3-small), a memory is about something else. Measured in testing: related questions scored 0.42–0.81 against a correction, unrelated ones 0.18–0.23.
+ * Below this cosine (Nemotron Embed, both as queries), a memory is about something else.
+ * Measured testing: related questions scored 0.54–0.68 against a correction, unrelated ones
+ * 0.00–0.20.
  */
 const MIN_MEANING = 0.35
 

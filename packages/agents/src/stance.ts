@@ -26,8 +26,11 @@ export type FindingStance =
     }
   | { stance: "new"; claim: string }
 
-/** Below this best match, nothing the person has is about the paper's subject. */
-const RELATED_SIMILARITY = 0.3
+/**
+ * Below this best match, nothing the person has is about the paper's subject. Measured testing
+ * (Nemotron Embed): abstracts on the library's subject 0.60–0.66, off-subject ones 0.20–0.26.
+ */
+const RELATED_SIMILARITY = 0.4
 /** Passages compared with each finding. */
 const PASSAGES = 6
 /** Each comparison's own deadline: a slow one leaves the finding without a stance, never late. */

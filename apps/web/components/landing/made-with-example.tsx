@@ -1,6 +1,6 @@
 "use client"
 
-import { BRIEF, CONNECTORS, MODELS } from "@konkyo/config"
+import { BRIEF, CONNECTORS, MODELS, NEMOTRON } from "@konkyo/config"
 import { PauseIcon, PlayIcon } from "lucide-react"
 import { type ReactNode, useEffect, useRef, useState } from "react"
 import type { Vendor } from "@/components/landing/vendor-logo"
@@ -238,26 +238,26 @@ function MeterlessExample() {
   )
 }
 
-// ------------------------------------------------------------------ OpenAI: the model per job
+// ------------------------------------------------------------------ NVIDIA: the Nemotron model per job
 
 const ROLES = [
   {
     id: "planner",
     label: "Planner",
     does: "Plans the run",
-    measured: "the best support judgement among cheap models: 0 false rejections",
+    measured: "the only setup that passed every test: valid JSON 3/3, 0 false rejections",
   },
   {
     id: "writer",
     label: "Writer",
     does: "Writes the cited answer",
-    measured: "9/9 quotes verbatim, first token in about 1 s",
+    measured: "9/9 quotes verbatim, citation format 3/3, refused a planted figure 3/3",
   },
   {
     id: "verifier",
     label: "Verifier",
     does: "Checks each claim's support",
-    measured: "0/10 false rejections, 6/6 planted errors caught",
+    measured: "0/10 false rejections, 6/6 planted errors caught, thinking off",
   },
   {
     id: "analyst",
@@ -269,7 +269,7 @@ const ROLES = [
     id: "tutor",
     label: "Tutor",
     does: "Makes practice from passages",
-    measured: "81–83% of drafts pass, at $0.0002 per kept item",
+    measured: "17 of 19 drafted items passed every check; Lightning's never did",
   },
   {
     id: "screener",
@@ -279,7 +279,16 @@ const ROLES = [
   },
 ] as const
 
-function OpenAIExample() {
+/** Nemotron's model ids, as people say them. */
+const NAMES: Record<string, string> = {
+  [NEMOTRON.super]: "Nemotron 3.5 Super",
+  [NEMOTRON.ultra]: "Nemotron 3 Ultra",
+  [NEMOTRON.lightning]: "Nemotron 3.5 Lightning",
+}
+const nameOf = (id: string) => NAMES[id] ?? id
+const THINKING = { off: "thinking off", low: "thinks first (low effort)", high: "thinks first" }
+
+function NvidiaExample() {
   const [role, setRole] = useState<(typeof ROLES)[number]["id"]>("writer")
   const picked = ROLES.find((r) => r.id === role) ?? ROLES[0]
   const { primary, fallback } = MODELS[role]
@@ -289,8 +298,8 @@ function OpenAIExample() {
       <div className="mw-stage" key={role}>
         <div className="mw-slip mw-model">
           <small>{picked.does}</small>
-          <p className="mw-model-id">{primary.id}</p>
-          <p className="mw-model-effort">reasoning: {primary.reasoning}</p>
+          <p className="mw-model-id">{nameOf(primary.id)}</p>
+          <p className="mw-model-effort">{THINKING[primary.reasoning]}</p>
           <dl className="mw-fields">
             <div>
               <dt>why this one</dt>
@@ -299,7 +308,7 @@ function OpenAIExample() {
             <div>
               <dt>if it fails</dt>
               <dd>
-                {fallback.id} · {fallback.reasoning}
+                {nameOf(fallback.id)} · {THINKING[fallback.reasoning]}
               </dd>
             </div>
           </dl>
@@ -308,7 +317,7 @@ function OpenAIExample() {
           {ROLES.map((r) => (
             <li key={r.id} className={r.id === role ? "is-on" : ""}>
               <span>{r.label}</span>
-              <span>{MODELS[r.id].primary.id}</span>
+              <span>{nameOf(MODELS[r.id].primary.id)}</span>
             </li>
           ))}
         </ul>
@@ -552,7 +561,7 @@ function OpenAlexExample() {
 const EXAMPLES: Record<Vendor, () => ReactNode> = {
   zetaris: ZetarisExample,
   meterless: MeterlessExample,
-  openai: OpenAIExample,
+  nvidia: NvidiaExample,
   elevenlabs: ElevenLabsExample,
   composio: ComposioExample,
   openalex: OpenAlexExample,

@@ -3,7 +3,8 @@ title: Self-hosting
 description: Run the whole stack on your own machine.
 ---
 
-You need Node 22.18+, pnpm (`corepack enable`), Docker, a Zetaris instance and an OpenAI key.
+You need Node 22.18+, pnpm (`corepack enable`), Docker, a Zetaris instance and an NVIDIA API key
+(free at [build.nvidia.com](https://build.nvidia.com/settings/api-keys)).
 
 ```bash
 cp .env.example .env            # every variable is described there
@@ -39,7 +40,9 @@ Zetaris sees it.
 
 | Variable | For | Needed |
 |---|---|---|
-| `OPENAI_API_KEY` | Every model and embedding | Yes |
+| `NVIDIA_API_KEY` | Every model, embedding and safety check (Nemotron on NVIDIA's API) | Yes |
+| `MODEL_BASE_URL` | A self-hosted NVIDIA NIM serving the same Nemotron ids, instead of NVIDIA's API | No |
+| `MODEL_REQUESTS_PER_MINUTE` | This process's share of each model's rate limit (web and worker split about 40 a minute; half each by default) | No |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Sign-in with Google (guests work without) | Yes |
 | `ELEVENLABS_API_KEY` | Transcribing recordings, audio briefs | Yes |
 | `OPENALEX_API_KEY` | Higher OpenAlex limits | No |

@@ -14,6 +14,7 @@ import { closeInterrupted } from "./interrupted"
 import { indexNote } from "./notes"
 import { ingestFile } from "./pipeline"
 import { purgeAbandonedGuests, purgeExpired, purgeFiles } from "./purge"
+import { reembedMissing } from "./reembed"
 import { sendReminders } from "./reminders"
 import { makeSet } from "./study"
 import { backfillThumbs, makeThumb } from "./thumb"
@@ -118,6 +119,13 @@ async function reportInterrupted() {
     console.info(`[interrupted] closed ${JSON.stringify(closed)}`)
 }
 void reportInterrupted()
+
+// Passages left without a vector (the move to Nemotron's embeddings cleared them all) get one.
+void reembedMissing()
+  .then(({ embedded, tokens }) => {
+    if (embedded) console.info(`[reembed] ${embedded} passages, ${tokens} tokens`)
+  })
+  .catch((error: Error) => console.error(`[reembed] stopped: ${error.message}`))
 
 // Connectors (F35): changed Drive files and Notion pages are read again, and a Gmail watch
 // brings in new matches, every 15 minutes (Composio-managed auth's fastest anyway).

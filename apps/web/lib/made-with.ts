@@ -188,7 +188,7 @@ export const PARTNERS: Partner[] = [
     technical: [
       {
         title: "Why recall is re-ranked",
-        body: "H-MEM's built-in embedder hashes words, so “memory” in two unrelated questions looks alike to it. Konkyo keeps H-MEM's ranking, then drops anything under 0.35 cosine on OpenAI embeddings: related questions measured 0.42–0.81, unrelated ones 0.18–0.23.",
+        body: "H-MEM's built-in embedder hashes words, so “memory” in two unrelated questions looks alike to it. Konkyo keeps H-MEM's ranking, then drops anything under 0.35 cosine on Nemotron embeddings: related questions measured 0.54–0.68, unrelated ones 0.00–0.20.",
         code: { file: MEMORY, symbol: "MIN_MEANING" },
       },
       {
@@ -210,20 +210,20 @@ export const PARTNERS: Partner[] = [
     docs: "sponsor-tech#meterless-memory-world-state-and-long-tasks",
   },
   {
-    id: "openai",
-    name: "OpenAI",
+    id: "nvidia",
+    name: "NVIDIA Nemotron",
     color: "violet",
     role: "the models that plan, write, check and teach",
-    headline: ["One model", "for each job."],
+    headline: ["Nemotron for", "every job."],
     intro:
-      "Every agent in Konkyo runs on an OpenAI model picked by measurement: the cheapest one that met that job's bar, with a fallback for outages. Embeddings find the passages; moderation keeps shared spaces safe.",
+      "Every model call in Konkyo is Nemotron on NVIDIA's API: Ultra where judgement and writing matter, Lightning where speed does, each backed by another. Nemotron Embed finds the passages; Nemotron Content Safety keeps shared spaces safe.",
     cta: {
       label: "ask three real papers",
       href: "/#ask",
       note: "The receipt under each answer names the models that made it.",
     },
     example:
-      "Read from the app's own config: the model each agent uses, its fallback, and what it was measured to do.",
+      "Read from the app's own config: the Nemotron model each agent uses, whether it thinks first, and its fallback.",
     journeyTitle: "Follow one answer.",
     journey: [
       {
@@ -232,9 +232,9 @@ export const PARTNERS: Partner[] = [
         code: { file: ANSWER, symbol: "plan" },
       },
       {
-        title: "Embeddings find the passages.",
-        body: "text-embedding-3-small vectors and Postgres full-text search run together and are merged by rank, so meaning and exact words both count.",
-        code: { file: "packages/agents/src/retrieve.ts", symbol: "searchLibrary" },
+        title: "Nemotron Embed finds the passages.",
+        body: "Your question is embedded as a query, your passages as passages, and pgvector and Postgres full-text search are merged by rank, so meaning and exact words both count.",
+        code: { file: "packages/models/src/embed.ts", symbol: "embed" },
       },
       {
         title: "The Writer quotes.",
@@ -243,14 +243,14 @@ export const PARTNERS: Partner[] = [
       },
       {
         title: "The Verifier judges support.",
-        body: "While Zetaris checks the words, a second model reads each claim beside its passages and says whether they back it.",
+        body: "While Zetaris checks the words, Nemotron Ultra reads each claim beside its passages and says whether they back it.",
         code: { file: ANSWER, symbol: "verify" },
       },
     ],
     capabilities: [
       {
         title: "Measured, then picked.",
-        body: "Each role's model came out of a cost benchmark: the Writer copied 9 of 9 quotes verbatim, the Verifier made no false rejections and caught 6 of 6 planted errors.",
+        body: "Each role's model and thinking switch came out of a benchmark on NVIDIA's API: Ultra with thinking off was the only setup to pass everything, 0 of 10 false rejections, 6 of 6 planted errors caught, 9 of 9 quotes verbatim. Lightning judges well only when it thinks, so where it stands in, it thinks.",
         code: { file: "packages/config/src/index.ts", symbol: "MODELS" },
       },
       {
@@ -259,26 +259,26 @@ export const PARTNERS: Partner[] = [
         code: { file: "packages/agents/src/tutor.ts", symbol: "makeItems" },
       },
       {
-        title: "Deep search, on the web too.",
-        body: "When your library runs out, the Scout plans the search and runs OpenAI's web search beside OpenAlex.",
-        code: { file: SCOUT, symbol: "searchWeb" },
+        title: "Asymmetric search.",
+        body: "Nemotron Embed reads a question and a passage differently, so each is embedded in its own role and cached under its own key.",
+        code: { file: "packages/models/src/embed.ts", symbol: "embeddingKey" },
       },
       {
         title: "Safe to share.",
-        body: "Questions asked in a public space, and every article before it's published, go through omni-moderation-latest, in one batched call.",
+        body: "Questions asked in a public space, public profiles, and every article before it's published go through Nemotron Content Safety; a whole article is one check.",
         code: { file: "packages/agents/src/moderate.ts", symbol: "moderateAll" },
       },
     ],
     technical: [
       {
         title: "A fallback for every role",
-        body: "A call that fails runs once more on the role's fallback model, and the switch is written to the run's trace. A stopped run, or an account out of credit, doesn't fall back.",
+        body: "A call that fails, or gives no answer within 45 seconds (a stream: no first word within 25), runs once more on the role's fallback model, and the switch is written to the run's trace. A stopped run doesn't fall back.",
         code: { file: "packages/agents/src/models.ts", symbol: "withFallback" },
       },
       {
-        title: "One limiter for every call",
-        body: "Every model call shares one token bucket per server, set below the account's limits: 400 requests a minute, 24 in flight.",
-        code: { file: "packages/agents/src/models.ts", symbol: "model" },
+        title: "Inside the free tier",
+        body: "NVIDIA allows about 40 requests a minute for each model. Every call to a model shares its token bucket, and the web app and worker split it: a busy minute queues, it never fails.",
+        code: { file: "packages/models/src/limiter.ts", symbol: "limiterFor" },
       },
       {
         title: "Only the failures are rewritten",
@@ -286,12 +286,12 @@ export const PARTNERS: Partner[] = [
         code: { file: ANSWER, symbol: "reviseSentences" },
       },
       {
-        title: "Embeddings, cached",
-        body: "Search phrases are embedded once and kept, so asking again costs no embedding call.",
-        code: { file: "packages/agents/src/retrieve.ts", symbol: "embedQueries" },
+        title: "1536 of 2048 dimensions",
+        body: "NVIDIA's API shortens Nemotron's vectors and normalises them again, which keeps them under pgvector's 2,000-dimension index limit.",
+        code: { file: "packages/config/src/index.ts", symbol: "INGEST" },
       },
     ],
-    docs: "sponsor-tech#openai-the-models-that-plan-write-check-and-teach",
+    docs: "sponsor-tech#nvidia-nemotron-the-models-that-plan-write-check-and-teach",
   },
   {
     id: "elevenlabs",

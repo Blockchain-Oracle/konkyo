@@ -253,6 +253,13 @@
       "when": 1792947300000,
       "tag": "0035_site_totals",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1792953000000,
+      "tag": "0036_nemotron_embeddings",
+      "breakpoints": true
     }
   ]
 }

@@ -3,8 +3,9 @@ title: Limits
 description: What Konkyo doesn't do, or doesn't do well yet.
 ---
 
-- **Models are OpenAI only**, a deliberate cost choice. Without credit, live answers stop with a
-  plain message; sample mode still works.
+- **Models run on NVIDIA's free API tier**, about 40 requests a minute for each model, split
+  between the web app and the worker. A busy minute queues calls rather than failing them, so
+  answers slow down under load; sample mode needs no key at all.
 - **Live use needs Zetaris.** Nothing is marked verified without it, by design.
 - **"Supported" means the cited passage states it**, not that the claim is true in the world. A
   wrong source, quoted correctly, still passes.

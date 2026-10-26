@@ -1,12 +1,12 @@
 import { APP_URL } from "@/lib/layout.shared"
 
-type Partner = "zetaris" | "meterless" | "openai" | "openalex"
+type Partner = "zetaris" | "meterless" | "nvidia" | "openalex"
 
 /** Each partner's colour, as on its made-with page; ink reads on all four (5:1 and up). */
 const PARTNERS: Record<Partner, { name: string; color: string }> = {
   zetaris: { name: "Zetaris", color: "#13b8a6" },
   meterless: { name: "Meterless", color: "#e9369d" },
-  openai: { name: "OpenAI", color: "#b7a7ff" },
+  nvidia: { name: "NVIDIA Nemotron", color: "#b7a7ff" },
   openalex: { name: "OpenAlex", color: "#ffb02e" },
 }
 
@@ -15,43 +15,43 @@ const STEPS: { title: string; body: string; by: Partner[]; file: string }[] = [
   {
     title: "Your memory, first",
     body: "Before planning, the corrections you've given Konkyo are read from your H-MEM, only the ones about the same thing as this question.",
-    by: ["meterless", "openai"],
+    by: ["meterless", "nvidia"],
     file: "packages/agents/src/memory.ts",
   },
   {
     title: "The Planner",
     body: "Rewrites the question so it stands alone, plans one to three searches in the words your passages would use, and flags a comparison.",
-    by: ["openai"],
+    by: ["nvidia"],
     file: "packages/agents/src/answer.ts",
   },
   {
     title: "The Retriever",
     body: "Searches your passages by meaning and by words at once and merges the two by rank. Nothing close enough means “Not in your library”, never a guess.",
-    by: ["openai"],
+    by: ["nvidia"],
     file: "packages/agents/src/retrieve.ts",
   },
   {
     title: "The Writer, and a pre-check",
     body: "One finding per sentence, each with a citation and an exact quote, streamed as it writes. Meanwhile Zetaris confirms it holds every document those passages came from.",
-    by: ["openai", "zetaris"],
+    by: ["nvidia", "zetaris"],
     file: "packages/zetaris/src/checks.ts",
   },
   {
     title: "The Analyst, for comparisons",
     body: "Beside the Writer: claims against sources, each stance with a quote checked in Zetaris, kept in your World Model.",
-    by: ["openai", "zetaris", "meterless"],
+    by: ["nvidia", "zetaris", "meterless"],
     file: "packages/agents/src/analyst.ts",
   },
   {
     title: "The Verifier",
     body: "Each quote in code, then all of them in one Zetaris statement against its own reading of the PDF, while a model judges whether each sentence's quotes support it.",
-    by: ["zetaris", "openai"],
+    by: ["zetaris", "nvidia"],
     file: "packages/zetaris/src/checks.ts",
   },
   {
     title: "Rewrite, or drop",
     body: "Rejected sentences go back to the Writer with the reasons, at most twice. Whatever still fails is dropped; nothing unverified is shown as verified.",
-    by: ["openai"],
+    by: ["nvidia"],
     file: "packages/agents/src/answer.ts",
   },
   {

@@ -1,4 +1,4 @@
-import type { FileMeta, SpaceColor, SpaceWall } from "@konkyo/config"
+import { type FileMeta, INGEST, type SpaceColor, type SpaceWall } from "@konkyo/config"
 import { sql } from "drizzle-orm"
 import {
   type AnyPgColumn,
@@ -19,8 +19,8 @@ import {
 } from "drizzle-orm/pg-core"
 import { user } from "./auth"
 
-/** Embedding width of text-embedding-3-small (the only embedding model; plan §4). */
-export const EMBEDDING_DIMENSIONS = 1536
+/** Embedding width: Nemotron Embed (INGEST.embeddingModel) shortened by the API (plan §4). */
+export const EMBEDDING_DIMENSIONS = INGEST.embeddingDimensions
 
 const tsvector = customType<{ data: string }>({ dataType: () => "tsvector" })
 

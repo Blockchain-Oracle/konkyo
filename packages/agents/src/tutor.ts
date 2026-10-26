@@ -243,7 +243,11 @@ const Recall = z.object({
 
 const Cloze = z.object({
   passage: z.string().describe("The label of the passage the sentence is from"),
-  sentence: z.string().describe("One sentence copied exactly from that passage"),
+  sentence: z
+    .string()
+    .describe(
+      "One sentence copied exactly from that passage, every word and bracket, with no blank in it",
+    ),
   blank: z
     .string()
     .describe("The 1-4 key words to blank out, copied exactly as they appear in the sentence"),
@@ -264,7 +268,9 @@ const Bundle = z.object({
   truefalse: z
     .object({
       passage: z.string().describe("The label of the passage the sentence is from"),
-      original: z.string().describe("One sentence copied exactly from that passage"),
+      original: z
+        .string()
+        .describe("One sentence copied exactly from that passage, every word and bracket"),
       statement: z.string().describe("The statement the student judges, as asked"),
       hints: Hints,
       why: Why,
@@ -303,7 +309,7 @@ type Bundled = z.infer<typeof Bundle>
 
 /**
  * A flashcard is a question and its answer: recall and cloze are required, and the other kinds
- * can only be null. With all four optional, Luna wrote a true/false and no card (in testing).
+ * can only be null. With all four optional, a model wrote a true/false and no card (in testing).
  */
 const FlashcardBundle = Bundle.extend({
   recall: Recall,
@@ -410,8 +416,10 @@ function draftsOf(w: StudyWindow, b: Bundled, makeFalse: boolean, key: string) {
       })
   }
   if (b.cloze) {
-    const sentence = b.cloze.sentence.trim()
     const blank = b.cloze.blank.trim()
+    // Some models write the sentence with the blank already in it ("noradrenaline and ______"):
+    // the words go back in, so the sentence is checked as the passage has it.
+    const sentence = b.cloze.sentence.trim().replace(/_{2,}/, blank)
     const at = located(w, b.cloze.passage, sentence)
     const index = sentence.indexOf(blank)
     if (!at) failed.cloze = "sentence not in the passages"
@@ -781,6 +789,13 @@ async function neighbourIn(ownerId: string, p: StudyPassage, fileIds: string[]) 
 }
 
 /**
+ * Which neighbours make a comparison (Nemotron Embed, passage against passage). Below min the
+ * pair only shares a subject; above max it's the same text in two files (a scan and its digital
+ * copy scored 0.85–0.90 on testing, different sources at most 0.847), which "agrees" with itself.
+ */
+const PAIR_SIMILARITY = { min: 0.6, max: 0.85 }
+
+/**
  * Compare the Sources (F30): two sources on one point, where they really agree or disagree.
  * Pairs are the closest passages across files; the Analyst says how they relate and quotes each;
  * both quotes are checked in code and in Zetaris, and the Verifier checks the call.
@@ -801,9 +816,7 @@ export async function makeComparisons(
   for (const a of seeds) {
     if (made.length >= want) break
     const b = await neighbourIn(ownerId, a, fileIds)
-    // Below 0.6 the pair only shares a subject; above 0.9 it's the same text in two files
-    // (a scan and its digital copy, a repost), which "agrees" with itself.
-    if (!b || b.similarity < 0.6 || b.similarity > 0.9) continue
+    if (!b || b.similarity < PAIR_SIMILARITY.min || b.similarity > PAIR_SIMILARITY.max) continue
     const { result, choice } = await call("analyst", tracer, "compare", (c) =>
       generateText({
         model: model(c),

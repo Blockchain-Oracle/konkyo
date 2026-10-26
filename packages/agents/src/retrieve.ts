@@ -1,10 +1,8 @@
-import { createHash } from "node:crypto"
 import { db, schema } from "@konkyo/db"
 import { reachSql, resolveReach } from "@konkyo/db/access"
+import { embed, embeddingKey } from "@konkyo/models"
 import { taped } from "@konkyo/tape"
-import { embedMany } from "ai"
 import { inArray, sql } from "drizzle-orm"
-import { EMBEDDING_MODEL, openai } from "./models"
 
 const { embeddingCache } = schema
 
@@ -49,9 +47,8 @@ export function bylineOf(meta: { csl?: Csl } | null): string | undefined {
   return [who, year].filter(Boolean).join(" · ") || undefined
 }
 
-/** The same key the ingest cache uses, so a question about a passage reuses its vector. */
-const cacheKey = (text: string) =>
-  createHash("sha256").update(`${EMBEDDING_MODEL}\n${text}`).digest("hex")
+/** A query's own cache key: Nemotron embeds a question differently from a passage. */
+const cacheKey = (text: string) => embeddingKey(text, "query")
 
 /** Query vectors from the cache, the missing ones in a single embedding request. */
 export async function embedQueries(texts: string[]): Promise<number[][]> {
@@ -63,13 +60,10 @@ export async function embedQueries(texts: string[]): Promise<number[][]> {
   const cached = new Map(hits.map((h) => [h.hash, h.embedding]))
   const missing = texts.filter((_, i) => !cached.has(hashes[i] as string))
   if (missing.length) {
-    const { embeddings } = await embedMany({
-      model: openai.embedding(EMBEDDING_MODEL),
-      values: missing,
-    })
+    const { vectors } = await embed(missing, "query")
     const fresh = missing.map((text, i) => ({
       hash: cacheKey(text),
-      embedding: embeddings[i] as number[],
+      embedding: vectors[i] as number[],
     }))
     await db.insert(embeddingCache).values(fresh).onConflictDoNothing()
     for (const f of fresh) cached.set(f.hash, f.embedding)

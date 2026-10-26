@@ -20,7 +20,7 @@
   "sampleMode": {
     "command": "pnpm konkyo ask --sample [n]",
     "needs": "Node 22.18+ and pnpm; no keys, no services",
-    "how": "Replays the recorded replies of OpenAI, Zetaris, the library search and H-MEM recall (examples/*/tape.jsonl) while every step of Konkyo's own logic runs again: planning, citation parsing, quote checks, Verifier verdicts and rewrites, the matrix, the World Model and a new trace in logs/. Unrecorded questions are refused.",
+    "how": "Replays the recorded replies of Nemotron (NVIDIA API), Zetaris, the library search and H-MEM recall (examples/*/tape.jsonl) while every step of Konkyo's own logic runs again: planning, citation parsing, quote checks, Verifier verdicts and rewrites, the matrix, the World Model and a new trace in logs/. Unrecorded questions are refused.",
     "code": ["packages/tape/src/index.ts", "apps/cli/src/index.ts"]
   },
   "examples": [
@@ -67,43 +67,43 @@
     {
       "name": "Planner",
       "role": "Stand-alone question, 1-3 searches, comparison flag; reads H-MEM corrections first",
-      "model": "gpt-6-luna",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
       "code": "packages/agents/src/answer.ts"
     },
     {
       "name": "Retriever",
       "role": "Hybrid search (pgvector + Postgres full text, Reciprocal Rank Fusion)",
-      "model": "text-embedding-3-small",
+      "model": "nvidia/nemotron-3.5-embed-1b",
       "code": "packages/agents/src/retrieve.ts"
     },
     {
       "name": "Writer",
       "role": "Cited draft, one finding per sentence, exact quotes; rewrites rejected sentences",
-      "model": "gpt-6-luna",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
       "code": "packages/agents/src/answer.ts"
     },
     {
       "name": "Verifier",
       "role": "Code check of each quote, one Zetaris statement for all quotes, support judgement; sends failures back (max 2 rounds), drops what still fails",
-      "model": "gpt-6-luna",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
       "code": "packages/agents/src/answer.ts"
     },
     {
       "name": "Analyst",
       "role": "Claims × sources with stances, quotes checked in Zetaris, recorded in the World Model",
-      "model": "gpt-6-luna",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
       "code": "packages/agents/src/analyst.ts"
     },
     {
       "name": "Scout",
-      "role": "Deep search over OpenAlex and the web, screened in Markovian steps",
-      "model": "gpt-5-nano",
+      "role": "Deep search over OpenAlex and Wikipedia, screened in Markovian steps",
+      "model": "nvidia/nemotron-3.5-lightning-30b-a3b (plans), nvidia/nemotron-3-ultra-550b-a55b (screens)",
       "code": "packages/agents/src/scout.ts"
     },
     {
       "name": "Tutor",
       "role": "Practice items with Verifier-checked answer keys and Zetaris-checked quotes",
-      "model": "gpt-6-luna",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b",
       "code": "packages/agents/src/tutor.ts"
     }
   ],
@@ -163,15 +163,50 @@
         "Trace actions read_hmem and asserted_world_model",
         "Settings → Memory in the app"
       ]
+    },
+    "nvidia": {
+      "used": true,
+      "api": "NVIDIA API (build.nvidia.com), OpenAI-compatible, free tier; every model call goes through packages/models",
+      "models": [
+        {
+          "model": "nvidia/nemotron-3-ultra-550b-a55b",
+          "use": "Planner, Writer, Verifier, Analyst, Screener, Tutor, Grader (thinking off: the only benchmarked setup to pass every test)",
+          "code": "packages/config/src/index.ts"
+        },
+        {
+          "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+          "use": "Deep-search plans, spoken-ask intent, file summaries, the Planner's fallback; with thinking on, the judges' fallback",
+          "code": "packages/config/src/index.ts"
+        },
+        {
+          "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+          "use": "Fallback for the Writer and Tutor",
+          "code": "packages/config/src/index.ts"
+        },
+        {
+          "model": "nvidia/nemotron-3.5-embed-1b",
+          "use": "Passage and query embeddings (input_type passage/query, 1536 of 2048 dimensions) for pgvector hybrid search",
+          "code": "packages/models/src/embed.ts"
+        },
+        {
+          "model": "nvidia/nemotron-3.5-content-safety",
+          "use": "Public-space questions, public profiles and articles before publishing",
+          "code": "packages/agents/src/moderate.ts"
+        }
+      ],
+      "evidence": [
+        "Each answer's receipt and logs/<runId>.jsonl name the Nemotron model of every step",
+        "Benchmark of 2026 on NVIDIA's API: Ultra thinking off 0/10 false rejections, 6/6 planted errors, 9/9 quotes verbatim"
+      ]
     }
   },
   "otherServices": {
-    "OpenAI": "All language models and embeddings",
     "ElevenLabs": "Scribe transcription with word timing; Text-to-Dialogue audio briefs; study sounds",
     "OpenAlex": "Paper metadata, open-access PDFs, topic watches",
     "Composio": "Gmail, Google Drive and Notion connectors",
     "Gotenberg": "Word, PowerPoint and web pages to PDF renditions",
-    "OCRmyPDF": "Text layers for scanned PDFs"
+    "OCRmyPDF": "Text layers for scanned PDFs",
+    "Wikipedia": "Encyclopedia articles for deep search (its search API)"
   },
   "stack": [
     "TypeScript",

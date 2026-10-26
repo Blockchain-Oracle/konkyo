@@ -1,39 +1,37 @@
 # What are the stages of memory, and how does the lecture explain forgetting?
 
-Memory has three stages: encoding, which inputs information into the memory system; storage, which retains encoded information; and retrieval, which brings information out of memory and into awareness [1].
+The lecture slides identify a three‑stage model of memory that includes sensory memory, short‑term memory, and long‑term memory [1]. The slides also list “passive forgetting vs. interference” and the specific types “proactive interference” and “retroactive interference” as topics within long‑term memory [2]. The textbook notes that forgetting can be caused by lapses in attention [3] and describes Ebbinghaus’s forgetting curve showing rapid decay of new information over time [4].
 
-The lecture explains forgetting as one part of memory’s fragile nature, and says memories can also become less accurate and distorted rather than remaining records of experience [2]. The passage says that as life goes on, experiences, thoughts, and feelings get mixed together in memory, and that subsequent experiences can change prior memories [3].
+**Caveat:** The passages do not provide a detailed lecture explanation of forgetting beyond listing interference types and noting attention lapses and decay.
 
-**Caveat:** The lecture passage discusses forgetting and memory distortion broadly but does not give a complete account of the mechanisms of forgetting.
-
-## Sources (3)
+## Sources (4)
 _Each quote was found word for word in Zetaris's own reading of the source._
 
-- [1] 8.1 How Memory Functions, p. 1
-  > “Encoding involves the input of information into the memory system. Storage is the retention of the encoded information. Retrieval, or getting the information out of memory and back into awareness, is the third function.”
-- [2] Lecture 10: Memory I (transcript), p. 1
-  > “it turns out there's ways in which our memories get less accurate and distorted, are not actual records of our experience”
-- [3] Lecture 10: Memory I (transcript), p. 2 _(sentence rewritten after the Verifier's check)_
-  > “As life goes on, things get mixed in. And the raw memory is never recoverable from the mixture of subsequent experiences, thoughts, and feelings.”
-
-## What the Verifier sent back
-- Round 1: unsupported: "It describes forgetting as occurring as experiences, thoughts, and feelings mix together, with subsequent experiences able to change earlier memories [3]." (The passage links mixing to memory, but does not say mixing causes forgetting.)
+- [1] 8.1 How Memory Functions, p. 3
+  > “Sensory Memory, Short-Term Memory, and finally Long-Term Memory”
+- [2] Lecture 10: Memory I (slides), p. 37
+  > “passive forgetting vs. interference • proactive interference • retroactive interference”
+- [3] 8.3 Problems with Memory, p. 7
+  > “Forgetting caused by lapses in attention”
+- [4] 8.3 Problems with Memory, p. 8
+  > “Due to storage decay, an average person will lose 50% of the memorized information after 20 minutes and 70% of the information after 24 hours”
 
 ## Checks
-- 3 quotes from 2 sources checked in one Zetaris statement (8206 ms); 1 rewritten, 0 dropped; 13.4 s in all.
-- Models: planner gpt-6-luna, writer gpt-6-luna, verifier gpt-6-luna.
+- 4 quotes from 3 sources checked in one Zetaris statement; verifying, rewrites included, took 4.9 s; 0 rewritten, 0 dropped; 11.1 s in all.
+- Models: planner nvidia/nemotron-3-ultra-550b-a55b, writer nvidia/nemotron-3-ultra-550b-a55b, verifier nvidia/nemotron-3-ultra-550b-a55b.
 
 The Zetaris statement that checked every quote:
 
 ```sql
 SELECT q.qid
 FROM VALUES
-    ('1', 'd04306b0-2fca-47fe-9f7b-e99072757a04', 'd04306b0-2fca-47fe-9f7b-e99072757a04:p1:0', 'encodinginvolvestheinputofinformationintothememorysystem.storageistheretentionoftheencodedinformation.retrievalorgettingtheinformationoutofmemoryandbackintoawarenessisthethirdfunction.'),
-    ('2', '3132be8c-ec00-4973-a501-f9e7fa5e004e', '3132be8c-ec00-4973-a501-f9e7fa5e004e:p1:0', 'itturnsoutthereswaysinwhichourmemoriesgetlessaccurateanddistortedarenotactualrecordsofourexperience'),
-    ('4', '3132be8c-ec00-4973-a501-f9e7fa5e004e', '3132be8c-ec00-4973-a501-f9e7fa5e004e:p2:0', 'aslifegoesonthingsgetmixedin.andtherawmemoryisneverrecoverablefromthemixtureofsubsequentexperiencesthoughtsandfeelings.')
+    ('1', 'd04306b0-2fca-47fe-9f7b-e99072757a04', 'd04306b0-2fca-47fe-9f7b-e99072757a04:p3:1', 'sensorymemoryshorttermmemoryandfinallylongtermmemory'),
+    ('2', 'cad1c0fd-6ade-4963-886d-e944829b137d', 'cad1c0fd-6ade-4963-886d-e944829b137d:p37:0', 'passiveforgettingvs.interferenceproactiveinterferenceretroactiveinterference'),
+    ('3', 'ba228fe2-4bcc-4d5f-9974-6cd2fe043f07', 'ba228fe2-4bcc-4d5f-9974-6cd2fe043f07:p7:2', 'forgettingcausedbylapsesinattention'),
+    ('4', 'ba228fe2-4bcc-4d5f-9974-6cd2fe043f07', 'ba228fe2-4bcc-4d5f-9974-6cd2fe043f07:p8:0', 'duetostoragedecayanaveragepersonwilllose50ofthememorizedinformationafter20minutesand70oftheinformationafter24hours')
   AS q(qid, doc, pid, qkey)
 JOIN konkyo.konkyo_pdf_text t ON t.doc_id = q.doc
 WHERE instr(t.p, q.qkey) > 0
 ```
 
-_Trace: examples/04-lecture-and-textbook/trace.jsonl (11 steps)_
+_Trace: examples/04-lecture-and-textbook/trace.jsonl (8 steps)_

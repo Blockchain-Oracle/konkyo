@@ -103,12 +103,15 @@ export type AnswerInput = {
 }
 
 const MAX_ROUNDS = 2
-/** Below this best cosine similarity, and with no full-text hit, the library doesn't cover it. */
-const MIN_SIMILARITY = 0.22
+/**
+ * Below this best cosine similarity (Nemotron Embed, query against passage), the library doesn't
+ * cover it. Measured testing: unrelated questions scored 0.12–0.19 against a 20-source library.
+ */
+const MIN_SIMILARITY = 0.2
 /**
  * Below this, the first search is thin and the Planner tries again more broadly before giving
- * up. Measured on past runs: unrelated questions top out near 0.25, questions about the papers
- * as a whole near 0.35, questions the library answers above 0.55.
+ * up. Measured testing: questions about the papers as a whole scored 0.17–0.27, questions the
+ * library answers 0.50–0.73 (a spoken dialogue's transcript 0.27).
  */
 const THIN_SIMILARITY = 0.3
 /** Passages a comparison weighs in all, shared evenly among its sources (at least 3 each). */
@@ -144,10 +147,7 @@ async function withFallback<T>(
   } catch (error) {
     if (noFallback(error)) throw error
     tracer.log({
-      agent:
-        role === "retriever"
-          ? "retriever"
-          : (role as "planner" | "writer" | "verifier" | "analyst"),
+      agent: role as "planner" | "writer" | "verifier" | "analyst",
       step,
       action: "escalated_to_fallback",
       model: fallback.id,
@@ -297,7 +297,7 @@ function mergeCandidates(first: Candidate[], second: Candidate[], limit: number)
 // ------------------------------------------------------------------ writer
 
 const WRITER_INSTRUCTIONS = `You are the Writer in a research assistant. Answer ONLY from the given passages from the user's library.
-Every sentence must carry at least one numbered citation [n], placed before the sentence's final punctuation, and for each citation number a quote that is an EXACT verbatim substring of its passage (copy the characters exactly, at least five words, no ellipses).
+Every sentence must carry at least one numbered citation [n], placed before the sentence's final punctuation, and for each citation number a quote that is an EXACT verbatim substring of its passage (copy the characters exactly, no ellipses): the shortest span that states the claim, at least five words and at most 30, never the whole passage.
 Choose each quote so that it, on its own, states what its sentence claims: the reader is shown the quote as proof. So write one finding per sentence; never pack several findings behind one citation. Quotes go only on the Sources lines: never paste a quotation into the answer as a sentence of its own.
 When passages come from several sources, say what each relevant source found (with its own citation), and where they differ.
 Keep a comparison whole: say what was compared with what ("no difference between taking it at bedtime and 3 h before"), never only one side of it.
@@ -486,7 +486,8 @@ async function reviseSentences(
 
 // ------------------------------------------------------------------ verifier
 
-// The benchmark's measured Verifier prompt (0/10 false rejections at Luna "low"), plus one rule:
+// The benchmark's measured Verifier prompt (0/10 false rejections, 6/6 planted errors caught on
+// Nemotron Ultra with thinking off, testing), plus one rule:
 // correcting the question's false premise is not an unsupported claim.
 const VERIFIER_INSTRUCTIONS = `You are the Verifier. A claim is supported only if every fact in it (numbers, durations, significance) is stated in its cited passages. Be strict about numbers. Paraphrase is fine when the meaning is the same.
 A comparison must keep what was compared with what: "no difference between A and B" does not support "A had no effect", and a finding about one group does not support a claim about everyone.

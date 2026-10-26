@@ -1,6 +1,6 @@
 import { cn } from "@konkyo/ui/lib/utils"
 
-export type Vendor = "zetaris" | "meterless" | "openai" | "elevenlabs" | "composio" | "openalex"
+export type Vendor = "zetaris" | "meterless" | "nvidia" | "elevenlabs" | "composio" | "openalex"
 
 /**
  * A partner's real logo, readable on black (OurSpaces' VendorLogo). Wordmarks stand alone; marks
@@ -26,7 +26,13 @@ const LOGOS: Record<
     width: 34,
     height: 34,
   },
-  openai: { src: "/logos/partners/openai.svg", name: "OpenAI", word: false, width: 40, height: 40 },
+  nvidia: {
+    src: "/logos/partners/nvidia.svg",
+    name: "NVIDIA Nemotron",
+    word: false,
+    width: 38,
+    height: 38,
+  },
   elevenlabs: {
     src: "/logos/partners/elevenlabs.svg",
     name: "ElevenLabs",
