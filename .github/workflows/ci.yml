@@ -18,6 +18,8 @@ jobs:
     env:
       # Builds compile everything but never connect to a service.
       SKIP_ENV_VALIDATION: "1"
+      # Static pages are rendered at build time and need the public address (as in the Dockerfile).
+      BETTER_AUTH_URL: http://localhost:3210
     steps:
       # Actions are pinned to full commit SHAs (tags can be moved).
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
