@@ -53,7 +53,7 @@ export async function ask(options: Options) {
     compare = meta.compare
     recordedMs = meta.tookMs
     progress(
-      `Sample mode: replaying the replies Nemotron, Zetaris and the library search gave on ${options.sample.recordedAt.slice(0, 10)}.\nNo keys and no services: every agent step below runs again on those replies.\n`,
+      `Sample mode: replaying the replies OpenAI, Nemotron, Zetaris and the library search gave on ${options.sample.recordedAt.slice(0, 10)}.\nNo keys and no services: every agent step below runs again on those replies.\n`,
     )
   } else if (options.record) {
     startRecording({ question, recordedAt: new Date().toISOString(), scope, compare })

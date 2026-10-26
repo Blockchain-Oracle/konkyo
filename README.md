@@ -25,8 +25,8 @@ pnpm konkyo ask --sample        # or: SAMPLE_MODE=true pnpm konkyo
 ```
 
 No `.env`, keys, database or Docker are needed. Sample mode replays a run recorded against real
-services: the replies Nemotron (on NVIDIA's API), Zetaris and the library search gave are handed
-back, and every step of Konkyo's own logic runs again on them
+services: the replies OpenAI, Nemotron (on NVIDIA's API), Zetaris and the library search gave are
+handed back, and every step of Konkyo's own logic runs again on them
 (planning, citation parsing, the quote checks, the Verifier's verdicts and rewrites, the
 agree/disagree matrix, the World Model, the trace). It prints the cited answer and the path of the
 new trace in `logs/`. `pnpm konkyo samples` lists the five recorded questions; see
@@ -34,26 +34,27 @@ new trace in `logs/`. `pnpm konkyo samples` lists the five recorded questions; s
 
 ```
 $ pnpm konkyo ask --sample 2
-Sample mode: replaying the replies Nemotron, Zetaris and the library search gave on 2026-10-21.
+Sample mode: replaying the replies OpenAI, Nemotron, Zetaris and the library search gave on 2026-10-21.
 No keys and no services: every agent step below runs again on those replies.
 
 What role do sleep spindles play in memory, and do these papers agree about it?
   ✓ Planning · What role do sleep spindles play in memory, and do these papers agree about it?
   ✓ Searching your library · 16 passages from 3 files
   ✓ Checking sources in Zetaris · 3 of 3 files confirmed
-  ✓ Comparing sources · 3 claims across 3 sources
   ✓ Writing
-  ↺ The Verifier sent back 1 sentence; rewriting (round 1)
-  ↺ The Verifier sent back 1 sentence; rewriting (round 2)
-  ✓ Verified 8 citations
+  ✓ Verified 3 citations
+  ✓ Comparing sources · 1 claim across 2 sources
 
-Sleep spindles are waxing-and-waning oscillations (~10–15 Hz) that prime cortical networks for
-neuronal plasticity [1].
+Sleep spindles are implicated as phasic electrophysiological events that can display regionally
+specific associations with offline memory enhancement …
 …
-Sources (8)
+Sources (3)
 Each quote was found word for word in Zetaris's own reading of the source.
 
-[1] Diekelmann · 2014, Sleep for cognitive enhancement, p. 4
+[2] Muehlroth et al. · 2019, Precise Slow Oscillation–Spindle Coupling Promotes Memory
+    Consolidation in Younger and Older Adults, p. 1
+    “the tight precision of so–fast sp coupling promotes memory consolidation across younger and
+    older adults”
 …
 ```
 
@@ -88,21 +89,23 @@ flowchart LR
   F --> T[Receipt + trace in logs/]
 ```
 
-| Agent | Does | Model (NVIDIA Nemotron) |
+| Agent | Does | Model |
 |---|---|---|
 | Planner | Rewrites the question to stand alone, plans 1–3 searches, flags comparisons, reads the person's corrections from H-MEM first; when the first search comes back thin, replans from what it found and searches again before saying "Not in your library" | Nemotron 3 Ultra |
 | Retriever | Hybrid search: pgvector cosine and Postgres full text per query, fused by Reciprocal Rank Fusion; questions embedded as queries, passages as passages | Nemotron 3.5 Embed |
-| Writer | One finding per sentence, each with a citation and an exact quote from its passage | Nemotron 3 Ultra |
-| Verifier | Checks each quote in code, then all of them in **one Zetaris statement** against Zetaris's own reading of the PDF; judges whether each sentence's quotes support it; sends failures back with reasons (at most two rewrite rounds); anything that still fails is dropped, never shown as verified | Nemotron 3 Ultra |
-| Analyst | When a question weighs several sources: 3–6 specific claims × sources with agrees / disagrees / partly, each stance quoted and checked in Zetaris, recorded in the World Model. Also places each paper a watch finds: agrees with, disagrees with, or new to your sources, your passage quoted | Nemotron 3 Ultra |
-| Scout | Deep search: OpenAlex papers and Wikipedia articles, screened in Markovian steps, imported and read before answering | Nemotron 3.5 Lightning plans, Ultra screens |
-| Tutor | Practice items from your passages, every answer key checked by the Verifier and every quote in Zetaris | Nemotron 3 Ultra |
+| Writer | One finding per sentence, each with a citation and an exact quote from its passage | OpenAI `gpt-6-luna` |
+| Verifier | Checks each quote in code, then all of them in **one Zetaris statement** against Zetaris's own reading of the PDF; judges whether each sentence's quotes support it; sends failures back with reasons (at most two rewrite rounds); anything that still fails is dropped, never shown as verified | OpenAI `gpt-6-luna` (low reasoning) |
+| Analyst | When a question weighs several sources: 3–6 specific claims × sources with agrees / disagrees / partly, each stance quoted and checked in Zetaris, recorded in the World Model. Also places each paper a watch finds: agrees with, disagrees with, or new to your sources, your passage quoted | OpenAI `gpt-6-luna` (low) |
+| Scout | Deep search: OpenAlex papers and web pages (OpenAI's web search, Wikipedia if it fails), screened in Markovian steps, imported and read before answering | Nemotron 3.5 Lightning plans, Nemotron 3 Ultra screens |
+| Tutor | Practice items from your passages, every answer key checked by the Verifier and every quote in Zetaris | OpenAI `gpt-6-luna` |
 
-Public questions, profiles and articles go through Nemotron 3.5 Content Safety first. Each role has
-a fallback model for errors, stalls (no answer within 45 s) and malformed replies; the switch is
-logged. The models and their thinking switch were picked by a measured benchmark on NVIDIA's API:
-Ultra with thinking off was the only setup to pass every test (0/10 false rejections, 6/6 planted
-errors caught, 9/9 quotes verbatim).
+OpenAI writes and judges; Nemotron plans, finds, screens and guards. Each role's fallback is on the
+other provider (OpenAI's on Nemotron 3 Ultra, Nemotron's on `gpt-6-luna`), so an outage, an empty
+account or NVIDIA's free tier filling up never stops an answer; the switch is logged. Public
+questions, profiles and articles go through Nemotron 3.5 Content Safety first. The models were
+picked by measured benchmarks: OpenAI's on testing, Nemotron's on NVIDIA's API on testing, where
+Ultra with thinking off passed every test (0/10 false rejections, 6/6 planted errors caught, 9/9
+quotes verbatim).
 
 ## Sponsor technology
 
@@ -136,26 +139,25 @@ can be marked verified.
   [`watch.ts`](packages/zetaris/src/watch.ts)
 - Every Zetaris call is in the trace as `queried_zetaris` with the statement's hash and rows.
 
-### NVIDIA Nemotron: every model call
+### NVIDIA Nemotron: planning, search, safety, and every fallback
 
-Every model Konkyo calls is a Nemotron model on NVIDIA's API, made in one place,
-[`packages/models`](packages/models/src/index.ts).
+Nemotron runs on NVIDIA's API through [`packages/models`](packages/models/src/index.ts), the one
+place Konkyo calls any model.
 
-- **Nemotron 3 Ultra** (550B, 55B active) plans, writes the cited answer, checks each sentence's
-  support, compares sources, screens deep-search finds, makes practice and grades it. With its
-  thinking off it was the only setup to pass every test in our benchmark on NVIDIA's API (0/10
-  false rejections, 6/6 planted errors caught, 9/9 quotes verbatim).
-- **Nemotron 3.5 Lightning** (30B, 3B active) takes the fast steps: deep-search plans, reading a
-  spoken ask, file summaries, and stands in for the judges with its thinking on.
-- **Nemotron 3.5 Super VL** is the fallback for the Writer, Analyst and Tutor.
 - **Nemotron 3.5 Embed** embeds every passage (as a passage) and every question (as a query) for
-  pgvector search, at 1536 of its 2048 dimensions.
+  pgvector search, at 1536 of its 2048 dimensions: every answer starts with it.
+- **Nemotron 3 Ultra** (550B, 55B active) plans each answer and screens deep-search finds in
+  Markovian steps, and stands in for the Writer, Verifier, Analyst, Tutor and Grader whenever
+  OpenAI is down or out: with its thinking off it passed every test in our benchmark on NVIDIA's
+  API (0/10 false rejections, 6/6 planted errors caught, 9/9 quotes verbatim).
+- **Nemotron 3.5 Lightning** (30B, 3B active) plans deep searches, reads a spoken ask while you're
+  still talking, and summarises each file as it's read.
 - **Nemotron 3.5 Content Safety** checks questions in public spaces, public profiles and every
   article before it's published.
-- The free tier is used as it is: a rate limit per model, shared by the web app and the worker;
-  a call that runs long is asked again (a hedged request) and the first answer wins; a model that
-  answers 429 is skipped for a minute; every call has a deadline and a fallback, logged in the
-  trace as `escalated_to_fallback`. [`provider.ts`](packages/models/src/provider.ts)
+- Run inside the free tier: a rate limit per model, shared by the web app and the worker; a
+  stalled call is asked again (a hedged request) and the first answer wins; a model that answers
+  429 goes second for a minute; every call has a deadline and a fallback on the other provider,
+  logged as `escalated_to_fallback`. [`provider.ts`](packages/models/src/provider.ts)
 
 ### Meterless: memory, world state and long-task reasoning
 
@@ -176,17 +178,20 @@ and driven from [`packages/agents`](packages/agents/src).
 
 ## AI and model usage
 
-- **Models and providers:** NVIDIA Nemotron on NVIDIA's API (build.nvidia.com), free tier: 3 Ultra,
-  3.5 Super VL, 3.5 Lightning, 3.5 Embed 1B and 3.5 Content Safety, as above. ElevenLabs for
+- **Models and providers:** OpenAI (`gpt-6-luna` for the Writer, Verifier, Analyst, Tutor and
+  Grader; `gpt-5-nano` running OpenAI's web search for deep search) and NVIDIA Nemotron on
+  NVIDIA's API, free tier (3 Ultra, 3.5 Lightning, 3.5 Embed 1B and 3.5 Content Safety, as above).
+  ElevenLabs for
   speech (Scribe `scribe_v2` and realtime for transcription; Flash v2.5 and Eleven v3 dialogue for
   read-aloud and audio briefs). No other AI model is called while Konkyo runs.
 - **Made once, shipped as files:** the illustrations (the looks, stickers and landing pictures)
   were generated with OpenAI's image models (gpt-image-2; stickers gpt-image-1) by
   [`scripts/make-images.mjs`](scripts/make-images.mjs), and the five study sounds with
   ElevenLabs' sound-effects model.
-- **Frameworks:** the AI SDK 7 (`ai`, `@ai-sdk/openai-compatible` pointed at NVIDIA's API),
+- **Frameworks:** the AI SDK 7 (`ai`, `@ai-sdk/openai`, and `@ai-sdk/openai-compatible` pointed at
+  NVIDIA's API),
   Next.js 16, Postgres with pgvector, pg-boss, Better Auth; Zetaris and Meterless as above.
-- **Data:** your own uploads; OpenAlex and Wikipedia for deep search and paper records; the
+- **Data:** your own uploads; OpenAlex, the web and Wikipedia for deep search and paper records; the
   sample library is openly licensed papers (see [examples/](examples/README.md)).
 - **Development:** written with Claude Code (Anthropic). Cursor was not used.
 
@@ -247,8 +252,8 @@ like any other.
 
 ## Run it yourself
 
-Needs Node 22.18+, pnpm (via `corepack enable`), Docker, a Zetaris instance and an NVIDIA API key
-(free at [build.nvidia.com](https://build.nvidia.com/settings/api-keys)).
+Needs Node 22.18+, pnpm (via `corepack enable`), Docker, a Zetaris instance, an OpenAI API key and
+an NVIDIA API key (free at [build.nvidia.com](https://build.nvidia.com/settings/api-keys)).
 
 ```bash
 cp .env.example .env            # fill it in; every variable is described there
@@ -303,9 +308,9 @@ Zetaris statement (by hash), rows returned, verdicts (`approved`, `rejected_to_w
 
 ## Limits
 
-- **Models run on NVIDIA's free API tier**: about 40 requests a minute for each model, split
-  between the web app and the worker. A busy minute queues calls rather than failing them, so
-  answers slow down under load; sample mode needs no key.
+- **Two model providers, one fallback each.** OpenAI writes and judges; when it's down or out of
+  credit, Nemotron 3 Ultra takes over, slower on NVIDIA's free tier (about 40 requests a minute
+  for each model, split between the web app and the worker). Sample mode needs no key.
 - **Live use needs Zetaris.** Nothing is marked verified without it, by design.
 - **Sample mode replays recorded questions only.** Any other question is refused, not invented.
 - **Fair-use caps** (no paywall): 300 answers, 20 deep searches and 300 files a day per account;

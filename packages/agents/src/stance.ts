@@ -1,7 +1,7 @@
 import { generateText, Output } from "ai"
 import { z } from "zod"
 import { quoteKey } from "./citations"
-import { MODELS, type ModelChoice, model, noFallback, ordered, reasoning } from "./models"
+import { type ModelChoice, model, reasoning, withFallback } from "./models"
 import { hybridSearch, type Scope } from "./retrieve"
 import type { Tracer } from "./trace"
 
@@ -90,16 +90,7 @@ export async function placeFinding(
         .join("\n\n")}`,
       abortSignal: AbortSignal.timeout(BUDGET_MS),
     })
-  const pair = ordered(MODELS.analyst)
-  let choice: ModelChoice = pair.primary
-  let result: Awaited<ReturnType<typeof call>>
-  try {
-    result = await call(choice)
-  } catch (error) {
-    if (noFallback(error)) throw error
-    choice = pair.fallback
-    result = await call(choice)
-  }
+  const { result, choice } = await withFallback("analyst", "analyst", tracer, "stance", call)
   const out = result.output
   const passage = passages.find((p) => p.label === out.passage.trim().replace(/^\[|\]$/g, ""))
   // The quote must be the person's own words from that passage; otherwise no stance is claimed.

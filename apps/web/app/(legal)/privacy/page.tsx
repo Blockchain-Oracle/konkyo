@@ -37,8 +37,12 @@ export default function PrivacyPage() {
       <h2>Who else handles it</h2>
       <ul>
         <li>
-          NVIDIA, whose API runs the Nemotron models that read questions and passages, write answers
-          and check what's shared, under NVIDIA's API terms.
+          OpenAI, to write answers from your passages and check them, and to search the web for deep
+          search (its API doesn't train on this data).
+        </li>
+        <li>
+          NVIDIA, whose API runs the Nemotron models that plan answers, find passages and check
+          what's shared, and that stand in when OpenAI can't, under NVIDIA's API terms.
         </li>
         <li>ElevenLabs, to transcribe recordings you upload and to make audio briefs.</li>
         <li>Zetaris, which stores the source text used to check every quote.</li>

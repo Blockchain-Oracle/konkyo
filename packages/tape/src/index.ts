@@ -5,11 +5,11 @@ import path from "node:path"
 
 /**
  * Record and replay (plan S09, sample mode). A real run records what came back across each outside
- * boundary: Nemotron's HTTP replies from NVIDIA's API, the rows of each Zetaris statement, the
- * library search and the H-MEM recall. A replay hands those same bytes back instead of calling the
- * services, while every line of Konkyo's own logic (planning, citation parsing, the quote checks,
- * the Verifier's rewrites, the matrix, the World Model, the trace) runs again. Off unless the CLI
- * turns it on: in the web app and the worker every wrapper calls straight through.
+ * boundary: the model APIs' HTTP replies (OpenAI, Nemotron), the rows of each Zetaris statement,
+ * the library search and the H-MEM recall. A replay hands those same bytes back instead of calling
+ * the services, while every line of Konkyo's own logic (planning, citation parsing, the quote
+ * checks, the Verifier's rewrites, the matrix, the World Model, the trace) runs again. Off unless
+ * the CLI turns it on: in the web app and the worker every wrapper calls straight through.
  */
 
 export type TapeMeta = {

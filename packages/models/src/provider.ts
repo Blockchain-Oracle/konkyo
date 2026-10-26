@@ -1,19 +1,24 @@
+import { createOpenAI } from "@ai-sdk/openai"
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible"
 import type {
   LanguageModelV4CallOptions,
   LanguageModelV4StreamPart,
   LanguageModelV4StreamResult,
+  SharedV4ProviderOptions,
 } from "@ai-sdk/provider"
-import { MODEL_API, type ModelChoice, type ModelEffort } from "@konkyo/config"
+import { MODEL_API, type ModelChoice, type ModelEffort, providerOf } from "@konkyo/config"
 import { env } from "@konkyo/env/server"
 import { tapedFetch } from "@konkyo/tape"
 import { type LanguageModel, wrapLanguageModel } from "ai"
-import { markBusy } from "./health"
+import { markBusy, markOutOfCredit } from "./health"
 import { hedged } from "./hedge"
 import { limiterFor } from "./limiter"
 
-/** Where the calls go: NVIDIA's API, or the self-hosted server MODEL_BASE_URL names. */
-export const baseURL = env.MODEL_BASE_URL ?? MODEL_API.baseURL
+/** Where Nemotron calls go: NVIDIA's API, or the self-hosted NIM MODEL_BASE_URL names. */
+export const baseURL = env.MODEL_BASE_URL ?? MODEL_API.nvidia.baseURL
+
+/** OpenAI's Responses API, through the tape like every model call (sample mode, S09). */
+export const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY, fetch: tapedFetch })
 
 /**
  * NVIDIA's API speaks the OpenAI chat format, so one OpenAI-compatible provider reaches every
@@ -28,7 +33,7 @@ export const nvidia = createOpenAICompatible({
   supportsStructuredOutputs: true,
 })
 
-/** The key has no credit left: no retry, and no fallback model on the same key, helps. */
+/** An account has no credit left: its calls go to the other provider until it has some again. */
 export class OutOfCreditError extends Error {
   constructor() {
     super("Konkyo's AI service is out of credit right now. Try again later.")
@@ -37,16 +42,20 @@ export class OutOfCreditError extends Error {
 }
 
 function isOutOfCredit(error: unknown): boolean {
-  const e = error as { statusCode?: number; message?: string }
+  const e = error as {
+    statusCode?: number
+    message?: string
+    data?: { error?: { code?: string; type?: string } }
+  }
+  const code = e?.data?.error?.code ?? e?.data?.error?.type
   return (
     e?.statusCode === 402 ||
-    /out of credits?|insufficient credits?|payment required/i.test(e?.message ?? "")
+    code === "insufficient_quota" ||
+    code === "credit_balance_exhausted" ||
+    /insufficient_quota|credit_balance_exhausted|no credits remaining|out of credits?|payment required/i.test(
+      e?.message ?? "",
+    )
   )
-}
-
-// Thrown inside the SDK's retry loop as a non-API error, so it isn't retried with backoff.
-const failFast = (error: unknown): never => {
-  throw isOutOfCredit(error) ? new OutOfCreditError() : error
 }
 
 /** The model didn't answer within its deadline: the role's fallback takes over. */
@@ -68,8 +77,16 @@ export class ModelBusyError extends Error {
   }
 }
 
-/** A failure as the caller should see it, noting a model that refused or stalled. */
+/**
+ * A failure as the caller should see it, noting a model that refused or stalled, and an account
+ * out of credit (OpenAI answers that with a 429 too, so it is checked first). None of these is
+ * retried by the SDK; the role's fallback, on the other provider, takes the call.
+ */
 function settle(modelId: string, error: unknown) {
+  if (isOutOfCredit(error)) {
+    markOutOfCredit(modelId)
+    return new OutOfCreditError()
+  }
   if ((error as { statusCode?: number })?.statusCode === 429) {
     markBusy(modelId)
     return new ModelBusyError(modelId)
@@ -128,9 +145,11 @@ function resume({ reader, head }: Started): ReadableStream<LanguageModelV4Stream
 const hedgeLog = (id: string, ms: number) => () =>
   console.info(`[hedge] ${id}: no answer after ${ms} ms, asked again`)
 
-/** A failure a fallback model can't fix: the person stopped it, or the key is out of credit. */
-export const noFallback = (error: unknown) =>
-  ["AbortError", "OutOfCreditError"].includes((error as Error)?.name)
+/**
+ * A failure a fallback model can't fix: the person stopped it. (An empty account can: every
+ * role's fallback is on the other provider.)
+ */
+export const noFallback = (error: unknown) => (error as Error)?.name === "AbortError"
 
 /**
  * Every model call goes through its model's rate limiter, a hedge and a deadline. The hedge: when
@@ -146,7 +165,7 @@ export function model(choice: ModelChoice): LanguageModel {
   const after = choice.hedgeAfterMs
   const onHedge = after === undefined ? undefined : hedgeLog(choice.id, after)
   return wrapLanguageModel({
-    model: nvidia(choice.id),
+    model: providerOf(choice.id) === "nvidia" ? nvidia(choice.id) : openai(choice.id),
     middleware: {
       transformParams: async ({ params }) => ({
         ...params,
@@ -164,7 +183,7 @@ export function model(choice: ModelChoice): LanguageModel {
           })
         } catch (error) {
           const timeout = new ModelTimeoutError(choice.id, answerMs)
-          return failFast(settle(choice.id, due.timedOut() ? timeout : error))
+          throw settle(choice.id, due.timedOut() ? timeout : error)
         } finally {
           due.clear()
         }
@@ -183,7 +202,7 @@ export function model(choice: ModelChoice): LanguageModel {
           return { ...started.result, stream: resume(started) }
         } catch (error) {
           const timeout = new ModelTimeoutError(choice.id, firstTokenMs)
-          return failFast(settle(choice.id, due.timedOut() ? timeout : error))
+          throw settle(choice.id, due.timedOut() ? timeout : error)
         } finally {
           // The deadline is for the first content; once it has come, the stream runs its course.
           due.clear()
@@ -194,15 +213,19 @@ export function model(choice: ModelChoice): LanguageModel {
 }
 
 /**
- * Nemotron's thinking switch, through its chat template: off, low effort, or full. The same
- * request body works on NVIDIA's API and on a self-hosted vLLM or Nightshift server.
+ * Nemotron's thinking switch, through its chat template: off, low effort, or full (the same
+ * request body works on NVIDIA's API and on a self-hosted NIM or vLLM).
  */
 const THINKING: Record<ModelEffort, Record<string, boolean | number>> = {
-  off: { enable_thinking: false },
+  none: { enable_thinking: false },
+  minimal: { enable_thinking: false },
   low: { enable_thinking: true, low_effort: true, reasoning_budget: MODEL_API.thinkingBudget.low },
+  medium: { enable_thinking: true, reasoning_budget: MODEL_API.thinkingBudget.high },
   high: { enable_thinking: true, reasoning_budget: MODEL_API.thinkingBudget.high },
 }
 
-export const reasoning = (choice: ModelChoice) => ({
-  nvidia: { chat_template_kwargs: THINKING[choice.reasoning] },
-})
+/** How much a model thinks, in its own provider's terms (each provider reads only its own key). */
+export const reasoning = (choice: ModelChoice): SharedV4ProviderOptions =>
+  providerOf(choice.id) === "nvidia"
+    ? { nvidia: { chat_template_kwargs: THINKING[choice.reasoning] } }
+    : { openai: { reasoningEffort: choice.reasoning } }

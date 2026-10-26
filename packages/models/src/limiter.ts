@@ -1,4 +1,4 @@
-import { LIMITS } from "@konkyo/config"
+import { MODEL_API, providerOf } from "@konkyo/config"
 import { env } from "@konkyo/env/server"
 
 /**
@@ -64,15 +64,21 @@ shared.__konkyoLimiters ??= new Map()
 const limiters = shared.__konkyoLimiters
 
 /**
- * NVIDIA limits each model separately (in testing), so every model has its own bucket, shared by every call to it here.
+ * Every model has its own bucket, shared by every call to it here: NVIDIA limits each model
+ * separately (in testing), and
+ * this process takes its share of that (MODEL_REQUESTS_PER_MINUTE, half by default); an OpenAI
+ * model gets the account-sized bucket.
  */
 export function limiterFor(modelId: string): Limiter {
   let limiter = limiters.get(modelId)
   if (!limiter) {
-    limiter = new Limiter(
-      env.MODEL_REQUESTS_PER_MINUTE ?? LIMITS.modelRequestsPerMinute,
-      LIMITS.modelCallsInFlight,
-    )
+    const nvidia = providerOf(modelId) === "nvidia"
+    limiter = nvidia
+      ? new Limiter(
+          env.MODEL_REQUESTS_PER_MINUTE ?? MODEL_API.nvidia.requestsPerMinute / 2,
+          MODEL_API.nvidia.callsInFlight,
+        )
+      : new Limiter(MODEL_API.openai.requestsPerMinute, MODEL_API.openai.callsInFlight)
     limiters.set(modelId, limiter)
   }
   return limiter

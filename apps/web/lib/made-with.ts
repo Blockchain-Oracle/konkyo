@@ -213,22 +213,22 @@ export const PARTNERS: Partner[] = [
     id: "nvidia",
     name: "NVIDIA Nemotron",
     color: "violet",
-    role: "the models that plan, write, check and teach",
-    headline: ["Nemotron for", "every job."],
+    role: "planning, search, safety and every fallback",
+    headline: ["Every answer", "starts on Nemotron."],
     intro:
-      "Every model call in Konkyo is Nemotron on NVIDIA's API: Ultra where judgement and writing matter, Lightning where speed does, each backed by another. Nemotron Embed finds the passages; Nemotron Content Safety keeps shared spaces safe.",
+      "Nemotron 3 Ultra plans each answer and Nemotron Embed finds its passages; OpenAI then writes and judges. Lightning reads a spoken ask and plans deep searches, Ultra screens what they find, Content Safety guards what's shared, and when OpenAI is down or out, Ultra writes and checks instead.",
     cta: {
       label: "ask three real papers",
       href: "/#ask",
       note: "The receipt under each answer names the models that made it.",
     },
     example:
-      "Read from the app's own config: the Nemotron model each agent uses, whether it thinks first, and its fallback.",
+      "Read from the app's own config: the Nemotron model in each job, whether it goes first or stands in, and what it was measured to do.",
     journeyTitle: "Follow one answer.",
     journey: [
       {
-        title: "The Planner turns it into searches.",
-        body: "One to three searches written in the words your passages would use, with your corrections read first.",
+        title: "Ultra turns it into searches.",
+        body: "One to three searches written in the words your passages would use, with your corrections read first; a stalled call is asked again, and OpenAI takes over if Ultra is busy.",
         code: { file: ANSWER, symbol: "plan" },
       },
       {
@@ -237,26 +237,26 @@ export const PARTNERS: Partner[] = [
         code: { file: "packages/models/src/embed.ts", symbol: "embed" },
       },
       {
-        title: "The Writer quotes.",
-        body: "One finding per sentence, each with its quote, streamed as it writes.",
-        code: { file: ANSWER, symbol: "write" },
+        title: "OpenAI writes; Ultra is in reserve.",
+        body: "The Writer quotes one finding per sentence. If OpenAI fails, stalls or runs out of credit, Nemotron 3 Ultra writes it instead, and the switch is in the trace.",
+        code: { file: "packages/agents/src/models.ts", symbol: "withFallback" },
       },
       {
-        title: "The Verifier judges support.",
-        body: "While Zetaris checks the words, Nemotron Ultra reads each claim beside its passages and says whether they back it.",
-        code: { file: ANSWER, symbol: "verify" },
+        title: "Content Safety guards what's shared.",
+        body: "A question asked in a public space, a public profile, and every article before it's published go through Nemotron Content Safety; a whole article is one check.",
+        code: { file: "packages/agents/src/moderate.ts", symbol: "moderateAll" },
       },
     ],
     capabilities: [
       {
         title: "Measured, then picked.",
-        body: "Each role's model and thinking switch came out of a benchmark on NVIDIA's API: Ultra with thinking off was the only setup to pass everything, 0 of 10 false rejections, 6 of 6 planted errors caught, 9 of 9 quotes verbatim. Lightning judges well only when it thinks, so where it stands in, it thinks.",
+        body: "On NVIDIA's API, Ultra with its thinking off was the only setup to pass every test: 0 of 10 false rejections, 6 of 6 planted errors, 9 of 9 quotes verbatim. So it plans, screens, and backs up every judge.",
         code: { file: "packages/config/src/index.ts", symbol: "MODELS" },
       },
       {
-        title: "Practice with checked keys.",
-        body: "The Tutor makes recall, fix-the-false-statement and find-the-evidence items from your passages; every answer key then goes to the Verifier and to Zetaris.",
-        code: { file: "packages/agents/src/tutor.ts", symbol: "makeItems" },
+        title: "Deep search in bounded steps.",
+        body: "Lightning plans the searches; Ultra screens the papers and pages found eight at a time, carrying only the shortlist, so the context stays the same size however much comes back.",
+        code: { file: SCOUT, symbol: "screenSources" },
       },
       {
         title: "Asymmetric search.",
@@ -264,25 +264,25 @@ export const PARTNERS: Partner[] = [
         code: { file: "packages/models/src/embed.ts", symbol: "embeddingKey" },
       },
       {
-        title: "Safe to share.",
-        body: "Questions asked in a public space, public profiles, and every article before it's published go through Nemotron Content Safety; a whole article is one check.",
-        code: { file: "packages/agents/src/moderate.ts", symbol: "moderateAll" },
+        title: "Spoken asks, while you talk.",
+        body: "When no pattern places what you said, Lightning picks the action in about a second, with an 8-second deadline and OpenAI behind it.",
+        code: { file: "packages/agents/src/intent-model.ts", symbol: "readIntent" },
       },
     ],
     technical: [
       {
         title: "Asked twice, then a fallback",
-        body: "A call that runs past its usual time is asked again and the first answer wins. One that fails, or gives nothing within 45 seconds (a stream: no first word within 25), runs on the role's fallback model, and the switch is written to the run's trace.",
+        body: "A Nemotron call that runs past its usual time is asked again and the first answer wins. One that fails, or gives nothing within 45 seconds (a stream: no first word within 25), runs on the other provider, and the switch is written to the run's trace.",
         code: { file: "packages/models/src/hedge.ts", symbol: "hedged" },
       },
       {
         title: "Inside the free tier",
-        body: "NVIDIA allows about 40 requests a minute for each model. Every call to a model shares its token bucket, and the web app and worker split it: a busy minute queues, it never fails.",
+        body: "NVIDIA allows about 40 requests a minute for each model. Every call to a model shares its token bucket, the web app and worker split it, and a model that answers 429 goes second for a minute.",
         code: { file: "packages/models/src/limiter.ts", symbol: "limiterFor" },
       },
       {
         title: "Only the failures are rewritten",
-        body: "Sentences the Verifier rejected go back to the Writer with its reasons; every other sentence stays word for word.",
+        body: "Sentences the Verifier rejected go back to the Writer with its reasons; a later round judges only those, and every other sentence stays word for word.",
         code: { file: ANSWER, symbol: "reviseSentences" },
       },
       {
@@ -291,7 +291,7 @@ export const PARTNERS: Partner[] = [
         code: { file: "packages/config/src/index.ts", symbol: "INGEST" },
       },
     ],
-    docs: "sponsor-tech#nvidia-nemotron-the-models-that-plan-write-check-and-teach",
+    docs: "sponsor-tech#nvidia-nemotron-planning-search-safety-and-every-fallback",
   },
   {
     id: "elevenlabs",

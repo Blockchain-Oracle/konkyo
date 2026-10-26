@@ -19,10 +19,9 @@ import {
   MODELS,
   type ModelChoice,
   model,
-  noFallback,
-  ordered,
   type Role,
   reasoning,
+  withFallback as runWithFallback,
 } from "./models"
 import { type Candidate, hybridSearch, type Scope } from "./retrieve"
 import type { Tracer } from "./trace"
@@ -145,28 +144,20 @@ function spread(candidates: Candidate[], perFile: number, limit: number) {
     .slice(0, limit)
 }
 
-/** Runs one model call, escalating to the role's fallback model on failure (plan §2 Escalation). */
-async function withFallback<T>(
+/** Runs one model call on the role's models in turn (plan §2 Escalation): `models.ts`. */
+const withFallback = <T>(
   role: Role,
   tracer: Tracer,
   step: string,
   call: (choice: ModelChoice) => Promise<T>,
-): Promise<{ result: T; choice: ModelChoice }> {
-  const { primary, fallback } = ordered(MODELS[role])
-  try {
-    return { result: await call(primary), choice: primary }
-  } catch (error) {
-    if (noFallback(error)) throw error
-    tracer.log({
-      agent: role as "planner" | "writer" | "verifier" | "analyst",
-      step,
-      action: "escalated_to_fallback",
-      model: fallback.id,
-      detail: { reason: (error as Error).message.slice(0, 300), from: primary.id },
-    })
-    return { result: await call(fallback), choice: fallback }
-  }
-}
+) =>
+  runWithFallback(
+    role,
+    role === "planner" || role === "writer" || role === "analyst" ? role : "verifier",
+    tracer,
+    step,
+    call,
+  )
 
 // ------------------------------------------------------------------ planner
 
@@ -340,8 +331,11 @@ function passagesBlock(sources: SourceRef[]) {
     .join("\n\n")
 }
 
-/** A cited answer is a few sentences and their source lines; this leaves room for long quotes. */
-const WRITER_MAX_TOKENS = 1_600
+/**
+ * A cited answer is a few sentences and their source lines (about 600–1,000 tokens); this leaves
+ * room for a long one while still stopping a model stuck in a loop well short of minutes.
+ */
+const WRITER_MAX_TOKENS = 3_000
 
 /** The Writer has started looping (the same sentence over and over): its fallback takes over. */
 class RepetitionError extends Error {

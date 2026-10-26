@@ -7,7 +7,7 @@ import { z } from "zod"
 import type { AnswerInput, SourceRef } from "./answer"
 import { quoteKey } from "./citations"
 import { freshCache } from "./fresh"
-import { MODELS, type ModelChoice, model, noFallback, ordered, reasoning } from "./models"
+import { type ModelChoice, model, reasoning, withFallback } from "./models"
 
 /** A source's position on a claim (plan §7.4 #4): the stance glyph and its one word. */
 export type Stance = "agrees" | "disagrees" | "partly"
@@ -284,23 +284,11 @@ export async function analyse(
         ...(input.abortSignal ? [input.abortSignal] : []),
       ]),
     })
-  const pair = ordered(MODELS.analyst)
-  let choice: ModelChoice = pair.primary
-  let result: Awaited<ReturnType<typeof call>>
-  try {
-    result = await call(choice, ANALYST_BUDGET_MS.primary)
-  } catch (error) {
-    if (noFallback(error)) throw error
-    choice = pair.fallback
-    tracer.log({
-      agent: "analyst",
-      step: "claims",
-      action: "escalated_to_fallback",
-      model: choice.id,
-      detail: { reason: (error as Error).message.slice(0, 300) },
-    })
-    result = await call(choice, ANALYST_BUDGET_MS.fallback)
-  }
+  // The first model tried gets the primary's budget; a stand-in, the fallback's.
+  let attempt = 0
+  const { result, choice } = await withFallback("analyst", "analyst", tracer, "claims", (c) =>
+    call(c, attempt++ === 0 ? ANALYST_BUDGET_MS.primary : ANALYST_BUDGET_MS.fallback),
+  )
 
   // Code check: a cell stays only if its quote is in the passage it names.
   const byLabel = new Map(sources.map((s) => [s.label, s]))

@@ -1,9 +1,9 @@
 /**
- * Every model call Konkyo makes goes through here: Nemotron on NVIDIA's API (or a self-hosted
- * NIM with the same ids), a rate limit per model in each process, and the tape for sample mode.
+ * Every model call Konkyo makes goes through here: OpenAI's API and Nemotron on NVIDIA's (or a
+ * self-hosted NIM), a rate limit per model in each process, and the tape for sample mode.
  */
 export { type EmbedAs, embed, embeddingKey } from "./embed"
-export { isBusy, markBusy, ordered } from "./health"
+export { inOrder, isBusy, markBusy, markOutOfCredit } from "./health"
 export { limiterFor } from "./limiter"
 export {
   baseURL,
@@ -13,5 +13,6 @@ export {
   noFallback,
   nvidia,
   OutOfCreditError,
+  openai,
   reasoning,
 } from "./provider"

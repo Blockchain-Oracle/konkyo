@@ -5,7 +5,7 @@ import { generateText } from "ai"
 export type Moderation = { flagged: boolean; categories: string[]; checked: boolean }
 
 /** A verdict usually takes under a second; a stalled one is asked again at 3 s. */
-const SAFETY = { id: PUBLIC.moderationModel, reasoning: "off", hedgeAfterMs: 3_000 } as const
+const SAFETY = { id: PUBLIC.moderationModel, reasoning: "none", hedgeAfterMs: 3_000 } as const
 /** The verdict is two short lines; the model card samples it near-greedily. */
 const VERDICT_TOKENS = 60
 const TEMPERATURE = 0.01

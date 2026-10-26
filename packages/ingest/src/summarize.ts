@@ -4,7 +4,7 @@ import { generateText, Output } from "ai"
 import { z } from "zod"
 
 /** Short grounded writing: the fast model, no thinking. */
-const SUMMARY: ModelChoice = { id: INGEST.summaryModel, reasoning: "off" }
+const SUMMARY: ModelChoice = { id: INGEST.summaryModel, reasoning: "none" }
 
 /** Enough of a document to say what it is: its opening, where abstracts and introductions are. */
 const SUMMARY_CHARS = 12_000

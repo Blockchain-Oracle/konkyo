@@ -1,6 +1,6 @@
 "use client"
 
-import { BRIEF, CONNECTORS, MODELS, NEMOTRON } from "@konkyo/config"
+import { BRIEF, CONNECTORS, MODELS, type ModelChoice, NEMOTRON, providerOf } from "@konkyo/config"
 import { PauseIcon, PlayIcon } from "lucide-react"
 import { type ReactNode, useEffect, useRef, useState } from "react"
 import type { Vendor } from "@/components/landing/vendor-logo"
@@ -238,14 +238,32 @@ function MeterlessExample() {
   )
 }
 
-// ------------------------------------------------------------------ NVIDIA: the Nemotron model per job
+// ------------------------------------------------------------------ NVIDIA: Nemotron's part in each job
 
 const ROLES = [
   {
     id: "planner",
     label: "Planner",
-    does: "Plans the run",
-    measured: "the only setup that passed every test: valid JSON 3/3, 0 false rejections",
+    does: "Plans every answer",
+    measured: "the only setup that passed every test on NVIDIA's API: valid JSON 3/3",
+  },
+  {
+    id: "screener",
+    label: "Screener",
+    does: "Screens deep-search finds",
+    measured: "one batch of abstracts per Markovian step, only the shortlist carried",
+  },
+  {
+    id: "scout",
+    label: "Scout",
+    does: "Plans a deep search",
+    measured: "three paper queries and a web query in about a second",
+  },
+  {
+    id: "intent",
+    label: "Voice",
+    does: "Reads a spoken ask",
+    measured: "a one-line pick in about a second, while you're still talking",
   },
   {
     id: "writer",
@@ -257,69 +275,73 @@ const ROLES = [
     id: "verifier",
     label: "Verifier",
     does: "Checks each claim's support",
-    measured: "0/10 false rejections, 6/6 planted errors caught, thinking off",
-  },
-  {
-    id: "analyst",
-    label: "Analyst",
-    does: "Lines up where sources agree",
-    measured: "the same strict support judgement as the Verifier",
-  },
-  {
-    id: "tutor",
-    label: "Tutor",
-    does: "Makes practice from passages",
-    measured: "17 of 19 drafted items passed every check; Lightning's never did",
-  },
-  {
-    id: "screener",
-    label: "Screener",
-    does: "Screens deep-search finds",
-    measured: "reads one batch of abstracts per Markovian step",
+    measured: "0/10 false rejections, 6/6 planted errors caught",
   },
 ] as const
 
-/** Nemotron's model ids, as people say them. */
+/** Model ids, as people say them. */
 const NAMES: Record<string, string> = {
   [NEMOTRON.super]: "Nemotron 3.5 Super",
   [NEMOTRON.ultra]: "Nemotron 3 Ultra",
   [NEMOTRON.lightning]: "Nemotron 3.5 Lightning",
 }
 const nameOf = (id: string) => NAMES[id] ?? id
-const THINKING = { off: "thinking off", low: "thinks first (low effort)", high: "thinks first" }
+/** Nemotron's thinking switch, as the card says it. */
+const THINKING: Record<ModelChoice["reasoning"], string> = {
+  none: "thinking off",
+  minimal: "thinking off",
+  low: "thinks first (low effort)",
+  medium: "thinks first",
+  high: "thinks first",
+}
+
+/** The Nemotron model in a role: its first choice, or the stand-in behind an OpenAI model. */
+function nemotronIn(role: (typeof ROLES)[number]["id"]) {
+  const { primary, fallback } = MODELS[role]
+  const first = providerOf(primary.id) === "nvidia"
+  return { model: first ? primary : fallback, other: first ? fallback : primary, first }
+}
 
 function NvidiaExample() {
-  const [role, setRole] = useState<(typeof ROLES)[number]["id"]>("writer")
+  const [role, setRole] = useState<(typeof ROLES)[number]["id"]>("planner")
   const picked = ROLES.find((r) => r.id === role) ?? ROLES[0]
-  const { primary, fallback } = MODELS[role]
+  const { model, other, first } = nemotronIn(role)
   return (
     <>
-      <Tabs options={ROLES} value={role} onChange={setRole} label="Agent" />
+      <Tabs options={ROLES} value={role} onChange={setRole} label="Job" />
       <div className="mw-stage" key={role}>
         <div className="mw-slip mw-model">
           <small>{picked.does}</small>
-          <p className="mw-model-id">{nameOf(primary.id)}</p>
-          <p className="mw-model-effort">{THINKING[primary.reasoning]}</p>
+          <p className="mw-model-id">{nameOf(model.id)}</p>
+          <p className="mw-model-effort">{THINKING[model.reasoning]}</p>
           <dl className="mw-fields">
             <div>
-              <dt>why this one</dt>
-              <dd>{picked.measured}</dd>
+              <dt>its part</dt>
+              <dd>
+                {first
+                  ? `first choice; ${other.id} if it's busy`
+                  : `stands in for ${other.id} when OpenAI is down or out`}
+              </dd>
             </div>
             <div>
-              <dt>if it fails</dt>
-              <dd>
-                {nameOf(fallback.id)} · {THINKING[fallback.reasoning]}
-              </dd>
+              <dt>measured</dt>
+              <dd>{picked.measured}</dd>
             </div>
           </dl>
         </div>
-        <ul className="mw-roster" aria-label="Every agent's model">
-          {ROLES.map((r) => (
-            <li key={r.id} className={r.id === role ? "is-on" : ""}>
-              <span>{r.label}</span>
-              <span>{nameOf(MODELS[r.id].primary.id)}</span>
-            </li>
-          ))}
+        <ul className="mw-roster" aria-label="Nemotron in every job">
+          {ROLES.map((r) => {
+            const job = nemotronIn(r.id)
+            return (
+              <li key={r.id} className={r.id === role ? "is-on" : ""}>
+                <span>{r.label}</span>
+                <span>
+                  {nameOf(job.model.id)}
+                  {job.first ? "" : " (stand-in)"}
+                </span>
+              </li>
+            )
+          })}
         </ul>
       </div>
     </>

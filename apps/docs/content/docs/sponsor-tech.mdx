@@ -41,28 +41,27 @@ The engines are vendored unchanged (Apache-2.0) in `packages/meterless` and driv
 - **Markovian** (`scout.ts`): deep search screens what it found in bounded steps that carry only
   the shortlist forward; its estimate of tokens saved is shown and logged.
 
-## NVIDIA Nemotron: the models that plan, write, check and teach
+## NVIDIA Nemotron: planning, search, safety, and every fallback
 
-Every model call in Konkyo is a Nemotron model on NVIDIA's API, made in one place
-(`packages/models`):
+Konkyo calls two model providers from one place (`packages/models`): OpenAI writes and judges
+(`gpt-6-luna`: the Writer, Verifier, Analyst, Tutor and Grader), and Nemotron on NVIDIA's API does
+the rest, and stands in for OpenAI whenever it is down or out.
 
-- **Nemotron 3 Ultra** (550B, 55B active) plans, writes, checks each claim's support, builds the
-  agree/disagree matrix, screens deep-search finds, makes practice and grades it: with thinking
-  off it was the only setup to pass every test in the benchmark. **Nemotron 3.5 Lightning** (30B,
-  3B active) takes the fast JSON steps: deep-search plans, reading a spoken ask, file summaries.
-  Each role has a fallback on another model (Lightning thinking, or Nemotron 3.5 Super), and the
-  switch is logged. Which role runs on which, and with thinking on
-  or off, is in [The agents and their trace](/agents-and-traces).
+- **Nemotron 3.5 Embed** finds the passages: every passage is embedded as a passage and every
+  question as a query, at 1536 of its 2048 dimensions, beside Postgres full-text search.
+- **Nemotron 3 Ultra** (550B, 55B active) plans each answer and screens deep-search finds in
+  Markovian steps; with its thinking off it passed every test in our benchmark on NVIDIA's API, so
+  it is the fallback for every OpenAI role.
+- **Nemotron 3.5 Lightning** (30B, 3B active) plans deep searches, reads a spoken ask, and
+  summarises each file as it's read.
+- **Nemotron 3.5 Content Safety** checks questions asked in a public space, public profiles, and
+  every article before it's published.
 - **Thinking is a switch per role**, sent through Nemotron's chat template (`enable_thinking`,
-  `low_effort`, `reasoning_budget`): Ultra judged best with it off; Lightning only judges well
-  with it on, so where it stands in for a judge, it thinks.
-- **Nemotron 3.5 Embed** finds the passages: 1536 of its 2048 dimensions, asked as a passage
-  when a file is indexed and as a query when you ask, beside Postgres full-text search.
-- **Nemotron 3.5 Content Safety** checks questions asked in a public space, public profiles,
-  and every article before it's published.
-- **A rate limit per model**, shared by the web app and the worker, so the app stays inside
-  NVIDIA's free tier (about 40 requests a minute for each model) by queueing, never by failing.
-- **Your own GPUs instead**: `MODEL_BASE_URL` sends the same calls to a self-hosted NVIDIA NIM
+  `low_effort`, `reasoning_budget`).
+- **Inside the free tier**: a rate limit per model, shared by the web app and the worker; a
+  stalled call is asked again and the first answer wins; a model that answers 429 is tried second
+  for a minute.
+- **Your own GPUs instead**: `MODEL_BASE_URL` sends the Nemotron calls to a self-hosted NVIDIA NIM
   serving the same model ids.
 
 ## ElevenLabs: listening and speaking
@@ -83,7 +82,7 @@ pipeline as an upload. (`packages/connectors/src/index.ts`)
 ## OpenAlex: open papers
 
 - **Deep search** looks up open-access papers on OpenAlex when your library runs out, beside
-  Wikipedia's own search for explainers. (`packages/agents/src/scout.ts`)
+  OpenAI's web search (Wikipedia's own search if that fails). (`packages/agents/src/scout.ts`)
 - **Citation records**: a DOI or title is matched on OpenAlex for authors, venue and licence.
   (`packages/ingest/src/metadata.ts`)
 - **Topic watches** are Zetaris `REST` tables over the OpenAlex API (see Zetaris above).

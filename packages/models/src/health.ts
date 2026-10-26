@@ -1,4 +1,4 @@
-import { MODEL_API, type ModelChoice } from "@konkyo/config"
+import { MODEL_API, type ModelChoice, providerOf, type RoleModels } from "@konkyo/config"
 
 /**
  * Which models just refused (429) or stalled past their deadline. On NVIDIA's free tier a model's
@@ -14,13 +14,20 @@ export function markBusy(modelId: string) {
   busyUntil.set(modelId, Date.now() + MODEL_API.busyCooldownMs)
 }
 
-export const isBusy = (modelId: string) => (busyUntil.get(modelId) ?? 0) > Date.now()
+/** An account out of credit: every model of that provider goes second for a while. */
+export function markOutOfCredit(modelId: string) {
+  busyUntil.set(`provider:${providerOf(modelId)}`, Date.now() + MODEL_API.outOfCreditCooldownMs)
+}
 
-/** A role's two models in the order to try them now: a busy primary swaps with its fallback. */
-export function ordered<T extends { primary: ModelChoice; fallback: ModelChoice }>(
-  role: T,
-): { primary: ModelChoice; fallback: ModelChoice } {
-  return isBusy(role.primary.id) && !isBusy(role.fallback.id)
-    ? { primary: role.fallback, fallback: role.primary }
-    : role
+export const isBusy = (modelId: string) =>
+  Math.max(busyUntil.get(modelId) ?? 0, busyUntil.get(`provider:${providerOf(modelId)}`) ?? 0) >
+  Date.now()
+
+/**
+ * A role's models in the order to try them now: the ones answering first, in the role's own
+ * order, then the busy ones (still worth a try when nothing else is left).
+ */
+export function inOrder(role: RoleModels): ModelChoice[] {
+  const all = [role.primary, role.fallback, ...(role.reserve ? [role.reserve] : [])]
+  return [...all.filter((c) => !isBusy(c.id)), ...all.filter((c) => isBusy(c.id))]
 }

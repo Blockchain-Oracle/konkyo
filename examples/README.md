@@ -1,6 +1,6 @@
 # Examples
 
-Five real runs of Konkyo's answer pipeline on NVIDIA Nemotron, recorded on 2026 against a sample library
+Five real runs of Konkyo's answer pipeline, recorded on 2026 against a sample library
 of openly licensed sources (see [Sources and licences](#sources-and-licences)). Each folder holds:
 
 | File | What it is |
@@ -8,7 +8,7 @@ of openly licensed sources (see [Sources and licences](#sources-and-licences)). 
 | `input.json` | The question, the folder it was asked in, and when it was recorded |
 | `output.md` | What Konkyo answered: the answer, every citation with its quote, the agree/disagree matrix when there is one, what the Verifier sent back, and the Zetaris statement that checked the quotes |
 | `trace.jsonl` | The agents' trace: one line per step (which agent, which model, which Zetaris statement by hash, rows returned, verdicts, latency, tokens) |
-| `tape.jsonl` | The replies from outside services (Nemotron on NVIDIA's API, Zetaris, the library search, H-MEM recall) that sample mode replays |
+| `tape.jsonl` | The replies from outside services (OpenAI, Nemotron on NVIDIA's API, Zetaris, the library search, H-MEM recall) that sample mode replays |
 
 | # | Question | Shows |
 |---|---|---|

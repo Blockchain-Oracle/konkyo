@@ -79,6 +79,7 @@ if (command === "ask" && sample) {
   // Analyst writes goes to a scratch folder, not your data.
   process.env.SKIP_ENV_VALIDATION = "1"
   process.env.NVIDIA_API_KEY = "sample-mode"
+  process.env.OPENAI_API_KEY = "sample-mode"
   process.env.KONKYO_WORLD_DIR = mkdtempSync(path.join(tmpdir(), "konkyo-sample-"))
   const examples = await listExamples(root)
   const example = pickExample(examples, question || undefined)

@@ -2,7 +2,7 @@ import { checkQuotes, sqlHash } from "@konkyo/zetaris"
 import { generateText, Output } from "ai"
 import { z } from "zod"
 import { quoteKey } from "./citations"
-import { MODELS, type ModelChoice, model, noFallback, ordered, reasoning } from "./models"
+import { type ModelChoice, model, reasoning, withFallback } from "./models"
 import { type Candidate, hybridSearch } from "./retrieve"
 import type { Tracer } from "./trace"
 
@@ -51,27 +51,12 @@ const passageOf = (c: Candidate): FoundPassage => ({
 
 const clean = (text: string) => text.replace(/\p{Cc}/gu, " ")
 
-async function call<T>(
+const call = <T>(
   role: "verifier" | "writer",
   tracer: Tracer,
   step: string,
   fn: (choice: ModelChoice) => Promise<T>,
-) {
-  const { primary, fallback } = ordered(MODELS[role])
-  try {
-    return { result: await fn(primary), choice: primary }
-  } catch (error) {
-    if (noFallback(error)) throw error
-    tracer.log({
-      agent: "verifier",
-      step,
-      action: "escalated_to_fallback",
-      model: fallback.id,
-      detail: { reason: (error as Error).message.slice(0, 300) },
-    })
-    return { result: await fn(fallback), choice: fallback }
-  }
-}
+) => withFallback(role, "verifier", tracer, step, fn)
 
 // ------------------------------------------------------------------ Check my draft (F23)
 

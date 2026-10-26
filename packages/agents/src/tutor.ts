@@ -8,7 +8,7 @@ import { sql } from "drizzle-orm"
 import { z } from "zod"
 import { quoteKey } from "./citations"
 import { recall as recallMemories } from "./memory"
-import { MODELS, type ModelChoice, model, noFallback, ordered, reasoning } from "./models"
+import { type ModelChoice, model, reasoning, withFallback } from "./models"
 import { looksLikeApparatus, type Scope } from "./retrieve"
 import type { Tracer } from "./trace"
 
@@ -51,27 +51,13 @@ export type MadeItem = {
 
 const clean = (text: string) => text.replace(/\p{Cc}/gu, " ")
 
-async function call<T>(
+const call = <T>(
   role: "tutor" | "verifier" | "grader" | "analyst" | "writer",
   tracer: Tracer | undefined,
   step: string,
   fn: (choice: ModelChoice) => Promise<T>,
-) {
-  const { primary, fallback } = ordered(MODELS[role])
-  try {
-    return { result: await fn(primary), choice: primary }
-  } catch (error) {
-    if (noFallback(error)) throw error
-    tracer?.log({
-      agent: role === "tutor" || role === "grader" ? "tutor" : "verifier",
-      step,
-      action: "escalated_to_fallback",
-      model: fallback.id,
-      detail: { reason: (error as Error).message.slice(0, 300) },
-    })
-    return { result: await fn(fallback), choice: fallback }
-  }
-}
+) =>
+  withFallback(role, role === "tutor" || role === "grader" ? "tutor" : "verifier", tracer, step, fn)
 
 // ------------------------------------------------------------------ choosing what to ask about
 

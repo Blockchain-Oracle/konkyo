@@ -160,31 +160,54 @@ export const LIBRARY = {
  * points the same calls at a self-hosted server with the same model ids instead.
  */
 export const MODEL_API = {
-  baseURL: "https://integrate.api.nvidia.com/v1",
+  /** NVIDIA's API (build.nvidia.com), OpenAI-compatible; MODEL_BASE_URL can point at a NIM. */
+  nvidia: {
+    baseURL: "https://integrate.api.nvidia.com/v1",
+    /**
+     * NVIDIA's free tier: about 40 requests a minute for each model on a key, shared by the web
+     * app and the worker (measured testing: 41 calls to one model went through, then 429s).
+     */
+    requestsPerMinute: 40,
+    callsInFlight: 8,
+  },
   /**
-   * NVIDIA's free tier: about 40 requests a minute for each model on a key, shared by the web app
-   * and the worker (measured testing: 41 calls to one model went through, then 429s).
+   * OpenAI's API: the account's tier allows far more; each model's bucket keeps a runaway loop
+   * from emptying the account (the pre-Nemotron setting).
    */
-  requestsPerMinute: 40,
+  openai: { requestsPerMinute: 400, callsInFlight: 24 },
   /**
-   * Most tokens a model may think for before it must answer (Nemotron's reasoning_budget). Without
-   * a cap, Lightning thinking at low effort spent a whole 2,500-token reply thinking (in testing).
+   * Most tokens a Nemotron model may think for before it must answer (its reasoning_budget).
+   * Without a cap, Lightning at low effort spent a whole 2,500-token reply thinking (in testing).
    */
   thinkingBudget: { low: 512, high: 2048 },
   /**
-   * How long a call may go unanswered before its role's fallback takes over. The free tier
+   * How long a call may go unanswered before its role's fallback takes over. NVIDIA's free tier
    * usually answers in seconds but sometimes stalls for minutes (in testing). A stream only has to start in time.
    */
   answerTimeoutMs: 45_000,
+  firstTokenTimeoutMs: 25_000,
   /**
    * The most a call may write unless it sets its own: NVIDIA's default is 16,384, and a model
    * stuck in a loop would spend minutes reaching it.
    */
-  maxOutputTokens: 4_000,
-  firstTokenTimeoutMs: 25_000,
+  maxOutputTokens: 8_000,
   /** A model that refused (429) or stalled is tried second for this long. */
   busyCooldownMs: 60_000,
+  /** A provider whose account is out of credit is tried second for this long. */
+  outOfCreditCooldownMs: 10 * 60_000,
 } as const
+
+/** The OpenAI models Konkyo calls (the measured picks of testing, BENCHMARK.md). */
+export const OPENAI = {
+  /** Writes and judges: 9/9 quotes verbatim; at low effort 0/10 false rejections, 6/6 caught. */
+  luna: "gpt-6-luna",
+  /** Runs OpenAI's web search for deep search (it needs reasoning above minimal). */
+  nano: "gpt-5-nano",
+} as const
+
+/** Which API serves a model: Nemotron ids are NVIDIA's ("nvidia/…"), the rest OpenAI's. */
+export const providerOf = (modelId: string) =>
+  modelId.startsWith("nvidia/") ? ("nvidia" as const) : ("openai" as const)
 
 /** The Nemotron models Konkyo calls, each for what NVIDIA built it for. */
 export const NEMOTRON = {
@@ -236,7 +259,11 @@ export const QUERY = {
 } as const
 
 /** How much a model thinks before it answers: Nemotron's reasoning off, low effort, or full. */
-export type ModelEffort = "off" | "low" | "high"
+/**
+ * How much a model thinks before it answers. OpenAI takes these as its reasoning effort; Nemotron
+ * maps none and minimal to thinking off, low to low effort, and medium and high to full thinking.
+ */
+export type ModelEffort = "none" | "minimal" | "low" | "medium" | "high"
 export type ModelChoice = {
   id: string
   reasoning: ModelEffort
@@ -252,61 +279,77 @@ export type ModelChoice = {
   hedgeAfterMs?: number
 }
 
+const LUNA = (reasoning: ModelEffort): ModelChoice => ({ id: OPENAI.luna, reasoning })
 const ULTRA = (reasoning: ModelEffort): ModelChoice => ({ id: NEMOTRON.ultra, reasoning })
 const SUPER = (reasoning: ModelEffort): ModelChoice => ({ id: NEMOTRON.super, reasoning })
 const LIGHTNING = (reasoning: ModelEffort): ModelChoice => ({ id: NEMOTRON.lightning, reasoning })
 
+/** A role's models in the order to try them: its first choice, its fallback, and a reserve. */
+export type RoleModels = { primary: ModelChoice; fallback: ModelChoice; reserve?: ModelChoice }
+
 /**
- * Each agent's Nemotron model (packages/models calls them), with a fallback on another model for an
- * outage or a malformed reply. Picked by the measured benchmark of testing on NVIDIA's API
- * (gen-ai/.spikes/costs/BENCHMARK.md, the same cases as the earlier models' run): Ultra with
- * thinking off was the only setup to pass everything (0/10 false rejections, 6/6 planted errors
- * caught, 9/9 quotes verbatim, citation format 3/3). Lightning reads and returns JSON well and
- * judges well when it thinks, but never wrote the cited format; Super 3.5 often answered 500.
+ * Each agent's model (packages/models calls them) and its fallback on the other provider, so an
+ * outage, an empty account or a full free tier on one side never stops an answer. OpenAI writes
+ * and judges (gpt-6-luna, the measured picks of testing); Nemotron plans, screens deep search,
+ * reads spoken asks, and (outside this table) embeds every passage, summarises files and checks
+ * safety. Nemotron Ultra with thinking off passed every test in the testing run on NVIDIA's API
+ * (0/10 false rejections, 6/6 planted errors, 9/9 quotes), so it is every judge's fallback.
+ * A reserve on a third model covers the hour when both are out (in testing). Hedges (asking a stalled call again) are for NVIDIA's free tier only.
  */
 export const MODELS = {
   /** Plans the run: whether it needs the library, which queries, whether to compare. */
   planner: {
-    primary: { ...ULTRA("off"), deadlineMs: 15_000, hedgeAfterMs: 5_000 },
-    fallback: { ...LIGHTNING("off"), hedgeAfterMs: 4_000 },
+    primary: { ...ULTRA("none"), deadlineMs: 12_000, hedgeAfterMs: 5_000 },
+    fallback: LUNA("low"),
+    reserve: { ...LIGHTNING("none"), hedgeAfterMs: 4_000 },
   },
-  /** Writes the cited answer: 9/9 quotes verbatim, refused the planted figure 3/3. */
-  writer: { primary: { ...ULTRA("off"), hedgeAfterMs: 8_000 }, fallback: SUPER("off") },
-  /** Support checks: 0/10 false rejections, 6/6 planted errors (Lightning thinking: the same). */
-  verifier: { primary: { ...ULTRA("off"), hedgeAfterMs: 15_000 }, fallback: LIGHTNING("low") },
-  /** Deep search: plans the paper and encyclopedia queries. */
-  scout: { primary: { ...LIGHTNING("off"), hedgeAfterMs: 4_000 }, fallback: ULTRA("off") },
+  /** Writes the cited answer: 9/9 quotes verbatim, first token in about 1 s. */
+  writer: { primary: LUNA("none"), fallback: ULTRA("none"), reserve: SUPER("none") },
+  /** Support checks: 0/10 false rejections, 6/6 planted errors caught. */
+  verifier: { primary: LUNA("low"), fallback: ULTRA("none"), reserve: LIGHTNING("low") },
+  /** Deep search: plans the paper and web queries. */
+  scout: {
+    primary: { ...LIGHTNING("none"), hedgeAfterMs: 4_000 },
+    fallback: LUNA("none"),
+    reserve: ULTRA("none"),
+  },
   /** Screens found sources against the question, batch by batch (Markovian steps). */
-  screener: { primary: { ...ULTRA("off"), hedgeAfterMs: 12_000 }, fallback: LIGHTNING("low") },
+  screener: {
+    primary: { ...ULTRA("none"), hedgeAfterMs: 12_000 },
+    fallback: LUNA("none"),
+    reserve: LIGHTNING("low"),
+  },
   /** Claims and agreement across sources: the same strict-support judgement as the Verifier. */
-  analyst: { primary: { ...ULTRA("off"), hedgeAfterMs: 15_000 }, fallback: SUPER("off") },
+  analyst: { primary: LUNA("low"), fallback: ULTRA("none"), reserve: SUPER("none") },
   /**
-   * Makes practice items from passages (F27); every answer key then goes to the Verifier. In the
-   * background, and a draft is 600–950 tokens (13–27 s on Ultra, testing), so it gets longer.
-   * Lightning drafted none that passed: vague keys, sentences not copied exactly.
+   * Makes practice items from passages (F27); every answer key then goes to the Verifier. Luna
+   * kept 81–83% of its drafts at about $0.0002 each (in testing); Ultra 17 of 19 but 13–27 s a draft.
    */
   tutor: {
-    primary: { ...ULTRA("off"), deadlineMs: 90_000, hedgeAfterMs: 35_000 },
-    fallback: { ...SUPER("off"), deadlineMs: 90_000 },
+    primary: { ...LUNA("none"), deadlineMs: 90_000 },
+    fallback: { ...ULTRA("none"), deadlineMs: 90_000 },
+    reserve: { ...SUPER("none"), deadlineMs: 90_000 },
   },
   /** Reads a spoken ask that no pattern placed (S16): a one-line pick while you are still talking. */
   intent: {
-    primary: { ...LIGHTNING("off"), deadlineMs: 8_000, hedgeAfterMs: 3_000 },
-    fallback: ULTRA("off"),
+    primary: { ...LIGHTNING("none"), deadlineMs: 8_000, hedgeAfterMs: 3_000 },
+    fallback: LUNA("none"),
+    reserve: { ...ULTRA("none"), deadlineMs: 8_000 },
   },
   /** Judges a typed answer the code check couldn't settle, with feedback that never gives it away. */
-  grader: { primary: { ...ULTRA("off"), hedgeAfterMs: 10_000 }, fallback: LIGHTNING("low") },
-} as const satisfies Record<string, { primary: ModelChoice; fallback: ModelChoice }>
+  grader: { primary: LUNA("low"), fallback: ULTRA("none"), reserve: LIGHTNING("low") },
+} as const satisfies Record<string, RoleModels>
+
+/** Deep search's web pages come from OpenAI's web search on this model; Wikipedia if it fails. */
+export const WEB_SEARCH: ModelChoice = { id: OPENAI.nano, reasoning: "low" }
 
 /**
- * Rate limits (plan §3 "Model calls"). Each model has one token bucket per server process; the web
- * app and the worker each take a share of MODEL_API.requestsPerMinute (MODEL_REQUESTS_PER_MINUTE
- * sets it, half each by default). Each person has a cap on answers, so a public guest sign-in
- * can't use up everyone's budget.
+ * Rate limits (plan §3 "Model calls"). Each model has one token bucket per server process
+ * (MODEL_API: OpenAI's, or a share of NVIDIA's free tier, which the web app and the worker split:
+ * MODEL_REQUESTS_PER_MINUTE, half each by default). Each person has a cap on answers, so a public
+ * guest sign-in can't use up everyone's budget.
  */
 export const LIMITS = {
-  modelRequestsPerMinute: MODEL_API.requestsPerMinute / 2,
-  modelCallsInFlight: 8,
   answersPerTenMinutes: 20,
   guestAnswersPerDay: 60,
   answersPerDay: 300,

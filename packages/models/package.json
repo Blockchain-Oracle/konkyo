@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@ai-sdk/openai": "4.0.94",
     "@ai-sdk/openai-compatible": "3.0.69",
     "@ai-sdk/provider": "4.0.27",
     "@konkyo/config": "workspace:*",
