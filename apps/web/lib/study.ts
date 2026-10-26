@@ -14,7 +14,7 @@ import {
 } from "@konkyo/agents"
 import { type FileKind, type FileMeta, STUDY } from "@konkyo/config"
 import { db, schema } from "@konkyo/db"
-import { folderRole, readableFileSql } from "@konkyo/db/access"
+import { folderRole, readableFileSql, resolveReach } from "@konkyo/db/access"
 import type { StudyCheck, StudyItemData, StudyKind, StudyMode, StudyScope } from "@konkyo/db/schema"
 import { enqueue } from "@konkyo/jobs"
 import {
@@ -190,6 +190,27 @@ async function newToday(ownerId: string, start: Date) {
 
 const liveItems = (ownerId: string) =>
   and(eq(studyItems.ownerId, ownerId), eq(studyItems.status, "active"), isNull(files.deletedAt))
+
+/**
+ * A space's practice for this person (the wall's study card, F46): items made from its sources,
+ * and how many of them are due today.
+ */
+export async function spaceStudy(ownerId: string, spaceId: string) {
+  const { fileIds } = await resolveReach(ownerId, { folderIds: [spaceId] })
+  if (!fileIds?.length) return { items: 0, due: 0 }
+  const prefs = await studyPrefs(ownerId)
+  const { end } = await dayBounds(prefs.timeZone)
+  const [row] = await db
+    .select({
+      items: count(),
+      due: sql<number>`(count(*) filter (where ${studyCards.state} <> 0 and ${studyCards.due} < ${end.toISOString()}))::int`,
+    })
+    .from(studyItems)
+    .innerJoin(studyCards, eq(studyCards.itemId, studyItems.id))
+    .innerJoin(files, eq(files.id, studyItems.fileId))
+    .where(and(liveItems(ownerId), inArray(studyItems.fileId, fileIds)))
+  return { items: row?.items ?? 0, due: row?.due ?? 0 }
+}
 
 export async function todaySummary(ownerId: string): Promise<TodaySummary> {
   const prefs = await studyPrefs(ownerId)

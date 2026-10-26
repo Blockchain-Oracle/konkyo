@@ -268,6 +268,7 @@ export function LibraryView({ folderId, space = false }: { folderId?: string; sp
       {view === "wall" && folderId ? (
         <SpaceWall
           spaceId={folderId}
+          name={spaceRow?.name ?? "this space"}
           subfolders={subfolders}
           shared={(spaceRow?.people ?? 1) > 1}
         />

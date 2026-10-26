@@ -7,7 +7,7 @@ import { cn } from "@konkyo/ui/lib/utils"
 import type { Route } from "next"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import type { CSSProperties } from "react"
+import { type CSSProperties, useState } from "react"
 import { FolderBriefs } from "@/components/briefs/folder-briefs"
 import { AnswerText } from "@/components/chat/answer-text"
 import { WallTape } from "@/components/voice/wall-tape"
@@ -22,6 +22,7 @@ import { usePins, useUnpin } from "@/lib/use-pins"
 import { FileStatus } from "./file-status"
 import { KIND_LABEL } from "./kind-icon"
 import { SourceFace } from "./source-face"
+import { AgentsCard, PeopleCard, StudyCard } from "./space-wall-cards"
 import { TakesChip, useTakeCounts } from "./takes"
 
 const shortDate = (iso: string | Date) =>
@@ -45,12 +46,24 @@ const PRINTS = new Set(["pdf", "docx", "pptx", "markdown", "text", "youtube", "v
  * paper's first page, a web clipping with the page's own picture, a sticky for a note, an
  * envelope for an email. Folders inside sit beside it as manila folders.
  */
+/** The wall's filters (F46): what's new this week, what people talk about, what needs you. */
+const FILTERS = {
+  all: "all",
+  new: "new this week",
+  discussed: "discussed",
+  needs: "needs you",
+} as const
+type Filter = keyof typeof FILTERS
+const WEEK_MS = 7 * 86_400_000
+
 export function SpaceWall({
   spaceId,
+  name,
   subfolders,
   shared = false,
 }: {
   spaceId: string
+  name: string
   subfolders: { id: string; name: string; fileCount: number }[]
   /** More than one person in it: sources say who added them and carry takes (F56). */
   shared?: boolean
@@ -58,6 +71,19 @@ export function SpaceWall({
   const { data: files } = useSpaceFiles(spaceId)
   const { data: pins } = usePins(spaceId)
   const { data: takes } = useTakeCounts(spaceId)
+  const [filter, setFilter] = useState<Filter>("all")
+  const now = Date.now()
+  const matches: Record<Filter, (f: LibraryFile) => boolean> = {
+    all: () => true,
+    new: (f) => now - new Date(f.createdAt).getTime() < WEEK_MS,
+    discussed: (f) => (takes?.[f.id] ?? 0) > 0,
+    needs: (f) => f.status === "needs_you",
+  }
+  // only the filters that would show something (and "all"), so none of them is a dead end
+  const offered = (Object.keys(FILTERS) as Filter[]).filter(
+    (k) => k === "all" || (files ?? []).some(matches[k]),
+  )
+  const shown = (files ?? []).filter(matches[filter])
   return (
     <div className="space-wall-frame">
       <WallTape />
@@ -66,10 +92,29 @@ export function SpaceWall({
           {pins?.length ? <PinnedAnswers spaceId={spaceId} pins={pins} /> : null}
           <div className="board-label">
             <span className="room-pill">sources · newest first</span>
+            {offered.length > 1 && (
+              <span className="flex flex-wrap justify-end gap-1.5">
+                {offered.map((key) => (
+                  <button
+                    key={key}
+                    type="button"
+                    aria-pressed={filter === key}
+                    onClick={() => setFilter(key)}
+                    className={cn(
+                      "room-pill hover:bg-ink",
+                      filter === key && "bg-white! text-ink!",
+                    )}
+                  >
+                    {FILTERS[key]}
+                    {key !== "all" && ` · ${(files ?? []).filter(matches[key]).length}`}
+                  </button>
+                ))}
+              </span>
+            )}
           </div>
           {files?.length ? (
             <ul className="space-masonry">
-              {files.map((file) => (
+              {shown.map((file) => (
                 <li key={file.id} data-file-id={file.id} className="wall-item">
                   <WallObject file={file} />
                   {/* a member's source says whose it is; the owner's are the space's own */}
@@ -147,6 +192,9 @@ export function SpaceWall({
               />
             </section>
           ) : null}
+          {files?.some((f) => f.status === "ready") && <StudyCard spaceId={spaceId} name={name} />}
+          <AgentsCard spaceId={spaceId} name={name} />
+          {shared && <PeopleCard spaceId={spaceId} />}
         </aside>
       </div>
     </div>
