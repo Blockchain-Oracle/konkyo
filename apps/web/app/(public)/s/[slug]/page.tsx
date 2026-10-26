@@ -21,6 +21,8 @@ async function find(slug: string) {
 // Cache Components a request-time generateMetadata blocked the page from hydrating.
 export const metadata: Metadata = {
   title: "Public space",
+  description:
+    "A space shared from Konkyo: ask its sources anything, and every quote in the answer is checked against the source before you see it.",
   robots: { index: false, follow: false },
 }
 

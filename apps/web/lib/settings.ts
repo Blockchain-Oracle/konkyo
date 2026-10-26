@@ -2,7 +2,7 @@ import "server-only"
 import { VOICE } from "@konkyo/config"
 import { db, schema } from "@konkyo/db"
 import { emailReady } from "@konkyo/email"
-import { eq } from "drizzle-orm"
+import { and, eq, isNull } from "drizzle-orm"
 
 const { userSettings, user } = schema
 
@@ -51,6 +51,24 @@ export async function getSettings(userId: string): Promise<Settings> {
     canEmail: emailReady() && Boolean(person) && !person?.isAnonymous,
     onboarded: Boolean(row?.onboardedAt),
   }
+}
+
+/**
+ * Whether Home opens on first run ("what are you here for?"): not onboarded and no files yet. Read
+ * on the server so the right Home is in the first HTML, not swapped in after two fetches (in testing).
+ */
+export async function isFirstRun(userId: string) {
+  const [row, file] = await Promise.all([
+    db.query.userSettings.findFirst({
+      where: eq(userSettings.userId, userId),
+      columns: { onboardedAt: true },
+    }),
+    db.query.files.findFirst({
+      where: and(eq(schema.files.ownerId, userId), isNull(schema.files.deletedAt)),
+      columns: { id: true },
+    }),
+  ])
+  return !row?.onboardedAt && !file
 }
 
 export async function updateSettings(

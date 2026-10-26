@@ -29,7 +29,14 @@ const PIECES = {
  * template opens the space maker on it; below, the three starters run for real on open material.
  * Making a space, a starter, or skip ends first run for good.
  */
-export function HomeStart({ children }: { children: React.ReactNode }) {
+export function HomeStart({
+  children,
+  firstRun: firstRunAtLoad,
+}: {
+  children: React.ReactNode
+  /** Read on the server for the first HTML; the client's own data takes over once it arrives. */
+  firstRun: boolean
+}) {
   const { settings } = useSettings()
   const { data: files } = useFiles()
   const { me } = useMe()
@@ -39,7 +46,7 @@ export function HomeStart({ children }: { children: React.ReactNode }) {
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["settings"] }),
     onError: (error: Error) => toast.error(error.message),
   })
-  const firstRun = settings && files && !settings.onboarded && files.length === 0
+  const firstRun = settings && files ? !settings.onboarded && files.length === 0 : firstRunAtLoad
   if (!firstRun) return children
   const hello = me ? `welcome, ${me.name.toLowerCase()}` : "welcome to konkyo"
   return (
