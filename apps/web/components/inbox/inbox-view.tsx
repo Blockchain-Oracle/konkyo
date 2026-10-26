@@ -24,6 +24,7 @@ import { EmptyState } from "@/components/empty-state"
 import { api } from "@/lib/fetcher"
 import type { InboxItem } from "@/lib/inbox"
 import { inboxKeys, useInbox } from "@/lib/use-inbox"
+import { sessionHref, useToday } from "@/lib/use-study"
 
 /** What kind of slip it is, said on its black tag. */
 const KIND = {
@@ -90,6 +91,7 @@ function Row({ item }: { item: InboxItem }) {
   }
   // Mail to a space from someone outside it (F59): the owner adds its sources, or lets it go.
   const [deciding, setDeciding] = useState(false)
+  const [discarding, setDiscarding] = useState(false)
   const decide = async (add: boolean) => {
     if (deciding) return
     setDeciding(true)
@@ -166,9 +168,11 @@ function Row({ item }: { item: InboxItem }) {
             <button
               type="button"
               className="text-[12.5px] font-bold text-ink-muted underline-offset-2 hover:underline"
-              onClick={() => void decide(false)}
+              // the mail can't be brought back: a second tap says so first
+              onClick={() => (discarding ? void decide(false) : setDiscarding(true))}
+              onBlur={() => setDiscarding(false)}
             >
-              discard it
+              {discarding ? "discard for good?" : "discard it"}
             </button>
           ) : (
             !item.read && (
@@ -194,6 +198,8 @@ function Row({ item }: { item: InboxItem }) {
 export function InboxView() {
   const { data: items, isPending } = useInbox()
   const queryClient = useQueryClient()
+  // Practice waiting is worth saying even when nothing new has arrived.
+  const due = useToday().data?.due ?? 0
   if (isPending)
     return (
       <div className="space-y-3">
@@ -206,16 +212,34 @@ export function InboxView() {
     return (
       <EmptyState
         label="Inbox"
-        title="Nothing new"
-        description="Review reminders, sources your watches find and finished agent runs arrive here. Turn on notifications to get them on this device too."
+        title={due ? `${due} to practise today` : "Nothing new"}
+        description={
+          due
+            ? "Nothing new has arrived, but practice is waiting. Review reminders, sources your watches find and finished agent runs arrive here."
+            : "Review reminders, sources your watches find and finished agent runs arrive here. Turn on notifications to get them on this device too."
+        }
       >
-        <Button
-          render={<Link href="/settings#notifications" />}
-          nativeButton={false}
-          variant="secondary"
-        >
-          Notification settings
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          {due > 0 && (
+            <Button render={<Link href={sessionHref({ mode: "review" })} />} nativeButton={false}>
+              Start review
+            </Button>
+          )}
+          <Button
+            render={<Link href={"/agents?new=watch" as Route} />}
+            nativeButton={false}
+            variant="secondary"
+          >
+            Watch for new papers
+          </Button>
+          <Button
+            render={<Link href="/settings#notifications" />}
+            nativeButton={false}
+            variant="ghost"
+          >
+            Notification settings
+          </Button>
+        </div>
       </EmptyState>
     )
   const unread = items.filter((i) => !i.read).length

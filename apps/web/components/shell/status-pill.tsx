@@ -5,6 +5,9 @@ import { useEffect, useState } from "react"
 import { useLiveStatus } from "@/lib/use-status"
 import { useDockVisible } from "./dock"
 
+/** How long the last checked answer is news. */
+const RECENT_MS = 60 * 60_000
+
 /** "3m ago" from an ISO time, refreshed by the caller's tick. */
 function ago(iso: string, now: number) {
   const s = Math.max(0, Math.round((now - Date.parse(iso)) / 1000))
@@ -30,11 +33,16 @@ export function StatusPill() {
   }, [])
   if (!data || !visible) return null
   const busy = data.reading > 0 || data.working > 0
+  // A check from hours ago reads like a stale system: past the hour it's simply quiet.
+  const recent =
+    data.lastAnsweredAt && now - new Date(data.lastAnsweredAt).getTime() < RECENT_MS
+      ? data.lastAnsweredAt
+      : null
   const parts = [
     data.reading ? `${data.reading} reading` : null,
     data.working ? `${data.working} working` : null,
-    !busy && data.lastAnsweredAt ? `last check ${ago(data.lastAnsweredAt, now)}` : null,
-    !busy && !data.lastAnsweredAt ? "all quiet" : null,
+    !busy && recent ? `last answer checked ${ago(recent, now)}` : null,
+    !busy && !recent ? "all quiet" : null,
   ].filter(Boolean)
   return (
     <div

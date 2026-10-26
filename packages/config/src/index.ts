@@ -472,6 +472,9 @@ export const BREAKPOINTS = {
  * walls are OurSpaces' own values; `text` is the lighter step used when the colour is text on the
  * plum room (≥4.5:1). Ink on a wall comes from the preset, never from guesswork.
  */
+/** The house's lime (tokens.css --color-lime), for code that needs the colour as a value. */
+export const LIME = "#c9ff3d"
+
 export const SPACES = {
   colors: {
     violet: { hex: "#7853ff", text: "#9d85ff" },

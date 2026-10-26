@@ -901,6 +901,8 @@ export function useVoiceStage(
       <button
         type="button"
         className="voice-stage-mute"
+        // named even where its word is hidden (wide screens show only the icon)
+        aria-label="Mute the microphone"
         aria-pressed={voice.muted}
         onClick={() => {
           sound("tap")
@@ -917,6 +919,7 @@ export function useVoiceStage(
       <button
         type="button"
         className="voice-stage-finish"
+        aria-label="Finish asking"
         onClick={() => {
           sound("tap")
           done()

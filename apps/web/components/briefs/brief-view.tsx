@@ -1,7 +1,7 @@
 "use client"
 
 import type { Citation } from "@konkyo/agents"
-import { BRIEF, SPACES } from "@konkyo/config"
+import { BRIEF, LIME, SPACES } from "@konkyo/config"
 import { Button } from "@konkyo/ui/components/button"
 import { colorFor } from "@konkyo/ui/lib/space"
 import { cn } from "@konkyo/ui/lib/utils"
@@ -35,6 +35,8 @@ const VOICE = {
 
 type Line = Brief["lines"][number]
 
+/** How long the delete button waits for its second tap. */
+const CONFIRM_MS = 4000
 /**
  * An audio brief (plan F37, §7.5 after Around and Krisp): the player with a speaker-coloured scrub
  * bar, speed and download, and the transcript beside it: the line being heard is lit, a timestamp
@@ -50,7 +52,7 @@ export function BriefView({ id }: { id: string }) {
   useRoomWall(brief?.space?.wall ?? null)
   const color = brief?.space
     ? SPACES.colors[brief.space.color ?? colorFor(brief.space.id)].hex
-    : "#c9ff3d"
+    : LIME
   return (
     <div className="mx-auto w-full max-w-[880px] px-4 pt-4 pb-32 md:px-8 md:pt-[92px]">
       {isError ? (
@@ -215,6 +217,13 @@ function Player({ brief, color }: { brief: Brief; color: string }) {
     if (playing && active >= 0) items.current[active]?.scrollIntoView({ block: "nearest" })
   }, [active, playing])
 
+  // A brief takes minutes to make: deleting it asks once more, on the same button.
+  const [confirming, setConfirming] = useState(false)
+  useEffect(() => {
+    if (!confirming) return
+    const timer = window.setTimeout(() => setConfirming(false), CONFIRM_MS)
+    return () => window.clearTimeout(timer)
+  }, [confirming])
   const remove = useMutation({
     mutationFn: () => api(`/api/briefs/${brief.id}`, { method: "DELETE" }),
     onSuccess: () => {
@@ -346,11 +355,12 @@ function Player({ brief, color }: { brief: Brief; color: string }) {
             <button
               type="button"
               className="brief-pill"
-              aria-label="Delete this brief"
-              onClick={() => remove.mutate()}
+              aria-label={confirming ? "Delete this brief for good" : "Delete this brief"}
+              onClick={() => (confirming ? remove.mutate() : setConfirming(true))}
               disabled={remove.isPending}
             >
               <Trash2Icon className="size-3.5" strokeWidth={2} />
+              {confirming && "delete for good?"}
             </button>
           </span>
         </div>
@@ -392,7 +402,7 @@ function Player({ brief, color }: { brief: Brief; color: string }) {
                 <p
                   className={cn(
                     "mt-1 text-reading text-pretty transition-colors duration-(--duration-press)",
-                    i === active ? "text-ink" : "text-[#3a3036]",
+                    i === active ? "text-ink" : "text-room-soft",
                   )}
                 >
                   {line.text}

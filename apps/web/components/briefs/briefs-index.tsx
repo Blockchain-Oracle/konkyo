@@ -1,6 +1,6 @@
 "use client"
 
-import { SPACES } from "@konkyo/config"
+import { LIME, SPACES } from "@konkyo/config"
 import { colorFor } from "@konkyo/ui/lib/space"
 import { PlayIcon } from "lucide-react"
 import type { Route } from "next"
@@ -61,9 +61,7 @@ export function BriefsIndex() {
         <ul className="briefs-grid">
           {data?.map((b) => {
             // a space without a chosen colour has the one the rest of the app hashes from its id
-            const color = b.spaceId
-              ? SPACES.colors[b.spaceColor ?? colorFor(b.spaceId)].hex
-              : "#c9ff3d"
+            const color = b.spaceId ? SPACES.colors[b.spaceColor ?? colorFor(b.spaceId)].hex : LIME
             return (
               <li key={b.id}>
                 <Link
