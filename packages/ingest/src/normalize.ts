@@ -42,3 +42,34 @@ export function chunkCoverage(quote: string, target: string, n = 20): number {
   for (let i = 0; i + n <= q.length; i += n) chunks.push(q.slice(i, i + n))
   return chunks.length ? chunks.filter((c) => t.includes(c)).length / chunks.length : 0
 }
+
+/** The mark of UTF-8 read as Latin-1: a lead byte (Â, Ã…) followed by a continuation byte. */
+const MOJIBAKE = /[\u00C2-\u00F4][\u0080-\u00BF]/
+
+/**
+ * "RÃ³bert BÃ³dizs" → "Róbert Bódizs": text some upstream system read as Latin-1 when it was
+ * UTF-8 (OpenAlex returns a few names and titles like this). Text that isn't wholly Latin-1, or
+ * whose bytes aren't valid UTF-8, is left exactly as it was.
+ */
+export function fixMojibake(s: string): string {
+  if (!MOJIBAKE.test(s)) return s
+  for (let i = 0; i < s.length; i++) if (s.charCodeAt(i) > 0xff) return s
+  try {
+    return new TextDecoder("utf-8", { fatal: true }).decode(
+      Uint8Array.from(s, (c) => c.charCodeAt(0)),
+    )
+  } catch {
+    return s
+  }
+}
+
+/** fixMojibake through a whole parsed JSON value, keys included (abstracts are keyed by word). */
+export function repairText<T>(value: T): T {
+  if (typeof value === "string") return fixMojibake(value) as T
+  if (Array.isArray(value)) return value.map(repairText) as T
+  if (value && typeof value === "object")
+    return Object.fromEntries(
+      Object.entries(value).map(([k, v]) => [fixMojibake(k), repairText(v)]),
+    ) as T
+  return value
+}

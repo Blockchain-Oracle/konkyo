@@ -1,4 +1,4 @@
-import { INGEST } from "@konkyo/config"
+import { BOT_CHECK, INGEST } from "@konkyo/config"
 import { Readability } from "@mozilla/readability"
 import { JSDOM } from "jsdom"
 import { documentHtml, escapeHtml, htmlToPdf } from "./convert"
@@ -77,6 +77,11 @@ export async function articleToPdf(
   const dom = new JSDOM(html, { url })
   // Read before Readability, which rewrites the document.
   const ogImage = ogImageOf(dom.window.document, url)
+  // A site that shows bots a check page: what came back is the check, not the article.
+  if (BOT_CHECK.test(dom.window.document.title))
+    throw new UnreachableError(
+      "This site only lets browsers in. Save the page or its PDF and upload it instead.",
+    )
   const article = new Readability(dom.window.document).parse()
   if (!article?.content || (article.textContent ?? "").trim().length < 200) {
     throw new UnreachableError("This page has no readable article text")

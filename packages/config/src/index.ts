@@ -614,3 +614,10 @@ export const MOTION = {
   tiltStep: 1.1,
   tiltWidth: 240,
 } as const
+
+/**
+ * A page that only lets browsers in shows one of these instead of its content (Cloudflare,
+ * PerimeterX, PMC's own check). Such a page is never offered as a source or saved as one.
+ */
+export const BOT_CHECK =
+  /checking (if the site connection is secure|your browser)|just a moment|attention required|access denied|verify(ing)? (that )?you are (a )?human|are you a robot|security check|enable javascript and cookies|ddos protection/i

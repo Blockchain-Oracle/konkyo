@@ -4,6 +4,7 @@ import { BRIEF, INGEST } from "@konkyo/config"
 import { db, schema } from "@konkyo/db"
 import { resolveReach } from "@konkyo/db/access"
 import { env } from "@konkyo/env/server"
+import { fixMojibake } from "@konkyo/ingest"
 import { enqueue } from "@konkyo/jobs"
 import { describeSchedule, nextRunAt } from "@konkyo/jobs/schedule"
 import { notify, pushTo } from "@konkyo/notify"
@@ -120,6 +121,13 @@ async function runWatch(agent: Agent, tracer: Tracer): Promise<RunResult> {
     })
     found = await directWorks(agent.instructions, new Set(known))
   }
+  // a few OpenAlex records carry double-encoded names and titles (whichever way they came)
+  found = found.map((w) => ({
+    ...w,
+    title: fixMojibake(w.title),
+    firstAuthor: w.firstAuthor && fixMojibake(w.firstAuthor),
+    venue: w.venue && fixMojibake(w.venue),
+  }))
   if (found.length)
     await db
       .insert(agentSeen)

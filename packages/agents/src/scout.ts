@@ -1,3 +1,4 @@
+import { BOT_CHECK } from "@konkyo/config"
 import { type FoundWork, searchWorks } from "@konkyo/ingest/metadata"
 import { Markovian } from "@konkyo/meterless/markovian"
 import { generateText, Output } from "ai"
@@ -115,8 +116,13 @@ const ENTITIES: Record<string, string> = {
   nbsp: " ",
 }
 
-/** A page's <title> (first 64 KB, 4 s at most), without the " | Site name" tail. */
-async function pageTitle(url: string): Promise<string | null> {
+const BLOCKED_PAGE = Symbol("blocked")
+
+/**
+ * A page's <title> (first 64 KB, 4 s at most), without the " | Site name" tail. `blocked` when
+ * the site answered with a bot check instead: Konkyo couldn't read that page either.
+ */
+async function pageTitle(url: string): Promise<string | null | typeof BLOCKED_PAGE> {
   try {
     const res = await fetch(url, {
       headers: { "user-agent": "KonkyoBot/1.0 (+https://konkyo.xyz)", accept: "text/html" },
@@ -135,6 +141,7 @@ async function pageTitle(url: string): Promise<string | null> {
     void reader.cancel()
     const raw = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]
     if (!raw) return null
+    if (BOT_CHECK.test(raw)) return BLOCKED_PAGE
     const title = raw
       .replace(/&(#?\w+);/g, (m, e: string) => ENTITIES[e] ?? m)
       .replace(/\s+/g, " ")
@@ -177,26 +184,30 @@ async function searchWeb(query: string, tracer: Tracer, abortSignal?: AbortSigna
     const site = url.hostname.replace(/^www\./, "")
     return [{ key: `web:${key}`, kind: "web" as const, title: s.title || site, url: key, site }]
   })
-  // web_search gives addresses without titles: read each page's own <title>, quickly.
+  // web_search gives addresses without titles: read each page's own <title>, quickly. A page
+  // that answers with a bot check is dropped: it couldn't be imported either.
+  const blocked = new Set<string>()
   await Promise.all(
     pages.slice(0, 4).map(async (page) => {
-      if (page.title !== page.site) return
+      if (page.title !== page.site && !BOT_CHECK.test(page.title)) return
       const title = await pageTitle(page.url)
-      if (title) page.title = title
+      if (title === BLOCKED_PAGE || BOT_CHECK.test(page.title)) blocked.add(page.key)
+      else if (title) page.title = title
     }),
   )
+  const readable = pages.filter((page) => !blocked.has(page.key))
   tracer.log({
     agent: "scout",
     step: "web",
     action: "web_search",
     model: choice.id,
     toolCalls: ["web_search"],
-    rowsReturned: pages.length,
+    rowsReturned: readable.length,
     latencyMs: Math.round(performance.now() - started),
     tokens: { input: result.usage.inputTokens, output: result.usage.outputTokens },
-    detail: { query },
+    detail: { query, botChecks: blocked.size },
   })
-  return pages.slice(0, 4)
+  return readable.slice(0, 4)
 }
 
 /**

@@ -1,5 +1,6 @@
 import { type CslItem, type CslName, type FileMeta, INGEST } from "@konkyo/config"
 import { env } from "@konkyo/env/server"
+import { repairText } from "./normalize"
 
 export type { CslItem, CslName, FileMeta }
 
@@ -43,7 +44,8 @@ async function openAlex<T>(path: string): Promise<T | null> {
   })
   if (res.status === 404) return null
   if (!res.ok) throw new Error(`OpenAlex answered ${res.status}`)
-  return (await res.json()) as T
+  // a few OpenAlex records carry double-encoded names and titles: repaired on the way in
+  return repairText((await res.json()) as T)
 }
 
 const byDoi = (doi: string) =>
