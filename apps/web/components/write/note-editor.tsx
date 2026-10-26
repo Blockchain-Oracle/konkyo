@@ -186,12 +186,13 @@ export function NoteEditor({ note }: { note: NoteDetail }) {
     editor?.commands.setActiveClaim(activeClaim)
   }, [editor, activeClaim])
 
-  const log = (type: "cited", data: Record<string, unknown>) =>
+  const log = (type: "cited" | "suggestion-accepted", data: Record<string, unknown>) =>
     void api(`/api/notes/${note.id}/events`, { method: "POST", json: { type, data } }).catch(
       () => undefined,
     )
 
-  const insertCitation = (attrs: CitationAttrs, at?: number | null) => {
+  /** `suggestedFor`: the claim Check my draft found this source for (an AI suggestion, F22). */
+  const insertCitation = (attrs: CitationAttrs, at?: number | null, suggestedFor?: string) => {
     if (!editor) return
     const pos = at ?? editor.state.selection.to
     // The same passage already cited right here (a double click): once is enough.
@@ -204,7 +205,10 @@ export function NoteEditor({ note }: { note: NoteDetail }) {
     )
       return
     editor.chain().focus().insertContentAt(pos, { type: "citation", attrs }).run()
-    log("cited", { title: attrs.title, page: attrs.page, quote: attrs.quote, fileId: attrs.fileId })
+    const cited = { title: attrs.title, page: attrs.page, quote: attrs.quote, fileId: attrs.fileId }
+    // The process record tells a suggestion Konkyo made apart from a source the writer found.
+    if (suggestedFor) log("suggestion-accepted", { ...cited, claim: suggestedFor })
+    else log("cited", cited)
   }
 
   const fromMatch = (m: CitationMatch): CitationAttrs => ({
@@ -232,6 +236,7 @@ export function NoteEditor({ note }: { note: NoteDetail }) {
         quote: r.quote,
       },
       sentenceEnd(editor.state.doc, r.sentence),
+      r.claim,
     )
   }
 

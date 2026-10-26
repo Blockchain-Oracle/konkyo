@@ -310,6 +310,16 @@ function describe(e: NoteEvent) {
         icon: QuoteIcon,
         text: `Cited ${String(d.title ?? "a source")}: “${String(d.quote ?? "").slice(0, 90)}”`,
       }
+    case "suggestion-accepted":
+      return {
+        icon: QuoteIcon,
+        text: `Took Konkyo's suggested source for “${String(d.claim ?? "").slice(0, 70)}”: ${String(d.title ?? "a source")}`,
+      }
+    case "published":
+      return {
+        icon: HistoryIcon,
+        text: `${Number(d.version) > 1 ? "Republished" : "Published"} as “${String(d.title ?? "")}”`,
+      }
     case "removed-citation":
       return { icon: QuoteIcon, text: `Removed a citation of ${String(d.title ?? "a source")}` }
     case "restored":

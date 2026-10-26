@@ -61,6 +61,12 @@ export async function processRecord(ownerId: string, noteId: string) {
           what: `Searched the library for a source: “${String(d.text ?? "")}”`,
           details: [`${d.found ?? 0} passages offered`],
         }
+      case "suggestion-accepted":
+        return {
+          at: e.createdAt,
+          what: `Accepted Konkyo's suggested source for “${String(d.claim ?? "")}”: ${String(d.title ?? "a source")}${d.page ? `, p. ${String(d.page)}` : ""}`,
+          details: d.quote ? [`Quote: “${String(d.quote)}”`] : [],
+        }
       case "cited":
         return {
           at: e.createdAt,
@@ -86,7 +92,8 @@ export async function processRecord(ownerId: string, noteId: string) {
   const oldestFirst = [...versions].reverse()
   const counts = {
     checks: events.filter((e) => e.type === "checked").length,
-    citations: events.filter((e) => e.type === "cited").length,
+    citations: events.filter((e) => e.type === "cited" || e.type === "suggestion-accepted").length,
+    suggestions: events.filter((e) => e.type === "suggestion-accepted").length,
     searches: events.filter((e) => e.type === "searched-citation").length,
   }
   return { note, lines, versions: oldestFirst, counts }
@@ -101,7 +108,7 @@ export function recordMarkdown(r: Awaited<ReturnType<typeof processRecord>>) {
     "## Summary",
     "",
     `- ${plural(r.versions.length, "saved version")}, ${plural(r.note.words, "word")} now`,
-    `- ${plural(r.counts.checks, "draft check")}, ${plural(r.counts.searches, "source search", "source searches")}, ${plural(r.counts.citations, "citation")} inserted`,
+    `- ${plural(r.counts.checks, "draft check")}, ${plural(r.counts.searches, "source search", "source searches")}, ${plural(r.counts.citations, "citation")} inserted (${r.counts.suggestions} of them suggested by Konkyo)`,
     "",
     "## What was done with Konkyo",
     "",
@@ -149,7 +156,7 @@ export async function recordDocx(r: Awaited<ReturnType<typeof processRecord>>) {
       bullet: { level: 0 },
       children: [
         new TextRun(
-          `${plural(r.counts.checks, "draft check")}, ${plural(r.counts.searches, "source search", "source searches")}, ${plural(r.counts.citations, "citation")} inserted`,
+          `${plural(r.counts.checks, "draft check")}, ${plural(r.counts.searches, "source search", "source searches")}, ${plural(r.counts.citations, "citation")} inserted (${r.counts.suggestions} of them suggested by Konkyo)`,
         ),
       ],
     }),
