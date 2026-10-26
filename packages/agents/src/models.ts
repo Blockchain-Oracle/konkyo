@@ -1,5 +1,5 @@
 import { MODELS, type ModelChoice } from "@konkyo/config"
-import { noFallback } from "@konkyo/models"
+import { noFallback, ordered } from "@konkyo/models"
 import type { TraceEvent, Tracer } from "./trace"
 
 export {
@@ -7,6 +7,7 @@ export {
   noFallback,
   nvidia,
   OutOfCreditError,
+  ordered,
   reasoning,
 } from "@konkyo/models"
 export type { ModelChoice }
@@ -25,7 +26,7 @@ export async function withFallback<T>(
   step: string,
   fn: (choice: ModelChoice) => Promise<T>,
 ): Promise<{ result: T; choice: ModelChoice }> {
-  const { primary, fallback } = MODELS[role]
+  const { primary, fallback } = ordered(MODELS[role])
   try {
     return { result: await fn(primary), choice: primary }
   } catch (error) {

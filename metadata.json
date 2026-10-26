@@ -180,7 +180,7 @@
         },
         {
           "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
-          "use": "Fallback for the Writer and Tutor",
+          "use": "Fallback for the Writer, Analyst and Tutor",
           "code": "packages/config/src/index.ts"
         },
         {

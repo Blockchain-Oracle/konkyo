@@ -4,7 +4,7 @@ import { reachSql, resolveReach } from "@konkyo/db/access"
 import { generateText, Output } from "ai"
 import { and, desc, eq, isNull, sql } from "drizzle-orm"
 import { z } from "zod"
-import { MODELS, model, reasoning } from "./models"
+import { MODELS, model, ordered, reasoning } from "./models"
 import type { Scope } from "./retrieve"
 
 const { files } = schema
@@ -49,7 +49,7 @@ export async function suggestQuestions(ownerId: string, scope: Scope): Promise<s
   const described = rows
     .map((r) => `- ${r.title}${r.meta?.summary ? `: ${r.meta.summary}` : ""}`)
     .join("\n")
-  const choice = MODELS.writer.primary
+  const choice = ordered(MODELS.writer).primary
   const { output } = await generateText({
     model: model(choice),
     providerOptions: reasoning(choice),

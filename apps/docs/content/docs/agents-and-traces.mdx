@@ -16,8 +16,11 @@ description: Who does what, with which model, and how to read the trace.
 A call that runs past its usual time is asked again (a hedged request: the first answer wins, the
 other is cancelled), and every role has a fallback model for errors, stalls (no answer within 45
 seconds, or no first word of a stream within 25; 15 for the Planner, 90 for the Tutor's drafts)
-and malformed replies; the switch is logged as `escalated_to_fallback`. Judgement roles fall back to Lightning with thinking
-on, the Planner to Lightning, the Writer and Tutor to Nemotron 3.5 Super. The models were picked by a measured benchmark on NVIDIA's API: Ultra with thinking off
+and malformed replies; the switch is logged as `escalated_to_fallback`. A model that refuses
+(NVIDIA's free tier answers 429 when it's full) goes to the fallback at once, with no retries, and
+is tried second for the next minute. The Verifier, Screener and Grader fall back to
+Lightning with thinking on, the Planner to Lightning, the Writer, Analyst and Tutor to Nemotron 3.5
+Super. The models were picked by a measured benchmark on NVIDIA's API: Ultra with thinking off
 was the only setup to pass every test (0/10 false rejections, 6/6 planted errors caught, 9/9
 quotes verbatim); Lightning judged as well only when thinking, and never kept the cited format.
 On real practice sets Ultra's drafts passed every check 17 times in 19.

@@ -42,17 +42,17 @@ What role do sleep spindles play in memory, and do these papers agree about it?
   ✓ Checking sources in Zetaris · 3 of 3 files confirmed
   ✓ Comparing sources · 3 claims across 3 sources
   ✓ Writing
-  ✓ Verified 2 citations
+  ↺ The Verifier sent back 1 sentence; rewriting (round 1)
+  ↺ The Verifier sent back 1 sentence; rewriting (round 2)
+  ✓ Verified 8 citations
 
-Sleep spindles are associated with memory consolidation during sleep, but it is unclear whether
-the relationship is causal [1].
+Sleep spindles are waxing-and-waning oscillations (~10–15 Hz) that prime cortical networks for
+neuronal plasticity [1].
 …
-Sources (2)
+Sources (8)
 Each quote was found word for word in Zetaris's own reading of the source.
 
-[1] Diekelmann · 2014, Sleep for cognitive enhancement, p. 5
-    “Although spindles have frequently been associated with memory consolidation during sleep, it
-    is unclear whether sleep spindles can be externally manipulated.”
+[1] Diekelmann · 2014, Sleep for cognitive enhancement, p. 4
 …
 ```
 

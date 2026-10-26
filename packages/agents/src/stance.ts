@@ -1,7 +1,7 @@
 import { generateText, Output } from "ai"
 import { z } from "zod"
 import { quoteKey } from "./citations"
-import { MODELS, type ModelChoice, model, noFallback, reasoning } from "./models"
+import { MODELS, type ModelChoice, model, noFallback, ordered, reasoning } from "./models"
 import { hybridSearch, type Scope } from "./retrieve"
 import type { Tracer } from "./trace"
 
@@ -90,13 +90,14 @@ export async function placeFinding(
         .join("\n\n")}`,
       abortSignal: AbortSignal.timeout(BUDGET_MS),
     })
-  let choice: ModelChoice = MODELS.analyst.primary
+  const pair = ordered(MODELS.analyst)
+  let choice: ModelChoice = pair.primary
   let result: Awaited<ReturnType<typeof call>>
   try {
     result = await call(choice)
   } catch (error) {
     if (noFallback(error)) throw error
-    choice = MODELS.analyst.fallback
+    choice = pair.fallback
     result = await call(choice)
   }
   const out = result.output

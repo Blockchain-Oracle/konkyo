@@ -2,6 +2,7 @@ import { createHash } from "node:crypto"
 import { INGEST } from "@konkyo/config"
 import { env } from "@konkyo/env/server"
 import { tapedFetch } from "@konkyo/tape"
+import { hedged } from "./hedge"
 import { limiterFor } from "./limiter"
 import { baseURL } from "./provider"
 
@@ -17,41 +18,70 @@ export const embeddingKey = (text: string, as: EmbedAs) =>
     .update(`${INGEST.embeddingModel}\n${INGEST.embeddingDimensions}\n${as}\n${text}`)
     .digest("hex")
 
-const TIMEOUT_MS = 30_000
+/**
+ * A question is embedded while someone waits (about 0.3 s): a stalled request is asked again at
+ * 2.5 s and given up at 8. A batch of passages is background work, so it gets longer.
+ */
+const TIMING: Record<EmbedAs, { timeoutMs: number; hedgeAfterMs?: number }> = {
+  query: { timeoutMs: 8_000, hedgeAfterMs: 2_500 },
+  passage: { timeoutMs: 30_000 },
+}
 const RETRIES = 3
 const BACKOFF_MS = 2_000
 
 type Reply = { data: { embedding: number[]; index: number }[]; usage?: { total_tokens?: number } }
 
-/** One request; a rate limit or a server error waits (Retry-After when given) and tries again. */
-async function request(input: string[], as: EmbedAs): Promise<Reply> {
-  for (let attempt = 0; ; attempt++) {
-    const res = await limiterFor(INGEST.embeddingModel).run(() =>
-      tapedFetch(`${baseURL}/embeddings`, {
-        method: "POST",
-        headers: {
-          authorization: `Bearer ${env.NVIDIA_API_KEY}`,
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          model: INGEST.embeddingModel,
-          input,
-          input_type: as,
-          dimensions: INGEST.embeddingDimensions,
-          truncate: "END",
-          encoding_format: "float",
-        }),
-        signal: AbortSignal.timeout(TIMEOUT_MS),
+/** One HTTP request to the embeddings endpoint, within its time limit. */
+function post(input: string[], as: EmbedAs, signal: AbortSignal) {
+  return limiterFor(INGEST.embeddingModel).run(() =>
+    tapedFetch(`${baseURL}/embeddings`, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${env.NVIDIA_API_KEY}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        model: INGEST.embeddingModel,
+        input,
+        input_type: as,
+        dimensions: INGEST.embeddingDimensions,
+        truncate: "END",
+        encoding_format: "float",
       }),
-    )
-    if (res.ok) return (await res.json()) as Reply
-    const retryable = res.status === 429 || res.status >= 500
-    if (!retryable || attempt >= RETRIES) {
-      throw new Error(`Embedding failed (${res.status}): ${(await res.text()).slice(0, 300)}`)
+      signal,
+    }),
+  )
+}
+
+/**
+ * One embedding, hedged for a question; a rate limit, a server error, a timeout or a dropped
+ * connection waits (Retry-After when given) and tries again.
+ */
+async function request(input: string[], as: EmbedAs): Promise<Reply> {
+  const { timeoutMs, hedgeAfterMs } = TIMING[as]
+  for (let attempt = 0; ; attempt++) {
+    let failure: string
+    let after = 0
+    try {
+      const res = await hedged({
+        after: hedgeAfterMs,
+        signal: AbortSignal.timeout(timeoutMs),
+        attempt: (signal) => post(input, as, signal),
+        discard: (late) => void late.body?.cancel().catch(() => undefined),
+      })
+      if (res.ok) return (await res.json()) as Reply
+      if (res.status !== 429 && res.status < 500) {
+        throw new Error(`Embedding failed (${res.status}): ${(await res.text()).slice(0, 300)}`)
+      }
+      failure = `Embedding failed (${res.status})`
+      after = Number(res.headers.get("retry-after")) * 1000
+    } catch (error) {
+      if ((error as Error).message.startsWith("Embedding failed")) throw error
+      failure = `Embedding failed: ${(error as Error).message}`
     }
-    const after = Number(res.headers.get("retry-after"))
+    if (attempt >= RETRIES) throw new Error(failure)
     await new Promise((resolve) =>
-      setTimeout(resolve, after > 0 ? after * 1000 : BACKOFF_MS * 2 ** attempt),
+      setTimeout(resolve, after > 0 ? after : BACKOFF_MS * 2 ** attempt),
     )
   }
 }

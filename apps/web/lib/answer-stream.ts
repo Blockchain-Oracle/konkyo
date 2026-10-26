@@ -9,9 +9,12 @@ import type { UIMessageStreamWriter } from "ai"
  */
 export function answerWriter(writer: UIMessageStreamWriter<KonkyoMessage>) {
   let drafting = false
+  // Each restart of the Writer gets a new text part; the latest one is the draft shown.
+  let draftId = "draft"
+  let restarts = 0
   let receipt: Receipt | undefined
   const endDraft = () => {
-    if (drafting) writer.write({ type: "text-end", id: "draft" })
+    if (drafting) writer.write({ type: "text-end", id: draftId })
     drafting = false
   }
   const emit = (event: AnswerEvent) => {
@@ -24,10 +27,15 @@ export function answerWriter(writer: UIMessageStreamWriter<KonkyoMessage>) {
         break
       case "text":
         if (!drafting) {
-          writer.write({ type: "text-start", id: "draft" })
+          writer.write({ type: "text-start", id: draftId })
           drafting = true
         }
-        writer.write({ type: "text-delta", id: "draft", delta: event.delta })
+        writer.write({ type: "text-delta", id: draftId, delta: event.delta })
+        break
+      case "draft-restart":
+        endDraft()
+        restarts++
+        draftId = `draft-${restarts}`
         break
       case "revising":
         writer.write({ type: "data-revising", id: "revising", data: event })

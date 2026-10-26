@@ -8,6 +8,7 @@ import { MODEL_API, type ModelChoice, type ModelEffort } from "@konkyo/config"
 import { env } from "@konkyo/env/server"
 import { tapedFetch } from "@konkyo/tape"
 import { type LanguageModel, wrapLanguageModel } from "ai"
+import { markBusy } from "./health"
 import { hedged } from "./hedge"
 import { limiterFor } from "./limiter"
 
@@ -54,6 +55,27 @@ export class ModelTimeoutError extends Error {
     super(`${modelId} gave no answer within ${Math.round(ms / 1000)} s`)
     this.name = "ModelTimeoutError"
   }
+}
+
+/**
+ * The model refused for now (429): its fallback takes over at once, with no retries against a
+ * model that just said it's full (the SDK would wait 2 s and 4 s, asking twice more).
+ */
+export class ModelBusyError extends Error {
+  constructor(modelId: string) {
+    super(`${modelId} is busy right now`)
+    this.name = "ModelBusyError"
+  }
+}
+
+/** A failure as the caller should see it, noting a model that refused or stalled. */
+function settle(modelId: string, error: unknown) {
+  if ((error as { statusCode?: number })?.statusCode === 429) {
+    markBusy(modelId)
+    return new ModelBusyError(modelId)
+  }
+  if (error instanceof ModelTimeoutError) markBusy(modelId)
+  return error
 }
 
 /** A deadline joined to the caller's own signal; `timedOut` tells it apart from a stop. */
@@ -126,6 +148,10 @@ export function model(choice: ModelChoice): LanguageModel {
   return wrapLanguageModel({
     model: nvidia(choice.id),
     middleware: {
+      transformParams: async ({ params }) => ({
+        ...params,
+        maxOutputTokens: params.maxOutputTokens ?? MODEL_API.maxOutputTokens,
+      }),
       wrapGenerate: async ({ params, model: inner }) => {
         const due = deadline(params, answerMs)
         try {
@@ -137,7 +163,8 @@ export function model(choice: ModelChoice): LanguageModel {
               limiter.run(() => inner.doGenerate({ ...params, abortSignal: signal })),
           })
         } catch (error) {
-          return failFast(due.timedOut() ? new ModelTimeoutError(choice.id, answerMs) : error)
+          const timeout = new ModelTimeoutError(choice.id, answerMs)
+          return failFast(settle(choice.id, due.timedOut() ? timeout : error))
         } finally {
           due.clear()
         }
@@ -155,7 +182,8 @@ export function model(choice: ModelChoice): LanguageModel {
           })
           return { ...started.result, stream: resume(started) }
         } catch (error) {
-          return failFast(due.timedOut() ? new ModelTimeoutError(choice.id, firstTokenMs) : error)
+          const timeout = new ModelTimeoutError(choice.id, firstTokenMs)
+          return failFast(settle(choice.id, due.timedOut() ? timeout : error))
         } finally {
           // The deadline is for the first content; once it has come, the stream runs its course.
           due.clear()

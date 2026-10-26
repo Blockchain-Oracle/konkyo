@@ -14,7 +14,15 @@ import {
   type SourceLine,
 } from "./citations"
 import { type Recalled, recall } from "./memory"
-import { MODELS, type ModelChoice, model, noFallback, type Role, reasoning } from "./models"
+import {
+  MODELS,
+  type ModelChoice,
+  model,
+  noFallback,
+  ordered,
+  type Role,
+  reasoning,
+} from "./models"
 import { type Candidate, hybridSearch, type Scope } from "./retrieve"
 import type { Tracer } from "./trace"
 
@@ -62,6 +70,8 @@ export type AnswerEvent =
     }
   | { type: "sources"; sources: SourceRef[] }
   | { type: "text"; delta: string }
+  /** The draft so far is thrown away: the Writer starts again on its fallback model. */
+  | { type: "draft-restart" }
   | { type: "revising"; round: number; reasons: string[] }
   | {
       type: "final"
@@ -141,7 +151,7 @@ async function withFallback<T>(
   step: string,
   call: (choice: ModelChoice) => Promise<T>,
 ): Promise<{ result: T; choice: ModelChoice }> {
-  const { primary, fallback } = MODELS[role]
+  const { primary, fallback } = ordered(MODELS[role])
   try {
     return { result: await call(primary), choice: primary }
   } catch (error) {
@@ -329,6 +339,33 @@ function passagesBlock(sources: SourceRef[]) {
     .join("\n\n")
 }
 
+/** A cited answer is a few sentences and their source lines; this leaves room for long quotes. */
+const WRITER_MAX_TOKENS = 1_600
+
+/** The Writer has started looping (the same sentence over and over): its fallback takes over. */
+class RepetitionError extends Error {
+  constructor() {
+    super("The Writer started repeating itself")
+    this.name = "RepetitionError"
+  }
+}
+
+/** The same sentence a third time, numbers and markers aside: a model stuck in a loop. */
+function repeating(text: string) {
+  const seen = new Map<string, number>()
+  for (const sentence of text.split(/(?<=[.!?])\s+/)) {
+    const key = sentence
+      .replace(/\[\d+\]|\d+/g, "")
+      .trim()
+      .toLowerCase()
+    if (key.length < 25) continue
+    const count = (seen.get(key) ?? 0) + 1
+    if (count >= 3) return true
+    seen.set(key, count)
+  }
+  return false
+}
+
 async function write(
   input: AnswerInput,
   question: string,
@@ -336,6 +373,7 @@ async function write(
   feedback: string | null,
   onDelta?: (delta: string) => void,
   memories: Recalled[] = [],
+  onRestart?: () => void,
 ) {
   const started = performance.now()
   const prompt =
@@ -343,6 +381,7 @@ async function write(
     (feedback
       ? `\n\nYour previous draft was REJECTED by the Verifier:\n${feedback}\n\nRewrite the answer fixing every problem. Use only facts and exact quotes from the passages.`
       : "")
+  let streamed = false
   const { result, choice } = await withFallback("writer", input.tracer, "write", async (c) => {
     if (!onDelta) {
       const r = await generateText({
@@ -350,26 +389,41 @@ async function write(
         providerOptions: reasoning(c),
         instructions: WRITER_INSTRUCTIONS,
         prompt,
+        maxOutputTokens: WRITER_MAX_TOKENS,
         abortSignal: input.abortSignal,
       })
+      if (repeating(r.text)) throw new RepetitionError()
       return { text: r.text, usage: r.usage }
     }
+    // A second attempt (the fallback) starts the reader's draft afresh.
+    if (streamed) onRestart?.()
+    const stop = new AbortController()
     const stream = streamText({
       model: model(c),
       providerOptions: reasoning(c),
       instructions: WRITER_INSTRUCTIONS,
       prompt,
-      abortSignal: input.abortSignal,
+      maxOutputTokens: WRITER_MAX_TOKENS,
+      abortSignal: input.abortSignal
+        ? AbortSignal.any([input.abortSignal, stop.signal])
+        : stop.signal,
+      // A failed stream rejects `usage` below, where the fallback takes it: no console noise.
+      onError: () => {},
     })
     // Only the answer streams: the caveat and the sources are read once the draft is done.
     let text = ""
     let sent = 0
     for await (const delta of stream.textStream) {
       text += delta
+      if (repeating(text)) {
+        stop.abort()
+        throw new RepetitionError()
+      }
       const end = bodyEnd(text, false)
       if (end > sent) {
         onDelta(text.slice(sent, end))
         sent = end
+        streamed = true
       }
     }
     const end = bodyEnd(text, true)
@@ -426,6 +480,7 @@ async function reviseSentences(
       model: model(c),
       providerOptions: reasoning(c),
       output: Output.object({ schema: FixSchema }),
+      maxOutputTokens: WRITER_MAX_TOKENS,
       instructions: `${WRITER_INSTRUCTIONS}\n\nNow you are correcting single sentences the Verifier rejected. Fix each so every fact in it is stated in the passages it cites, or return an empty text to drop it. Do not touch other sentences.`,
       prompt: `Passages:\n${passagesBlock(sources)}\n\nAnswer so far:\n${draft.sentences
         .map((sn, i) => `(${i + 1}) ${sn.text}`)
@@ -1046,16 +1101,16 @@ export async function answer(input: AnswerInput) {
     : Promise.resolve(null)
 
   step("write", "Writing", "running")
-  const draftText = (
-    await write(
-      input,
-      planned.standalone,
-      sources,
-      null,
-      (delta) => emit({ type: "text", delta }),
-      memories,
-    )
-  ).text
+  const drafted = await write(
+    input,
+    planned.standalone,
+    sources,
+    null,
+    (delta) => emit({ type: "text", delta }),
+    memories,
+    () => emit({ type: "draft-restart" }),
+  )
+  const draftText = drafted.text
   step("write", "Writing", "done")
   const pre = await precheck
   const missingDocs = new Set([...files].filter((f) => !pre.present.has(f)))
@@ -1130,7 +1185,7 @@ export async function answer(input: AnswerInput) {
     precheckSql: pre.sql,
     models: {
       planner: planned.model,
-      writer: MODELS.writer.primary.id,
+      writer: drafted.model,
       verifier: verdict.model,
       ...(analysed ? { analyst: analysed.model } : {}),
     },

@@ -7,7 +7,7 @@ import { z } from "zod"
 import type { AnswerInput, SourceRef } from "./answer"
 import { quoteKey } from "./citations"
 import { freshCache } from "./fresh"
-import { MODELS, type ModelChoice, model, noFallback, reasoning } from "./models"
+import { MODELS, type ModelChoice, model, noFallback, ordered, reasoning } from "./models"
 
 /** A source's position on a claim (plan §7.4 #4): the stance glyph and its one word. */
 export type Stance = "agrees" | "disagrees" | "partly"
@@ -51,7 +51,9 @@ const AnalystSchema = z.object({
         stances: z
           .array(
             z.object({
-              passage: z.string().describe("The passage label, like p3"),
+              passage: z
+                .string()
+                .describe("The passage's own label in brackets, like p3 (not its source letter)"),
               stance: z.enum(["agrees", "disagrees", "partly"]),
               quote: z
                 .string()
@@ -63,7 +65,7 @@ const AnalystSchema = z.object({
           .min(2)
           .max(8)
           .describe(
-            "Every passage that takes a position on this claim: at least two, from different sources (different titles)",
+            "Every passage that takes a position on this claim: at least two, from different sources (different letters)",
           ),
       }),
     )
@@ -76,10 +78,10 @@ const AnalystSchema = z.object({
  * now and then), and the receipt waits for the comparison. Past its budget the fast fallback takes over;
  * past that, the answer lands without a comparison (the step shows failed).
  */
-const ANALYST_BUDGET_MS = { primary: 25_000, fallback: 20_000 }
+const ANALYST_BUDGET_MS = { primary: 25_000, fallback: 30_000 }
 
 const ANALYST_INSTRUCTIONS = `You are the Analyst in a research assistant. You compare what the user's sources say about the question.
-List 3-6 SPECIFIC claims (one finding, number, mechanism or condition each; never one broad summary) that two or more DIFFERENT sources (different titles) take a position on. Include the main points they agree on and every point where they differ or one qualifies another.
+List 3-6 SPECIFIC claims (one finding, number, mechanism or condition each; never one broad summary) that two or more DIFFERENT sources (different source letters: A, B, C…) take a position on; two passages of one source are one source. Include the main points they agree on and every point where they differ or one qualifies another.
 For each passage that addresses a claim: "agrees" if it states the claim, "disagrees" if it states the opposite or a conflicting value, "partly" if it supports it only with a limit or condition. Skip passages that don't address it.
 Use only what the passages say. Each quote is 3-12 consecutive words copied exactly from that passage, nothing added. If the sources share no points, return no claims.`
 
@@ -239,6 +241,23 @@ function shape(claims: Matrix["claims"], all: SourceRef[], state: Matrix["state"
 }
 
 /**
+ * Passages under their source, each source lettered: "two different sources" is then two
+ * letters. Listed one by one, models paired two passages of one paper as often as not (in testing).
+ */
+function grouped(sources: SourceRef[]) {
+  const bySource = new Map<string, SourceRef[]>()
+  for (const s of sources) bySource.set(s.fileId, [...(bySource.get(s.fileId) ?? []), s])
+  return [...bySource.values()]
+    .map(
+      (list, i) =>
+        `Source ${String.fromCharCode(65 + i)}: ${list[0]?.title}\n${list
+          .map((s) => `[${s.label}] ${s.text}`)
+          .join("\n\n")}`,
+    )
+    .join("\n\n")
+}
+
+/**
  * The Analyst (plan §2, F13): reads the retrieved passages alongside the Writer, extracts the
  * claims several sources take a position on, and keeps a cell only when its quote is in its
  * passage (code) and in Zetaris's own reading of the document (one statement). Claims, sources
@@ -258,22 +277,21 @@ export async function analyse(
       providerOptions: reasoning(c),
       output: Output.object({ schema: AnalystSchema }),
       instructions: ANALYST_INSTRUCTIONS,
-      prompt: `Passages:\n${sources
-        .map((s) => `[${s.label}] (${s.title})\n${s.text}`)
-        .join("\n\n")}\n\nQuestion: ${question}`,
+      prompt: `${grouped(sources)}\n\nQuestion: ${question}`,
       // A stopped run aborts it; so does its time budget (a TimeoutError, which falls back).
       abortSignal: AbortSignal.any([
         AbortSignal.timeout(budgetMs),
         ...(input.abortSignal ? [input.abortSignal] : []),
       ]),
     })
-  let choice: ModelChoice = MODELS.analyst.primary
+  const pair = ordered(MODELS.analyst)
+  let choice: ModelChoice = pair.primary
   let result: Awaited<ReturnType<typeof call>>
   try {
     result = await call(choice, ANALYST_BUDGET_MS.primary)
   } catch (error) {
     if (noFallback(error)) throw error
-    choice = MODELS.analyst.fallback
+    choice = pair.fallback
     tracer.log({
       agent: "analyst",
       step: "claims",
@@ -290,7 +308,8 @@ export async function analyse(
   const claims: Matrix["claims"] = result.output.claims.map((c, i) => {
     const cells = new Map<string, MatrixCell>()
     for (const s of c.stances) {
-      const source = byLabel.get(s.passage.trim().replace(/^\[|\]$/g, ""))
+      // The label as written ("p3", "[p3]", "Source A p3"): its passage number is what counts.
+      const source = byLabel.get(s.passage.match(/p\d+/i)?.[0]?.toLowerCase() ?? "")
       if (!source || !quoteKey(source.text).includes(quoteKey(s.quote)) || !quoteKey(s.quote)) {
         dropped++
         continue

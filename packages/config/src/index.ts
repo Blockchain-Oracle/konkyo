@@ -176,7 +176,14 @@ export const MODEL_API = {
    * usually answers in seconds but sometimes stalls for minutes (in testing). A stream only has to start in time.
    */
   answerTimeoutMs: 45_000,
+  /**
+   * The most a call may write unless it sets its own: NVIDIA's default is 16,384, and a model
+   * stuck in a loop would spend minutes reaching it.
+   */
+  maxOutputTokens: 4_000,
   firstTokenTimeoutMs: 25_000,
+  /** A model that refused (429) or stalled is tried second for this long. */
+  busyCooldownMs: 60_000,
 } as const
 
 /** The Nemotron models Konkyo calls, each for what NVIDIA built it for. */
@@ -272,7 +279,7 @@ export const MODELS = {
   /** Screens found sources against the question, batch by batch (Markovian steps). */
   screener: { primary: { ...ULTRA("off"), hedgeAfterMs: 12_000 }, fallback: LIGHTNING("low") },
   /** Claims and agreement across sources: the same strict-support judgement as the Verifier. */
-  analyst: { primary: { ...ULTRA("off"), hedgeAfterMs: 15_000 }, fallback: LIGHTNING("low") },
+  analyst: { primary: { ...ULTRA("off"), hedgeAfterMs: 15_000 }, fallback: SUPER("off") },
   /**
    * Makes practice items from passages (F27); every answer key then goes to the Verifier. In the
    * background, and a draft is 600–950 tokens (13–27 s on Ultra, testing), so it gets longer.

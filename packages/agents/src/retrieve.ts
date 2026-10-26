@@ -6,6 +6,27 @@ import { inArray, sql } from "drizzle-orm"
 
 const { embeddingCache } = schema
 
+/**
+ * Reference lists, front matter and tables of numbers: nothing there to learn from or to quote as
+ * a finding (a bibliography of spindle papers embeds close to a question about spindles).
+ */
+export function looksLikeApparatus(text: string) {
+  const words = text.split(/\s+/).length
+  const years = text.match(/\b(19|20)\d{2}[a-z]?\b/g)?.length ?? 0
+  // "Fett, P., Gomes, M.W.": 0.10-0.23 per word in reference lists, none in prose (in testing).
+  const initials = text.match(/\b\p{Lu}[\p{Ll}'’-]+,\s(?:\p{Lu}\.\s?){1,3}/gu)?.length ?? 0
+  const digits = text.replace(/[^\d]/g, "").length / Math.max(1, text.length)
+  return (
+    /^\s*(references|bibliography|acknowledg|funding|conflicts? of interest|author contributions)/i.test(
+      text,
+    ) ||
+    (/doi\.org|https?:\/\//.test(text) && years > 3) ||
+    years / Math.max(1, words) > 0.05 ||
+    initials / Math.max(1, words) > 0.04 ||
+    digits > 0.2
+  )
+}
+
 /** What a chat looks at: everything (empty), or some files and folders (with their subfolders). */
 export type Scope = { fileIds?: string[]; folderIds?: string[] }
 
@@ -150,7 +171,8 @@ async function searchLibrary(
       fused.set(row.id, entry)
     })
   }
-  const top = [...fused.entries()].sort((a, b) => b[1].score - a[1].score).slice(0, limit)
+  // Twice the passages are read, so reference lists can give way to prose (below).
+  const top = [...fused.entries()].sort((a, b) => b[1].score - a[1].score).slice(0, limit * 2)
   if (!top.length) return { candidates: [], scopedFiles: files?.length ?? null }
 
   const rows = await db.execute<{
@@ -194,5 +216,13 @@ async function searchLibrary(
         ]
       : []
   })
-  return { candidates, scopedFiles: files?.length ?? null }
+  // Reference lists and front matter embed close to the questions they cite (a bibliography of
+  // spindle papers scored 0.63 for "what do spindles do for memory?"), but they hold no findings:
+  // the Writer once copied one title over and over (in testing). Prose comes first; they're kept only
+  // when nothing else matched (a question about a paper's references).
+  const prose = candidates.filter((c) => !looksLikeApparatus(c.text))
+  return {
+    candidates: (prose.length ? prose : candidates).slice(0, limit),
+    scopedFiles: files?.length ?? null,
+  }
 }

@@ -2,7 +2,7 @@ import { checkQuotes, sqlHash } from "@konkyo/zetaris"
 import { generateText, Output } from "ai"
 import { z } from "zod"
 import { quoteKey } from "./citations"
-import { MODELS, type ModelChoice, model, noFallback, reasoning } from "./models"
+import { MODELS, type ModelChoice, model, noFallback, ordered, reasoning } from "./models"
 import { type Candidate, hybridSearch } from "./retrieve"
 import type { Tracer } from "./trace"
 
@@ -57,7 +57,7 @@ async function call<T>(
   step: string,
   fn: (choice: ModelChoice) => Promise<T>,
 ) {
-  const { primary, fallback } = MODELS[role]
+  const { primary, fallback } = ordered(MODELS[role])
   try {
     return { result: await fn(primary), choice: primary }
   } catch (error) {

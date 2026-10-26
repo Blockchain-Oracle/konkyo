@@ -8,8 +8,8 @@ import { sql } from "drizzle-orm"
 import { z } from "zod"
 import { quoteKey } from "./citations"
 import { recall as recallMemories } from "./memory"
-import { MODELS, type ModelChoice, model, noFallback, reasoning } from "./models"
-import type { Scope } from "./retrieve"
+import { MODELS, type ModelChoice, model, noFallback, ordered, reasoning } from "./models"
+import { looksLikeApparatus, type Scope } from "./retrieve"
 import type { Tracer } from "./trace"
 
 /** A passage the Tutor reads, labelled so its answers can say where they come from. */
@@ -57,7 +57,7 @@ async function call<T>(
   step: string,
   fn: (choice: ModelChoice) => Promise<T>,
 ) {
-  const { primary, fallback } = MODELS[role]
+  const { primary, fallback } = ordered(MODELS[role])
   try {
     return { result: await fn(primary), choice: primary }
   } catch (error) {
@@ -78,24 +78,6 @@ async function call<T>(
 /** Windows shorter than this are joined with the next passage; longer ones stand alone. */
 const WINDOW_MIN = 600
 const WINDOW_MAX = 2400
-
-/** Reference lists, front matter and tables of numbers: nothing there is worth learning. */
-export function looksLikeApparatus(text: string) {
-  const words = text.split(/\s+/).length
-  const years = text.match(/\b(19|20)\d{2}[a-z]?\b/g)?.length ?? 0
-  // "Fett, P., Gomes, M.W.": 0.10-0.23 per word in reference lists, none in prose (in testing).
-  const initials = text.match(/\b\p{Lu}[\p{Ll}'’-]+,\s(?:\p{Lu}\.\s?){1,3}/gu)?.length ?? 0
-  const digits = text.replace(/[^\d]/g, "").length / Math.max(1, text.length)
-  return (
-    /^\s*(references|bibliography|acknowledg|funding|conflicts? of interest|author contributions)/i.test(
-      text,
-    ) ||
-    (/doi\.org|https?:\/\//.test(text) && years > 3) ||
-    years / Math.max(1, words) > 0.05 ||
-    initials / Math.max(1, words) > 0.04 ||
-    digits > 0.2
-  )
-}
 
 function windowsOf(passages: (StudyPassage & { centrality: number })[]): StudyWindow[] {
   const out: StudyWindow[] = []

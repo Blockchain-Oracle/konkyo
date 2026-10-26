@@ -3,7 +3,7 @@ import { type FoundWork, searchWorks } from "@konkyo/ingest/metadata"
 import { Markovian } from "@konkyo/meterless/markovian"
 import { generateText, Output } from "ai"
 import { z } from "zod"
-import { MODELS, type ModelChoice, model, noFallback, reasoning } from "./models"
+import { MODELS, type ModelChoice, model, noFallback, ordered, reasoning } from "./models"
 import type { Tracer } from "./trace"
 
 /** A source deep search found: a paper OpenAlex holds a PDF of, or a Wikipedia article. */
@@ -29,7 +29,7 @@ async function withFallback<T>(
   step: string,
   call: (choice: ModelChoice) => Promise<T>,
 ): Promise<{ result: T; choice: ModelChoice }> {
-  const { primary, fallback } = MODELS[role]
+  const { primary, fallback } = ordered(MODELS[role])
   try {
     return { result: await call(primary), choice: primary }
   } catch (error) {
