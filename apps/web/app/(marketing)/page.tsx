@@ -35,7 +35,7 @@ const MAKERS: { vendor: Vendor; body: string }[] = [
   },
   {
     vendor: "nvidia",
-    body: "Nemotron plans every answer, finds its passages and guards what's shared.",
+    body: "Nemotron plans your answers, finds their passages and guards what's shared.",
   },
   {
     vendor: "elevenlabs",
