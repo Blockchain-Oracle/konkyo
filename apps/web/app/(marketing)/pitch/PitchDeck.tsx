@@ -4,7 +4,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { BrandMark } from "@/components/brand-mark"
-import { PITCH } from "./copy"
+import { MILESTONES, PITCH } from "./copy"
 import styles from "./page.module.css"
 
 export function PitchDeck() {
@@ -32,7 +32,7 @@ export function PitchDeck() {
   }, [])
 
   return (
-    <main className={styles.deck} aria-label="Konkyo pitch">
+    <main className={styles.deck} data-theme={slide.theme} aria-label="Konkyo pitch">
       <div className={styles.frame}>
         <header className={styles.header}>
           <Link href="/" className={styles.brand} aria-label="Konkyo home">
@@ -108,6 +108,16 @@ export function PitchDeck() {
                   <span>03 / OPEN</span>
                   <strong>The passage and receipt are one click away.</strong>
                 </li>
+              </ol>
+            ) : null}
+            {slide.id === "milestones" ? (
+              <ol className={styles.milestones}>
+                {MILESTONES.map((milestone) => (
+                  <li key={milestone.label}>
+                    <span>{milestone.label}</span>
+                    <strong>{milestone.text}</strong>
+                  </li>
+                ))}
               </ol>
             ) : null}
           </article>

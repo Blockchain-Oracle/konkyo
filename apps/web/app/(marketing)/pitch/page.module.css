@@ -1,10 +1,33 @@
 .deck {
+  --pitch-bg: #0b0b0e;
+  --pitch-text: #f5f3ef;
+  --pitch-muted: #c0bec4;
+  --pitch-soft: #aaa8ad;
+  --pitch-rule: #28282e;
+  --pitch-panel: #17161b;
+  --pitch-panel-rule: #34333a;
+  --pitch-accent: #d7ff60;
+
   position: fixed;
   inset: 0;
   z-index: 100;
   overflow: hidden;
-  background: #0b0b0e;
-  color: #f5f3ef;
+  background: var(--pitch-bg);
+  color: var(--pitch-text);
+  transition:
+    background-color 220ms ease,
+    color 220ms ease;
+}
+
+.deck[data-theme="light"] {
+  --pitch-bg: #f6f3ec;
+  --pitch-text: #18161a;
+  --pitch-muted: #57525a;
+  --pitch-soft: #6e6872;
+  --pitch-rule: #d9d2cb;
+  --pitch-panel: #fffdf8;
+  --pitch-panel-rule: #d8d0c9;
+  --pitch-accent: #385f00;
 }
 
 .frame {
@@ -13,7 +36,7 @@
   width: min(100% - 56px, 1460px);
   height: 100dvh;
   margin-inline: auto;
-  border-inline: 1px solid #28282e;
+  border-inline: 1px solid var(--pitch-rule);
   padding-inline: clamp(18px, 3vw, 50px);
 }
 
@@ -25,7 +48,7 @@
   justify-content: space-between;
   min-height: 79px;
   gap: 20px;
-  border-bottom: 1px solid #28282e;
+  border-bottom: 1px solid var(--pitch-rule);
 }
 
 .brand {
@@ -44,6 +67,10 @@
   height: 30px;
 }
 
+.brand .mark {
+  color: var(--pitch-accent);
+}
+
 .headerRight {
   display: flex;
   align-items: center;
@@ -52,14 +79,15 @@
 }
 
 .headerRight a {
-  color: #d7ff60;
+  color: var(--pitch-accent);
 }
 
 .folio,
 .eyebrow,
 .footerHint,
 .questions span,
-.steps span {
+.steps span,
+.milestones span {
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 600;
@@ -69,7 +97,7 @@
 
 .folio,
 .footerHint {
-  color: #aaa8ad;
+  color: var(--pitch-soft);
 }
 
 .stage {
@@ -106,7 +134,7 @@
 
 .eyebrow {
   margin: 0 0 17px;
-  color: #d7ff60;
+  color: var(--pitch-accent);
 }
 
 .copy h1 {
@@ -123,7 +151,7 @@
 .body {
   max-width: 45ch;
   margin: 25px 0 0;
-  color: #c0bec4;
+  color: var(--pitch-muted);
   font-size: clamp(1.05rem, 1.5vw, 1.35rem);
   line-height: 1.6;
 }
@@ -155,14 +183,14 @@
 
 .links a:not(.cta) {
   margin-top: 30px;
-  color: #f5f3ef;
+  color: var(--pitch-text);
   font-size: 14px;
 }
 
 .capture {
   overflow: hidden;
   margin: 0;
-  border: 1px solid #35343a;
+  border: 1px solid var(--pitch-panel-rule);
   border-radius: 18px;
   background: #131216;
   transform: rotate(1.5deg);
@@ -181,7 +209,8 @@
 }
 
 .questions,
-.steps {
+.steps,
+.milestones {
   display: grid;
   gap: 12px;
   margin: 0;
@@ -190,16 +219,18 @@
 }
 
 .questions span,
-.steps li {
+.steps li,
+.milestones li {
   display: block;
-  border: 1px solid #34333a;
+  border: 1px solid var(--pitch-panel-rule);
   border-radius: 16px;
   padding: clamp(20px, 2.5vw, 34px);
-  background: #17161b;
+  background: var(--pitch-panel);
 }
 
 .questions span:nth-child(2),
-.steps li:nth-child(2) {
+.steps li:nth-child(2),
+.milestones li:nth-child(2) {
   background: #6347d9;
   color: #fff;
 }
@@ -210,22 +241,34 @@
   text-transform: none;
 }
 
-.steps span {
+.steps span,
+.milestones span {
   display: block;
   margin-bottom: 13px;
-  color: #d7ff60;
+  color: var(--pitch-accent);
 }
 
-.steps strong {
+.steps li:nth-child(2) span,
+.milestones li:nth-child(2) span {
+  color: #e6dfff;
+}
+
+.steps strong,
+.milestones strong {
   display: block;
   font-family: var(--font-display);
   font-size: clamp(20px, 2vw, 29px);
   line-height: 1.15;
 }
 
+.milestones strong {
+  max-width: 28ch;
+  font-size: clamp(18px, 1.65vw, 24px);
+}
+
 .footer {
   min-height: 81px;
-  border-top: 1px solid #28282e;
+  border-top: 1px solid var(--pitch-rule);
   border-bottom: 0;
 }
 
@@ -239,24 +282,24 @@
 .dots button {
   width: 11px;
   height: 11px;
-  border: 1px solid #aaa8ad;
+  border: 1px solid var(--pitch-soft);
   border-radius: 50%;
   background: transparent;
   cursor: pointer;
 }
 
 .dots button[aria-current="step"] {
-  border-color: #d7ff60;
-  background: #d7ff60;
+  border-color: var(--pitch-accent);
+  background: var(--pitch-accent);
 }
 
 .arrows button {
   width: 43px;
   height: 43px;
-  border: 1px solid #aaa8ad;
+  border: 1px solid var(--pitch-soft);
   border-radius: 50%;
   background: transparent;
-  color: #f5f3ef;
+  color: var(--pitch-text);
   cursor: pointer;
   font-size: 22px;
 }
@@ -325,6 +368,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .deck {
+    transition: none;
+  }
   .slide {
     animation: none;
   }
