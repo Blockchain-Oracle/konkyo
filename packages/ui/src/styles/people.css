@@ -332,7 +332,7 @@
 }
 
 .claim-card:has(.claim-look.is-selected) .claim-look:not(.is-selected):not(:hover),
-.settings-sheet:has(.claim-look.is-selected) .claim-look:not(.is-selected):not(:hover) {
+.profile-looks:has(.claim-look.is-selected) .claim-look:not(.is-selected):not(:hover) {
   opacity: 0.64;
 }
 
@@ -507,270 +507,12 @@
   font-weight: 600;
 }
 
-/* ---- The settings card, off the rail ---- */
-/* Konkyo: above the dock and the coach slip (70), which the phone sheet would otherwise sit under. */
-.settings-scrim {
-  position: fixed;
-  z-index: 79;
-  inset: 0;
-}
-
-.settings-sheet {
-  position: fixed;
-  z-index: 80;
-  top: 20px;
-  left: 112px;
-  display: flex;
-  width: 296px;
-  max-height: calc(100dvh - 40px);
-  flex-direction: column;
-  gap: 16px;
-  overflow: auto;
-  border-radius: 24px;
-  background: var(--color-sticker);
-  box-shadow:
-    0 8px 0 rgba(45, 22, 31, 0.26),
-    0 30px 60px -24px rgba(0, 0, 0, 0.6);
-  color: white;
-  padding: 18px;
-  rotate: 0.6deg;
-  transform-origin: bottom left;
-  animation: settings-sheet-in var(--dur-arrive) var(--ease-pop) both;
-}
-
+/* The entrance a person's page and the sample space share. */
 @keyframes settings-sheet-in {
   from {
     opacity: 0;
     translate: -18px 10px;
     scale: 0.96;
-  }
-}
-
-.settings-heading strong {
-  color: white;
-  font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  line-height: 1.05;
-}
-
-.settings-you {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.settings-face {
-  position: relative;
-  display: grid;
-  flex: 0 0 auto;
-  place-items: center;
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
-  padding: 0;
-  cursor: pointer;
-  transition: scale var(--dur-quick) var(--ease-glide);
-}
-
-.settings-face:hover {
-  scale: 1.06;
-}
-
-.settings-face.is-busy {
-  opacity: 0.6;
-}
-
-.settings-face-hint {
-  position: absolute;
-  right: -4px;
-  bottom: -2px;
-  border: 2px solid var(--color-sticker);
-  border-radius: var(--radius-pill);
-  background: var(--color-lime);
-  color: var(--color-sticker);
-  padding: 2px 6px;
-  font-family: var(--font-sans);
-  font-size: 9px;
-  font-weight: 800;
-  line-height: 1;
-}
-
-.settings-name {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.settings-name .claim-name-input {
-  min-height: 44px;
-  font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-}
-
-.settings-sheet .claim-look-row {
-  padding-bottom: 4px;
-}
-
-.settings-account {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding-top: 14px;
-}
-
-.settings-account-row {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.settings-account-email {
-  color: rgba(255, 255, 255, 0.62);
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.4;
-  overflow-wrap: anywhere;
-}
-
-.settings-account-email strong {
-  color: white;
-}
-
-.settings-keep {
-  align-self: flex-start;
-}
-
-.settings-signout {
-  align-self: flex-start;
-  border: 1.5px solid rgba(255, 255, 255, 0.18);
-  border-radius: var(--radius-pill);
-  background: transparent;
-  color: rgba(255, 255, 255, 0.72);
-  padding: 6px 12px;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 700;
-  transition:
-    border-color var(--dur-quick) var(--ease-glide),
-    color var(--dur-quick) var(--ease-glide);
-}
-
-.settings-signout:hover {
-  border-color: white;
-  color: white;
-}
-
-.settings-me-link {
-  align-self: flex-end;
-  color: rgba(255, 255, 255, 0.55);
-  font-size: 11px;
-  font-weight: 700;
-  text-decoration: none;
-  transition: color var(--dur-quick) var(--ease-glide);
-}
-
-.settings-me-link:hover {
-  color: var(--color-lime);
-}
-
-/* Konkyo: your page's handle and bio inside the card, and the card's ways out. */
-.settings-page-form {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.settings-handle {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.settings-handle > span {
-  position: absolute;
-  left: 11px;
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 14px;
-  font-weight: 700;
-  pointer-events: none;
-}
-
-.settings-handle .claim-name-input {
-  padding-left: 25px;
-}
-
-.settings-handle-note {
-  color: rgba(255, 255, 255, 0.55);
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.settings-handle-note.is-ok {
-  color: var(--color-lime);
-}
-
-.settings-handle-note.is-bad {
-  color: #ffb4a9;
-}
-
-textarea.claim-name-input {
-  min-height: 64px;
-  resize: none;
-  line-height: 1.35;
-  font-weight: 600;
-}
-
-.settings-links {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding-top: 14px;
-}
-
-.settings-links a,
-.settings-links button {
-  border: 1.5px solid rgba(255, 255, 255, 0.14);
-  border-radius: var(--radius-pill);
-  background: transparent;
-  color: rgba(255, 255, 255, 0.78);
-  padding: 6px 11px;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 700;
-  text-decoration: none;
-  transition:
-    border-color var(--dur-quick) var(--ease-glide),
-    color var(--dur-quick) var(--ease-glide);
-}
-
-.settings-links a:hover,
-.settings-links button:hover {
-  border-color: white;
-  color: white;
-}
-
-.settings-links .settings-me-link {
-  margin-left: auto;
-  border: 0;
-  padding: 6px 0;
-}
-
-@media (max-width: 800px) {
-  .settings-sheet {
-    top: auto;
-    right: 12px;
-    bottom: 12px;
-    left: 12px;
-    width: auto;
-    max-height: calc(100dvh - 24px);
-    rotate: 0deg;
-    transform-origin: bottom center;
   }
 }
 
@@ -1142,7 +884,6 @@ textarea.claim-name-input {
 
 @media (prefers-reduced-motion: reduce) {
   .claim-card.is-gate,
-  .settings-sheet,
   .me-wrap {
     animation: none;
   }
@@ -1442,110 +1183,7 @@ textarea.claim-name-input {
   }
 }
 
-/* ---- Konkyo: the Settings page: a section nav beside you and the paper ---- */
-.settings-layout {
-  display: grid;
-  grid-template-columns: 196px minmax(0, 1fr);
-  align-items: start;
-  gap: 28px;
-}
-
-.settings-nav {
-  position: sticky;
-  top: 92px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-}
-
-.settings-nav a {
-  border-radius: var(--radius-pill);
-  background: var(--color-sticker);
-  color: white;
-  padding: 7px 13px;
-  font-size: 13px;
-  font-weight: 800;
-  text-decoration: none;
-  transition:
-    translate var(--dur-quick) var(--ease-glide),
-    background var(--dur-quick) var(--ease-glide),
-    color var(--dur-quick) var(--ease-glide);
-}
-
-.settings-nav a:hover {
-  translate: 3px 0;
-}
-
-.settings-nav a.is-here {
-  background: var(--color-lime);
-  color: var(--color-sticker);
-}
-
-.settings-sections {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  gap: 26px;
-}
-
-/* clear of the places bar and the sticky section tabs beneath it */
-.settings-you-wrap,
-.settings-section {
-  scroll-margin-top: 168px;
-}
-
-.settings-you-card {
-  align-items: stretch;
-  gap: 16px;
-  max-width: 560px;
-  text-align: left;
-  rotate: -0.4deg;
-}
-
-.settings-you-card.is-loading {
-  min-height: 420px;
-}
-
-.settings-you-card .settings-heading {
-  align-items: center;
-}
-
-.settings-you-card .settings-me-link {
-  align-self: center;
-  white-space: nowrap;
-}
-
-.settings-paper {
-  display: flex;
-  flex-direction: column;
-}
-
-.settings-section {
-  border-top: 1px solid rgb(17 17 20 / 0.1);
-  padding: 26px 0 8px;
-}
-
-.settings-section:first-child {
-  border-top: 0;
-  padding-top: 0;
-}
-
-.settings-section > h2 {
-  margin: 0 0 6px;
-  color: var(--color-ink);
-  font-family: var(--font-display);
-  font-size: 26px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-}
-
-.settings-section-about {
-  margin: 0 0 8px;
-  color: var(--color-ink-muted);
-  font-size: 13.5px;
-}
-
+/* ---- Konkyo: the Settings page's rows: words on the left, the control on the right ---- */
 .setting-rows > * + * {
   border-top: 1px solid rgb(17 17 20 / 0.08);
 }
@@ -1662,38 +1300,13 @@ label.setting-text {
   font-weight: 800;
 }
 
-@media (max-width: 900px) {
-  .settings-layout {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 16px;
-  }
-  .settings-nav {
-    top: 8px;
-    z-index: 20;
-    flex-direction: row;
-    margin: 0 -16px;
-    overflow-x: auto;
-    padding: 4px 16px 10px;
-    scrollbar-width: none;
-  }
-  .settings-nav a {
-    flex: 0 0 auto;
-  }
-  .settings-nav a:hover {
-    translate: none;
-  }
-  .settings-you-card {
-    max-width: none;
-    rotate: 0deg;
-  }
-}
-
-.settings-you-card .claim-look-row {
+/* The look picker on Settings: a black panel of faces, seven to a row (four on a phone). */
+.profile-looks .claim-look-row {
   grid-template-columns: repeat(7, minmax(0, 1fr));
 }
 
 @media (max-width: 640px) {
-  .settings-you-card .claim-look-row {
+  .profile-looks .claim-look-row {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
@@ -1705,20 +1318,6 @@ label.setting-text {
 
 .setting-row.is-switch .setting-text {
   flex-basis: auto;
-}
-
-@media (max-width: 800px) {
-  /* under the places bar, which is fixed at the top on phones */
-  .settings-nav {
-    top: 64px;
-  }
-}
-
-@media (max-width: 800px) {
-  .settings-you-wrap,
-  .settings-section {
-    scroll-margin-top: 176px;
-  }
 }
 
 /* ---- Konkyo: follow (F55), Threads' states on the house pill; one width for all of them ---- */
@@ -1992,16 +1591,6 @@ label.setting-text {
   padding: 22px 0;
   color: var(--color-ink-muted);
   font-size: 14px;
-}
-
-.settings-face-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 14px;
-}
-
-.settings-face-links:empty {
-  display: none;
 }
 
 /* ---- The invite button and popover, plus Konkyo's people in the

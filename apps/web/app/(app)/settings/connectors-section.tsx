@@ -12,7 +12,6 @@ import { Input } from "@konkyo/ui/components/input"
 import { NativeSelect } from "@konkyo/ui/components/native-select"
 import { Skeleton } from "@konkyo/ui/components/skeleton"
 import { Spinner } from "@konkyo/ui/components/spinner"
-import { HardDriveIcon, MailIcon, NotebookTextIcon } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "sonner"
 import { openKeep } from "@/components/people/keep-dialog"
@@ -26,20 +25,21 @@ import {
 } from "@/lib/use-connections"
 import { flattenTree, useFolderTree } from "@/lib/use-folders"
 
-const ROWS: { toolkit: Toolkit; icon: typeof MailIcon; about: string }[] = [
+/** Each service's own mark (public/logos), the way people know it. */
+const ROWS: { toolkit: Toolkit; logo: string; about: string }[] = [
   {
     toolkit: "gmail",
-    icon: MailIcon,
+    logo: "/logos/gmail.svg",
     about: "Emails and their attachments, cited like any paper. Can watch a search for new ones.",
   },
   {
     toolkit: "googledrive",
-    icon: HardDriveIcon,
+    logo: "/logos/drive.svg",
     about: "PDFs, Word files, slides, and Google Docs, kept current when they change.",
   },
   {
     toolkit: "notion",
-    icon: NotebookTextIcon,
+    logo: "/logos/notion.svg",
     about: "Pages you share with Konkyo, kept current when they change.",
   },
 ]
@@ -60,8 +60,9 @@ function statusLine(row: ConnectionRow | undefined) {
       ? "Access ran out. Reconnect to import from Gmail again."
       : "Access ran out. Reconnect to keep imports current."
   if (row.status === "initiated") return "Waiting for you to finish signing in."
+  // "Connected" is the badge beside the name; the line says which account and what came of it.
   const parts = [
-    row.label ?? "Connected",
+    row.label,
     `${row.imported} imported`,
     // an imported email doesn't change: Gmail is only checked for a watched search's new mail
     row.syncedAt && (row.toolkit !== "gmail" || row.watchQuery)
@@ -138,16 +139,31 @@ export function ConnectorsSection() {
         </p>
       )}
       <ul className="mt-4 divide-y divide-border border-y border-border">
-        {ROWS.map(({ toolkit, icon: Icon, about }) => {
+        {ROWS.map(({ toolkit, logo, about }) => {
           const row = data.connections.find((c) => c.toolkit === toolkit)
           const name = TOOLKIT_NAME[toolkit]
           const starting = connect.isPending && connect.variables === toolkit
           return (
-            <li key={toolkit} className="py-4">
+            <li key={toolkit} className="py-5">
               <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-                <Icon className="size-5 shrink-0 text-ash-gray" strokeWidth={1.5} aria-hidden />
+                <span className="grid size-12 shrink-0 place-items-center rounded-2xl border border-border bg-white shadow-[0_2px_0_rgb(17_17_20/0.08)]">
+                  <img src={logo} alt="" width={26} height={26} className="size-[26px]" />
+                </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-ui text-bone-white">{name}</p>
+                  <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-ui font-semibold text-bone-white">
+                    {name}
+                    {row?.status === "active" && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-verified/12 px-2 py-0.5 text-micro font-semibold text-verified">
+                        <span aria-hidden className="size-1.5 rounded-full bg-verified" />
+                        Connected
+                      </span>
+                    )}
+                    {row?.status === "expired" && (
+                      <span className="rounded-full bg-partly/12 px-2 py-0.5 text-micro font-semibold text-partly">
+                        Needs reconnecting
+                      </span>
+                    )}
+                  </p>
                   <p className="mt-0.5 text-snippet text-pretty text-ash-gray">
                     {statusLine(row) ?? about}
                   </p>
@@ -203,7 +219,7 @@ function GmailWatch({ row }: { row: ConnectionRow }) {
   const changed = query.trim() !== (row.watchQuery ?? "") || folderId !== (row.folderId ?? "")
   return (
     <form
-      className="mt-3 ml-9 flex flex-wrap items-center gap-2"
+      className="mt-3 flex flex-wrap items-center gap-2 sm:ml-16"
       onSubmit={(e) => {
         e.preventDefault()
         watch.mutate({ id: row.id, watchQuery: query.trim() || null, folderId: folderId || null })
