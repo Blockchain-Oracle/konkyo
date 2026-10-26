@@ -24,6 +24,9 @@ next-env.d.ts
 # local tooling
 .claude/
 
+# the demo recording script (a working note)
+docs/demo/
+
 # Agent traces (one JSONL per run); recorded examples with their traces live in examples/
 logs/*.jsonl
 

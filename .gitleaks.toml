@@ -1,0 +1,11 @@
+# gitleaks: the default rules, plus one allowance. Sample-mode tapes key each recorded request by a
+# 20-character hash of its method, path and body ("key":"<hex>"); those hashes are not secrets.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Request hashes in recorded sample-mode tapes"
+condition = "AND"
+regexTarget = "match"
+paths = ['''^examples/[^/]+/tape\.jsonl$''']
+regexes = ['''key":"[0-9a-f]{20}"''']
