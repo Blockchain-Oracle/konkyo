@@ -26,6 +26,7 @@ import { api } from "@/lib/fetcher"
 import { clock } from "@/lib/format"
 import { useDeepRun } from "@/lib/use-deep-run"
 import { LiveSteps } from "./run-receipt"
+import { ScoutStage } from "./scout-stage"
 
 /** How long, from milliseconds. */
 const took = (ms: number) => clock(Math.max(0, Math.round(ms / 1000)))
@@ -46,53 +47,6 @@ function useElapsed(since: string | undefined, endedAt: string | undefined) {
   if (!since) return 0
   if (endedAt) return new Date(endedAt).getTime() - new Date(since).getTime()
   return now == null ? null : now - new Date(since).getTime()
-}
-
-/**
- * One outlined triangle per source found: the brand's particle field, here
- * counting real sources. Positions are fixed per index, so it grows without reshuffling.
- */
-function Constellation({ count }: { count: number }) {
-  const shown = Math.min(count, 40)
-  const points = useMemo(
-    () =>
-      Array.from({ length: 40 }, (_, i) => {
-        // A low-discrepancy scatter (golden-ratio steps): even, but never a grid.
-        const x = 5 + ((i * 0.618034) % 1) * 150
-        const y = 5 + ((i * 0.754878) % 1) * 18
-        const r = 2 + (i % 3) * 0.5
-        const turn = (i * 47) % 360
-        return { x, y, r, turn }
-      }),
-    [],
-  )
-  return (
-    <svg
-      viewBox="0 0 160 28"
-      className="hidden h-7 w-40 sm:block"
-      role="img"
-      aria-label={`${count} sources found`}
-    >
-      {points.slice(0, shown).map((p, i) => (
-        <polygon
-          // biome-ignore lint/suspicious/noArrayIndexKey: positions are fixed per index
-          key={i}
-          points={`0,${-p.r} ${p.r * 0.87},${p.r * 0.5} ${-p.r * 0.87},${p.r * 0.5}`}
-          transform={`translate(${p.x} ${p.y}) rotate(${p.turn})`}
-          fill="none"
-          strokeWidth="0.9"
-          className={cn(
-            "animate-in duration-(--duration-menu) fade-in-0 zoom-in-50",
-            i === shown - 1
-              ? "stroke-electric-iris"
-              : i % 3 === 0
-                ? "stroke-supports"
-                : "stroke-white/35",
-          )}
-        />
-      ))}
-    </svg>
-  )
 }
 
 function SourceIcon({ kind, className }: { kind: "paper" | "web"; className?: string }) {
@@ -327,6 +281,8 @@ export function DeepRun({
   const papers = state.found.filter((f) => f.kind === "paper").length
   const active = !ended
   const awaiting = Boolean(state.shortlist && !state.approved && !state.shortlist.auto && active)
+  // The scout crawls while the search runs; once the answer is being written it steps aside.
+  const staged = active && !answering
 
   const stop = () => void api(`/api/runs/${runId}/stop`, { method: "POST" })
   const sendSteer = async () => {
@@ -344,7 +300,8 @@ export function DeepRun({
     <>
       <LiveSteps steps={state.stages} />
       {state.found.length > 0 && !answering && (
-        <ul className="mt-4 space-y-1" aria-label="Sources found">
+        // The scout stamps each title as it reaches it, so on stage the list is for screen readers.
+        <ul className={cn("space-y-1", staged ? "sr-only" : "mt-4")} aria-label="Sources found">
           {state.found.slice(-4).map((f) => (
             <li
               key={f.key}
@@ -380,7 +337,6 @@ export function DeepRun({
           {state.found.length > 0 &&
             ` · ${papers} paper${papers === 1 ? "" : "s"}, ${state.found.length - papers} page${state.found.length - papers === 1 ? "" : "s"}`}
         </span>
-        <Constellation count={state.found.length} />
         {active && (
           <Button
             variant="ghost"
@@ -429,7 +385,10 @@ export function DeepRun({
           {open && <div className="mt-3">{details}</div>}
         </div>
       ) : (
-        <div className="mt-4">{details}</div>
+        <div className="mt-4">
+          {staged && <ScoutStage state={state} className="mb-4" />}
+          {details}
+        </div>
       )}
 
       {active && !answering && !awaiting && (
