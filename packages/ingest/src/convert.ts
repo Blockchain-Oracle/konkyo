@@ -17,7 +17,7 @@ async function gotenberg(route: string, form: FormData): Promise<Uint8Array> {
 const blob = (data: Uint8Array | string, type: string) =>
   new Blob([typeof data === "string" ? data : Buffer.from(data)], { type })
 
-/** DOCX / PPTX → PDF with LibreOffice. Slides keep their speaker notes (S00: exportNotesPages). */
+/** DOCX / PPTX → PDF with LibreOffice. Slides keep their speaker notes (exportNotesPages). */
 export function officeToPdf(bytes: Uint8Array, filename: string): Promise<Uint8Array> {
   const form = new FormData()
   form.append("files", blob(bytes, "application/octet-stream"), filename)

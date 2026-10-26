@@ -30,7 +30,37 @@ Built for **Open Agent Hackathon 2026 · Track 02: The Agent That Can Explain Wh
 ([how it meets the track](#how-konkyo-meets-the-hackathon)). *Konkyo* (根拠) is Japanese for
 "grounds" or "evidence".
 
-## One question, start to finish
+## The problem
+
+A student revising for an exam, or anyone writing an essay, reads across many sources at once:
+papers, lecture recordings, slides, their own notes. Many now ask an AI to pull them together.
+Then the real work starts:
+
+1. Upload the files and ask.
+2. Get a fluent answer with numbered references.
+3. Open each source and hunt for the line behind each sentence, because a reference can point to
+   a page that says something else.
+4. Read the sources side by side to see where they disagree, because one smooth answer rarely
+   says so.
+
+Skip steps 3 and 4 and a claim no source makes can end up in the essay. In July 2025, NTU Singapore
+[upheld a zero mark](https://www.ntu.edu.sg/sss/news-events/news/detail/ntu-upholds-grade) on an
+essay for 14 false citations or data.
+
+Tools that answer from your uploads now link each sentence to a passage. The link shows where the
+answer looked, not whether the passage says the same thing, so the checking is still yours.
+Research search engines show where published papers agree, but only across their own index, not
+your lectures and notes.
+
+## The idea
+
+Konkyo gives the checking to agents. They answer only from your library, and a citation gets its
+tick only after the Verifier finds its quote word for word in Zetaris. A sentence it can't back
+goes back to the Writer, at most twice, and is dropped if it still fails. With **Compare** on, the
+Analyst lines the sources up claim by claim. Your job shrinks from checking every line to clicking
+a tick to read the passage.
+
+### One question, start to finish
 
 Here the agents do the work Track 02 asks for. Three open-access papers on sleep, one question
 with **Compare** on, asked on testing: *What role do sleep spindles play in memory, and do these
@@ -55,9 +85,8 @@ the source. The Analyst lays the papers side by side: where they agree, disagree
 
 **Every answer has a receipt:** the steps, the models behind the Planner, Writer, Verifier and
 Analyst, and the SQL Zetaris ran to find every quote in its own reading of the PDFs (two
-statements with Compare: the answer's quotes and the table's). A sentence the Verifier can't back
-goes back to be rewritten, at most twice; anything that still fails is dropped. When your library
-has no answer, Konkyo says **This isn't in your library yet.** and offers a deep search.
+statements with Compare: the answer's quotes and the table's). When your library has no answer,
+Konkyo says **This isn't in your library yet.** and offers a deep search.
 
 ## Demo video
 
@@ -145,7 +174,7 @@ findings, and produce evidence-backed answers or recommendations."*
 | "Evidence of how the system reached its output" | A receipt under every answer; a trace per run in `logs/` | [Proof](#proof) |
 | Logs show "which model handled each request" | Each trace step and the receipt name the model | [examples/](examples/README.md) |
 | A `SAMPLE_MODE=true` fallback | Replays recorded runs with no keys or services | [Try it](#try-it-with-no-keys) |
-| Impact (30) | Students and researchers keep everything they study in one place and can trust every answer, quiz and draft check it gives | [What Konkyo is](https://docs.konkyo.xyz) |
+| Impact (30) | Students and researchers stop checking AI answers line by line: every quote is checked against their own sources, and where the sources disagree is shown | [The problem](#the-problem) · [What Konkyo is](https://docs.konkyo.xyz) |
 | Technical (20) | Nine model roles (Planner, Writer, Verifier, Analyst, Scout, Screener, Tutor, Grader, voice intent), a verify-and-rewrite loop, fallbacks, runs from a clean clone | [Agents and traces](https://docs.konkyo.xyz/docs/agents) |
 | Innovation (15) | Quotes checked against an independent reading of the source, in SQL | [How answers are checked](https://docs.konkyo.xyz/docs/agents/how-answers-are-checked) |
 | Product & UX (10) | One library to ask, practise, write, listen and share, every part built on the same check; guests start without an account | [The whole library](#the-whole-library) |
@@ -240,7 +269,7 @@ packages/tape     record and replay for sample mode
 examples/ data/   recorded runs, sample sources
 ```
 
-## Limits
+## Honest limits
 
 - Live answers need Zetaris: nothing is marked verified without it.
 - NVIDIA's free tier allows about 40 requests a minute per model, so the Nemotron fallback path is

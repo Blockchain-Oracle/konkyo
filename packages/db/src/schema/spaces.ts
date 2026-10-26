@@ -15,7 +15,7 @@ import { user } from "./auth"
 import { chats } from "./chat"
 import { files, folders, owner } from "./library"
 
-/** What happened in a space: the live stream replays these (S19) and catch me up reads them. */
+/** What happened in a space: the live stream replays these and catch me up reads them. */
 export type SpaceEventKind =
   | "source_added"
   | "source_ready"

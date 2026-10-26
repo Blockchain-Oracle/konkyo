@@ -21,8 +21,26 @@ next-env.d.ts
 # os
 .DS_Store
 
-# local tooling
+# local tooling and agent instructions
 .claude/
+.codex/
+.cursorrules
+AGENT.md
+AGENTS.md
+CLAUDE.md
+CLOUD.md
+COPILOT.md
+GEMINI.md
+WOODS.md
+WORKS.md
+.github/copilot-instructions.md
+
+# local research and working notes
+/context/
+/research/
+/refs/
+/plans/
+/notes/
 
 # the demo recording script (a working note)
 docs/demo/

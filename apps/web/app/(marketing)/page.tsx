@@ -22,6 +22,20 @@ export const metadata: Metadata = {
 
 const DOCS = APP.docs ?? "https://docs.konkyo.xyz"
 
+/** The README's problem, step for step: what checking an AI's answer takes today. */
+const TODAY = [
+  { step: "Upload the files and ask." },
+  { step: "Get a fluent answer with numbered references." },
+  {
+    step: "Open each source and hunt for the line behind each sentence,",
+    why: "because a reference can point to a page that says something else.",
+  },
+  {
+    step: "Read the sources side by side to see where they disagree,",
+    why: "because one smooth answer rarely says so.",
+  },
+]
+
 /** Who Konkyo is built on, each opening its made-with page. */
 const MAKERS: { vendor: Vendor; body: string }[] = [
   {
@@ -228,8 +242,8 @@ export default function LandingPage() {
               <span>every answer.</span>
             </h1>
             <p className="about-lede">
-              Add papers, lectures and notes; ask, practise, write and listen. Research agents answer
-              only from them and check <em>every quote word for word</em> in Zetaris.
+              Add papers, lectures and notes; ask, practise, write and listen. Research agents
+              answer only from them and check <em>every quote word for word</em> in Zetaris.
             </p>
             <div className="about-hero-actions">
               <Link href="/sign-in" className="about-button is-lime">
@@ -244,6 +258,55 @@ export default function LandingPage() {
             </p>
           </div>
           <HeroBoard />
+        </section>
+
+        {/* The problem, in the README's words, right under the promise. */}
+        <section
+          id="the-problem"
+          className="about-wrap about-problem"
+          aria-labelledby="problem-title"
+        >
+          <div className="about-problem-heading">
+            <span className="about-sticker is-paper">the problem</span>
+            <p>
+              A student revising for an exam, or anyone writing an essay, reads across many sources
+              at once: papers, lecture recordings, slides, their own notes. Many now ask an AI to
+              pull them together.
+            </p>
+            <h2 id="problem-title">
+              Then the real work <span>starts.</span>
+            </h2>
+          </div>
+          <ol className="about-problem-steps">
+            {TODAY.map((s, i) => (
+              <li key={s.step} className="surface-paper">
+                <span className="about-problem-mark" aria-hidden>
+                  {i + 1}
+                </span>
+                <p>
+                  {s.step}
+                  {s.why && <span> {s.why}</span>}
+                </p>
+              </li>
+            ))}
+          </ol>
+          <div className="about-problem-foot">
+            <p className="about-problem-cost">
+              Skip steps 3 and 4 and a claim no source makes can end up in the essay.{" "}
+              <span>
+                In July 2025, NTU Singapore{" "}
+                <a href="https://www.ntu.edu.sg/sss/news-events/news/detail/ntu-upholds-grade">
+                  upheld a zero mark
+                </a>{" "}
+                on an essay for 14 false citations or data.
+              </span>
+            </p>
+            <p>
+              Tools that answer from your uploads now link each sentence to a passage. The link
+              shows where the answer looked, not whether the passage says the same thing, so the
+              checking is still yours.
+            </p>
+          </div>
         </section>
 
         <section className="about-wrap about-made" aria-labelledby="made-title">
@@ -305,15 +368,16 @@ export default function LandingPage() {
         <section className="about-wrap about-how" aria-labelledby="how-title">
           <div className="about-how-heading">
             <h2 id="how-title">
-              Good answers
+              Konkyo gives
               <br />
-              get lost in
+              the checking
               <br />
-              <span>the tabs.</span>
+              to <span>agents.</span>
             </h2>
             <p>
-              Papers in one app, notes in another, a chatbot in a third, and citations nobody opens.
-              Konkyo keeps your sources in one place and checks every answer against them.
+              They answer only from your library, and a citation gets its tick only after the
+              Verifier finds its quote word for word in Zetaris. Your job shrinks from checking
+              every line to clicking a tick to read the passage.
             </p>
             <img src="/stickers/magnifier.webp" alt="" width={158} height={158} />
           </div>

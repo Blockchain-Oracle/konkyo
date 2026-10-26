@@ -1,4 +1,4 @@
-// Ported from the S00 document spike (.spikes/docs/lib/normalize.ts).
+// Normalization helpers for documents with inconsistent encodings.
 // Verifier normalization (Q7). Two levels:
 //   normText(s) - readable, for display/diff:  NFKC (ligatures, full-width), accents folded, quotes/dashes unified,
 //                 line-break hyphenation removed, intra-word hyphens removed, lowercase, whitespace collapsed.

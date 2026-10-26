@@ -27,7 +27,7 @@ function SheetOverlay({ className, ...props }: SheetPrimitive.Backdrop.Props) {
     <SheetPrimitive.Backdrop
       data-slot="sheet-overlay"
       className={cn(
-        // Same dim as dialogs (DESIGN.md: 70% black, no blur; blur makes the page behind unreadable).
+        // Same dim as dialogs: 70% black with no blur, so the page behind remains readable.
         "fixed inset-0 z-50 bg-sticker/72 transition-opacity duration-(--duration-modal) data-ending-style:opacity-0 data-starting-style:opacity-0",
         className,
       )}

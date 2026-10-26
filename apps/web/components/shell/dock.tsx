@@ -161,7 +161,7 @@ function useStageExamples(spaceId: string | null, spaceName: string | null, want
 
 /**
  * The dock (markup and CSS in house.css). The orb leads: tap it
- * and it lifts out of the dock into the voice stage (S16), where you talk and Konkyo builds what
+ * and it lifts out of the dock into the voice stage, where you talk and Konkyo builds what
  * you said (components/voice). The quiet "ask this space" beside it opens the say strip for typing
  * instead. ✦ opens catch me up, which is also where answers land; the bubble is your
  * chats; ♪ opens the sounds menu (interface sounds, reading answers aloud, the voice).
@@ -195,7 +195,7 @@ export function Dock() {
     setPanel(true)
   }, [])
 
-  // ---- voice (S16): the orb hears you, the stage shows what it builds ----
+  // ---- voice: the orb hears you, the stage shows what it builds ----
   const voiceRef = useRef<ReturnType<typeof useVoice> | null>(null)
   const build = useVoiceBuild({
     spaceId,

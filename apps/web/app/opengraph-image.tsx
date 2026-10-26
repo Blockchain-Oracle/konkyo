@@ -30,19 +30,21 @@ export default async function OpenGraphImage() {
           <div style={{ fontSize: 34, fontWeight: 800 }}>konkyo</div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", fontWeight: 800 }}>
-          {["everything you study,", "in one library.", "agents check", "every answer."].map((line, i) => (
-            <div
-              key={line}
-              style={{
-                fontSize: 70,
-                lineHeight: 1,
-                letterSpacing: -4,
-                color: i === 3 ? OG.pink : OG.paper,
-              }}
-            >
-              {line}
-            </div>
-          ))}
+          {["everything you study,", "in one library.", "agents check", "every answer."].map(
+            (line, i) => (
+              <div
+                key={line}
+                style={{
+                  fontSize: 70,
+                  lineHeight: 1,
+                  letterSpacing: -4,
+                  color: i === 3 ? OG.pink : OG.paper,
+                }}
+              >
+                {line}
+              </div>
+            ),
+          )}
         </div>
         <div style={{ fontSize: 24, fontWeight: 600, color: "#b4a9b1" }}>
           every answer shows its grounds · konkyo.xyz

@@ -1,9 +1,4 @@
 {
   "title": "Konkyo",
-  "pages": [
-    "guide",
-    "agents",
-    "partners",
-    "build"
-  ]
+  "pages": ["guide", "agents", "partners", "build"]
 }

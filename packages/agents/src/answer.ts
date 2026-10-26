@@ -110,7 +110,7 @@ export type AnswerInput = {
    * and nothing is written to the owner's World Model; every check runs as usual.
    */
   visitor?: boolean
-  /** Set when the files searched are exactly one space: its World Model learns too (S19). */
+  /** Set when the files searched are exactly one space: its World Model learns too. */
   spaceId?: string
 }
 

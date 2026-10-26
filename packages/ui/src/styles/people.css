@@ -2390,7 +2390,7 @@ label.setting-text {
   color: #ff9a90;
 }
 
-/* Konkyo: "2 here" on the invite pill (presence, S19) */
+/* Konkyo: "2 here" on the invite pill */
 .invite-here {
   display: inline-flex;
   align-items: center;
@@ -3354,7 +3354,7 @@ label.setting-text {
   color: var(--color-ink);
 }
 
-/* ------------------------------------------------------------- the join form (F59, S24)
+/* ------------------------------------------------------------- the join form (F59)
  * The join form: email in, six digits back, inside the black claim card. The code boxes are Base UI's
  * OTP field (otp-slot), drawn here as the code slots on black, with ink-white digits
  * (lime stays a fill: the box you're on and the ones you've filled). */

@@ -5,7 +5,7 @@ import { env } from "@konkyo/env/server"
 /**
  * Connectors through Composio: Gmail, Google Drive and Notion. Each person is a
  * Composio user (their Konkyo id); each connection is one Composio connected account. Every
- * tool call is pinned to the toolkit version measured in S00.
+ * tool call is pinned to the toolkit version measured in testing.
  */
 export type Toolkit = "gmail" | "googledrive" | "notion"
 export const TOOLKITS = ["gmail", "googledrive", "notion"] as const satisfies readonly Toolkit[]
@@ -190,7 +190,7 @@ export async function gmailMessage(userId: string, accountId: string, messageId:
     message_id: messageId,
     format: "full",
   })
-  // The attachment list is untyped in the schema (S00), so both spellings are read.
+  // The attachment list is untyped in the schema, so both spellings are read.
   const attachments: Attachment[] = (m.attachmentList ?? []).flatMap((a) => {
     const id = (a.attachmentId ?? a.attachment_id ?? a.id) as string | undefined
     const name = (a.filename ?? a.fileName ?? a.name) as string | undefined

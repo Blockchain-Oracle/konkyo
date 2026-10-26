@@ -19,7 +19,7 @@ export type Settings = {
   reminderHour: number
   /** Taps, places and checks. */
   interfaceSounds: boolean
-  /** Konkyo says the short answer out loud after a spoken ask (S16). */
+  /** Konkyo says the short answer out loud after a spoken ask. */
   readAloud: boolean
   /** The voice it answers in: one of VOICE.voices. */
   voiceId: string

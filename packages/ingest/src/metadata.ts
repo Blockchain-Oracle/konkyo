@@ -286,7 +286,7 @@ type SearchWork = Work & { has_content?: { pdf?: boolean } }
 
 /**
  * Open-access papers for a query, only those OpenAlex holds a PDF copy of (its content API
- * fetched 10/10 of them in S00, where publisher links managed 2/20).
+ * fetched 10/10 of them in testing, where publisher links managed 2/20).
  */
 export async function searchWorks(query: string, perPage = 15): Promise<FoundWork[]> {
   const filter = "open_access.is_oa:true,has_content.pdf:true,type:article|preprint|review"

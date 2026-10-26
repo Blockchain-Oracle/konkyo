@@ -13,6 +13,22 @@ export const metadata: Metadata = {
   description: SITE.description,
 }
 
+/** The README's problem, step for step: what checking an AI's answer takes today. */
+const TODAY = [
+  { n: "1", step: "Upload the files and ask." },
+  { n: "2", step: "Get a fluent answer with numbered references." },
+  {
+    n: "3",
+    step: "Open each source and hunt for the line behind each sentence,",
+    why: "because a reference can point to a page that says something else.",
+  },
+  {
+    n: "4",
+    step: "Read the sources side by side to see where they disagree,",
+    why: "because one smooth answer rarely says so.",
+  },
+]
+
 /** The journey the judges score, as the README tells it: answer, passage, receipt. */
 const JOURNEY = [
   {
@@ -131,6 +147,79 @@ export default function HomePage() {
       <section className="flex flex-col items-center gap-6">
         <Kicker>Partners doing real work</Kicker>
         <LogoRow />
+      </section>
+
+      {/* The problem and the idea, in the README's words, before the run that shows them. */}
+      <section id="the-problem" className="flex scroll-mt-24 flex-col gap-10">
+        <div className="grid items-start gap-10 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
+          <div className="flex flex-col gap-4">
+            <Kicker>The problem</Kicker>
+            <p className="max-w-[46ch] text-[17px] leading-relaxed text-fd-muted-foreground">
+              A student revising for an exam, or anyone writing an essay, reads across many sources
+              at once: papers, lecture recordings, slides, their own notes. Many now ask an AI to
+              pull them together.
+            </p>
+            <h2 className="font-display text-[clamp(2rem,3.6vw,3rem)] leading-[1.05] font-extrabold tracking-[-0.03em]">
+              Then the real work <span className="text-[#e9369d]">starts.</span>
+            </h2>
+            <p className="max-w-[46ch] text-[16px] leading-relaxed text-fd-muted-foreground">
+              Skip steps 3 and 4 and a claim no source makes can end up in the essay. In July 2025,
+              NTU Singapore{" "}
+              <a
+                href="https://www.ntu.edu.sg/sss/news-events/news/detail/ntu-upholds-grade"
+                className="text-fd-foreground underline underline-offset-4"
+              >
+                upheld a zero mark
+              </a>{" "}
+              on an essay for 14 false citations or data.
+            </p>
+          </div>
+          <ol className="grid gap-4 sm:grid-cols-2">
+            {TODAY.map((s) => (
+              <li
+                key={s.n}
+                className={`flex items-start gap-4 rounded-[22px] border bg-fd-card p-5 sm:flex-col sm:p-6 ${s.why ? "border-[#e9369d]/50" : "border-fd-border"}`}
+              >
+                <span
+                  className={`grid size-8 shrink-0 place-items-center rounded-full font-display text-[14px] font-extrabold ${s.why ? "bg-[#e9369d] text-ink" : "border border-fd-border text-fd-muted-foreground"}`}
+                >
+                  {s.n}
+                </span>
+                <p className="pt-1 text-[16px] leading-snug sm:pt-0">
+                  {s.step}
+                  {s.why && <span className="text-fd-muted-foreground"> {s.why}</span>}
+                </p>
+              </li>
+            ))}
+          </ol>
+        </div>
+        <div className="grid items-start gap-10 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
+          <div className="flex flex-col gap-3 lg:pt-8">
+            <Kicker>Where today's tools stop</Kicker>
+            <p className="max-w-[46ch] text-[16px] leading-relaxed text-fd-muted-foreground">
+              Tools that answer from your uploads now link each sentence to a passage. The link
+              shows where the answer looked, not whether the passage says the same thing, so the
+              checking is still yours. Research search engines show where published papers agree,
+              but only across their own index, not your lectures and notes.
+            </p>
+          </div>
+          <div className="flex flex-col gap-3 rounded-[22px] bg-paper-card p-6 text-ink shadow-[4px_4px_0_rgb(255_250_247/0.14)] sm:p-8">
+            <p className="text-[13px] font-semibold tracking-[0.12em] text-[#5f5055] uppercase">
+              The idea
+            </p>
+            <p className="font-display text-[24px] leading-tight font-extrabold tracking-[-0.02em]">
+              Konkyo gives the checking to agents.
+            </p>
+            <p className="text-[16px] leading-relaxed text-[#3a3036]">
+              They answer only from your library, and a citation gets its tick only after the
+              Verifier finds its quote word for word in Zetaris. A sentence it can't back goes back
+              to the Writer, at most twice, and is dropped if it still fails. With{" "}
+              <strong className="text-ink">Compare</strong> on, the Analyst lines the sources up
+              claim by claim. Your job shrinks from checking every line to clicking a tick to read
+              the passage.
+            </p>
+          </div>
+        </div>
       </section>
 
       {/* The story the track scores, with its real captures. */}

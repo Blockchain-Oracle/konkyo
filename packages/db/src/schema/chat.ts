@@ -130,7 +130,7 @@ export const userSettings = pgTable("user_settings", {
   catchupFrom: timestamp({ withTimezone: true }),
   /** Taps, places and checks; the browser keeps a copy so a page plays it at once. */
   interfaceSounds: boolean().default(true).notNull(),
-  /** After a spoken ask Konkyo says the short answer out loud (S16); off = it only shows it. */
+  /** After a spoken ask Konkyo says the short answer out loud; off = it only shows it. */
   readAloud: boolean().default(true).notNull(),
   /** The ElevenLabs voice Konkyo answers in (one of VOICE.voices); null = the default. */
   voiceId: text(),

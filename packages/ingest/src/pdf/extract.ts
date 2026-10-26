@@ -1,6 +1,5 @@
-// Ported from the S00 document spike (.spikes/docs/lib/extract.ts), where boxes matched
-// EmbedPDF's own engine on 97–99.5% of lines, including rotated and cropped pages.
-// S00 spike: PDF -> lines -> paragraphs -> passages with per-line boxes.
+// PDF extraction preserves page geometry, including rotated and cropped pages.
+// Pipeline: PDF -> lines -> paragraphs -> passages with per-line boxes.
 //
 // Coordinate contract (what we store) = EmbedPDF's page space (document opened with normalizeRotation: true):
 //   the page at 0 degrees (its /Rotate NOT applied), origin top-left of the CropBox, x right, y down,

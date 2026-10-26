@@ -262,7 +262,7 @@ async function readSource(file: FileRow): Promise<DocResult> {
     case "web": {
       if (!file.sourceUrl) throw new Error("Web import has no URL")
       // A paper from deep search (an OpenAlex work) or a pasted DOI: read the open-access PDF,
-      // never the publisher's abstract page. OpenAlex's own copy first (10/10 in S00), then
+      // never the publisher's abstract page. OpenAlex's own copy first (10/10 in testing), then
       // every open location it knows.
       const workId = file.sourceUrl.match(/^https:\/\/openalex\.org\/(W\d+)$/)?.[1]
       // A web page whose details later found a DOI stays a web page: only the URL decides.

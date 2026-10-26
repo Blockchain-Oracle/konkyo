@@ -14,7 +14,7 @@ export const APP = {
   /** The subheadline: what you do in it, and how the agents back every answer. */
   description:
     "Add papers, lectures and notes; ask, practise, write and listen. Research agents answer only from them and check every quote word for word in Zetaris.",
-  /** The public repository, once it exists (S11); links to it are hidden until then. */
+  /** The public repository, once it exists; links to it are hidden until then. */
   repository: null as string | null,
   /** The live app and its docs site (apps/docs). */
   url: "https://konkyo.xyz",
@@ -79,7 +79,7 @@ export const LAYOUT = {
 } as const
 
 export const ZETARIS = {
-  /** Our own deadline: Zetaris never times out by itself (a 390 s query ran to the end in S00). */
+  /** Our own deadline: Zetaris never times out by itself (a 390 s query ran to the end in testing). */
   queryTimeoutMs: 30_000,
   /**
    * Background work nobody waits on (practice sets, lecture notes, the worker's warm-up). After hours
@@ -205,7 +205,7 @@ export const MODEL_API = {
   outOfCreditCooldownMs: 10 * 60_000,
 } as const
 
-/** The OpenAI models Konkyo calls (the measured picks of testing, BENCHMARK.md). */
+/** The OpenAI models Konkyo calls in production. */
 export const OPENAI = {
   /** Writes and judges: 9/9 quotes verbatim; at low effort 0/10 false rejections, 6/6 caught. */
   luna: "gpt-6-luna",
@@ -232,7 +232,7 @@ export const NEMOTRON = {
 } as const
 
 export const INGEST = {
-  /** A page with fewer characters than this (and an image) is a scan and gets OCR (S00 rule). */
+  /** A page with fewer characters than this (and an image) is treated as a scan and gets OCR. */
   scanCharsPerPage: 20,
   ocrImage: "jbarlow83/ocrmypdf-alpine:v17.13.0",
   ocrLanguages: "eng",
@@ -352,7 +352,7 @@ export const MODELS = {
     fallback: { ...ULTRA("none"), deadlineMs: 90_000, hedgeAfterMs: 35_000 },
     reserve: { ...SUPER("none"), deadlineMs: 90_000 },
   },
-  /** Reads a spoken ask that no pattern placed (S16): a one-line pick while you are still talking. */
+  /** Reads a spoken ask that no pattern placed: a one-line pick while you are still talking. */
   intent: {
     primary: { ...LIGHTNING("none"), deadlineMs: 8_000, hedgeAfterMs: 3_000 },
     fallback: LUNA("none"),
@@ -405,7 +405,7 @@ export const PUBLIC = {
 } as const
 
 /**
- * Connectors through Composio. Tool calls need pinned toolkit versions (S00); our own
+ * Connectors through Composio. Tool calls need pinned toolkit versions; our own
  * poll resyncs every 15 minutes, which is Composio-managed auth's fastest trigger anyway, and
  * covers Notion, whose triggers would need a Notion integration of our own.
  */
@@ -455,8 +455,8 @@ export const EMAIL = {
 
 /**
  * Audio briefs: two voices talk through a folder. One Text-to-Dialogue request stays
- * reliable to about 2,000 characters (S00), so a brief is one request of about two minutes.
- * Voices and the model are the ones the S00 spike measured.
+ * reliable to about 2,000 characters, so a brief is one request of about two minutes.
+ * Voices and the model are the measured production choices.
  */
 export const BRIEF = {
   maxChars: 1_900,

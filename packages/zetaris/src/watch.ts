@@ -21,7 +21,7 @@ const SELECT = "id,doi,display_name,publication_date,authorships,primary_locatio
  * The OpenAlex search a watch runs: papers whose title or abstract match the topic
  * (plain `search=` also matches full text, which let loosely related papers through: checked
  * testing), newest first, open access with a PDF copy so Import can read it, trimmed with
- * `select=` (5–10× faster in Zetaris, S00). Commas would split OpenAlex's filter list.
+ * `select=` (5–10× faster in testing). Commas would split OpenAlex's filter list.
  */
 export const watchEndpoint = (topic: string) =>
   `https://api.openalex.org/works?filter=title_and_abstract.search:${encodeURIComponent(topic.replace(/,/g, " ").trim())},open_access.is_oa:true,has_content.pdf:true,type:article|preprint|review&sort=publication_date:desc&per_page=25&select=${SELECT}`
@@ -31,7 +31,7 @@ export const watchTableName = (agentId: string) =>
 
 /**
  * One Lightning REST table per watch. The OpenAlex key goes in a header: in the URL it would
- * show to anyone listing the database's tables (S00). Re-created on edit (drop + create, 0.2 s).
+ * show to anyone listing the database's tables. Re-created on edit (drop + create, 0.2 s).
  */
 export async function createWatchTable(agentId: string, topic: string) {
   const table = watchTableName(agentId)
@@ -65,7 +65,7 @@ const works = (table: string, nested: boolean) => `
 
 /**
  * What's new in the watch: its papers minus every DOI the person already has or was told about,
- * in one statement (explode in a subquery first, then LEFT ANTI JOIN; S00: 0.8–1.0 s). If the
+ * in one statement (explode in a subquery first, then LEFT ANTI JOIN; testing: 0.8–1.0 s). If the
  * inferred schema lacks the nested author and venue fields, the plain columns still answer.
  */
 export async function newWorks(table: string, known: string[]) {

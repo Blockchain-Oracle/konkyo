@@ -32,7 +32,7 @@ export type EvidenceDoc = {
 
 /**
  * The quote-matching key Zetaris computes in SQL: lowercase, then keep only a–z, 0–9 and ".".
- * S00 measured it at 10/10 on real quotes while still catching a planted "1.2 → 12".
+ * It matched 10/10 real quotes in testing while still catching a planted "1.2 → 12".
  */
 export const evidenceKey = (text: string) => text.toLowerCase().replace(/[^a-z0-9.]/g, "")
 export const EVIDENCE_KEY_SQL = (column: string) =>
@@ -154,7 +154,7 @@ export function withoutPageFurniture(text: string): string {
     .join("\n")
 }
 
-/** Writes a document's passages; uncached FILESTORE tables see new files on the next query (S00). */
+/** Writes a document's passages; uncached FILESTORE tables see new files on the next query. */
 export async function publishPassages(doc: EvidenceDoc): Promise<void> {
   await writeAtomic(FOLDERS.passages, `${doc.doc_id}.json`, JSON.stringify(doc))
 }
@@ -162,7 +162,7 @@ export async function publishPassages(doc: EvidenceDoc): Promise<void> {
 /**
  * Hands a PDF rendition to Zetaris and stores Zetaris's own text for it. Reading text through a
  * per-document PDF table once, then keeping it as small JSON, is the fast form: one folder-wide PDF
- * table re-parsed every PDF on every query (6.6 s at 60 PDFs in S00).
+ * table re-parsed every PDF on every query (6.6 s at 60 PDFs in testing).
  */
 export async function publishPdfText(fileId: string, pdf: Uint8Array): Promise<{ chars: number }> {
   await writeAtomic(FOLDERS.originals, `${fileId}.pdf`, pdf)

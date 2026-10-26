@@ -13,7 +13,7 @@ export type TranscriptPassage = {
 
 let client: ElevenLabsClient | undefined
 
-/** Recording → words with timestamps and speakers (ElevenLabs Scribe v2; 0% word errors in S00). */
+/** Recording → words with timestamps and speakers (ElevenLabs Scribe v2; 0% word errors in testing). */
 export async function transcribe(
   bytes: Uint8Array,
   filename: string,

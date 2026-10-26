@@ -3,11 +3,5 @@
   "description": "How it's built and run",
   "icon": "Wrench",
   "root": true,
-  "pages": [
-    "index",
-    "cli-and-api",
-    "sample-mode",
-    "self-hosting",
-    "limits"
-  ]
+  "pages": ["index", "cli-and-api", "sample-mode", "self-hosting", "limits"]
 }

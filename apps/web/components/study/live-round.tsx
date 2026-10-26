@@ -459,7 +459,7 @@ const FILL = { type: "spring", stiffness: 210, damping: 34, mass: 0.9 } as const
 const POP = { type: "spring", stiffness: 640, damping: 22, mass: 0.7 } as const
 
 /**
- * One option's bar, ported from `@ddoemonn/poll-results` (21st.dev 23544): the fill springs to its
+ * One option's animated result bar: the fill springs to its
  * share through a clip-path, the percentage counts with it, and the right answer's tick pops in
  * once it lands. Here the faces of who picked it ride on the bar.
  */

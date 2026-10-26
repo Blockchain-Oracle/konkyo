@@ -17,12 +17,12 @@ import { limiterFor } from "./limiter"
 /** Where Nemotron calls go: NVIDIA's API, or the self-hosted NIM MODEL_BASE_URL names. */
 export const baseURL = env.MODEL_BASE_URL ?? MODEL_API.nvidia.baseURL
 
-/** OpenAI's Responses API, through the tape like every model call (sample mode, S09). */
+/** OpenAI's Responses API, through the tape like every model call in sample mode. */
 export const openai = createOpenAI({ apiKey: env.OPENAI_API_KEY, fetch: tapedFetch })
 
 /**
  * NVIDIA's API speaks the OpenAI chat format, so one OpenAI-compatible provider reaches every
- * Nemotron model. Through the tape: a CLI sample run replays recorded replies (S09).
+ * Nemotron model. Through the tape: a CLI sample run replays recorded replies.
  */
 export const nvidia = createOpenAICompatible({
   name: "nvidia",

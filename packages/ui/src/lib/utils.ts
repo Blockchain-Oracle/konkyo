@@ -13,7 +13,7 @@ export const cn: CnFunction = createCn({
       "font-size": [
         {
           text: [
-            // marketing scale (DESIGN.md)
+            // Marketing type scale.
             "caption",
             "nav-label",
             "body",
