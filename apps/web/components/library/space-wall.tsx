@@ -41,7 +41,7 @@ const domainOf = (url: string | null) => {
 const PRINTS = new Set(["pdf", "docx", "pptx", "markdown", "text", "youtube", "video"])
 
 /**
- * A space's wall (plan F46; OurSpaces' board, arranged by itself, R5): every source filed
+ * A space's wall: every source filed
  * anywhere in the space, newest first, as the paper object its kind is — a taped print of a
  * paper's first page, a web clipping with the page's own picture, a sticky for a note, an
  * envelope for an email. Folders inside sit beside it as manila folders.
@@ -231,7 +231,7 @@ const pinCitations = (pin: Pin): Citation[] =>
   }))
 
 /**
- * Answers pinned to the wall (plan F52, OurSpaces' promoted message): a cream reply slip each,
+ * Answers pinned to the wall: a cream reply slip each,
  * the question, the verified answer with its citations (they open the passage), the receipt.
  */
 function PinnedAnswers({ spaceId, pins }: { spaceId: string; pins: Pin[] }) {

@@ -1,9 +1,7 @@
 "use client"
 
 /*
- * The space chat, in OurSpaces' chat panel (https://github.com/thomasnguyen/ourspaces-app,
- * src/components/GlobalChatPanel.tsx and ThreadContent.tsx; MIT, Copyright (c) 2026 Thomas
- * Nguyen). Konkyo adds "@konkyo …": the ask goes in the thread, and Konkyo's one verified answer
+ * The space chat. "@konkyo …" asks the space: the ask goes in the thread, and Konkyo's one verified answer
  * posts for everyone, its steps live, with Stop and pin (plan F56).
  */
 

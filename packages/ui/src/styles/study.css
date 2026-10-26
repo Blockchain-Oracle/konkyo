@@ -1,5 +1,5 @@
 /*
- * Study, in OurSpaces' game language (their poll rows, the black scoreboard, the reply slip with
+ * Study, in the game language (poll rows, the black scoreboard, the reply slip with
  * its coloured tab, taped paper). Each game has a colour (--game, components/study/games.ts) for
  * its tape, kicker dot and tile; every word stays ink on paper or white on black (R13).
  */
@@ -124,7 +124,7 @@
   text-decoration: line-through 2px;
 }
 
-/* ------------------------------------------------------------------ choices: OurSpaces poll rows */
+/* ------------------------------------------------------------------ choices: poll rows */
 .game-options {
   display: grid;
   gap: 12px;
@@ -456,7 +456,7 @@ textarea.game-input {
 }
 
 /* ------------------------------------------------------------------ feedback: the reply slip */
-/* OurSpaces' reply slip: cream, a 2px ink border, a 7px ink shadow, tilted, with a tab coloured by
+/* The reply slip: cream, a 2px ink border, a 7px ink shadow, tilted, with a tab coloured by
    tone (lime: right; orange: try again; white: the answer). */
 .reply-slip {
   position: relative;
@@ -548,7 +548,7 @@ textarea.game-input {
 }
 
 /* ------------------------------------------------------------------ the scoreboard (black) */
-/* OurSpaces' game-day scoreboard: a black card, the number that matters huge in lime. */
+/* The game-day scoreboard: a black card, the number that matters huge in lime. */
 .scoreboard {
   position: relative;
   border-radius: 24px;

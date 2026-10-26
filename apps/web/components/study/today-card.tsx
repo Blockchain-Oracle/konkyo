@@ -37,7 +37,7 @@ export function TodayCard({
 }: {
   variant?: "home" | "study"
   className?: string
-  /** On a board: a push pin at the top (OurSpaces' pinned card). */
+  /** On a board: a push pin at the top. */
   pinned?: boolean
 }) {
   const mounted = useSyncExternalStore(

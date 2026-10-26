@@ -9,7 +9,7 @@ import brief from "@/lib/made-with-brief.json"
 import { OPENALEX_TOPICS, ZETARIS_EXAMPLE } from "@/lib/made-with-examples"
 
 /**
- * The hero example on each made-with page (plan F61), in OurSpaces' tilted card. Two are live
+ * The hero example on each made-with page (plan F61), in the tilted card. Two are live
  * (Zetaris checks three quotes; OpenAlex searches), one plays a real brief Konkyo made, and the
  * rest show the app's own config and wording. Nothing here is invented output.
  */

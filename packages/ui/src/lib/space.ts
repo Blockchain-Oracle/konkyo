@@ -21,8 +21,8 @@ export function contrast(a: string, b: string) {
 }
 
 /**
- * Black or white text on a colour, whichever measures higher. OurSpaces used a YIQ cutoff, which
- * puts white on cobalt (4.2:1) and pink (3.8:1); measuring picks ink there (4.7 and 4.9).
+ * Black or white text on a colour, whichever measures higher. A YIQ cutoff would
+ * put white on cobalt (4.2:1) and pink (3.8:1); measuring picks ink there (4.7 and 4.9).
  */
 /**
  * The colour darkened (mixed toward black in 5% steps) until it reaches `min` against `bg`: a
@@ -56,7 +56,7 @@ export function colorFor(id: string): SpaceColor {
 }
 
 /**
- * A small deterministic tilt, the same on every screen (OurSpaces WidgetCard): -2..2 steps of 1.1°,
+ * A small deterministic tilt, the same on every screen: -2..2 steps of 1.1°,
  * damped on wide cards; a fifth of cards stay straight.
  */
 export function tiltFor(id: string, width = 240): string | undefined {

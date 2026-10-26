@@ -585,7 +585,7 @@ export const BREAKPOINTS = {
 
 /**
  * Spaces (plan §16.4, F45): a top-level folder owns one identity colour and one wall. Colours and
- * walls are OurSpaces' own values; `text` is the lighter step used when the colour is text on the
+ * walls are the house values; `text` is the lighter step used when the colour is text on the
  * plum room (≥4.5:1). Ink on a wall comes from the preset, never from guesswork.
  */
 /** The house's lime (tokens.css --color-lime), for code that needs the colour as a value. */
@@ -602,7 +602,7 @@ export const SPACES = {
   },
   walls: {
     night: { bg: "#211922", ink: "#ffffff" },
-    lagoon: { bg: "#12a594", ink: "#111114" }, // measured 6.1:1; OurSpaces' white is 3.1:1
+    lagoon: { bg: "#12a594", ink: "#111114" }, // measured 6.1:1; white would be 3.1:1
     spruce: { bg: "#0f5c50", ink: "#ffffff" },
     cobalt: { bg: "#3f70ff", ink: "#0b0b0e" }, // 4.65:1; white is 4.22
     midnight: { bg: "#1f1b2d", ink: "#ffffff" },
@@ -622,7 +622,7 @@ export const SPACES = {
     butter: "mint",
   },
   /**
-   * Symbols are typographic glyphs on the tile, as OurSpaces does (✦ ♥ ☺ ◎ …), never an icon set:
+   * Symbols are typographic glyphs on the tile (✦ ♥ ☺ ◎ …), never an icon set:
    * a space without a cover shows its glyph.
    */
   symbols: ["✦", "✎", "◎", "☾", "∑", "♪", "✿", "❖", "☀", "⚑", "◐", "✺"],
@@ -630,7 +630,7 @@ export const SPACES = {
 
 /**
  * Looks (plan §16.4, F53): the twelve faces from scripts/make-images.mjs, in its order, each on its
- * space colour. A look carries a placeholder name (OurSpaces' personas) that the next look may
+ * space colour. A look carries a placeholder name that the next look may
  * replace; a name someone typed is theirs and stays.
  */
 export const LOOKS = [
@@ -711,7 +711,7 @@ export const PEOPLE = {
 export type SpaceColor = keyof typeof SPACES.colors
 export type SpaceWall = keyof typeof SPACES.walls
 
-/** Interface sounds (plan §16.5): Mixkit free licence, trimmed per OurSpaces' sound README. */
+/** Interface sounds (plan §16.5): Mixkit free licence, trimmed. */
 export const SOUNDS = {
   files: {
     tap: "/sounds/tap.mp3",
@@ -726,7 +726,7 @@ export const SOUNDS = {
 
 export type UiSound = keyof typeof SOUNDS.files
 
-/** House motion beats (OurSpaces voiceTimings / entrance): stagger between arrivals, tilt range. */
+/** House motion beats: stagger between arrivals, tilt range. */
 export const MOTION = {
   stagger: 40,
   waveMax: 300,

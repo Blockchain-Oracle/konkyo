@@ -1,7 +1,7 @@
 import type { SpaceWall } from "@konkyo/config"
 
 /**
- * Each game has its own colour and wall (OurSpaces: a widget's tone is its identity), so a round
+ * Each game has its own colour and wall, so a round
  * looks like the game it is. The accent marks the game's tile, tape and kicker dot; the wall is the
  * room the round is played in (light walls, so the black chrome stands off them, R15).
  */

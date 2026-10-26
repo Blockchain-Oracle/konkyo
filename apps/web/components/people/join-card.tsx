@@ -10,7 +10,7 @@ import { sound } from "@/lib/sounds"
 import { MemberFace } from "./member-face"
 
 /**
- * Joining as who you already are (OurSpaces' gate for a returning person): the space, who's in,
+ * Joining as who you already are: the space, who's in,
  * your face and name as they'll see you, one lime "join".
  */
 export function JoinCard({ token, space, me }: { token: string; space: InvitePreview; me: Me }) {

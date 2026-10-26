@@ -24,7 +24,7 @@ async function Shell({ children }: { children: React.ReactNode }) {
   const me = await getMe(session.user.id)
   const shellUser = { name: me.name, isGuest: me.isGuest, face: me.face }
 
-  // OurSpaces' floating chrome (plan §16.6): the rail of spaces (a bottom bar on phones), the
+  // The floating chrome (plan §16.6): the rail of spaces (a bottom bar on phones), the
   // places as words top right, the dock with the orb, the live pill bottom left.
   return (
     <UploadsProvider>
@@ -34,7 +34,7 @@ async function Shell({ children }: { children: React.ReactNode }) {
         </a>
         <Rail user={shellUser} />
         <PlacesBar />
-        {/* Room for the rail on the left (OurSpaces' header starts at 118px), and on phones for
+        {/* Room for the rail on the left, and on phones for
           the rail as a bottom bar with the dock above it. */}
         <WallBackground>
           <div className="min-w-0 min-[801px]:pl-[112px] max-[800px]:pt-16 max-[800px]:pb-[190px]">

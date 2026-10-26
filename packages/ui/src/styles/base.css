@@ -11,7 +11,7 @@
 @source "../../../apps/**/*.{ts,tsx}";
 @source "../**/*.{ts,tsx}";
 
-/* shadcn bridge: component tokens → the OurSpaces palette (plan §16.4). */
+/* shadcn bridge: component tokens → the house palette (plan §16.4). */
 @theme inline {
   --font-heading: var(--font-display);
   --font-sans: var(--font-sans);
@@ -80,7 +80,7 @@
   --destructive-foreground: #ff5c74;
   --border: rgb(255 255 255 / 0.12);
   --input: rgb(255 255 255 / 0.18);
-  /* Focus is lime (OurSpaces widgets and inputs). */
+  /* Focus is lime. */
   --ring: #c9ff3d;
   --chart-1: #7853ff;
   --chart-2: #e9369d;
@@ -111,7 +111,7 @@
   body {
     @apply bg-background text-foreground;
   }
-  /* Display type: Bricolage 800, tight (OurSpaces base layer). */
+  /* Display type: Bricolage 800, tight. */
   h1,
   h2,
   .font-display {

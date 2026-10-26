@@ -3,7 +3,7 @@ import { cn } from "@konkyo/ui/lib/utils"
 import { cva, type VariantProps } from "class-variance-authority"
 
 const buttonVariants = cva(
-  // OurSpaces' sticker buttons (plan §16.4): pills that lift on hover and press down on click.
+  // The sticker buttons (plan §16.4): pills that lift on hover and press down on click.
   "group/button inline-flex shrink-0 items-center justify-center rounded-full border border-transparent bg-clip-padding text-sm font-semibold whitespace-nowrap transition-[translate,box-shadow,background-color,color,border-color,opacity] duration-(--dur-quick) ease-(--ease-glide) outline-none select-none focus-visible:ring-3 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-45 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/25 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {

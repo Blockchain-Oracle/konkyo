@@ -23,7 +23,7 @@ const STANCE_WORD = { agrees: "agrees", partly: "partly", disagrees: "disagrees"
 const day = (iso: string) =>
   new Date(iso).toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" })
 
-/** OurSpaces' hand strike: three ink lines drawn across a line you cross out. */
+/** The hand strike: three ink lines drawn across a line you cross out. */
 function Strike() {
   return (
     <svg className="knows-strike" aria-hidden="true">
@@ -46,7 +46,7 @@ function reasonOf(raw: string) {
 }
 
 /**
- * What Konkyo knows (plan F51): OurSpaces' "what this space knows", the cream other side of the
+ * What Konkyo knows (plan F51): the cream other side of the
  * wall. Every line comes from rows: where your sources agree and disagree (the Analyst's World
  * Model, each source chip opens its passage), what you told it (H-MEM; cross a line out to make
  * it forget), the words your sources share, what's coming up, what it made, what it held back.
@@ -74,7 +74,7 @@ export function KnowsView({ spaceId }: { spaceId: string | null }) {
   const crossOut = (memory: MemoryItem) => {
     sound("place")
     setGone((g) => new Set(g).add(memory.id))
-    // The strike draws first (OurSpaces' 220 ms), then it forgets.
+    // The strike draws first, then it forgets.
     window.setTimeout(() => forget.mutate({ id: memory.id }), 500)
   }
 

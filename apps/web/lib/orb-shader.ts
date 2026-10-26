@@ -1,6 +1,5 @@
 /*
- * Ported from OurSpaces (https://github.com/thomasnguyen/ourspaces-app, src/lib/orbShader.ts),
- * MIT licence, Copyright (c) 2026 Thomas Nguyen. Colours read from Konkyo's orb tokens (--orb-a..d).
+ * Colours read from Konkyo's orb tokens (--orb-a..d).
  */
 /* The voice orb's shaders. Three looks, all live WebGL, all in the house
    colours (crew violet, couple pink, trip orange, fam blue):

@@ -1,8 +1,6 @@
 /* biome-ignore-all lint/complexity/noImportantStyles: the reduced-motion block must beat every animation and transition. */
 /*
- * Konkyo design tokens: the OurSpaces direction (plan §16.4, testing). Values come from
- * OurSpaces' own code (gen-ai/context/design/ourspaces/01-design-system.md §1–4, §10), adapted
- * to a library: a plum-black room, flat loud identity colours per space, cream paper for
+ * Konkyo design tokens (plan §16.4), for a library: a plum-black room, flat loud identity colours per space, cream paper for
  * everything you read, black sticker pills for chrome, lime as the one pop.
  * Spacing stays on Tailwind's default 4px scale: never define numeric --spacing-N names.
  */
@@ -55,7 +53,7 @@
   --color-mark: rgb(63 112 255 / 0.26);
 
   /* ------------------------------------------- legacy names, remapped onto the new palette
-     (the old Dala names stay valid until each surface is rebuilt in S13–S22). */
+     (the older token names stay valid as aliases). */
   --color-void: #211922;
   --color-bone-white: #ffffff;
   --color-ash-gray: #b4a9b1;
@@ -155,7 +153,7 @@
   --shadow-slip: 7px 7px 0 #111114;
   --shadow-brutal: 5px 5px 0 #111114;
 
-  /* ------------------------------------------------------------------ motion (OurSpaces) */
+  /* ------------------------------------------------------------------ motion */
   --ease-glide: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-pop: cubic-bezier(0.2, 0.9, 0.3, 1.18);
   --ease-snap: cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -252,7 +250,7 @@
       scale: 0.4;
     }
   }
-  /* The AI panel grows out of the dock (OurSpaces recap-in). */
+  /* The AI panel grows out of the dock. */
   @keyframes panel-in {
     from {
       opacity: 0;
@@ -341,7 +339,7 @@
   --orb-d: #3f70ff;
 }
 
-/* One rule for reduced motion (OurSpaces' global block): movement goes, colour and opacity stay. */
+/* One rule for reduced motion: movement goes, colour and opacity stay. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -356,7 +354,7 @@
 
 /* ------------------------------------------------------------------ walls (a space's room) */
 /* A space wall: `.wall .wall-<preset>` plus inline --space-accent/--space-accent-ink
-   (packages/ui/src/lib/space.ts). Presets and inks from OurSpaces' spaceThemes. */
+   (packages/ui/src/lib/space.ts). Presets and inks per wall. */
 .wall {
   --wall-bg: var(--color-paper);
   --wall-ink: #ffffff;
@@ -457,7 +455,7 @@
     line-height: 1.2;
     white-space: nowrap;
   }
-  /* Black call to action (OurSpaces .welcome-cta): lifts on hover, presses on click. */
+  /* Black call to action: lifts on hover, presses on click. */
   .sticker-cta {
     display: inline-flex;
     min-height: 52px;
@@ -482,7 +480,7 @@
     translate: 0 1px;
     box-shadow: 0 5px 0 rgb(17 17 20 / 0.24);
   }
-  /* The one lime action (OurSpaces .claim-done). */
+  /* The one lime action. */
   .lime-pill {
     display: inline-flex;
     min-height: 38px;
@@ -533,7 +531,7 @@
     outline: 3px solid var(--color-lime);
     outline-offset: 4px;
   }
-  /* The reply slip (OurSpaces voice reply): cream, ink border, offset ink shadow, a coloured tab. */
+  /* The reply slip: cream, ink border, offset ink shadow, a coloured tab. */
   .say-slip {
     position: relative;
     border: 2px solid var(--color-ink);
@@ -683,7 +681,7 @@
  *      higher (readableInk in lib/space.ts).
  */
 
-/* Wall inks, measured. OurSpaces gives lagoon white (3.1:1); ink reads at 6.1:1. Cobalt's 4.2–4.7:1
+/* Wall inks, measured. White on lagoon is 3.1:1; ink reads at 6.1:1. Cobalt's 4.2–4.7:1
    either way is title-only (ink measures higher), so nothing small ever sits on it bare. */
 .paper-bg {
   --space-heading-color: #ffffff;
@@ -845,11 +843,11 @@ html[data-wall-tone="light"]
     background-color: var(--color-rail);
   }
 
-  /* The sheet a page's body sits on: cream, OurSpaces' note-paper grain, a hard offset shadow. */
+  /* The sheet a page's body sits on: cream, the note-paper grain, a hard offset shadow. */
   .paper-sheet {
     position: relative;
     border-radius: var(--radius-card);
-    /* OurSpaces' note-paper grain under a cream veil: a hint of paper, clean cream to read on */
+    /* The note-paper grain under a cream veil: a hint of paper, clean cream to read on */
     background:
       linear-gradient(rgb(255 250 247 / 0.78), rgb(255 250 247 / 0.78)),
       url("/os/note-paper.jpg") center / 260px 260px,
@@ -861,7 +859,7 @@ html[data-wall-tone="light"]
   }
 }
 
-/* A room's header on its wall (OurSpaces .space-header, in flow instead of over a canvas). */
+/* A room's header on its wall. */
 .room-header {
   /* the actions wrap under the title when the room is narrow (a source pane open), so the
      title keeps a readable measure instead of being squeezed to a few letters */

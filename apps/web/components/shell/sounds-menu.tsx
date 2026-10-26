@@ -1,9 +1,7 @@
 "use client"
 
 /*
- * The ♪ on the dock opens OurSpaces' sound menu (src/components/ActionDock.tsx, the radio's
- * `dock-sound-menu`; MIT, Copyright (c) 2026 Thomas Nguyen). Konkyo has no radio: its rows are the
- * interface sounds, whether answers are read aloud, and the voice Konkyo answers in (plan F62).
+ * The ♪ on the dock opens the sound menu: its rows are the interface sounds, whether answers are read aloud, and the voice Konkyo answers in (plan F62).
  */
 
 import { VOICE } from "@konkyo/config"

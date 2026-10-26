@@ -43,7 +43,7 @@ async function Door({ searchParams }: PageProps<"/sign-in">) {
   )
 }
 
-/** Where the polaroids hang on the wall behind the card (OurSpaces' board, loosely). */
+/** Where the polaroids hang on the wall behind the card. */
 const SPOTS = [
   { left: "6%", top: "16%", tilt: -4 },
   { left: "24%", top: "52%", tilt: 3 },
@@ -102,7 +102,7 @@ async function SampleSpace() {
 }
 
 /**
- * Enter Konkyo (plan F53): OurSpaces' door over the blurred sample space. A name and a look in
+ * Enter Konkyo (plan F53): the door over the blurred sample space. A name and a look in
  * two taps; keeping it on other devices is one quiet line under the way in.
  */
 export default function SignInPage(props: PageProps<"/sign-in">) {

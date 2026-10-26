@@ -1,9 +1,7 @@
 "use client"
 
 /*
- * Ported from OurSpaces (https://github.com/thomasnguyen/ourspaces-app, src/components/MemberFace.tsx),
- * MIT licence, Copyright (c) 2026 Thomas Nguyen. Their crew photo crop is theirs alone; here a face
- * is a look, a photo, or the initial on a colour.
+ * A person's face: a look, a photo, or the initial on a colour.
  */
 
 import { type CSSProperties, useState } from "react"

@@ -1,10 +1,6 @@
 "use client"
 
 /*
- * Ported from OurSpaces (https://github.com/thomasnguyen/ourspaces-app, src/components/OrbHint.tsx),
- * MIT licence, Copyright (c) 2026 Thomas Nguyen. The slip, its pinning to the orb and its fold into
- * the orb on the first ask are theirs; Konkyo's starters are the place's own example asks.
- *
  * One black slip pinned above the orb the first time a browser lands with the dock: it names the
  * move (tap the orb and talk) and carries three starter asks that play through the orb. `?hint=1`
  * forces it, `?hint=0` hides it; otherwise it shows once per browser.

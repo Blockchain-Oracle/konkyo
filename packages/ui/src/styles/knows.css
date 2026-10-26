@@ -1,9 +1,6 @@
 /*
- * What it knows (plan F51): OurSpaces' "what this space knows" (MIT, Copyright (c) 2026 Thomas
- * Nguyen; src/components/RoomKnows.tsx, RoomKnowsObjects.tsx and room-knows.css), ported. Their
- * page turns the board over in place; Konkyo's is a route on the same cream side (the
- * space-theme-knows wall), so the flip's view-transition rules are left out. Konkyo's changes are
- * at the end.
+ * What it knows (plan F51): a route on the cream side of the board (the space-theme-knows
+ * wall).
  */
 .room-knows {
   position: absolute;
@@ -1586,8 +1583,7 @@ p.knows-empty {
   --space-muted-color: #5f5055;
 }
 
-/* A page, not an overlay over the board. Its columns follow its own width (container queries,
-   where OurSpaces reads the window's), so a source pane open beside it folds them. */
+/* A page, not an overlay over the board. Its columns follow its own width (container queries), so a source pane open beside it folds them. */
 .room-knows {
   container: knows / inline-size;
   position: relative;
@@ -1690,7 +1686,7 @@ button.knows-src:hover {
   line-height: 1.5;
 }
 
-/* The door, beside the space's name (OurSpaces' RoomKnowsDoor, room-knows.css). */
+/* The door, beside the space's name. */
 .space-knows-chip {
   display: inline-flex;
   min-height: 30px;

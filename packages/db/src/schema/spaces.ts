@@ -77,7 +77,7 @@ export type PinCitation = {
 }
 
 /**
- * An answer pinned to a space's wall (plan F52, OurSpaces' "promote"): a frozen snapshot of the
+ * An answer pinned to a space's wall: a frozen snapshot of the
  * question, the verified answer and its citations, so the wall never changes under it. Once per
  * answer per space; the pinner or the space's owner can unpin.
  */

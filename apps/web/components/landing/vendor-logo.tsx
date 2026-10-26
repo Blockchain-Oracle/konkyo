@@ -3,7 +3,7 @@ import { cn } from "@konkyo/ui/lib/utils"
 export type Vendor = "zetaris" | "meterless" | "nvidia" | "elevenlabs" | "composio" | "openalex"
 
 /**
- * A partner's real logo, readable on black (OurSpaces' VendorLogo). Wordmarks stand alone; marks
+ * A partner's real logo, readable on black. Wordmarks stand alone; marks
  * that are only a symbol get the name beside them in Bricolage. Zetaris and OpenAlex ship dark
  * artwork, so they are inverted to white.
  */

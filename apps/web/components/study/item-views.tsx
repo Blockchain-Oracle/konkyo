@@ -10,7 +10,7 @@ import type { CompareSide, RoundItem } from "@/lib/study"
 import { SourceChip } from "./feedback"
 
 /*
- * How each kind of item is played, in OurSpaces' game language (styles in study.css): the prompt
+ * How each kind of item is played, in the game language (styles in study.css): the prompt
  * big in Bricolage on paper, choices as their poll rows with a numbered key, a statement as a taped
  * slip, typed answers in a big field, passages as slips, steps as numbered strips. Only the look
  * changed; every prop and rule is the session's (components/study/session.tsx).

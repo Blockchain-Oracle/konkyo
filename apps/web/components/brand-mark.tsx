@@ -43,7 +43,7 @@ export function BrandMark({ className, small = false }: { className?: string; sm
   )
 }
 
-/** The mark with the lowercase wordmark in Bricolage 800 (OurSpaces' "ourspaces" lockup). */
+/** The mark with the lowercase wordmark in Bricolage 800. */
 export function BrandLockup({
   className,
   markClassName,

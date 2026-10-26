@@ -12,7 +12,7 @@ import { openSource } from "@/lib/preview"
 /** The answer a chip belongs to, so the passage it opens can ask "Right passage?". */
 export const CitedIn = createContext<string | null>(null)
 
-/** Lights a source on the chat's wall while its chip is pointed at (OurSpaces' cited ring). */
+/** Lights a source on the chat's wall while its chip is pointed at. */
 export const LitSource = createContext<((fileId: string | null) => void) | null>(null)
 
 /** The verified tick, drawn in once (plan §7.4 #1). */

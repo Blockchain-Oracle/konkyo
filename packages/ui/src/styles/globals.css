@@ -1,4 +1,4 @@
-/* Everything the app draws: the base, then OurSpaces' component sheets (plan §16). */
+/* Everything the app draws: the base, then the component sheets (plan §16). */
 @import "./base.css";
 @import "./house.css";
 @import "./board.css";

@@ -1,7 +1,5 @@
 /*
- * The landing page: OurSpaces' about page (MIT, Copyright (c) 2026 Thomas Nguyen;
- * src/pages/About.tsx and its about-* rules in src/index.css), ported for Konkyo's landing
- * (apps/web/app/(marketing)/page.tsx). Only variable names were mapped to Konkyo's tokens.
+ * The landing page (apps/web/app/(marketing)/page.tsx), on Konkyo's tokens.
  */
 
 .about-page {
@@ -976,7 +974,7 @@
   color: var(--color-paper-card);
 }
 
-/* The note asks the live demo: a button dressed as OurSpaces' note. */
+/* The note asks the live demo: a button dressed as a note. */
 .about-note {
   border: 0;
   text-align: left;
@@ -1158,10 +1156,8 @@
 }
 
 /* ------------------------------------------------------------------ made with (F61)
- * OurSpaces' vendor pages (src/pages/About.tsx VendorPage and the vendor-* rules in its
- * src/index.css), ported: the partner nav, the hero with its example, "Follow one answer.",
- * "Where it shows up.", "A closer look." and "Meet the rest." Their example-specific rules
- * stay behind; Konkyo's examples are its own (made-with-*). */
+ * The partner pages: the partner nav, the hero with its example, "Follow one answer.",
+ * "Where it shows up.", "A closer look." and "Meet the rest." Each partner's example has its own rules (made-with-*). */
 .vendor-nav {
   display: flex;
   align-items: center;

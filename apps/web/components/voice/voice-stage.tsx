@@ -1,13 +1,11 @@
 "use client"
 
 /*
- * Ported from OurSpaces (https://github.com/thomasnguyen/ourspaces-app,
- * src/components/VoiceStage.tsx), MIT licence, Copyright (c) 2026 Thomas Nguyen. The orb's flight
- * (anticipation, arc, stretch, thump, squash home), the waveform, the words with the cue sticker,
- * the card dealt out of the orb and revealed part by part, the ring states, the reply slip, the
- * follow-up question with offers and the card's flight home are theirs, beat for beat
- * (lib/voice-timings.ts). Konkyo's: the cards are its own (an answer, a search, practice, a note,
- * a brief, a space), examples play in a real recorded voice, and with no mic you type instead.
+ * The voice stage: the orb's flight (anticipation, arc, stretch, thump, squash home), the
+ * waveform, the words with the cue sticker, the card dealt out of the orb and revealed part by
+ * part, the ring states, the reply slip, the follow-up question with offers and the card's flight
+ * home, timed by lib/voice-timings.ts. The cards are an answer, a search, practice, a note, a
+ * brief or a space; examples play in a real recorded voice, and with no mic you type instead.
  *
  * One orb canvas, moved between the dock and the stage, never a second orb.
  */

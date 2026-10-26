@@ -136,7 +136,7 @@ export async function openCapture(
       let sum = 0
       for (const sample of samples) sum += sample * sample
       const rms = Math.sqrt(sum / samples.length)
-      // OurSpaces' curve (lib/voice.ts): a quiet room reads as nothing, a voice fills it
+      // The curve (lib/voice.ts): a quiet room reads as nothing, a voice fills it
       return Math.sqrt(Math.min(1, Math.max(0, rms - 0.004) * 6))
     },
     mute(on) {

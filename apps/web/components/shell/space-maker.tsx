@@ -12,7 +12,7 @@ import { qk } from "@/lib/query-keys"
 import { sound } from "@/lib/sounds"
 
 /*
- * Make a space (plan F45): OurSpaces' SpaceMaker (MIT), ported. Pick a starting point, name it on
+ * Make a space (plan F45). Pick a starting point, name it on
  * the little board, change its colour, wall and symbol under "customize", and choose the pieces
  * it starts with. Every piece is real: finding sources runs a deep search that files what it finds
  * into the new space, a watch is a weekly agent, a quiz is a Monday agent, a brief is a Friday
@@ -118,7 +118,7 @@ const EMPTY: Template = {
   line: "",
 }
 
-/** Where the starting pieces land on the little board (OurSpaces' SLOTS_THREE). */
+/** Where the starting pieces land on the little board. */
 const SLOTS = [
   { left: 5, top: 30, width: 32, tilt: -2 },
   { left: 38, top: 54, width: 30, tilt: 1.6 },
@@ -268,7 +268,7 @@ export function SpaceMaker({
     }
   }
 
-  // As OurSpaces does: nothing in the page while closed (the backdrop's own display rule would
+  // Nothing in the page while closed (the backdrop's own display rule would
   // otherwise override the hidden state of a closed <dialog>).
   if (!open) return null
 

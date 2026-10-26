@@ -1,8 +1,7 @@
 /*
  * People: the enter card, looks, the settings card and your page (plan F53, F54).
- * Ported from OurSpaces (https://github.com/thomasnguyen/ourspaces-app, src/index.css: the claim
- * card, the entry gate, the look row, the settings sheet and #/me), MIT licence, Copyright (c)
- * 2026 Thomas Nguyen. Rules already ported into house.css (.claim-done, .join-stamp, .rail-you,
+ * The claim card, the entry gate, the look row, the settings sheet and your page. Rules already in
+ * house.css (.claim-done, .join-stamp, .rail-you,
  * the faces inside looks) are not repeated here. Konkyo's own additions are marked.
  */
 
@@ -415,7 +414,7 @@
   color: var(--color-sticker);
 }
 
-/* A face with no picture wears its initial on a colour (OurSpaces' identity chip). */
+/* A face with no picture wears its initial on a colour. */
 .identity-chip {
   display: inline-grid;
   place-items: center;
@@ -775,7 +774,7 @@ textarea.claim-name-input {
   }
 }
 
-/* ---- Your page: /u/<handle> (OurSpaces' #/me card, laid out as Literal's profile) ---- */
+/* ---- Your page: /u/<handle> ---- */
 .me-page {
   min-height: 100dvh;
   overflow: auto;
@@ -1593,7 +1592,7 @@ label.setting-text {
   gap: 8px;
 }
 
-/* The house switch: a black track with a lime thumb when on (OurSpaces' on/off sticker). */
+/* The house switch: a black track with a lime thumb when on. */
 .settings-paper .setting-switch[data-slot="switch"] {
   width: 46px;
   height: 28px;
@@ -2005,7 +2004,7 @@ label.setting-text {
   display: none;
 }
 
-/* ---- The invite button and popover (OurSpaces' header, Canvas.tsx), plus Konkyo's people in the
+/* ---- The invite button and popover, plus Konkyo's people in the
    space, what a new link gives, the public link and leaving (F56) ---- */
 .invite-button {
   display: inline-flex;
@@ -3356,9 +3355,8 @@ label.setting-text {
 }
 
 /* ------------------------------------------------------------- the join form (F59, S24)
- * OurSpaces' JoinForm (src/components/JoinForm.tsx and its join-form rules in src/index.css,
- * MIT): email in, six digits back, inside the black claim card. The code boxes are Base UI's
- * OTP field (otp-slot), drawn here as OurSpaces' code slots on black, with ink-white digits
+ * The join form: email in, six digits back, inside the black claim card. The code boxes are Base UI's
+ * OTP field (otp-slot), drawn here as the code slots on black, with ink-white digits
  * (lime stays a fill: the box you're on and the ones you've filled). */
 .join-form {
   display: flex;

@@ -1,6 +1,5 @@
 /*
- * The seam between the voice stage and the build behind it, after OurSpaces' src/lib/voiceStage.ts
- * (https://github.com/thomasnguyen/ourspaces-app, MIT licence, Copyright (c) 2026 Thomas Nguyen).
+ * The seam between the voice stage and the build behind it.
  *
  * The stage (components/voice/voice-stage.tsx) shows the card being built on its right half. It
  * owns no pipeline and knows nothing about calls: it reads this one shape. The build
@@ -22,7 +21,7 @@ export type StagePart = {
   value: PartValue | null
   /** A number that counts up to its value as it lands. */
   tick?: boolean
-  /** Filled from your library rather than your words (an orange pip, OurSpaces' "from the room"). */
+  /** Filled from your library rather than your words. */
   library?: boolean
 }
 

@@ -8,7 +8,7 @@ const { files, runs } = schema
 const WORKING = ["running", "queued", "searching", "importing", "answering"] as const
 
 /**
- * The live pill (plan §16.6, OurSpaces' pulse strip): what Konkyo is doing for this person right
+ * The live pill: what Konkyo is doing for this person right
  * now, from real rows only. Sources being read, runs working, and when the last answer finished.
  */
 export async function liveStatus(ownerId: string) {

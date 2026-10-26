@@ -1,8 +1,7 @@
 "use client"
 
 /*
- * Ported from OurSpaces (https://github.com/thomasnguyen/ourspaces-app, src/components/LookRow.tsx),
- * MIT licence, Copyright (c) 2026 Thomas Nguyen. Twelve looks here instead of their eight.
+ * The row of looks a person picks from: twelve faces, one tap each.
  */
 
 import { LOOKS, SPACES } from "@konkyo/config"

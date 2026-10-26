@@ -5,10 +5,9 @@ import { createPortal } from "react-dom"
 import { useSpokenHighlight } from "@/lib/read-aloud"
 
 /**
- * The answer taped onto its source (plan §16.5, beyond OurSpaces): after a spoken ask on a space
+ * The answer taped onto its source (plan §16.5): after a spoken ask on a space
  * wall, the source the answer cites most rings lime and wears the short answer on a slip, the
- * sentence being read underlined, for a few seconds. OurSpaces tapes its answer slip onto the
- * card it came from; ours is the passage's own source.
+ * sentence being read underlined, for a few seconds.
  */
 
 type Tape = { fileId: string; text: string; until: number; readingId?: string }

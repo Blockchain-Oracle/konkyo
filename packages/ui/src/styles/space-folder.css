@@ -54,7 +54,7 @@
   transition: transform 0.9s var(--gf-ease);
 }
 
-/* A hard slab under the folder (OurSpaces' offset shadow); on hover it takes the space's colour. */
+/* A hard slab under the folder; on hover it takes the space's colour. */
 .gf-shadow {
   position: absolute;
   right: 2px;

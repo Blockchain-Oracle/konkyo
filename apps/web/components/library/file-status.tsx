@@ -83,11 +83,11 @@ export function FileStatus({ file, upload }: { file: LibraryFile; upload?: Uploa
   )
 }
 
-/** SLOW_MS: when a source has been reading this long, say so (plan F46, OurSpaces' 11 s). */
+/** SLOW_MS: when a source has been reading this long, say so. */
 const SLOW_MS = 11_000
 
 /**
- * The time a source has been in the works, ticking (OurSpaces' reading-room timers): real elapsed
+ * The time a source has been in the works, ticking: real elapsed
  * time since it arrived, then a plain note when it's a slow one.
  */
 function Ticking({ since }: { since: string | Date }) {

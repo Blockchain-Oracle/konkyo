@@ -32,7 +32,7 @@ export type Me = {
 
 const lookOf = (id: string | null | undefined) => LOOKS.find((look) => look.id === id)
 
-/** A steady colour from a name, for a face with no picture (OurSpaces' MemberFace). */
+/** A steady colour from a name, for a face with no picture. */
 function colorFromName(name: string) {
   const colors = Object.values(SPACES.colors)
   let h = 0

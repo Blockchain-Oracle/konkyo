@@ -15,7 +15,7 @@ import { useStudyActions } from "@/lib/use-study"
 import { openConnectorImport, openImport, openRecorder } from "./app-dialogs"
 
 /*
- * "Add to this space" (plan F60): OurSpaces' widget picker tray (MIT; markup and CSS in house.css),
+ * "Add to this space" (plan F60): the add tray (markup and CSS in house.css),
  * with one tile per way something gets into Konkyo. Each tile is drawn as the thing it makes, or
  * the service's own logo, never an icon, and each runs the real thing: the file picker, the URL
  * import, a recording made here, a deep search filed here, a note filed here, the Gmail/Drive/

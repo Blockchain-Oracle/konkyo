@@ -12,8 +12,7 @@ import { useUnread } from "@/lib/use-inbox"
 import { useCurrentSpaceId } from "./rail"
 
 /**
- * The places: words in one dark sticker group, top right (OurSpaces' header group "here now · +
- * add · ↗ invite"), never an icon rail. The rail holds only your spaces, as in OurSpaces.
+ * The places: words in one dark sticker group, top right, never an icon rail. The rail holds only your spaces.
  */
 export function PlacesBar() {
   const pathname = usePathname()

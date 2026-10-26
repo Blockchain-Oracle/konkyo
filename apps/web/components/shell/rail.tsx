@@ -66,9 +66,9 @@ function SpaceLink({ space, active, index }: { space: SpaceRow; active: boolean;
 }
 
 /**
- * The rail: OurSpaces' Rail, ported (markup and CSS in house.css). The mark goes home; your spaces
+ * The rail (markup and CSS in house.css). The mark goes home; your spaces
  * are sticker tiles with their cover photos, tilted like they were stuck on; the dashed + makes a
- * new space; your face opens your account. Nothing else lives here, as in OurSpaces.
+ * new space; your face opens your account. Nothing else lives here.
  */
 export function Rail({ user }: { user: ShellUser }) {
   const spaces = useSpaces()

@@ -19,7 +19,7 @@ function ago(iso: string, now: number) {
 }
 
 /**
- * The live pill, bottom left (plan §16.6, OurSpaces' "live sync · connected for everyone"): what
+ * The live pill, bottom left: what
  * Konkyo is doing for you right now, from real rows. Desktop only.
  */
 export function StatusPill() {

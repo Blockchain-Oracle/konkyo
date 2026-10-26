@@ -258,7 +258,7 @@ function Player({ brief, color }: { brief: Brief; color: string }) {
         onEnded={() => setPlaying(false)}
       />
 
-      {/* the radio (OurSpaces' room radio): one big play, the time, a scrub bar in the space's
+      {/* The radio: one big play, the time, a scrub bar in the space's
           colour with a tick where the other host takes over, and the speeds as pills */}
       <section
         className="brief-radio surface-sticker"

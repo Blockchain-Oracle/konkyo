@@ -13,7 +13,7 @@ import type { SpaceRow } from "@/lib/use-spaces"
 type Edit = Partial<{ name: string; color: SpaceColor; wall: SpaceWall; symbol: string }>
 
 /**
- * The room's "✎ edit" (OurSpaces' space-edit-button under the name): its name, colour, wall and
+ * The room's "✎ edit": its name, colour, wall and
  * symbol, each saved as it's picked so the wall repaints under you. Rows reuse the space maker's.
  */
 export function SpaceEdit({ space }: { space: SpaceRow }) {

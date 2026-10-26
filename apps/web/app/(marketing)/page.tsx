@@ -186,7 +186,7 @@ function Brand() {
 }
 
 /**
- * The landing page (plan §16.8): OurSpaces' about page (About.tsx, MIT), told with Konkyo's own
+ * The landing page (plan §16.8), told with Konkyo's own
  * story and real data: the hero board is the public sample space, the counters are live, the
  * partners link to the docs that show their use, and the demo asks three real papers.
  */

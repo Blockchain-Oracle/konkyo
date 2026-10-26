@@ -1,7 +1,7 @@
 import { cn } from "@konkyo/ui/lib/utils"
 
 /**
- * A page is a room (OurSpaces' .space-header over a wall): a black kicker pill, the name huge and
+ * A page is a room: a black kicker pill, the name huge and
  * lowercase in the wall's measured ink, sticker actions on the right; then the body on a sheet of
  * cream paper, where every word reads at 4.5:1 or better (tokens.css, "visibility").
  */
@@ -14,7 +14,7 @@ export function RoomHeader({
   title: string
   kicker?: React.ReactNode
   actions?: React.ReactNode
-  /** Small chips under the name, in the wall's ink (OurSpaces' space-title-handles: ✎ edit). */
+  /** Small chips under the name, in the wall's ink. */
   handles?: React.ReactNode
 }) {
   return (

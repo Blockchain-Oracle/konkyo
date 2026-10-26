@@ -53,7 +53,7 @@ const BOILERPLATE = new Set(
 )
 
 /**
- * What Konkyo knows (plan F51, OurSpaces' "what this space knows"): built from rows, never a
+ * What Konkyo knows: built from rows, never a
  * model. Where your sources agree and disagree (the World Model the Analyst writes), what you
  * told it (H-MEM), the words your sources share, what's coming up, what it made for you, and
  * what it held back this week (quotes the Verifier sent back or dropped, with the reasons).

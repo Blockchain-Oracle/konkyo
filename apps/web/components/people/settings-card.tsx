@@ -1,8 +1,7 @@
 "use client"
 
 /*
- * Ported from OurSpaces (https://github.com/thomasnguyen/ourspaces-app, src/components/SettingsSheet.tsx
- * and the rail's "you" tile), MIT licence, Copyright (c) 2026 Thomas Nguyen. Konkyo adds your page
+ * The settings card behind the rail's "you" tile: your name and look, your page
  * (a handle and a bio for a kept account), the ways to the full settings and the trash, and a
  * guest's sign-out that says what it deletes.
  */
@@ -309,7 +308,7 @@ export function SettingsBody({ me }: { me: Me }) {
   )
 }
 
-/** Settings' "you" section: the same card, laid on the page (OurSpaces' #/me card). */
+/** Settings' "you" section: the same card, laid on the page. */
 export function YouCard() {
   const { me } = useMe()
   if (!me) return <div className="me-card settings-you-card is-loading" aria-busy />

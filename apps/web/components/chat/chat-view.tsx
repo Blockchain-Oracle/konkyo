@@ -97,7 +97,7 @@ function UserMessage({
           <PencilIcon />
         </Button>
       )}
-      {/* Your words: OurSpaces' own-message bubble, lime with black text, its corner clipped. */}
+      {/* Your words: the own-message bubble, lime with black text, its corner clipped. */}
       <div className="max-w-[85%] rounded-[20px_6px_20px_20px] bg-lime px-4.5 py-3 text-ink shadow-[0_4px_0_rgb(17_17_20/0.14)]">
         {quote?.type === "data-quote" && (
           <blockquote className="mb-2 border-l-2 border-ink/40 pl-3 text-snippet text-ink/80">

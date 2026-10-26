@@ -1,11 +1,9 @@
 "use client"
 
 /*
- * Ported from OurSpaces (https://github.com/thomasnguyen/ourspaces-app, src/lib/voice.ts), MIT
- * licence, Copyright (c) 2026 Thomas Nguyen: the pause rules, the late-word reopen, the scripted
- * asks, mute, say, play, cancel and hold are theirs. Konkyo's changes: the words come from
- * ElevenLabs Scribe realtime (lib/scribe.ts) over one capture (lib/voice-input.ts) instead of the
- * browser's speech API; example asks play a real recorded voice; and the session can stay open
+ * Voice: the pause rules, the late-word reopen, the scripted asks, mute, say, play, cancel and
+ * hold. The words come from ElevenLabs Scribe realtime (lib/scribe.ts) over one capture
+ * (lib/voice-input.ts); example asks play a real recorded voice; and the session can stay open
  * after an ask for a follow-up, where talking over Konkyo's own voice stops it (barge-in).
  */
 

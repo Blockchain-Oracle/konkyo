@@ -1,8 +1,7 @@
 import { PEOPLE } from "@konkyo/config"
 
 /*
- * Ported from OurSpaces (https://github.com/thomasnguyen/ourspaces-app, src/lib/avatarPhoto.ts),
- * MIT licence, Copyright (c) 2026 Thomas Nguyen.
+ * A chosen photo, cropped square and shrunk before it's uploaded as a face.
  */
 
 /**

@@ -35,7 +35,7 @@ const NOTE_TONES = ["violet", "pink", "teal", "cobalt"] as const
 const DOODLES = ["✦", "?", "☾", "✿"]
 
 /**
- * Home is a room (OurSpaces' space, on the blush wall): your name huge, black sticker counts, and
+ * Home is a room: your name huge, black sticker counts, and
  * a board of paper objects that arranges itself — the ask sheet, today's review pinned beside it,
  * your spaces as folders holding their real first pages, questions your sources can answer as torn
  * notes, what landed last, and the chats to pick up again.

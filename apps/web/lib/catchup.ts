@@ -39,7 +39,7 @@ const MAX_CHIPS = 3
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`
 
 /**
- * Catch me up (plan F50, OurSpaces' "what moved"): what is waiting on you, then what moved since
+ * Catch me up: what is waiting on you, then what moved since
  * you last closed it, built from rows (sources, the inbox, deep searches, practice, articles by
  * people you follow), never a model, so it opens at once and says nothing that didn't happen.
  */

@@ -3,7 +3,7 @@
 import { useSyncExternalStore } from "react"
 
 /**
- * The sources an answer in the panel is reading, then citing (plan F48, OurSpaces' reading scan):
+ * The sources an answer in the panel is reading, then citing:
  * the wall behind rings them lime. One small store, so any card can ask "am I lit?".
  */
 let lit = new Set<string>()

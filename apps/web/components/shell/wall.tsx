@@ -6,8 +6,7 @@ import { useSpaceList } from "@/lib/use-spaces"
 import { useCurrentSpaceId } from "./rail"
 
 /**
- * Every page lives on a wall, as every OurSpaces room does (their .paper-bg + space-theme-*
- * classes, ported in house.css). A space's page takes its own wall; each place takes one that
+ * Every page lives on a wall (the .paper-bg and space-theme-* classes in house.css). A space's page takes its own wall; each place takes one that
  * stands off the black chrome (3:1 or more against it), so the rail, dock and places bar never
  * sink into the room. Words sit on paper or stickers on top (tokens.css, "visibility").
  */

@@ -1,9 +1,7 @@
 /*
- * A room's board: the paper objects that sit on a wall. Built from OurSpaces' widgets (MIT,
- * Copyright (c) 2026 Thomas Nguyen; src/widgets/core.tsx NoteWidget and MediaWidget, and their
- * rules in src/index.css): the torn paper note with its tape and backing, the taped polaroid, the
+ * A room's board: the paper objects that sit on a wall: the torn paper note with its tape and backing, the taped polaroid, the
  * pinned sticker card. Nothing is placed by hand (R5): the board is a grid that arranges itself.
- * Type is set larger than OurSpaces' 8–11px labels so every word reads (tokens.css, visibility).
+ * Type is set larger than 8–11px labels so every word reads (tokens.css, visibility).
  */
 
 .board {
@@ -42,7 +40,7 @@
   }
 }
 
-/* An object on the wall: lifts on hover like OurSpaces' widget group, keeps its tilt. */
+/* An object on the wall: lifts on hover, keeps its tilt. */
 .board-object {
   position: relative;
   transition:
@@ -76,7 +74,7 @@ button.board-object:hover,
     0 9px 0 rgb(17 17 20 / 0.2);
   padding: 30px 30px 26px;
 }
-/* Masking tape across the top edge (OurSpaces' .note-paper-tape, wider). */
+/* Masking tape across the top edge. */
 .board-tape {
   position: absolute;
   z-index: 3;
@@ -113,7 +111,7 @@ button.board-object:hover,
   translate: -50% 0;
   pointer-events: none;
 }
-/* A push pin (OurSpaces .note-paper-pin), for sticker cards. */
+/* A push pin, for sticker cards. */
 .board-pin {
   position: absolute;
   z-index: 4;
@@ -133,7 +131,7 @@ button.board-object:hover,
   box-shadow: 0 9px 0 rgb(17 17 20 / 0.24);
 }
 
-/* ------------------------------------------------------------------ polaroids (OurSpaces MediaWidget) */
+/* ------------------------------------------------------------------ polaroids */
 .board-polaroids {
   display: flex;
   flex-wrap: wrap;
@@ -210,7 +208,7 @@ button.board-object:hover,
   right: 20px;
   rotate: 6deg;
 }
-/* The space's own colour, as a corner dot (OurSpaces .photo-heart). */
+/* The space's own colour, as a corner dot. */
 .board-polaroid .polaroid-dot {
   position: absolute;
   z-index: 3;
@@ -257,7 +255,7 @@ button.board-object:hover,
   font-size: 26px;
 }
 
-/* ------------------------------------------------------------------ notes (OurSpaces NoteWidget) */
+/* ------------------------------------------------------------------ notes */
 .board-notes {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -537,7 +535,7 @@ button.board-object:hover,
   font-size: 12px;
   font-weight: 600;
 }
-/* Pointed at from a citation: the lime ring OurSpaces puts on a cited widget. */
+/* Pointed at from a citation: a lime ring on the cited source. */
 .chat-source.is-lit {
   translate: 0 -4px;
   box-shadow:
@@ -545,7 +543,7 @@ button.board-object:hover,
     0 0 0 5px var(--color-sticker),
     0 9px 0 rgb(17 17 20 / 0.22);
 }
-/* Being read now: a breathing lime ring (OurSpaces' reading scan). */
+/* Being read now: a breathing lime ring. */
 .chat-source.is-reading {
   animation: chat-source-reading 1.1s var(--ease-glide) infinite alternate;
 }
@@ -591,7 +589,7 @@ button.board-object:hover,
   break-inside: avoid;
 }
 
-/* A taped print of a paper's first page (OurSpaces' polaroid, full column width). */
+/* A taped print of a paper's first page. */
 .board-print {
   position: relative;
   display: block;
@@ -730,7 +728,7 @@ button.board-object:hover,
   font-weight: 800;
 }
 
-/* An email as its envelope (kraft, OurSpaces' mail arrival). */
+/* An email as its envelope. */
 .board-envelope {
   position: relative;
   display: grid;
@@ -956,7 +954,7 @@ button.board-object:hover,
   font-weight: 700;
 }
 
-/* A pinned answer (plan F52): OurSpaces' reply slip on the wall — cream, a 2px ink edge, a hard
+/* A pinned answer (plan F52): the reply slip on the wall — cream, a 2px ink edge, a hard
    ink shadow — holding the question, the verified answer and its receipt. */
 .pin-slip {
   display: grid;

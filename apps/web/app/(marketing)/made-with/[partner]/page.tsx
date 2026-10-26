@@ -38,7 +38,7 @@ function colors(partner: Partner) {
 }
 
 /**
- * A partner's made-with page (plan F61): OurSpaces' vendor page (About.tsx VendorPage, MIT), told
+ * A partner's made-with page (plan F61), told
  * with what the partner really does in Konkyo. Each step opens the function that does it.
  */
 export default async function MadeWithPage({ params }: Props) {

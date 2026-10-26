@@ -1,11 +1,7 @@
 /*
- * OurSpaces' own component CSS, ported (plan §16, the user's direction testing: product fidelity
- * with OurSpaces). Extracted rule by rule from https://github.com/thomasnguyen/ourspaces-app
- * (src/index.css and src/components/voice-stage.css; MIT licence, Copyright (c) 2026 Thomas
- * Nguyen) for: walls, the rail, the dock and its voice seat, the room header, the chat thread,
- * the catch-me-up panel, widget paper, and the voice stage. Only variable names were mapped to
- * Konkyo's tokens, the externally hosted wall grain became an inline SVG, and texture paths point
- * at /os/. Konkyo components use these class names as OurSpaces' markup does.
+ * The house component CSS (plan §16): walls, the rail, the dock and its voice seat, the room header, the chat thread,
+ * the catch-me-up panel, widget paper, and the voice stage. The wall grain is an inline SVG
+ * and textures live in /os/.
  */
 :root {
   --slow: 1;
@@ -5723,11 +5719,10 @@ body.voice-stage-up .voice-found-pulse {
   color: var(--color-lime);
 }
 
-/* ================================================================== OurSpaces' space maker
- * src/components/SpaceMaker.tsx and its rules in src/index.css (MIT, Thomas Nguyen), ported for
+/* ================================================================== the space maker
  * Konkyo's new-space dialog (components/shell/space-maker.tsx). Only the maker's own rules and the
  * mini widgets it draws; the board's name and empty line take --maker-ink (measured, R13) instead
- * of OurSpaces' white, which fails on cobalt, pink, orange, teal and butter.
+ * of white, which fails on cobalt, pink, orange, teal and butter.
  */
 
 .widget-picker-backdrop {
@@ -6543,9 +6538,8 @@ body.voice-stage-up .voice-found-pulse {
   }
 }
 
-/* ================================================================== OurSpaces' add tray
- * src/components/WidgetPicker.tsx and its rules in src/index.css (MIT, Thomas Nguyen): the popover
- * tray and its tile grid, for Konkyo's "add to this space" (components/shell/add-picker.tsx). The
+/* ================================================================== the add tray
+ * The popover tray and its tile grid, for Konkyo's "add to this space" (components/shell/add-picker.tsx). The
  * section note is lifted from 48% to 66% white so it reads at 11.5px (R13).
  */
 

@@ -42,15 +42,14 @@ function wallOf(messages: KonkyoMessage[], running: boolean) {
     const { sources, final } = partsOf(message)
     const live = running && i === answers.length - 1
     if (final) for (const c of final.citations) add(c, { cited: [c.n] })
-    // While an answer is being written, the passages it's reading light up first (OurSpaces'
-    // reading scan); once it's final, only what it cited stays.
+    // While an answer is being written, the passages it's reading light up first; once it's final, only what it cited stays.
     else if (live) for (const s of sources) add(s, { reading: true })
   })
   return [...byFile.values()].sort((a, b) => Number(b.reading) - Number(a.reading))
 }
 
 /**
- * The chat's wall (OurSpaces: the room you talk in is the room you see): each source the answers
+ * The chat's wall: each source the answers
  * quote, as a paper card with its real first page. A source being read now rings lime and pulses;
  * pointing at a citation chip lights its card; a card opens the source beside the chat.
  */

@@ -1,8 +1,7 @@
 "use client"
 
 /*
- * Ported from OurSpaces (https://github.com/thomasnguyen/ourspaces-app, src/components/JoinForm.tsx),
- * MIT licence, Copyright (c) 2026 Thomas Nguyen: email in, six digits back, inside the claim card.
+ * The join form: email in, six digits back, inside the claim card.
  * Every line is about keeping what you already have, never about unlocking the app. Konkyo's codes
  * are Better Auth's email OTP, sent through Resend (plan F59); Google stays one tap away.
  */

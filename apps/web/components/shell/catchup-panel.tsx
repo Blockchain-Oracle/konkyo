@@ -28,7 +28,7 @@ import { useSpokenHighlight } from "@/lib/read-aloud"
 import { sound } from "@/lib/sounds"
 import { useQuery } from "@/lib/use-query"
 
-/** OurSpaces' pacing (src/data/recap.ts): a line lands every 300 ms. */
+/** The pacing: a line lands every 300 ms. */
 const LINE_MS = 300
 
 export function useCatchup(here: string | null) {
@@ -63,7 +63,7 @@ type Chat = {
 }
 
 /**
- * Catch me up and the AI panel (plan F48 + F50): OurSpaces' recap panel, grown out of the dock.
+ * Catch me up and the AI panel (plan F48 + F50): the recap panel, grown out of the dock.
  * What waits on you and what moved since you last closed it land one line at a time, each with
  * chips that take you there; below, ask your library (or the space you're in) and the answer
  * streams in with its citations, while the sources it reads ring lime on the wall behind.
@@ -92,7 +92,7 @@ export function CatchupPanel({
   const bodyRef = useRef<HTMLDivElement>(null)
 
   const linesKey = lines.map((l) => l.id).join("|")
-  // Lines land one at a time (OurSpaces' reveal); a reopen replays them.
+  // Lines land one at a time; a reopen replays them.
   useEffect(() => {
     if (!linesKey) return
     setRevealed(0)
@@ -119,7 +119,7 @@ export function CatchupPanel({
     return () => window.removeEventListener("keydown", onKey)
   }, [onClose, lines.length])
 
-  // FLIP the resize from the panel's anchored corner (OurSpaces' toggleExpanded).
+  // FLIP the resize from the panel's anchored corner.
   const toggleExpanded = () => {
     const panel = panelRef.current
     const first = panel?.getBoundingClientRect()
@@ -341,7 +341,7 @@ export function CatchupPanel({
           aria-label={here ? "Ask this space" : "Ask your library"}
           disabled={chat.running}
           maxLength={500}
-          // biome-ignore lint/a11y/noAutofocus: the panel opens to be asked, as OurSpaces' does
+          // biome-ignore lint/a11y/noAutofocus: the panel opens to be asked
           autoFocus
         />
         <button type="submit" disabled={!draft.trim() || chat.running} aria-label="Ask">

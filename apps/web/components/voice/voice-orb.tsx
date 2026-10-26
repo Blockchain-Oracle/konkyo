@@ -1,8 +1,7 @@
 "use client"
 
 /*
- * Ported from OurSpaces (https://github.com/thomasnguyen/ourspaces-app, src/components/VoiceOrb.tsx),
- * MIT licence, Copyright (c) 2026 Thomas Nguyen.
+ * The voice orb: one WebGL canvas that listens, thinks and speaks.
  */
 import { type RefObject, useEffect, useRef } from "react"
 import { createOrbRenderer } from "@/lib/orb-shader"

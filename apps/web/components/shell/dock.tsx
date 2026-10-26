@@ -160,7 +160,7 @@ function useStageExamples(spaceId: string | null, spaceName: string | null, want
 }
 
 /**
- * The dock: OurSpaces' ActionDock, ported (its markup and CSS, house.css). The orb leads: tap it
+ * The dock (markup and CSS in house.css). The orb leads: tap it
  * and it lifts out of the dock into the voice stage (S16), where you talk and Konkyo builds what
  * you said (components/voice). The quiet "ask this space" beside it opens the say strip for typing
  * instead. ✦ opens catch me up, which is also where answers land (plan F48); the bubble is your

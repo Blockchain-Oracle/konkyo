@@ -5,7 +5,7 @@ import type { Metadata, Viewport } from "next"
 import { Bricolage_Grotesque, IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google"
 import { Providers } from "./providers"
 
-// OurSpaces' two faces (plan §16.4): Bricolage Grotesque for display (its opsz axis tightens big
+// The two faces (plan §16.4): Bricolage Grotesque for display (its opsz axis tightens big
 // titles), IBM Plex Sans for everything you read. All OFL.
 const display = Bricolage_Grotesque({
   subsets: ["latin"],

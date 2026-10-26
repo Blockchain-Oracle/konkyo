@@ -1,9 +1,7 @@
 "use client"
 
 /*
- * Ported from OurSpaces (https://github.com/thomasnguyen/ourspaces-app, src/components/Canvas.tsx:
- * the header's invite button and invite popover), MIT licence, Copyright (c) 2026 Thomas Nguyen.
- * Konkyo adds the people in the space with their roles (the owner changes or removes them), what
+ * The header's invite button and its popover, with the people in the space with their roles (the owner changes or removes them), what
  * a new link gives, the public read-only link, and leaving (plan F56); and, when the server sends
  * email, an invite by email and the space's own address to mail papers to (F59).
  */
@@ -130,7 +128,7 @@ function InvitePopover({
   const input = useRef<HTMLInputElement>(null)
 
   const panel = useRef<HTMLElement>(null)
-  // under the button, its right edge lined up (OurSpaces' invitePosition)
+  // under the button, its right edge lined up
   useLayoutEffect(() => {
     const r = anchor?.getBoundingClientRect()
     if (r) setPlace({ top: r.bottom + 10, right: Math.max(16, window.innerWidth - r.right) })

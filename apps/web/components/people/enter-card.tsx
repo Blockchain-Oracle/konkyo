@@ -1,9 +1,7 @@
 "use client"
 
 /*
- * Ported from OurSpaces (https://github.com/thomasnguyen/ourspaces-app, src/components/ClaimCard.tsx,
- * the "gate" variant), MIT licence, Copyright (c) 2026 Thomas Nguyen. Their door into a live room
- * is Konkyo's door into your library: the room is named at the top with who's in, a look is one
+ * The door into your library: the room is named at the top with who's in, a look is one
  * tap, Enter walks you in as a guest, and keeping it is one quiet line under the way in. "Keep
  * this" and "sign in" open their join form (an email code, Google one tap away) when the server
  * can send email, and go straight to Google when it can't.
@@ -115,7 +113,7 @@ export function EnterCard({
   }
 
   /* The card travels to the orb's seat and shrinks into it, so the next thing you see is the
-     orb with its coach slip (OurSpaces collapses it into your cursor). */
+     orb with its coach slip. */
   const collapse = () => {
     const card = cardRef.current
     if (!card || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return

@@ -1,8 +1,7 @@
 "use client"
 
 /*
- * Ported from OurSpaces (https://github.com/thomasnguyen/ourspaces-app, src/components/PhotoInput.tsx),
- * MIT licence, Copyright (c) 2026 Thomas Nguyen.
+ * Choosing your own photo for your face.
  */
 
 import { type ChangeEvent, forwardRef, useState } from "react"

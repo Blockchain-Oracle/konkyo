@@ -482,9 +482,7 @@
   }
 }
 
-/* ---- the orb hint (components/voice/orb-hint.tsx): ported from OurSpaces
-   (https://github.com/thomasnguyen/ourspaces-app, src/components/orbHint.css), MIT licence,
-   Copyright (c) 2026 Thomas Nguyen. Only --color-card is mapped to --color-paper-card. ---- */
+/* ---- the orb hint (components/voice/orb-hint.tsx) ---- */
 
 .orb-hint {
   --orb-x: 50%;
@@ -707,7 +705,7 @@ body.voice-stage-up .orb-hint {
   }
 }
 
-/* Konkyo's examples are real questions, longer than OurSpaces' "add a poll…": they wrap */
+/* Konkyo's examples are real questions, longer than two words: they wrap */
 .voice-two-try {
   max-width: min(36em, 100%);
 }

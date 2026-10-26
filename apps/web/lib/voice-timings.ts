@@ -1,8 +1,4 @@
 /*
- * Ported from OurSpaces (https://github.com/thomasnguyen/ourspaces-app, src/lib/voiceTimings.ts),
- * MIT licence, Copyright (c) 2026 Thomas Nguyen. Their rows and values are kept as they were; the
- * Konkyo rows below them are marked as ours.
- *
  * The voice moment's clock, in one table. Every beat of an ask (speech, when the card kind is
  * known, when each part lands, the pause, the close) reads its length from here. Each row names
  * where its number comes from: "measured" (a median out of an eval run), "derived" (arithmetic on
@@ -23,21 +19,21 @@ const t = (ms: number, kind: TimingKind, source: string, note: string): Timing =
 
 export const VOICE_TIMINGS = {
   // ---- speech (scripted asks: `?voice=…&voicePace=talk`) ----
-  wordBase: t(200, "measured", "OurSpaces eval/s1-speed.md", "a scripted word takes 200 ms…"),
+  wordBase: t(200, "measured", "voice eval s1-speed", "a scripted word takes 200 ms…"),
   wordPerSyllable: t(
     70,
     "measured",
-    "OurSpaces eval/s1-speed.md",
+    "voice eval s1-speed",
     "…plus 70 ms per syllable, about 180 words a minute",
   ),
   wordGap: t(30, "code", "lib/voice.ts runScript", "the breath between two scripted words"),
-  hesitation: t(900, "measured", "OurSpaces eval/s1-speed.md", '"…" in a script is 900 ms'),
+  hesitation: t(900, "measured", "voice eval s1-speed", '"…" in a script is 900 ms'),
 
   // ---- which card ----
   typeAtKeyword: t(
     0,
     "measured",
-    "OurSpaces eval/s1-speed.md",
+    "voice eval s1-speed",
     "a kind word in the sentence: code names the card the frame the word lands",
   ),
   steady: t(

@@ -125,7 +125,7 @@ function Row({ item }: { item: InboxItem }) {
             }
           : null
 
-  // A slip of paper on the wall (OurSpaces' mail arrival): a black tag says what it is, a lime
+  // A slip of paper on the wall: a black tag says what it is, a lime
   // sticker that it's new, and its one action is the lime one.
   return (
     <li
