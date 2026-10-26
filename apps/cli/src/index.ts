@@ -2,6 +2,7 @@
  * Konkyo from the terminal (plan S09): the same agents the app runs.
  *
  *   pnpm konkyo ask --sample                       replay a recorded run: no keys, no services
+ *   SAMPLE_MODE=true pnpm konkyo                    the same, as the hackathon's validation runs it
  *   pnpm konkyo ask "<question>" --sample          the recorded run of that question
  *   pnpm konkyo samples                            the recorded questions
  *   pnpm konkyo ask "<question>" [--user <email>] [--folder <name>] [--compare] [--json]
@@ -22,6 +23,7 @@ process.env.KONKYO_ROOT ??= root
 const USAGE = `Konkyo: answers from your sources, every quote checked.
 
   pnpm konkyo ask --sample                      replay a recorded run (no keys, no services)
+  SAMPLE_MODE=true pnpm konkyo                  the same (SAMPLE_MODE=true makes every ask a replay)
   pnpm konkyo ask "<question>" --sample         replay the recorded run of that question
   pnpm konkyo samples                           list the recorded questions
   pnpm konkyo ask "<question>"                  ask your library (needs .env and services)
@@ -51,7 +53,9 @@ const { values, positionals } = parseArgs({
     help: { type: "boolean", short: "h" },
   },
 })
-const [command, ...words] = positionals
+/** SAMPLE_MODE=true (the hackathon's validation flow: `rm .env`, then sample mode) is --sample. */
+const sample = Boolean(values.sample) || /^(1|true|yes)$/i.test(process.env.SAMPLE_MODE ?? "")
+const [command = sample ? "ask" : undefined, ...words] = positionals
 const question = words.join(" ").trim()
 
 if (!command || values.help || command === "help") {
@@ -70,7 +74,7 @@ if (command === "samples") {
   process.exit(0)
 }
 
-if (command === "ask" && values.sample) {
+if (command === "ask" && sample) {
   // Nothing outside is reached in sample mode: no key is needed or read, and the World Model the
   // Analyst writes goes to a scratch folder, not your data.
   process.env.SKIP_ENV_VALIDATION = "1"

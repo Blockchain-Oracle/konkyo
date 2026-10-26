@@ -9,7 +9,11 @@ corepack enable && pnpm install
 pnpm konkyo ask --sample        # the first recorded question
 pnpm konkyo samples             # all of them
 pnpm konkyo ask --sample 2      # by number, name, or the exact question
+SAMPLE_MODE=true pnpm konkyo    # the same as --sample, with no .env at all
 ```
+
+No `.env`, keys, database or Docker are needed: the hackathon's validation flow (`rm .env`, then
+`SAMPLE_MODE=true`) runs exactly this.
 
 ## What it does
 

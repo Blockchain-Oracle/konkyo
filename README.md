@@ -21,11 +21,12 @@ and produce evidence-backed answers or recommendations."*
 ```bash
 git clone <this repo> konkyo && cd konkyo
 corepack enable && pnpm install
-pnpm konkyo ask --sample
+pnpm konkyo ask --sample        # or: SAMPLE_MODE=true pnpm konkyo
 ```
 
-Sample mode replays a run recorded against real services: the replies Nemotron (on NVIDIA's API),
-Zetaris and the library search gave are handed back, and every step of Konkyo's own logic runs again on them
+No `.env`, keys, database or Docker are needed. Sample mode replays a run recorded against real
+services: the replies Nemotron (on NVIDIA's API), Zetaris and the library search gave are handed
+back, and every step of Konkyo's own logic runs again on them
 (planning, citation parsing, the quote checks, the Verifier's verdicts and rewrites, the
 agree/disagree matrix, the World Model, the trace). It prints the cited answer and the path of the
 new trace in `logs/`. `pnpm konkyo samples` lists the five recorded questions; see
@@ -135,6 +136,27 @@ can be marked verified.
   [`watch.ts`](packages/zetaris/src/watch.ts)
 - Every Zetaris call is in the trace as `queried_zetaris` with the statement's hash and rows.
 
+### NVIDIA Nemotron: every model call
+
+Every model Konkyo calls is a Nemotron model on NVIDIA's API, made in one place,
+[`packages/models`](packages/models/src/index.ts).
+
+- **Nemotron 3 Ultra** (550B, 55B active) plans, writes the cited answer, checks each sentence's
+  support, compares sources, screens deep-search finds, makes practice and grades it. With its
+  thinking off it was the only setup to pass every test in our benchmark on NVIDIA's API (0/10
+  false rejections, 6/6 planted errors caught, 9/9 quotes verbatim).
+- **Nemotron 3.5 Lightning** (30B, 3B active) takes the fast steps: deep-search plans, reading a
+  spoken ask, file summaries, and stands in for the judges with its thinking on.
+- **Nemotron 3.5 Super VL** is the fallback for the Writer, Analyst and Tutor.
+- **Nemotron 3.5 Embed** embeds every passage (as a passage) and every question (as a query) for
+  pgvector search, at 1536 of its 2048 dimensions.
+- **Nemotron 3.5 Content Safety** checks questions in public spaces, public profiles and every
+  article before it's published.
+- The free tier is used as it is: a rate limit per model, shared by the web app and the worker;
+  a call that runs long is asked again (a hedged request) and the first answer wins; a model that
+  answers 429 is skipped for a minute; every call has a deadline and a fallback, logged in the
+  trace as `escalated_to_fallback`. [`provider.ts`](packages/models/src/provider.ts)
+
 ### Meterless: memory, world state and long-task reasoning
 
 The three engines are vendored unchanged (Apache-2.0) in [`packages/meterless`](packages/meterless/NOTICE)
@@ -151,6 +173,22 @@ and driven from [`packages/agents`](packages/agents/src).
 - **Markovian** ([`scout.ts`](packages/agents/src/scout.ts)): deep search screens what it found
   in bounded RESEARCH steps that carry only the shortlist forward; Markovian's own estimate of the
   tokens saved is shown on the approval card and logged.
+
+## AI and model usage
+
+- **Models and providers:** NVIDIA Nemotron on NVIDIA's API (build.nvidia.com), free tier: 3 Ultra,
+  3.5 Super VL, 3.5 Lightning, 3.5 Embed 1B and 3.5 Content Safety, as above. ElevenLabs for
+  speech (Scribe `scribe_v2` and realtime for transcription; Flash v2.5 and Eleven v3 dialogue for
+  read-aloud and audio briefs). No other AI model is called while Konkyo runs.
+- **Made once, shipped as files:** the illustrations (the looks, stickers and landing pictures)
+  were generated with OpenAI's image models (gpt-image-2; stickers gpt-image-1) by
+  [`scripts/make-images.mjs`](scripts/make-images.mjs), and the five study sounds with
+  ElevenLabs' sound-effects model.
+- **Frameworks:** the AI SDK 7 (`ai`, `@ai-sdk/openai-compatible` pointed at NVIDIA's API),
+  Next.js 16, Postgres with pgvector, pg-boss, Better Auth; Zetaris and Meterless as above.
+- **Data:** your own uploads; OpenAlex and Wikipedia for deep search and paper records; the
+  sample library is openly licensed papers (see [examples/](examples/README.md)).
+- **Development:** written with Claude Code (Anthropic). Cursor was not used.
 
 ## Everything else it does
 

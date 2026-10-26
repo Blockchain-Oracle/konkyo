@@ -1,4 +1,5 @@
 import { resolveReach } from "@konkyo/db/access"
+import { tapeMode } from "@konkyo/tape"
 import { checkQuotes, evidenceKey, presentDocuments, sqlHash } from "@konkyo/zetaris"
 import { generateText, Output, streamText } from "ai"
 import { z } from "zod"
@@ -942,7 +943,8 @@ export async function answer(input: AnswerInput) {
   const runStarted = performance.now()
   const { tracer, emit } = input
   // An ask over exactly one space also teaches that space's World Model (what its members see).
-  if (!input.visitor && input.spaceId === undefined)
+  // A sample-mode replay has no database to ask (and writes its World Model to a scratch folder).
+  if (!input.visitor && input.spaceId === undefined && tapeMode() !== "replay")
     input.spaceId = (await resolveReach(input.ownerId, input.scope)).spaceId
   const step = (id: string, label: string, state: "running" | "done" | "failed", detail?: string) =>
     emit({ type: "step", id, label, state, detail })
