@@ -294,7 +294,7 @@ export type RoleModels = { primary: ModelChoice; fallback: ModelChoice; reserve?
  * reads spoken asks, and (outside this table) embeds every passage, summarises files and checks
  * safety. Nemotron Ultra with thinking off passed every test in the testing run on NVIDIA's API
  * (0/10 false rejections, 6/6 planted errors, 9/9 quotes), so it is every judge's fallback.
- * A reserve on a third model covers the hour when both are out (in testing). Hedges (asking a stalled call again) are for NVIDIA's free tier only.
+ * A reserve on a third model covers the hour when both are out (in testing). Hedges (asking a stalled call again) are on the Nemotron models only.
  */
 export const MODELS = {
   /** Plans the run: whether it needs the library, which queries, whether to compare. */
@@ -304,9 +304,17 @@ export const MODELS = {
     reserve: { ...LIGHTNING("none"), hedgeAfterMs: 4_000 },
   },
   /** Writes the cited answer: 9/9 quotes verbatim, first token in about 1 s. */
-  writer: { primary: LUNA("none"), fallback: ULTRA("none"), reserve: SUPER("none") },
+  writer: {
+    primary: LUNA("none"),
+    fallback: { ...ULTRA("none"), hedgeAfterMs: 8_000 },
+    reserve: SUPER("none"),
+  },
   /** Support checks: 0/10 false rejections, 6/6 planted errors caught. */
-  verifier: { primary: LUNA("low"), fallback: ULTRA("none"), reserve: LIGHTNING("low") },
+  verifier: {
+    primary: LUNA("low"),
+    fallback: { ...ULTRA("none"), hedgeAfterMs: 15_000 },
+    reserve: LIGHTNING("low"),
+  },
   /** Deep search: plans the paper and web queries. */
   scout: {
     primary: { ...LIGHTNING("none"), hedgeAfterMs: 4_000 },
@@ -320,14 +328,18 @@ export const MODELS = {
     reserve: LIGHTNING("low"),
   },
   /** Claims and agreement across sources: the same strict-support judgement as the Verifier. */
-  analyst: { primary: LUNA("low"), fallback: ULTRA("none"), reserve: SUPER("none") },
+  analyst: {
+    primary: LUNA("low"),
+    fallback: { ...ULTRA("none"), hedgeAfterMs: 15_000 },
+    reserve: SUPER("none"),
+  },
   /**
    * Makes practice items from passages (F27); every answer key then goes to the Verifier. Luna
    * kept 81–83% of its drafts at about $0.0002 each (in testing); Ultra 17 of 19 but 13–27 s a draft.
    */
   tutor: {
     primary: { ...LUNA("none"), deadlineMs: 90_000 },
-    fallback: { ...ULTRA("none"), deadlineMs: 90_000 },
+    fallback: { ...ULTRA("none"), deadlineMs: 90_000, hedgeAfterMs: 35_000 },
     reserve: { ...SUPER("none"), deadlineMs: 90_000 },
   },
   /** Reads a spoken ask that no pattern placed (S16): a one-line pick while you are still talking. */
@@ -337,7 +349,11 @@ export const MODELS = {
     reserve: { ...ULTRA("none"), deadlineMs: 8_000 },
   },
   /** Judges a typed answer the code check couldn't settle, with feedback that never gives it away. */
-  grader: { primary: LUNA("low"), fallback: ULTRA("none"), reserve: LIGHTNING("low") },
+  grader: {
+    primary: LUNA("low"),
+    fallback: { ...ULTRA("none"), hedgeAfterMs: 10_000 },
+    reserve: LIGHTNING("low"),
+  },
 } as const satisfies Record<string, RoleModels>
 
 /** Deep search's web pages come from OpenAI's web search on this model; Wikipedia if it fails. */
