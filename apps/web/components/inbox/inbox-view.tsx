@@ -1,5 +1,6 @@
 "use client"
 
+import type { FileKind } from "@konkyo/config"
 import { Button } from "@konkyo/ui/components/button"
 import { Skeleton } from "@konkyo/ui/components/skeleton"
 import { tiltFor } from "@konkyo/ui/lib/space"
@@ -23,6 +24,7 @@ import { toast } from "sonner"
 import { EmptyState } from "@/components/empty-state"
 import { api } from "@/lib/fetcher"
 import type { InboxItem } from "@/lib/inbox"
+import { openSource } from "@/lib/preview"
 import { inboxKeys, useInbox } from "@/lib/use-inbox"
 import { sessionHref, useToday } from "@/lib/use-study"
 
@@ -152,6 +154,7 @@ function Row({ item }: { item: InboxItem }) {
       {(item.body || item.data.detail) && (
         <p className="inbox-body">{item.data.detail ?? item.body}</p>
       )}
+      {item.data.stance && <StanceLine stance={item.data.stance} />}
       {(primary || !item.read || item.kind === "held-mail") && (
         <div className="mt-3 flex items-center gap-3">
           {primary && (
@@ -269,5 +272,53 @@ export function InboxView() {
         ))}
       </ul>
     </section>
+  )
+}
+
+/** A claim read inside a sentence: no full stop, and lower case unless it opens with an acronym. */
+const midSentence = (claim: string) => {
+  const text = claim.trim().replace(/\.$/, "")
+  return /^[A-Z]{2}/.test(text) ? text : text.charAt(0).toLowerCase() + text.slice(1)
+}
+
+/**
+ * Where a watch's new paper stands against your own sources: it agrees or disagrees with one of
+ * them (your passage quoted, and one tap opens it there), or it's new to your library.
+ */
+function StanceLine({ stance }: { stance: NonNullable<InboxItem["data"]["stance"]> }) {
+  if (stance.stance === "new" || !stance.fileId)
+    return (
+      <p className="mt-2 text-[13px] text-ink-muted">
+        <b className="text-ink">new to your library</b> · {stance.claim}
+      </p>
+    )
+  const agrees = stance.stance === "agrees"
+  const fileId = stance.fileId
+  return (
+    <div className="mt-2 text-[13px] text-ink-muted">
+      <p>
+        <b className={agrees ? "text-supports-text" : "text-contradicts"}>
+          {agrees ? "agrees with" : "disagrees with"}
+        </b>{" "}
+        your <i>{stance.title}</i> on {midSentence(stance.claim)}
+      </p>
+      <button
+        type="button"
+        className="mt-1 text-left underline-offset-2 hover:underline"
+        onClick={() =>
+          openSource({
+            fileId,
+            title: stance.title ?? "Source",
+            kind: (stance.kind ?? "pdf") as FileKind,
+            passageId: stance.passageId,
+            page: stance.page ?? undefined,
+            quote: stance.quote,
+          })
+        }
+      >
+        “{stance.quote}”{stance.page != null ? ` · p. ${stance.page}` : ""}{" "}
+        <span aria-hidden="true">↗</span>
+      </button>
+    </div>
   )
 }

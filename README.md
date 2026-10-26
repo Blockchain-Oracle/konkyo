@@ -95,7 +95,7 @@ flowchart LR
 | Retriever | Hybrid search: pgvector cosine and Postgres full text per query, fused by Reciprocal Rank Fusion | `text-embedding-3-small` |
 | Writer | One finding per sentence, each with a citation and an exact quote from its passage | `gpt-6-luna` |
 | Verifier | Checks each quote in code, then all of them in **one Zetaris statement** against Zetaris's own reading of the PDF; judges whether each sentence's quotes support it; sends failures back with reasons (at most two rewrite rounds); anything that still fails is dropped, never shown as verified | `gpt-6-luna` (low) |
-| Analyst | When a question weighs several sources: 3–6 specific claims × sources with agrees / disagrees / partly, each stance quoted and checked in Zetaris, recorded in the World Model | `gpt-6-luna` (low) |
+| Analyst | When a question weighs several sources: 3–6 specific claims × sources with agrees / disagrees / partly, each stance quoted and checked in Zetaris, recorded in the World Model. Also places each paper a watch finds: agrees with, disagrees with, or new to your sources, your passage quoted | `gpt-6-luna` (low) |
 | Scout | Deep search: OpenAlex and web search, screened in Markovian steps, imported and read before answering | `gpt-5-nano` |
 | Tutor | Practice items from your passages, every answer key checked by the Verifier and every quote in Zetaris | `gpt-6-luna` |
 

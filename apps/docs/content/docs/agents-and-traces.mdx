@@ -9,7 +9,7 @@ description: Who does what, with which model, and how to read the trace.
 | Retriever | Hybrid search: pgvector and Postgres full text, fused by Reciprocal Rank Fusion | `text-embedding-3-small` |
 | Writer | Cited draft, one finding per sentence; rewrites rejected sentences | `gpt-6-luna` |
 | Verifier | Code check, one Zetaris statement, support judgement; at most two rewrite rounds | `gpt-6-luna` (low) |
-| Analyst | Claims × sources with stances, quotes checked in Zetaris, World Model | `gpt-6-luna` (low) |
+| Analyst | Claims × sources with stances, quotes checked in Zetaris, World Model; places each paper a watch finds against your sources (agrees, disagrees or new, your passage quoted) | `gpt-6-luna` (low) |
 | Scout | Deep search over OpenAlex and the web, screened in Markovian steps | `gpt-5-nano` |
 | Tutor | Practice items; every answer key checked by the Verifier, every quote in Zetaris | `gpt-6-luna` |
 
@@ -26,7 +26,7 @@ Every run writes `logs/<runId>.jsonl`, one JSON line per step:
 
 | Field | Meaning |
 |---|---|
-| `agent`, `step`, `action` | Who did what: `planned`, `hybrid_search`, `broadened_search`, `hybrid_search_broadened`, `not_in_library`, `offered_scout`, `queried_zetaris`, `drafted_answer`, `rejected_to_writer`, `revised_sentences`, `approved`, `asserted_world_model`, `read_hmem` |
+| `agent`, `step`, `action` | Who did what: `planned`, `hybrid_search`, `broadened_search`, `hybrid_search_broadened`, `not_in_library`, `offered_scout`, `finding_agrees`, `finding_disagrees`, `finding_new`, `queried_zetaris`, `drafted_answer`, `rejected_to_writer`, `revised_sentences`, `approved`, `asserted_world_model`, `read_hmem` |
 | `model`, `tokens`, `latencyMs` | Which model, at what cost and speed |
 | `sqlHash`, `rowsReturned` | Which Zetaris statement (by hash) and what came back |
 | `verdict`, `detail` | The decision, and its reasons |

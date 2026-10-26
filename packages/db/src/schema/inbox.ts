@@ -24,6 +24,20 @@ export type InboxData = {
   runId?: string
   /** A run that found nothing to report: only the newest one per agent stays in the Inbox. */
   quiet?: boolean
+  /**
+   * new-source from a watch: where the paper stands against the person's own sources, with the
+   * passage it agrees or disagrees with (its quote checked in code) or "new" to them.
+   */
+  stance?: {
+    stance: "agrees" | "disagrees" | "new"
+    claim: string
+    fileId?: string
+    title?: string
+    kind?: string
+    passageId?: string
+    page?: number | null
+    quote?: string
+  }
   /** practice: the set to open. */
   setId?: string
   /** "Author et al. · 2021 · Journal" for a found source. */

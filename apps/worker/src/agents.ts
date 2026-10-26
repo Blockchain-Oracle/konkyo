@@ -1,10 +1,10 @@
 import { randomUUID } from "node:crypto"
-import { Tracer } from "@konkyo/agents"
+import { placeFinding, Tracer } from "@konkyo/agents"
 import { BRIEF, INGEST } from "@konkyo/config"
 import { db, schema } from "@konkyo/db"
 import { resolveReach } from "@konkyo/db/access"
 import { env } from "@konkyo/env/server"
-import { fixMojibake } from "@konkyo/ingest"
+import { fixMojibake, workAbstracts } from "@konkyo/ingest"
 import { enqueue } from "@konkyo/jobs"
 import { describeSchedule, nextRunAt } from "@konkyo/jobs/schedule"
 import { notify, pushTo } from "@konkyo/notify"
@@ -135,12 +135,31 @@ async function runWatch(agent: Agent, tracer: Tracer): Promise<RunResult> {
       .onConflictDoNothing()
   // The first run starts the watch: the newest few now, everything else counts as seen.
   const announce = found.slice(0, firstRun ? 3 : PER_RUN)
-  for (const w of announce)
+  // Each finding says where it stands against what the person has: agrees, disagrees, or new.
+  const abstracts = await workAbstracts(announce.map((w) => w.openalexId)).catch(
+    () => new Map<string, string>(),
+  )
+  const stances = await Promise.all(
+    announce.map((w) => {
+      const abstract = abstracts.get(w.openalexId)
+      return abstract
+        ? placeFinding(agent.ownerId, agent.scope, { title: w.title, abstract }, tracer).catch(
+            () => null,
+          )
+        : null
+    }),
+  )
+  for (const [i, w] of announce.entries())
     await notify(agent.ownerId, {
       kind: "new-source",
       title: w.title,
       href: `https://doi.org/${w.doi}`,
-      data: { doi: w.doi, agentId: agent.id, detail: detailOf(w) || undefined },
+      data: {
+        doi: w.doi,
+        agentId: agent.id,
+        detail: detailOf(w) || undefined,
+        stance: stances[i] ?? undefined,
+      },
       push: false,
     })
   const topic = `“${agent.instructions}”`

@@ -335,6 +335,23 @@ export async function openAlexPdf(workId: string): Promise<Uint8Array | null> {
 }
 
 /** OpenAlex's id for a DOI, when it holds a PDF copy of the work. */
+/** Several works' abstracts in one OpenAlex call, by work id ("W123…"); works without one are left out. */
+export async function workAbstracts(ids: string[]): Promise<Map<string, string>> {
+  const wanted = ids.filter((id) => /^W\d+$/.test(id)).slice(0, 50)
+  if (!wanted.length) return new Map()
+  const page = await openAlex<{
+    results: { id: string; abstract_inverted_index?: Record<string, number[]> | null }[]
+  }>(
+    `/works?filter=openalex:${wanted.join("|")}&select=id,abstract_inverted_index&per_page=${wanted.length}`,
+  ).catch(() => null)
+  const out = new Map<string, string>()
+  for (const w of page?.results ?? []) {
+    const text = abstractText(w.abstract_inverted_index)
+    if (text) out.set(w.id.replace("https://openalex.org/", ""), text)
+  }
+  return out
+}
+
 export async function openAlexIdWithPdf(doi: string): Promise<string | null> {
   const work = await openAlex<{ id: string; has_content?: { pdf?: boolean } }>(
     `/works/doi:${encodeURIComponent(doi.toLowerCase())}?select=id,has_content`,
