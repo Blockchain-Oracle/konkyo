@@ -270,82 +270,88 @@ export function Composer({
           rows={2}
           className="max-h-[40vh] min-h-16 px-4.5 pt-4 text-reading placeholder:text-ash-gray"
         />
-        <InputGroupAddon align="block-end" className="gap-1.5 px-3 pb-3">
-          <InputGroupButton
-            size="icon-sm"
-            variant="outline"
-            className="rounded-full"
-            aria-label="Attach files"
-            onClick={attach}
-          >
-            <PlusIcon strokeWidth={1.5} />
-          </InputGroupButton>
-          {/* Phones show the icon only, so the send button never leaves the row. */}
-          {onFocusChange ? (
-            <FocusPicker
-              items={items}
-              focus={focus}
-              onChange={onFocusChange}
-              open={picking}
-              onOpenChange={setPicking}
-              trigger={
-                <InputGroupButton
-                  size="sm"
-                  variant="ghost"
-                  className="h-8 rounded-full px-2 text-snippet whitespace-nowrap text-ash-gray sm:px-2.5"
-                  aria-label={
-                    isWholeLibrary(focus) ? "Whole library (choose a focus)" : "Change the focus"
-                  }
-                >
-                  {isWholeLibrary(focus) ? (
-                    <LibraryBigIcon className="size-3.5" strokeWidth={1.5} aria-hidden />
-                  ) : (
-                    <AtSignIcon className="size-3.5" strokeWidth={1.5} aria-hidden />
-                  )}
-                  <span className="sr-only sm:not-sr-only">
-                    {isWholeLibrary(focus) ? "Whole library" : "Focus"}
-                  </span>
-                </InputGroupButton>
-              }
-            />
-          ) : (
-            <span className="inline-flex h-8 items-center gap-1.5 rounded-full px-2 text-snippet whitespace-nowrap text-ash-gray sm:px-2.5">
-              <LibraryBigIcon className="size-3.5" strokeWidth={1.5} aria-hidden />
-              <span className="sr-only sm:not-sr-only">Whole library</span>
-            </span>
-          )}
-          <InputGroupButton
-            size="sm"
-            variant="ghost"
-            aria-pressed={deep}
-            onClick={() => setDeep((value) => !value)}
-            className={cn(
-              "h-8 rounded-full px-2.5 text-snippet whitespace-nowrap text-ash-gray",
-              deep && "bg-raised text-bone-white",
+        <InputGroupAddon align="block-end" className="items-end gap-1.5 px-3 pb-3">
+          {/*
+            The toggles wrap onto a second line on a phone, and the send button stays at the end
+            of the row (in testing).
+          */}
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
+            <InputGroupButton
+              size="icon-sm"
+              variant="outline"
+              className="rounded-full"
+              aria-label="Attach files"
+              onClick={attach}
+            >
+              <PlusIcon strokeWidth={1.5} />
+            </InputGroupButton>
+            {/* Phones show the focus as an icon only, which leaves the labels room. */}
+            {onFocusChange ? (
+              <FocusPicker
+                items={items}
+                focus={focus}
+                onChange={onFocusChange}
+                open={picking}
+                onOpenChange={setPicking}
+                trigger={
+                  <InputGroupButton
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 rounded-full px-2 text-snippet whitespace-nowrap text-ash-gray sm:px-2.5"
+                    aria-label={
+                      isWholeLibrary(focus) ? "Whole library (choose a focus)" : "Change the focus"
+                    }
+                  >
+                    {isWholeLibrary(focus) ? (
+                      <LibraryBigIcon className="size-3.5" strokeWidth={1.5} aria-hidden />
+                    ) : (
+                      <AtSignIcon className="size-3.5" strokeWidth={1.5} aria-hidden />
+                    )}
+                    <span className="sr-only sm:not-sr-only">
+                      {isWholeLibrary(focus) ? "Whole library" : "Focus"}
+                    </span>
+                  </InputGroupButton>
+                }
+              />
+            ) : (
+              <span className="inline-flex h-8 items-center gap-1.5 rounded-full px-2 text-snippet whitespace-nowrap text-ash-gray sm:px-2.5">
+                <LibraryBigIcon className="size-3.5" strokeWidth={1.5} aria-hidden />
+                <span className="sr-only sm:not-sr-only">Whole library</span>
+              </span>
             )}
-          >
-            <TelescopeIcon className="size-3.5" strokeWidth={1.5} />
-            Deep search
-          </InputGroupButton>
-          <InputGroupButton
-            size="sm"
-            variant="ghost"
-            aria-pressed={compare}
-            onClick={() => setCompare((value) => !value)}
-            title="Where your sources agree and disagree, claim by claim"
-            className={cn(
-              "h-8 rounded-full px-2.5 text-snippet whitespace-nowrap text-ash-gray",
-              compare && "bg-raised text-bone-white",
+            <InputGroupButton
+              size="sm"
+              variant="ghost"
+              aria-pressed={deep}
+              onClick={() => setDeep((value) => !value)}
+              className={cn(
+                "h-8 rounded-full px-2.5 text-snippet whitespace-nowrap text-ash-gray",
+                deep && "bg-raised text-bone-white",
+              )}
+            >
+              <TelescopeIcon className="size-3.5" strokeWidth={1.5} />
+              Deep search
+            </InputGroupButton>
+            <InputGroupButton
+              size="sm"
+              variant="ghost"
+              aria-pressed={compare}
+              onClick={() => setCompare((value) => !value)}
+              title="Where your sources agree and disagree, claim by claim"
+              className={cn(
+                "h-8 rounded-full px-2.5 text-snippet whitespace-nowrap text-ash-gray",
+                compare && "bg-raised text-bone-white",
+              )}
+            >
+              <ScaleIcon className="size-3.5" strokeWidth={1.5} />
+              Compare
+            </InputGroupButton>
+            {reading > 0 && (
+              <span className="ml-auto text-[12px] font-semibold text-ash-gray" aria-live="polite">
+                reading {reading} file{reading === 1 ? "" : "s"}…
+              </span>
             )}
-          >
-            <ScaleIcon className="size-3.5" strokeWidth={1.5} />
-            Compare
-          </InputGroupButton>
-          {reading > 0 && (
-            <span className="ml-auto text-[12px] font-semibold text-ash-gray" aria-live="polite">
-              reading {reading} file{reading === 1 ? "" : "s"}…
-            </span>
-          )}
+          </div>
           {/* Violet only while there's text, so a view never shows two violet actions (§7.4 #9). */}
           {running ? (
             <InputGroupButton
@@ -353,7 +359,7 @@ export function Composer({
               size="icon-sm"
               variant="secondary"
               onClick={onStop}
-              className="ml-auto rounded-full"
+              className="ml-auto shrink-0 rounded-full"
               aria-label="Stop"
             >
               <SquareIcon className="size-3 fill-current" strokeWidth={0} />
@@ -364,7 +370,7 @@ export function Composer({
               size="icon-sm"
               variant={canSend ? "default" : "secondary"}
               disabled={!canSend}
-              className="ml-auto rounded-full"
+              className="ml-auto shrink-0 rounded-full"
               aria-label="Send"
             >
               <ArrowUpIcon strokeWidth={2} />
