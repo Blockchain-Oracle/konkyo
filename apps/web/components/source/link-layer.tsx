@@ -105,6 +105,8 @@ export function LinkLayer({
               href={link.href}
               target="_blank"
               rel="noopener noreferrer"
+              // A dragged link is carried off as a link, which ends the text selection that began on it.
+              draggable={false}
               title={link.href}
               onClick={(event) => {
                 if (!follows(event)) event.preventDefault()
