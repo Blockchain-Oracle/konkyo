@@ -81,29 +81,18 @@ export function ChatMenu({
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            render={
-              // biome-ignore lint/a11y/useAnchorContent: the menu item renders the label
-              <a href={`/api/chats/${chat.id}/export?format=pdf`} download />
-            }
+            render={<a href={`/api/chats/${chat.id}/export?format=pdf`} download />}
           >
             <DownloadIcon strokeWidth={1.5} />
             Export as PDF
           </DropdownMenuItem>
           <DropdownMenuItem
-            render={
-              // biome-ignore lint/a11y/useAnchorContent: the menu item renders the label
-              <a href={`/api/chats/${chat.id}/export?format=docx`} download />
-            }
+            render={<a href={`/api/chats/${chat.id}/export?format=docx`} download />}
           >
             <DownloadIcon strokeWidth={1.5} />
             Export as Word
           </DropdownMenuItem>
-          <DropdownMenuItem
-            render={
-              // biome-ignore lint/a11y/useAnchorContent: the menu item renders the label
-              <a href={`/api/chats/${chat.id}/export?format=md`} download />
-            }
-          >
+          <DropdownMenuItem render={<a href={`/api/chats/${chat.id}/export?format=md`} download />}>
             <FileTextIcon strokeWidth={1.5} />
             Export as Markdown
           </DropdownMenuItem>
