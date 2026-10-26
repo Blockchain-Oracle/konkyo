@@ -67,7 +67,7 @@ export function citationsIn(doc: PMNode): Record<string, unknown>[] {
 /** A cited file as CSL-JSON: its stored record (OpenAlex/arXiv/you), else what's known of it. */
 type CslEntry = Record<string, unknown> & { id: string }
 
-async function cslItems(ownerId: string, fileIds: string[]): Promise<Map<string, CslEntry>> {
+export async function cslItems(ownerId: string, fileIds: string[]): Promise<Map<string, CslEntry>> {
   if (!fileIds.length) return new Map()
   const rows = await db
     .select({
@@ -352,3 +352,28 @@ export async function noteDocx(ownerId: string, noteId: string, styleId: string)
 }
 
 export type { NoteDoc }
+
+/**
+ * One passage, cited in the person's style (the source pane's Cite): the in-text citation with its
+ * page, and the source's reference-list entry, as plain text for the clipboard.
+ */
+export async function citePassage(ownerId: string, fileId: string, styleId: string, page?: number) {
+  const items = await cslItems(ownerId, [fileId])
+  const item = items.get(fileId)
+  if (!item) return null
+  const style = await loadStyle(styleId)
+  const cite = new Cite([item])
+  const options = { template: style.id, format: "text", lang: "en-US" }
+  const inline = (
+    cite.format("citation", {
+      ...options,
+      entry: [{ id: fileId, ...(page ? { locator: String(page), label: "page" } : {}) }],
+    } as never) as string
+  ).trim()
+  const reference = (cite.format("bibliography", options as never) as string).trim()
+  return {
+    inline: style.kind === "numeric" ? inline.replace(/\d+/, "1") : inline,
+    reference,
+    style: style.id,
+  }
+}

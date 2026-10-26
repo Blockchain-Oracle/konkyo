@@ -7,12 +7,15 @@ import {
   CopyIcon,
   GalleryVerticalEndIcon,
   HighlighterIcon,
+  LightbulbIcon,
   MessageSquareQuoteIcon,
+  QuoteIcon,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { quoteInComposer, quoteTaker } from "@/lib/composer-draft"
 import { api } from "@/lib/fetcher"
+import { holdQuestion } from "@/lib/pending-question"
 import { useHighlightActions } from "@/lib/use-highlights"
 
 /**
@@ -45,6 +48,35 @@ export function SelectionToolbar({
     scope?.clear()
     // Asked in place: the page's composer or the dock's panel takes it; else Home's composer.
     if (!quoteTaker()) router.push("/home")
+  }
+  // Explain (F08): a new chat asks what the passage means, answered from this source and the rest.
+  const explain = async () => {
+    const text = await selectedText()
+    if (!text) return
+    scope?.clear()
+    const chatId = crypto.randomUUID()
+    holdQuestion(chatId, {
+      text: "Explain this passage in plain words, and what it rests on.",
+      quote: { fileId, title, page: context.pageIndex + 1, text },
+    })
+    router.push(`/chats/${chatId}`)
+  }
+  // Cite (F08): the words and their citation in your style, with the reference, to paste anywhere.
+  const cite = async () => {
+    const text = await selectedText()
+    if (!text) return
+    const page = context.pageIndex + 1
+    try {
+      const { inline, reference } = await api<{ inline: string; reference: string }>(
+        `/api/files/${fileId}/cite`,
+        { method: "POST", json: { page } },
+      )
+      await navigator.clipboard.writeText(`“${text}” ${inline}\n\n${reference}`)
+      scope?.clear()
+      toast.success("Citation copied", { description: inline })
+    } catch (error) {
+      toast.error((error as Error).message)
+    }
   }
   // Make flashcard (F08): the Tutor asks about the selection; the Verifier and Zetaris check it.
   const flashcard = async () => {
@@ -121,6 +153,10 @@ export function SelectionToolbar({
           <MessageSquareQuoteIcon />
           Ask
         </ToolbarAction>
+        <ToolbarAction onClick={explain}>
+          <LightbulbIcon />
+          Explain
+        </ToolbarAction>
         <ToolbarAction onClick={highlight}>
           <HighlighterIcon />
           Highlight
@@ -128,6 +164,10 @@ export function SelectionToolbar({
         <ToolbarAction onClick={flashcard}>
           <GalleryVerticalEndIcon />
           Flashcard
+        </ToolbarAction>
+        <ToolbarAction onClick={cite}>
+          <QuoteIcon />
+          Cite
         </ToolbarAction>
         <ToolbarAction onClick={copy}>
           <CopyIcon />
