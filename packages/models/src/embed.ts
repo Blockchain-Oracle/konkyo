@@ -27,11 +27,13 @@ const TIMING: Record<EmbedAs, { timeoutMs: number; hedgeAfterMs?: number }> = {
   passage: { timeoutMs: 30_000 },
 }
 /**
- * Retries per role. NVIDIA's endpoint has spells of fast 500s (in testing), and the next try usually works: a question retries quickly, a little longer
- * each time; background passages wait longer between tries.
+ * Retries per role. NVIDIA's endpoint has spells of fast 500s ("service inference failed": two
+ * of three calls on testing, nine of twelve on testing, half a second each), and a later try
+ * usually works: a question retries quickly, up to ten times in about ten seconds; background
+ * passages wait longer between tries.
  */
 const RETRY: Record<EmbedAs, { attempts: number; backoffMs: number; maxBackoffMs: number }> = {
-  query: { attempts: 6, backoffMs: 300, maxBackoffMs: 1_500 },
+  query: { attempts: 10, backoffMs: 200, maxBackoffMs: 1_000 },
   passage: { attempts: 6, backoffMs: 2_000, maxBackoffMs: 20_000 },
 }
 

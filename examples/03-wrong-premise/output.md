@@ -1,25 +1,28 @@
 # Why did Nishida and Walker find that a daytime nap made motor memory worse?
 
-No: Nishida and Walker found that a daytime nap significantly enhanced motor memory consolidation compared with remaining awake [1]. Subjects who obtained a 60–90 minute midday nap showed a highly significant consolidation enhancement, whereas those who did not nap showed no significant performance improvement [1].
+They did not find that a daytime nap made motor memory worse: Nishida and Walker report significant motor-memory improvement after a nap, while the no-nap group showed no significant delayed improvement [1]. The nap group’s improvement was associated with stage-2 NREM sleep and with the difference in spindle density between the learning and non-learning hemispheres [2].
 
-**Caveat:** The question misrepresents the paper’s result; nothing in the passages reports a daytime nap making motor memory worse.
+**Caveat:** The passages report results for a specific motor-skill task and nap experiment, not every kind of motor memory or nap.
 
-## Sources (1)
+## Sources (2)
 _Each quote was found word for word in Zetaris's own reading of the source._
 
 - [1] Nishida and Walker · 2007, Daytime Naps, Motor Memory Consolidation and Regionally Specific Sleep Spindles, p. 1
   > “those that did nap expressed a highly significant consolidation enhancement”
+- [2] Nishida and Walker · 2007, Daytime Naps, Motor Memory Consolidation and Regionally Specific Sleep Spindles, p. 3
+  > “a significant positive correlation was identified between the amount of offline motor skill improvement across the nap and the density of spindles”
 
 ## Checks
-- 1 quote from 1 source checked in one Zetaris statement; verifying, rewrites included, took 7.8 s; 0 rewritten, 0 dropped; 45.3 s in all.
-- Models: planner nvidia/nemotron-3-ultra-550b-a55b, writer nvidia/nemotron-3.5-super-vl-120b-a12b, verifier nvidia/nemotron-3.5-lightning-30b-a3b.
+- 2 quotes from 1 source checked in one Zetaris statement; verifying, rewrites included, took 4.0 s; 0 rewritten, 0 dropped; 17.9 s in all.
+- Models: planner nvidia/nemotron-3-ultra-550b-a55b, writer gpt-6-luna, verifier gpt-6-luna.
 
 The Zetaris statement that checked every quote:
 
 ```sql
 SELECT q.qid
 FROM VALUES
-    ('1', 'c82eb252-2ceb-4ba1-bd91-5cf985ab660f', 'c82eb252-2ceb-4ba1-bd91-5cf985ab660f:p1:0', 'thosethatdidnapexpressedahighlysignificantconsolidationenhancement')
+    ('1', 'c82eb252-2ceb-4ba1-bd91-5cf985ab660f', 'c82eb252-2ceb-4ba1-bd91-5cf985ab660f:p1:0', 'thosethatdidnapexpressedahighlysignificantconsolidationenhancement'),
+    ('2', 'c82eb252-2ceb-4ba1-bd91-5cf985ab660f', 'c82eb252-2ceb-4ba1-bd91-5cf985ab660f:p3:0', 'asignificantpositivecorrelationwasidentifiedbetweentheamountofofflinemotorskillimprovementacrossthenapandthedensityofspindles')
   AS q(qid, doc, pid, qkey)
 JOIN konkyo.konkyo_pdf_text t ON t.doc_id = q.doc
 WHERE instr(t.p, q.qkey) > 0

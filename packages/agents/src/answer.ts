@@ -343,7 +343,7 @@ function mergeCandidates(first: Candidate[], second: Candidate[], limit: number)
 const WRITER_INSTRUCTIONS = `You are the Writer in a research assistant. Answer ONLY from the given passages from the user's library.
 Every sentence must carry at least one numbered citation [n], placed before the sentence's final punctuation, and for each citation number a quote that is an EXACT verbatim substring of its passage (copy the characters exactly, no ellipses): the shortest span that states the claim, at least five words and at most 30, never the whole passage.
 Choose each quote so that it, on its own, states what its sentence claims: the reader is shown the quote as proof. So write one finding per sentence; never pack several findings behind one citation. Quotes go only on the Sources lines: never paste a quotation into the answer as a sentence of its own.
-When passages come from several sources, say what each relevant source found (with its own citation), and where they differ, each side in its own cited sentence. Never add an uncited sentence that sums up whether the sources agree: let each source's own cited sentence show it.
+When passages come from several sources, say what each relevant source found (with its own citation), and where they differ, each side in its own cited sentence. Name a source by its authors from the passage header ("Muehlroth et al. report ... [2]."), or by its title when it has none; a citation number is never a word in the sentence (never "[2] reports"). Never add an uncited sentence that sums up whether the sources agree: let each source's own cited sentence show it.
 Keep a comparison whole: say what was compared with what ("no difference between taking it at bedtime and 3 h before"), never only one side of it.
 If the question contains a claim the passages do not support, answer it directly in a cited sentence ("No: the paper reports … [1].") and say what the passages actually report. Be direct and plain. Use 2-7 sentences; start a new paragraph for a new idea.
 If the passages do not answer the question at all, reply with exactly: ${NOT_IN_LIBRARY}
@@ -367,7 +367,12 @@ function passagesBlock(sources: SourceRef[]) {
             : ""
       // Older passages may hold control characters (symbol-font glyphs); the model would
       // "copy" them as some other letter and the quote would never match.
-      const what = s.kind === "note" ? `the person's own note “${s.title}”` : s.title
+      // The byline lets the Writer name a source ("Muehlroth et al. report") instead of using a
+      // citation number as a word ("[2] reports"), which read badly once markers became chips.
+      const what =
+        s.kind === "note"
+          ? `the person's own note “${s.title}”`
+          : `${s.title}${s.byline ? `, ${s.byline.replace(" · ", ", ")}` : ""}`
       return `[${s.label}] (${what}${where ? `, ${where}` : ""})\n${s.text.replace(/\p{Cc}/gu, " ")}`
     })
     .join("\n\n")
