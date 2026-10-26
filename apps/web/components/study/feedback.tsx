@@ -172,7 +172,7 @@ export function FeedbackBar({
           {state.kind === "right"
             ? "That's it."
             : state.kind === "wrong"
-              ? "Close. Try once more."
+              ? "Not quite. Try once more."
               : "Here's what the source says."}
         </p>
         {state.kind === "right" && state.note && <p className="reply-slip-text">{state.note}</p>}

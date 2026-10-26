@@ -92,7 +92,7 @@ export function SpaceWall({
               className="board-note board-object tone-violet max-w-md cursor-default"
               style={{ rotate: "-1.2deg" } as CSSProperties}
             >
-              <span className="note-paper-backing" aria-hidden />
+              {/* a short hint: no torn backing, which only fits a full-height note */}
               <span className="note-paper-sheet min-h-0!">
                 <span className="note-kicker">an empty wall</span>
                 <span className="note-text">

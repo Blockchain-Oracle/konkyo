@@ -61,6 +61,14 @@
   gap: 6px;
 }
 
+/* Phones: the door card starts below the links instead of under them. */
+@media (max-width: 640px) {
+  .gate-page .claim-card.is-gate {
+    top: 58px;
+    max-height: calc(100dvh - 74px);
+  }
+}
+
 .entry-gate-scrim {
   position: fixed;
   z-index: 71;
@@ -1482,9 +1490,10 @@ textarea.claim-name-input {
   gap: 26px;
 }
 
+/* clear of the places bar and the sticky section tabs beneath it */
 .settings-you-wrap,
 .settings-section {
-  scroll-margin-top: 92px;
+  scroll-margin-top: 168px;
 }
 
 .settings-you-card {
@@ -1709,7 +1718,7 @@ label.setting-text {
 @media (max-width: 800px) {
   .settings-you-wrap,
   .settings-section {
-    scroll-margin-top: 124px;
+    scroll-margin-top: 176px;
   }
 }
 

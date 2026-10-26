@@ -13,7 +13,7 @@ type WallSource = {
   fileId: string
   title: string
   kind: string
-  /** The citation numbers that point here, per answer, in order. */
+  /** The citation numbers that point here, one per citation, across every answer. */
   cited: number[]
   pages: number[]
   reading: boolean
@@ -109,7 +109,8 @@ export function ChatWall({
 
 function WallCard({ source, lit }: { source: WallSource; lit: boolean }) {
   const [thumbGone, setThumbGone] = useState(false)
-  const cited = [...new Set(source.cited)]
+  // Each answer numbers its own citations, so across a chat the rail counts them instead.
+  const times = source.cited.length
   return (
     <button
       type="button"
@@ -144,7 +145,7 @@ function WallCard({ source, lit }: { source: WallSource; lit: boolean }) {
         <span className="chat-source-meta">
           {source.reading
             ? "reading…"
-            : `cited ${cited.map((n) => `[${n}]`).join(" ")}${
+            : `cited ${times === 1 ? "once" : `${times} times`}${
                 source.pages.length
                   ? ` · p. ${source.pages
                       .sort((a, b) => a - b)

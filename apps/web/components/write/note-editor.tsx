@@ -98,6 +98,15 @@ export function NoteEditor({ note }: { note: NoteDetail }) {
   }, [])
   // biome-ignore lint/correctness/useExhaustiveDependencies: refit whenever the title changes
   useEffect(() => fitTitle(titleBox.current), [title, fitTitle])
+  // ...and when its lines change without it: the display font arriving, or a narrower screen
+  useEffect(() => {
+    const refit = () => fitTitle(titleBox.current)
+    void document.fonts?.ready.then(refit)
+    const box = titleBox.current
+    const watch = new ResizeObserver(refit)
+    if (box?.parentElement) watch.observe(box.parentElement)
+    return () => watch.disconnect()
+  }, [fitTitle])
   const { state: saveState, schedule, flush } = useAutosave(note.id)
   const [tab, setTab] = useState<Tab>("sources")
   const [sheet, setSheet] = useState(false)

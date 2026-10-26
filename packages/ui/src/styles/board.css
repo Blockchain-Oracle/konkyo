@@ -1083,6 +1083,13 @@ button.board-object:hover,
     top: 84px;
   }
 }
+/* Phones: the tools wrap onto a second row, so "check my draft" is never cut off the edge. */
+@media (max-width: 640px) {
+  .write-toolbar:not(.is-bubble) {
+    flex-wrap: wrap;
+    border-radius: 20px;
+  }
+}
 .write-toolbar.is-bubble {
   position: static;
   margin: 0;
