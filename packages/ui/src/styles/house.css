@@ -6776,8 +6776,12 @@ body.voice-stage-up .voice-found-pulse {
   height: min(760px, calc(100dvh - 96px));
 }
 
+/* More tiles below: the bottom edge fades, so the tray reads as scrollable. The extra padding
+   means that at the end the fade falls on empty space, never on the last row. */
 .widget-picker-tray.is-browsing .widget-picker-content {
   flex: 1;
+  padding-bottom: 40px;
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 36px), transparent);
 }
 
 .widget-picker-tray.is-browsing .widget-picker-grid {

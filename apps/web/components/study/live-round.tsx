@@ -596,9 +596,11 @@ function Recap({ round }: { round: RoundView }) {
       <p className="round-note">
         {share >= 0.8
           ? "the team knew this well."
-          : share >= 0.5
+          : share > 0.5
             ? "more right than wrong. the misses are below."
-            : "this one's worth another go together."}
+            : share === 0.5
+              ? "half right. the misses are below."
+              : "this one's worth another go together."}
       </p>
       <ol className="round-recap-list">
         {recap?.questions.map((q, i) => (

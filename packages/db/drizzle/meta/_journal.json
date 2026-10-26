@@ -246,6 +246,13 @@
       "when": 1792941600000,
       "tag": "0034_inbound_claims",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1792947300000,
+      "tag": "0035_site_totals",
+      "breakpoints": true
     }
   ]
 }

@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react"
 import type { LiveTotals } from "@/lib/landing"
 
 const ROWS = [
-  ["spaces", "spaces"],
+  ["spaces", "spaces made"],
   ["sources", "sources read"],
   ["quotes", "quotes checked"],
 ] as const

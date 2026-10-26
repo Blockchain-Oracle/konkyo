@@ -94,7 +94,13 @@ const WAYS = [
     mark: "5",
     color: "var(--color-cobalt)",
     title: "Write with your grounds.",
-    body: "Check my draft marks what your sources back, contradict or don't cover. Export to Word in any citation style.",
+    body: "Check my draft marks what your sources back, contradict or don't cover. Export to Word in any citation style, or publish it with every claim checked.",
+  },
+  {
+    mark: "6",
+    color: "var(--color-orange)",
+    title: "Together, and while you're away.",
+    body: "Share a space and read with friends live, play a live round on its questions, or forward papers to its own email address. Ask out loud through the orb. Agents watch for new papers and remake a space's audio brief when it changes.",
   },
 ]
 

@@ -507,7 +507,9 @@ export async function roundView(userId: string, roundId: string): Promise<RoundV
   }
 
   if (round.phase === "done") {
-    const recap = round.questions.map((q, i) => {
+    // A round ended early stops where it was: only the questions it reached are recapped.
+    const played = round.questions.slice(0, round.at + 1)
+    const recap = played.map((q, i) => {
       const given = answers.filter((a) => a.at === i)
       const mine = given.find((a) => a.userId === userId)
       return {
@@ -524,7 +526,7 @@ export async function roundView(userId: string, roundId: string): Promise<RoundV
         ground: q.ground,
       }
     })
-    const missedIds = missedItems(round.questions, answers)
+    const missedIds = missedItems(played, answers)
     view.recap = {
       questions: recap,
       missed: missedIds.length,
