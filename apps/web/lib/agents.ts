@@ -4,11 +4,11 @@ import type { AgentKind, AgentSchedule, AgentScope } from "@konkyo/db/schema"
 import { enqueue } from "@konkyo/jobs"
 import { describeSchedule, nextRunAt } from "@konkyo/jobs/schedule"
 import { dropWatchTable } from "@konkyo/zetaris"
-import { and, desc, eq, inArray } from "drizzle-orm"
+import { and, desc, eq, inArray, like, sql } from "drizzle-orm"
 import { LibraryError } from "./library"
 import { validZone } from "./study"
 
-const { agents, agentRuns, userSettings } = schema
+const { agents, agentRuns, briefs, studySets, userSettings } = schema
 
 export type AgentInput = {
   name: string
@@ -55,6 +55,38 @@ function validate(input: AgentInput) {
     )
 }
 
+/**
+ * Where an agent's work lands, so its card can open it. A quiz agent names each set "<name> ·
+ * <date>" and a brief agent writes a brief over its own scope, so the newest of those is found
+ * without the run having to remember it; with none yet, the page that will hold it.
+ */
+async function outputOf(
+  ownerId: string,
+  agent: { kind: AgentKind; name: string; scope: AgentScope },
+) {
+  if (agent.kind === "watch") return { href: "/inbox", label: "Open Inbox" }
+  if (agent.kind === "quiz") {
+    const set = await db.query.studySets.findFirst({
+      where: and(
+        eq(studySets.ownerId, ownerId),
+        like(studySets.title, `${agent.name.replace(/[\\%_]/g, "\\$&")} · %`),
+      ),
+      orderBy: desc(studySets.createdAt),
+      columns: { id: true },
+    })
+    return { href: set ? `/study?set=${set.id}` : "/study", label: "Open practice" }
+  }
+  const brief = await db.query.briefs.findFirst({
+    where: and(
+      eq(briefs.ownerId, ownerId),
+      sql`${briefs.scope} = ${JSON.stringify(agent.scope)}::jsonb`,
+    ),
+    orderBy: desc(briefs.createdAt),
+    columns: { id: true },
+  })
+  return { href: brief ? `/briefs/${brief.id}` : "/briefs", label: "Open brief" }
+}
+
 export async function listAgents(ownerId: string) {
   const rows = await db
     .select()
@@ -74,32 +106,35 @@ export async function listAgents(ownerId: string) {
         .orderBy(desc(agentRuns.startedAt))
         .limit(200)
     : []
-  return rows.map((a) => ({
-    id: a.id,
-    name: a.name,
-    kind: a.kind,
-    instructions: a.instructions,
-    scope: a.scope,
-    schedule: a.schedule,
-    scheduleText: describeSchedule(a.schedule),
-    status: a.status,
-    nextRunAt: a.status === "active" ? (a.nextRunAt?.toISOString() ?? null) : null,
-    lastRunAt: a.lastRunAt?.toISOString() ?? null,
-    zetaris: Boolean(a.zetarisTable),
-    runs: runs
-      .filter((r) => r.agentId === a.id)
-      .slice(0, 10)
-      .map((r) => ({
-        id: r.id,
-        status: r.status,
-        trigger: r.trigger,
-        found: r.found,
-        summary: r.summary,
-        via: r.via,
-        startedAt: r.startedAt.toISOString(),
-        endedAt: r.endedAt?.toISOString() ?? null,
-      })),
-  }))
+  return Promise.all(
+    rows.map(async (a) => ({
+      id: a.id,
+      name: a.name,
+      kind: a.kind,
+      instructions: a.instructions,
+      scope: a.scope,
+      schedule: a.schedule,
+      scheduleText: describeSchedule(a.schedule),
+      status: a.status,
+      nextRunAt: a.status === "active" ? (a.nextRunAt?.toISOString() ?? null) : null,
+      lastRunAt: a.lastRunAt?.toISOString() ?? null,
+      zetaris: Boolean(a.zetarisTable),
+      output: await outputOf(ownerId, a),
+      runs: runs
+        .filter((r) => r.agentId === a.id)
+        .slice(0, 10)
+        .map((r) => ({
+          id: r.id,
+          status: r.status,
+          trigger: r.trigger,
+          found: r.found,
+          summary: r.summary,
+          via: r.via,
+          startedAt: r.startedAt.toISOString(),
+          endedAt: r.endedAt?.toISOString() ?? null,
+        })),
+    })),
+  )
 }
 
 export type AgentView = Awaited<ReturnType<typeof listAgents>>[number]

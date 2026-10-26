@@ -15,6 +15,7 @@ import { readableInk } from "@konkyo/ui/lib/space"
 import { cn } from "@konkyo/ui/lib/utils"
 import { useQueryClient } from "@tanstack/react-query"
 import {
+  ArrowUpRightIcon,
   ChevronDownIcon,
   EllipsisIcon,
   GraduationCapIcon,
@@ -26,6 +27,8 @@ import {
   TelescopeIcon,
   Trash2Icon,
 } from "lucide-react"
+import type { Route } from "next"
+import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { type CSSProperties, useEffect, useState } from "react"
 import { toast } from "sonner"
@@ -113,6 +116,12 @@ function AgentRow({ agent, onEdit }: { agent: AgentView; onEdit: () => void }) {
       className={cn("agent-card", agent.status === "paused" && "is-paused")}
       style={{ "--agent": color, "--agent-ink": readableInk(color) } as CSSProperties}
     >
+      {/* The whole card opens what the agent made (or will make): the buttons sit above this. */}
+      <Link
+        href={agent.output.href as Route}
+        className="agent-open"
+        aria-label={`${agent.output.label}: ${agent.name}`}
+      />
       <div className="flex items-start gap-3">
         <span className="agent-icon" aria-hidden>
           <Icon className="size-4.5" strokeWidth={2} />
@@ -176,21 +185,29 @@ function AgentRow({ agent, onEdit }: { agent: AgentView; onEdit: () => void }) {
         </DropdownMenu>
       </div>
 
-      {/* the last result, on a slip of paper */}
+      {/* the last result, on a slip of paper, with the way to what it made */}
       <div className="agent-slip">
-        {running ? (
-          <span className="inline-flex items-center gap-1.5">
-            <Spinner className="size-3" />
-            running now
-          </span>
-        ) : last ? (
-          <>
-            <span className={cn(last.status === "failed" && "text-[#b8401a]")}>{last.summary}</span>
-            {last.via && VIA[last.via] && <small> · via {VIA[last.via]}</small>}
-          </>
-        ) : (
-          "no runs yet"
-        )}
+        <div>
+          {running ? (
+            <span className="inline-flex items-center gap-1.5">
+              <Spinner className="size-3" />
+              running now
+            </span>
+          ) : last ? (
+            <>
+              <span className={cn(last.status === "failed" && "text-[#b8401a]")}>
+                {last.summary}
+              </span>
+              {last.via && VIA[last.via] && <small> · via {VIA[last.via]}</small>}
+            </>
+          ) : (
+            "no runs yet"
+          )}
+        </div>
+        <span className="agent-slip-go" aria-hidden>
+          {agent.output.label}
+          <ArrowUpRightIcon className="size-3.5" strokeWidth={2.5} />
+        </span>
       </div>
 
       <div className="mt-auto flex flex-wrap items-center gap-2">

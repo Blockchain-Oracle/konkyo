@@ -1674,9 +1674,35 @@ button.board-object:hover,
   box-shadow: 0 8px 0 rgb(17 17 20 / 0.2);
   color: var(--agent-ink);
   padding: 18px;
+  position: relative;
+  transition:
+    translate var(--dur-quick) var(--ease-glide),
+    box-shadow var(--dur-quick) var(--ease-glide);
+}
+.agent-card:hover {
+  translate: 0 -2px;
+  box-shadow: 0 10px 0 rgb(17 17 20 / 0.2);
 }
 .agent-card.is-paused {
   filter: saturate(0.35);
+}
+/* The card is one big link to what the agent made; everything you can press sits above it. */
+.agent-open {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+}
+.agent-open:focus-visible {
+  outline: 3px solid var(--color-sticker);
+  outline-offset: 3px;
+}
+.agent-more,
+.agent-run,
+.agent-history-toggle,
+.agent-history {
+  position: relative;
+  z-index: 2;
 }
 .agent-icon {
   display: grid;
@@ -1731,6 +1757,21 @@ button.board-object:hover,
 .agent-slip small {
   color: #5f5055;
   font-size: 12px;
+}
+/* "Open practice ↗": the slip says it goes somewhere, and underlines while the card is pointed at. */
+.agent-slip-go {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 6px;
+  color: var(--color-ink);
+  font-size: 12px;
+  font-weight: 800;
+  text-underline-offset: 3px;
+}
+.agent-card:hover .agent-slip-go,
+.agent-open:focus-visible ~ .agent-slip .agent-slip-go {
+  text-decoration: underline;
 }
 .agent-pill {
   border-radius: 999px;

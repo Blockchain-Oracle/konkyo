@@ -17,7 +17,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import type { Route } from "next"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { type CSSProperties, useMemo, useState } from "react"
+import { type CSSProperties, useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
 import { FocusPicker } from "@/components/chat/focus-picker"
 import { api } from "@/lib/fetcher"
@@ -337,6 +337,17 @@ export function SetList() {
   const queryClient = useQueryClient()
   const router = useRouter()
   const quizMe = useQuizMe()
+  // An agent's card sends you here with ?set=: bring that set into view and light it for a moment.
+  const [lit, setLit] = useState<string | null>(null)
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("set")
+    if (!id || !sets?.some((s) => s.id === id)) return
+    setLit(id)
+    document.getElementById(`set-${id}`)?.scrollIntoView({ block: "center", behavior: "smooth" })
+    window.history.replaceState(null, "", window.location.pathname)
+    const timer = window.setTimeout(() => setLit(null), 3200)
+    return () => window.clearTimeout(timer)
+  }, [sets])
   if (isPending)
     return (
       <div className="surface-paper board-sheet space-y-3">
@@ -376,9 +387,11 @@ export function SetList() {
         {sets.map((set, i) => (
           <li
             key={set.id}
+            id={`set-${set.id}`}
             className={cn(
-              "flex min-h-16 items-center gap-3.5 py-3",
+              "flex min-h-16 scroll-mt-40 items-center gap-3.5 py-3 transition-colors duration-500",
               i > 0 && "border-t border-ink/10",
+              lit === set.id && "-mx-3 rounded-2xl bg-lime/45 px-3",
             )}
           >
             <span className="min-w-0 flex-1">
