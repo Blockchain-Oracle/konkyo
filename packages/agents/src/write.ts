@@ -2,7 +2,7 @@ import { checkQuotes, sqlHash } from "@konkyo/zetaris"
 import { generateText, Output } from "ai"
 import { z } from "zod"
 import { quoteKey } from "./citations"
-import { type ModelChoice, model, reasoning, withFallback } from "./models"
+import { type ModelChoice, model, noFallback, reasoning, withFallback } from "./models"
 import { type Candidate, hybridSearch } from "./retrieve"
 import type { Tracer } from "./trace"
 
@@ -125,60 +125,77 @@ export async function checkDraft(
 
   const results: ClaimResult[] = []
   const queue = [...claims]
+  const checkOne = async (claim: (typeof claims)[number]) => {
+    const { candidates } = await hybridSearch(ownerId, [claim.claim], {}, 6, {
+      excludeNotes: true,
+    })
+    const best = Math.max(0, ...candidates.map((c) => c.similarity))
+    let result: ClaimResult = {
+      ...claim,
+      verdict: "not-found",
+      why: "Nothing in your sources speaks to this.",
+    }
+    if (candidates.length && best >= 0.25) {
+      const labelled = candidates.map((c, i) => ({ label: `p${i + 1}`, c }))
+      const { result: judged } = await call("verifier", tracer, "support", (c) =>
+        generateText({
+          model: model(c),
+          providerOptions: reasoning(c),
+          output: Output.object({ schema: Judged }),
+          instructions:
+            "Decide whether the passages support the claim. supported: a passage states it, including any numbers. partly: a passage supports part of it, or a weaker version. contradicted: a passage states the opposite or a conflicting finding. not-found: none speak to it. Be strict about numbers and scope. The quote must be copied exactly from the passage you name.",
+          prompt: `Claim: ${claim.claim}\n\nPassages:\n${labelled
+            .map((l) => `[${l.label}] (${l.c.title})\n${clean(l.c.text)}`)
+            .join("\n\n")}`,
+        }),
+      )
+      const j = judged.output
+      const hit = labelled.find((l) => l.label === j.passage?.trim())?.c
+      const quoteOk =
+        hit &&
+        j.quote &&
+        quoteKey(j.quote).length > 10 &&
+        quoteKey(hit.text).includes(quoteKey(j.quote))
+      result =
+        j.verdict !== "not-found" && hit && quoteOk
+          ? {
+              ...claim,
+              verdict: j.verdict,
+              why: j.why,
+              passage: passageOf(hit),
+              quote: j.quote?.trim(),
+            }
+          : {
+              ...claim,
+              verdict: "not-found",
+              why: j.verdict === "not-found" ? j.why : "No passage could be quoted for it.",
+            }
+    }
+    results.push(result)
+    emit({ type: "result", result })
+  }
+  // A claim whose search or judgement fails (an embedding or model outage) goes to the back of
+  // the queue once, so one bad moment doesn't stop the others; a second failure ends the check.
+  const retried = new Set<string>()
+  let failure: unknown
   const work = async () => {
     for (;;) {
       const claim = queue.shift()
       if (!claim) return
-      const { candidates } = await hybridSearch(ownerId, [claim.claim], {}, 6, {
-        excludeNotes: true,
-      })
-      const best = Math.max(0, ...candidates.map((c) => c.similarity))
-      let result: ClaimResult = {
-        ...claim,
-        verdict: "not-found",
-        why: "Nothing in your sources speaks to this.",
+      try {
+        await checkOne(claim)
+      } catch (error) {
+        if (noFallback(error)) throw error
+        if (retried.has(claim.id)) failure ??= error
+        else {
+          retried.add(claim.id)
+          queue.push(claim)
+        }
       }
-      if (candidates.length && best >= 0.25) {
-        const labelled = candidates.map((c, i) => ({ label: `p${i + 1}`, c }))
-        const { result: judged } = await call("verifier", tracer, "support", (c) =>
-          generateText({
-            model: model(c),
-            providerOptions: reasoning(c),
-            output: Output.object({ schema: Judged }),
-            instructions:
-              "Decide whether the passages support the claim. supported: a passage states it, including any numbers. partly: a passage supports part of it, or a weaker version. contradicted: a passage states the opposite or a conflicting finding. not-found: none speak to it. Be strict about numbers and scope. The quote must be copied exactly from the passage you name.",
-            prompt: `Claim: ${claim.claim}\n\nPassages:\n${labelled
-              .map((l) => `[${l.label}] (${l.c.title})\n${clean(l.c.text)}`)
-              .join("\n\n")}`,
-          }),
-        )
-        const j = judged.output
-        const hit = labelled.find((l) => l.label === j.passage?.trim())?.c
-        const quoteOk =
-          hit &&
-          j.quote &&
-          quoteKey(j.quote).length > 10 &&
-          quoteKey(hit.text).includes(quoteKey(j.quote))
-        result =
-          j.verdict !== "not-found" && hit && quoteOk
-            ? {
-                ...claim,
-                verdict: j.verdict,
-                why: j.why,
-                passage: passageOf(hit),
-                quote: j.quote?.trim(),
-              }
-            : {
-                ...claim,
-                verdict: "not-found",
-                why: j.verdict === "not-found" ? j.why : "No passage could be quoted for it.",
-              }
-      }
-      results.push(result)
-      emit({ type: "result", result })
     }
   }
   await Promise.all(Array.from({ length: Math.min(4, claims.length) }, work))
+  if (failure) throw failure
 
   // Every quote behind a "supported" or "partly", in one Zetaris statement.
   const quoted = results.filter((r) => r.passage && r.quote)

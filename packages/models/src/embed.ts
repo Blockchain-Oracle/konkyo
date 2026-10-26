@@ -26,8 +26,14 @@ const TIMING: Record<EmbedAs, { timeoutMs: number; hedgeAfterMs?: number }> = {
   query: { timeoutMs: 8_000, hedgeAfterMs: 2_500 },
   passage: { timeoutMs: 30_000 },
 }
-const RETRIES = 3
-const BACKOFF_MS = 2_000
+/**
+ * Retries per role. NVIDIA's endpoint has spells of fast 500s (in testing), and the next try usually works: a question retries quickly, a little longer
+ * each time; background passages wait longer between tries.
+ */
+const RETRY: Record<EmbedAs, { attempts: number; backoffMs: number; maxBackoffMs: number }> = {
+  query: { attempts: 6, backoffMs: 300, maxBackoffMs: 1_500 },
+  passage: { attempts: 6, backoffMs: 2_000, maxBackoffMs: 20_000 },
+}
 
 type Reply = { data: { embedding: number[]; index: number }[]; usage?: { total_tokens?: number } }
 
@@ -61,7 +67,8 @@ function post(input: string[], as: EmbedAs, signal: AbortSignal) {
  */
 async function request(input: string[], as: EmbedAs): Promise<Reply> {
   const { timeoutMs, hedgeAfterMs } = TIMING[as]
-  for (let attempt = 0; ; attempt++) {
+  const retry = RETRY[as]
+  for (let attempt = 1; ; attempt++) {
     let failure: string
     let after = 0
     try {
@@ -81,10 +88,9 @@ async function request(input: string[], as: EmbedAs): Promise<Reply> {
       if ((error as Error).message.startsWith("Embedding failed")) throw error
       failure = `Embedding failed: ${(error as Error).message}`
     }
-    if (attempt >= RETRIES) throw new Error(failure)
-    await new Promise((resolve) =>
-      setTimeout(resolve, after > 0 ? after : BACKOFF_MS * 2 ** attempt),
-    )
+    if (attempt >= retry.attempts) throw new Error(failure)
+    const backoff = Math.min(retry.backoffMs * 2 ** (attempt - 1), retry.maxBackoffMs)
+    await new Promise((resolve) => setTimeout(resolve, after > 0 ? after : backoff))
   }
 }
 
