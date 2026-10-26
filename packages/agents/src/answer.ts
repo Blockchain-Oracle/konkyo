@@ -350,20 +350,27 @@ class RepetitionError extends Error {
   }
 }
 
-/** The same sentence a third time, numbers and markers aside: a model stuck in a loop. */
-function repeating(text: string) {
-  const seen = new Map<string, number>()
-  for (const sentence of text.split(/(?<=[.!?])\s+/)) {
-    const key = sentence
+/**
+ * Where the answer's sentences start repeating (the same sentence a third time, numbers and
+ * markers aside): a model stuck in a loop, cut where the loop began. Only the body counts:
+ * several source lines may rightly quote the same passage. -1 when it isn't looping.
+ */
+function repeatAt(text: string) {
+  const body = text.slice(0, bodyEnd(text, false))
+  const seen = new Map<string, { count: number; first: number }>()
+  for (const match of body.matchAll(/[^.!?]+[.!?]+/g)) {
+    const key = match[0]
       .replace(/\[\d+\]|\d+/g, "")
       .trim()
       .toLowerCase()
     if (key.length < 25) continue
-    const count = (seen.get(key) ?? 0) + 1
-    if (count >= 3) return true
-    seen.set(key, count)
+    const at = seen.get(key) ?? { count: 0, first: match.index }
+    at.count++
+    // Cut where the loop began: the first time the repeated sentence appeared.
+    if (at.count >= 3) return at.first
+    seen.set(key, at)
   }
-  return false
+  return -1
 }
 
 async function write(
@@ -382,7 +389,11 @@ async function write(
       ? `\n\nYour previous draft was REJECTED by the Verifier:\n${feedback}\n\nRewrite the answer fixing every problem. Use only facts and exact quotes from the passages.`
       : "")
   let streamed = false
+  let attempts = 0
   const { result, choice } = await withFallback("writer", input.tracer, "write", async (c) => {
+    // A loop on the first model goes to the fallback; on the last one, the answer keeps what came
+    // before the loop and the Verifier judges that.
+    const last = ++attempts > 1
     if (!onDelta) {
       const r = await generateText({
         model: model(c),
@@ -392,8 +403,10 @@ async function write(
         maxOutputTokens: WRITER_MAX_TOKENS,
         abortSignal: input.abortSignal,
       })
-      if (repeating(r.text)) throw new RepetitionError()
-      return { text: r.text, usage: r.usage }
+      const at = repeatAt(r.text)
+      if (at < 0) return { text: r.text, usage: r.usage }
+      if (!last) throw new RepetitionError()
+      return { text: r.text.slice(0, at).trimEnd(), usage: r.usage }
     }
     // A second attempt (the fallback) starts the reader's draft afresh.
     if (streamed) onRestart?.()
@@ -413,11 +426,16 @@ async function write(
     // Only the answer streams: the caveat and the sources are read once the draft is done.
     let text = ""
     let sent = 0
+    let looped = false
     for await (const delta of stream.textStream) {
       text += delta
-      if (repeating(text)) {
+      const at = repeatAt(text)
+      if (at >= 0) {
         stop.abort()
-        throw new RepetitionError()
+        if (!last) throw new RepetitionError()
+        text = text.slice(0, at).trimEnd()
+        looped = true
+        break
       }
       const end = bodyEnd(text, false)
       if (end > sent) {
@@ -428,7 +446,9 @@ async function write(
     }
     const end = bodyEnd(text, true)
     if (end > sent) onDelta(text.slice(sent, end))
-    return { text, usage: await stream.usage }
+    // A stream stopped for looping has no usage to report.
+    const usage = looped ? { inputTokens: undefined, outputTokens: undefined } : await stream.usage
+    return { text, usage }
   })
   input.tracer.log({
     agent: "writer",
