@@ -22,8 +22,7 @@
 
 export type OrbLook = "calm" | "knot" | "glass"
 
-/** `?orb=glass|knot` picks one of the stage looks; the calm dock orb is the
-    default (Thomas, Oct 4: "I kind of like the old orb better"). */
+/** `?orb=glass|knot` picks one of the stage looks; the calm dock orb is the default. */
 export function orbLook(): OrbLook {
   const look = new URLSearchParams(window.location.search).get("orb")
   return look === "knot" || look === "glass" ? look : "calm"

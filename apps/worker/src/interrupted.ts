@@ -5,9 +5,9 @@ import { finish } from "./deep"
 
 /**
  * Work a restart cut off (a deploy, a crash). The study, deep and agent queues never retry (a
- * rerun would pay for its model calls twice), so nothing else would ever close these rows: a
- * practice set stayed "generating" forever after a restart on testing. Each is closed once it has
- * been quiet longer than its slowest step could take; runs at start-up and every five minutes.
+ * rerun would pay for its model calls twice), so nothing else would close these rows. Each is
+ * closed once it has been quiet longer than its slowest step could take; runs at start-up and
+ * every five minutes.
  */
 export async function closeInterrupted() {
   // A set saves after every window (≤3 min with a slow model call and Zetaris's 90 s deadline).

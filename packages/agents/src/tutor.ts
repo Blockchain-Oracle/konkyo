@@ -277,7 +277,7 @@ type Bundled = z.infer<typeof Bundle>
 
 /**
  * A flashcard is a question and its answer: recall and cloze are required, and the other kinds
- * can only be null. With all four optional, a model wrote a true/false and no card (in testing).
+ * can only be null. Making every kind optional can produce a true/false item without a card.
  */
 const FlashcardBundle = Bundle.extend({
   recall: Recall,
@@ -287,9 +287,9 @@ const FlashcardBundle = Bundle.extend({
 })
 
 /**
- * A practice set wants every game to have something to play: with recall and cloze optional, the
- * Tutor wrote only the true/false for 12 of 13 windows (in testing), leaving Recall Sprint and Find the
- * Evidence empty. Recall, cloze and true/false are required; order stays for real sequences.
+ * A practice set wants every game to have something to play: optional recall and cloze can leave
+ * Recall Sprint and Find the Evidence empty. Recall, cloze and true/false are required; order
+ * stays for real sequences.
  */
 const SetBundle = Bundle.extend({
   recall: Recall,
@@ -638,8 +638,8 @@ const Stated = z.object({
 /**
  * Wrong options for Find the Evidence, chosen once when the item is made: real, similar passages
  * (prose, never a reference list), at most one from the item's own file, and none that the
- * Verifier finds also states the claim. Nearest-by-meaning alone let another paper's "outcomes are
- * attributed to caffeine's effect on adenosine receptors" sit beside the right answer (in testing).
+ * Verifier finds also states the claim. Nearest-by-meaning alone can put another paper's matching
+ * statement beside the right answer.
  */
 export async function evidenceOptions(
   ownerId: string,

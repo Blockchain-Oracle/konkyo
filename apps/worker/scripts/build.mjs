@@ -17,8 +17,7 @@ const here = (path) => fileURLToPath(new URL(path, import.meta.url))
 const OWN = /^@konkyo\//
 /**
  * npm packages bundled with our code instead of installed: their version must be the one our code
- * resolves, and a flat production install can hoist another (Shijima, testing: zod 3 at the top
- * where the packages use zod 4).
+ * resolves, because a flat production install can hoist an incompatible major version.
  */
 const BUNDLED = new Set(["zod"])
 const OUT_DIR = here("../dist/bundle")
@@ -99,8 +98,8 @@ await build({
   entryPoints: { main: here("../src/index.ts") },
   outdir: OUT_DIR,
   // Dynamic import()s become their own chunks in Node's own module order: one-file output wraps
-  // modules in lazy initialisers, and a constant read before its wrapper ran is undefined (Agari's
-  // ops crash-looped on that, testing). Chunks sit beside main.mjs, so re-aimed paths hold in each.
+  // modules in lazy initialisers, and a constant read before its wrapper runs can be undefined.
+  // Chunks sit beside main.mjs, so re-aimed paths hold in each.
   splitting: true,
   outExtension: { ".js": ".mjs" },
   chunkNames: "[name]-[hash]",

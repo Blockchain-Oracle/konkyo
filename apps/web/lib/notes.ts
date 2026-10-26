@@ -65,8 +65,8 @@ async function ownNote(ownerId: string, fileId: string) {
 
 /**
  * The space a note is filed in, as its card and its editor show it. The outer file is named in
- * full: Drizzle writes `files.id` as a bare "id" in a one-table select, which inside this
- * subquery is ambiguous (folders have ids too) and broke every note's editor (in testing).
+ * full: Drizzle writes `files.id` as a bare "id" in a one-table select, which is ambiguous inside
+ * this subquery because folders have ids too.
  */
 const spaceOfNote = (ownerId: string) =>
   sql<{ id: string; name: string; color: SpaceColor | null } | null>`(

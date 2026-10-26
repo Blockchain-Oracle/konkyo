@@ -667,7 +667,7 @@
   background: rgb(255 255 255 / 0.08);
 }
 
-/* ================================================================== visibility (binding, testing)
+/* ================================================================== visibility
  * Every word is readable wherever it lands: 4.5:1 for text, 3:1 for titles of 24px and up,
  * measured against the real pixels behind it (scripts/contrast audit). Three rules make that
  * automatic instead of a per-screen chore:

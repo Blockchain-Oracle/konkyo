@@ -178,7 +178,7 @@ export const MODEL_API = {
   },
   /**
    * OpenAI's API: the account's tier allows far more; each model's bucket keeps a runaway loop
-   * from emptying the account (the pre-Nemotron setting).
+   * from emptying the account.
    */
   openai: { requestsPerMinute: 400, callsInFlight: 24 },
   /**

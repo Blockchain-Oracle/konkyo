@@ -32,8 +32,8 @@ const took = (ms: number) => clock(Math.max(0, Math.round(ms / 1000)))
 
 /**
  * How long the run has taken: ticking while it runs, fixed at its last event once it ends.
- * Nothing is read from the clock until the browser has mounted: a time rendered on the server
- * never matches the client's, and the mismatch made React rebuild the whole chat (in testing).
+ * Nothing is read from the clock until the browser has mounted because a server-rendered time
+ * cannot match the client's clock and would make React rebuild the whole chat.
  */
 function useElapsed(since: string | undefined, endedAt: string | undefined) {
   const [now, setNow] = useState<number | null>(null)

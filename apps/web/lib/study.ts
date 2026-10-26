@@ -490,9 +490,8 @@ const SENTENCE = /(?<=[.!?…])\s+(?=[A-Z0-9“"(‘'])/
 /**
  * A short window of a passage: around its quote, or its opening, cut at sentence ends. The window
  * always holds the whole quote: it opens at the quote's own sentence (with the one before when
- * both fit) and closes at the last sentence end after it. Opening at the previous sentence
- * instead once let a long, citation-heavy sentence fill the window and push the quote out, so a
- * Find the Evidence answer showed none of its evidence (in testing).
+ * both fit) and closes at the last sentence end after it. Opening at the previous sentence can let
+ * a long, citation-heavy sentence fill the window and push the quote out.
  */
 function excerptOf(text: string, quote?: string, size = 340) {
   const flat = text.replace(/\s+/g, " ").trim()

@@ -218,7 +218,8 @@ const movers: Array<
 
 /**
  * Moves everything a guest made to the account they signed in with, then removes the guest.
- * Better Auth 1.7.8 skips its own guest cleanup when the Google account is brand new (the guest row survived a first-time sign-up), so the guest is deleted here too.
+ * Better Auth 1.7.8 can skip its own guest cleanup when the Google account is brand new, so the
+ * guest is deleted here too.
  * Only rows still flagged as guests are deleted; sessions cascade with the user.
  */
 export async function reownUserData(

@@ -278,7 +278,6 @@ examples/ data/   recorded runs, sample sources
 - Fair-use caps: 300 answers, 20 deep searches and 300 files a day per account (guests get less).
 - Scanned pages are read with OCR, which can miss handwriting and complex tables.
 
-
 ## AI usage
 
 Models while Konkyo runs: OpenAI `gpt-6-luna` and `gpt-5-nano`, NVIDIA Nemotron (3 Ultra,
@@ -289,8 +288,7 @@ as the event's AI usage policy asks.
 
 ## Licences and credits
 
-Third-party code and assets, with their licences, are in
-[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). The Meterless engines are Apache-2.0
+The Meterless engines are Apache-2.0
 ([NOTICE](packages/meterless/NOTICE)). The sample sources are CC BY and CC BY-NC-SA
 ([data/](data/README.md)). Interface sounds are from [Mixkit](https://mixkit.co/license/#sfxFree);
 fonts are Bricolage Grotesque and IBM Plex (SIL OFL).

@@ -55,7 +55,8 @@ export async function getSettings(userId: string): Promise<Settings> {
 
 /**
  * Whether Home opens on first run ("what are you here for?"): not onboarded and no files yet. Read
- * on the server so the right Home is in the first HTML, not swapped in after two fetches (in testing).
+ * on the server so the right Home is in the first HTML instead of being swapped in after two
+ * fetches, which delays its largest paint on a phone.
  */
 export async function isFirstRun(userId: string) {
   const [row, file] = await Promise.all([
