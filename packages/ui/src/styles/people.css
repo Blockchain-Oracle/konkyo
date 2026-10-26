@@ -1286,11 +1286,11 @@ textarea.claim-name-input {
   line-height: 1.35;
 }
 
+/* full-strength ink: faded, the 12px line fell under 4.5:1 on violet, cobalt and pink */
 .first-run-pieces {
   font-size: 12px;
   font-weight: 600;
   line-height: 1.35;
-  opacity: 0.82;
 }
 
 .first-run-go {

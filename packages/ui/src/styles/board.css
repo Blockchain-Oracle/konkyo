@@ -231,7 +231,9 @@ button.board-object:hover,
   display: grid;
   place-items: center;
   border: 2.5px dashed rgb(17 17 20 / 0.42);
-  background: rgb(255 250 247 / 0.5);
+  /* paper enough that its words stay readable on any wall (on cobalt, half-clear paper fell to 4.46:1) */
+  background: rgb(255 250 247 / 0.82);
+  color: var(--color-ink);
   box-shadow: none;
   aspect-ratio: 200 / 271;
   cursor: pointer;

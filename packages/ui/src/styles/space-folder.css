@@ -299,8 +299,14 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* small words on a sticker, never straight on the tinted glass (4.2:1 there on some colours) */
 .gf-meta {
-  font-size: 13px;
+  width: fit-content;
+  border-radius: 999px;
+  background: var(--color-sticker);
+  color: #ffffff;
+  padding: 3px 9px;
+  font-size: 12.5px;
   font-weight: 700;
   white-space: nowrap;
 }
