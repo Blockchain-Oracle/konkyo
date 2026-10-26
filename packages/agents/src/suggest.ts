@@ -4,7 +4,7 @@ import { reachSql, resolveReach } from "@konkyo/db/access"
 import { generateText, Output } from "ai"
 import { and, desc, eq, isNull, sql } from "drizzle-orm"
 import { z } from "zod"
-import { inOrder, MODELS, model, reasoning } from "./models"
+import { model, reasoning, withFallback } from "./models"
 import type { Scope } from "./retrieve"
 
 const { files } = schema
@@ -49,22 +49,24 @@ export async function suggestQuestions(ownerId: string, scope: Scope): Promise<s
   const described = rows
     .map((r) => `- ${r.title}${r.meta?.summary ? `: ${r.meta.summary}` : ""}`)
     .join("\n")
-  const [choice = MODELS.writer.primary] = inOrder(MODELS.writer)
-  const { output } = await generateText({
-    model: model(choice),
-    providerOptions: reasoning(choice),
-    output: Output.object({ schema: Suggested }),
-    instructions: `You suggest questions a student or researcher could ask about their own files. Write ${
-      rows.length > 1 ? "4" : "3"
-    } short questions (at most 12 words each), each one these files can answer from what their descriptions show. ${
-      rows.length > 1
-        ? "Make one compare or connect two of the files. Mix a specific finding, a method or definition, and an implication."
-        : "Mix a specific finding, a method or definition, and an implication."
-    } Ask open questions (what, how, why, do they agree) that never presume a result the descriptions don't state. Refer to files by their topic, never by their title. Plain words, no numbering.`,
-    prompt: `Files:\n${described}`,
-    abortSignal: AbortSignal.timeout(20_000),
-  })
-  const questions = output.questions.map((q) => q.trim()).filter(Boolean)
+  // The Writer's models in turn: suggestions shouldn't fail while another model can answer.
+  const { result } = await withFallback("writer", "writer", undefined, "suggest", (choice) =>
+    generateText({
+      model: model(choice),
+      providerOptions: reasoning(choice),
+      output: Output.object({ schema: Suggested }),
+      instructions: `You suggest questions a student or researcher could ask about their own files. Write ${
+        rows.length > 1 ? "4" : "3"
+      } short questions (at most 12 words each), each one these files can answer from what their descriptions show. ${
+        rows.length > 1
+          ? "Make one compare or connect two of the files. Mix a specific finding, a method or definition, and an implication."
+          : "Mix a specific finding, a method or definition, and an implication."
+      } Ask open questions (what, how, why, do they agree) that never presume a result the descriptions don't state. Refer to files by their topic, never by their title. Plain words, no numbering.`,
+      prompt: `Files:\n${described}`,
+      abortSignal: AbortSignal.timeout(20_000),
+    }),
+  )
+  const questions = result.output.questions.map((q) => q.trim()).filter(Boolean)
   cache.__konkyoSuggest?.set(key, { at: Date.now(), questions })
   return questions
 }

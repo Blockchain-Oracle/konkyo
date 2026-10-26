@@ -23,11 +23,18 @@ export const isBusy = (modelId: string) =>
   Math.max(busyUntil.get(modelId) ?? 0, busyUntil.get(`provider:${providerOf(modelId)}`) ?? 0) >
   Date.now()
 
+/** The account behind this model is known to be out of credit right now. */
+export const outOfCredit = (modelId: string) =>
+  (busyUntil.get(`provider:${providerOf(modelId)}`) ?? 0) > Date.now()
+
 /**
  * A role's models in the order to try them now: the ones answering first, in the role's own
- * order, then the busy ones (still worth a try when nothing else is left).
+ * order, then the busy ones (still worth a try when nothing else is left). A provider whose
+ * account is out of credit is left out while another can answer: asking it only fails.
  */
 export function inOrder(role: RoleModels): ModelChoice[] {
   const all = [role.primary, role.fallback, ...(role.reserve ? [role.reserve] : [])]
-  return [...all.filter((c) => !isBusy(c.id)), ...all.filter((c) => isBusy(c.id))]
+  const funded = all.filter((c) => !outOfCredit(c.id))
+  const pool = funded.length ? funded : all
+  return [...pool.filter((c) => !isBusy(c.id)), ...pool.filter((c) => isBusy(c.id))]
 }

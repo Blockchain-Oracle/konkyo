@@ -3,9 +3,10 @@ title: Limits
 description: What Konkyo doesn't do, or doesn't do well yet.
 ---
 
-- **Two model providers, one fallback each.** OpenAI writes and judges; when it's down or out of
-  credit, Nemotron 3 Ultra takes over, slower on NVIDIA's free tier (about 40 requests a minute
-  for each model, split between the web app and the worker). Sample mode needs no key at all.
+- **Two model providers, a fallback and a reserve for each role.** OpenAI writes and judges; when
+  it's down or out of credit, Nemotron takes over, slower on NVIDIA's free tier (about 40 requests
+  a minute for each model, split between the web app and the worker). If every model of a role is
+  busy, the answer says so and asks you to try again. Sample mode needs no key at all.
 - **Live use needs Zetaris.** Nothing is marked verified without it, by design.
 - **"Supported" means the cited passage states it**, not that the claim is true in the world. A
   wrong source, quoted correctly, still passes.

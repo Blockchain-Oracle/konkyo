@@ -1,6 +1,6 @@
 import "server-only"
 import { randomUUID } from "node:crypto"
-import { type AnswerEvent, answer, type KonkyoMessage, Tracer } from "@konkyo/agents"
+import { type AnswerEvent, answer, type KonkyoMessage, modelTrouble, Tracer } from "@konkyo/agents"
 import { createUIMessageStream } from "ai"
 import { answerWriter } from "./answer-stream"
 import { dropAfter, ensureChat, finishRun, historyFor, saveMessage, startRun } from "./chats"
@@ -77,7 +77,7 @@ export async function startAnswer(input: {
         action: "failed",
         detail: { message: (error as Error).message },
       })
-      return "Something went wrong while answering. Try again."
+      return modelTrouble(error) ?? "Something went wrong while answering. Try again."
     },
     onEnd: async ({ messages, isAborted }) => {
       endRun(runId)

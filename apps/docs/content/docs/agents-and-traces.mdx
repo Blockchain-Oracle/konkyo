@@ -5,7 +5,7 @@ description: Who does what, with which model, and how to read the trace.
 
 | Agent | Does | Model |
 |---|---|---|
-| Planner | Stand-alone question, 1–3 searches, comparison flag; reads H-MEM corrections first; replans more broadly when the first search is thin | Nemotron 3 Ultra |
+| Planner | Stand-alone question, 1–3 searches, comparison flag; reads H-MEM corrections first; replans more broadly when the first search is thin; if no Planner model answers, searches the question as asked | Nemotron 3 Ultra |
 | Retriever | Hybrid search: pgvector and Postgres full text, fused by Reciprocal Rank Fusion | Nemotron 3.5 Embed (question as a query, passages as passages) |
 | Writer | Cited draft, one finding per sentence; rewrites rejected sentences | OpenAI `gpt-6-luna` |
 | Verifier | Code check, one Zetaris statement, support judgement; at most two rewrite rounds | OpenAI `gpt-6-luna` (low reasoning) |
@@ -13,9 +13,10 @@ description: Who does what, with which model, and how to read the trace.
 | Scout | Deep search over OpenAlex and the web (OpenAI's web search; Wikipedia if it fails), screened in Markovian steps | Nemotron 3.5 Lightning plans; Nemotron 3 Ultra screens |
 | Tutor | Practice items; every answer key checked by the Verifier, every quote in Zetaris | OpenAI `gpt-6-luna` |
 
-Every role's fallback is on the other provider: OpenAI's roles fall back to Nemotron 3 Ultra,
-Nemotron's to `gpt-6-luna`, so an outage, an empty account or NVIDIA's free tier filling up never
-stops an answer. A call falls back on an error, a malformed reply, or a stall (no answer within
+Every role's fallback is on the other provider (OpenAI's roles fall back to Nemotron 3 Ultra,
+Nemotron's to `gpt-6-luna`), with a reserve on a third model; they're tried in turn, the ones
+answering first, so an outage, an empty account or NVIDIA's free tier filling up doesn't stop an
+answer while any of them can answer. A call falls back on an error, a malformed reply, or a stall (no answer within
 45 seconds, or no first word of a stream within 25; 12 for the Planner, 90 for the Tutor's
 drafts); the switch is logged as `escalated_to_fallback`. On NVIDIA's free tier a call that runs
 past its usual time is also asked again (a hedged request: the first answer wins), and a model

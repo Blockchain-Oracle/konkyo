@@ -103,6 +103,24 @@ await queues.work(QUEUES.agent.name, { localConcurrency: 3 }, async ([job]) => {
   const { agentId, trigger } = QUEUES.agent.payload.parse(job.data)
   await runAgent(agentId, trigger)
 })
+// Passages left without a vector get one: at start-up (the move to Nemotron's embeddings cleared
+// them all) and again every five minutes, so a sweep that failed heals instead of waiting for a
+// restart. One at a time; a sweep with nothing to do is a single query.
+let healing = false
+async function healVectors() {
+  if (healing) return
+  healing = true
+  try {
+    const { embedded, tokens } = await reembedMissing()
+    if (embedded) console.info(`[reembed] ${embedded} passages, ${tokens} tokens`)
+  } catch (error) {
+    console.error(`[reembed] stopped: ${(error as Error).message}`)
+  } finally {
+    healing = false
+  }
+}
+void healVectors()
+
 const AGENTS_DUE = "agents-due"
 await queues.createQueue(AGENTS_DUE)
 await queues.schedule(AGENTS_DUE, "*/5 * * * *", {}, { tz: "UTC" })
@@ -110,6 +128,7 @@ await queues.work(AGENTS_DUE, async () => {
   const { queued } = await queueDueAgents()
   if (queued) console.info(`[agents] queued ${queued}`)
   await reportInterrupted()
+  await healVectors()
 })
 
 // Practice, deep searches and agent runs a restart cut off are closed (checked with agents-due).
@@ -119,13 +138,6 @@ async function reportInterrupted() {
     console.info(`[interrupted] closed ${JSON.stringify(closed)}`)
 }
 void reportInterrupted()
-
-// Passages left without a vector (the move to Nemotron's embeddings cleared them all) get one.
-void reembedMissing()
-  .then(({ embedded, tokens }) => {
-    if (embedded) console.info(`[reembed] ${embedded} passages, ${tokens} tokens`)
-  })
-  .catch((error: Error) => console.error(`[reembed] stopped: ${error.message}`))
 
 // Connectors (F35): changed Drive files and Notion pages are read again, and a Gmail watch
 // brings in new matches, every 15 minutes (Composio-managed auth's fastest anyway).

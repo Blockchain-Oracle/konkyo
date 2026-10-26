@@ -33,23 +33,25 @@ type Reply = { data: { embedding: number[]; index: number }[]; usage?: { total_t
 
 /** One HTTP request to the embeddings endpoint, within its time limit. */
 function post(input: string[], as: EmbedAs, signal: AbortSignal) {
-  return limiterFor(INGEST.embeddingModel).run(() =>
-    tapedFetch(`${baseURL}/embeddings`, {
-      method: "POST",
-      headers: {
-        authorization: `Bearer ${env.NVIDIA_API_KEY}`,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: INGEST.embeddingModel,
-        input,
-        input_type: as,
-        dimensions: INGEST.embeddingDimensions,
-        truncate: "END",
-        encoding_format: "float",
+  return limiterFor(INGEST.embeddingModel).run(
+    () =>
+      tapedFetch(`${baseURL}/embeddings`, {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${env.NVIDIA_API_KEY}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          model: INGEST.embeddingModel,
+          input,
+          input_type: as,
+          dimensions: INGEST.embeddingDimensions,
+          truncate: "END",
+          encoding_format: "float",
+        }),
+        signal,
       }),
-      signal,
-    }),
+    signal,
   )
 }
 

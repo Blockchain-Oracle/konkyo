@@ -214,9 +214,9 @@ export const PARTNERS: Partner[] = [
     name: "NVIDIA Nemotron",
     color: "violet",
     role: "planning, search, safety and every fallback",
-    headline: ["Every answer", "starts on Nemotron."],
+    headline: ["Every answer", "runs through Nemotron."],
     intro:
-      "Nemotron 3 Ultra plans each answer and Nemotron Embed finds its passages; OpenAI then writes and judges. Lightning reads a spoken ask and plans deep searches, Ultra screens what they find, Content Safety guards what's shared, and when OpenAI is down or out, Ultra writes and checks instead.",
+      "Nemotron Embed finds every answer's passages and Nemotron 3 Ultra plans it; OpenAI then writes and judges. Lightning reads a spoken ask and plans deep searches, Ultra screens what they find, Content Safety guards what's shared, and when OpenAI is down or out, Ultra writes and checks instead.",
     cta: {
       label: "ask three real papers",
       href: "/#ask",
@@ -277,7 +277,7 @@ export const PARTNERS: Partner[] = [
       },
       {
         title: "Inside the free tier",
-        body: "NVIDIA allows about 40 requests a minute for each model. Every call to a model shares its token bucket, the web app and worker split it, and a model that answers 429 goes second for a minute.",
+        body: "NVIDIA allows about 40 requests a minute for each model. Each process keeps a sliding minute per model, the web app's and worker's shares add up to that, and a model that answers 429 goes second for a minute.",
         code: { file: "packages/models/src/limiter.ts", symbol: "limiterFor" },
       },
       {

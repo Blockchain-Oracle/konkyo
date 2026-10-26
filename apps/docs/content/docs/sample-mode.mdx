@@ -26,7 +26,10 @@ in `logs/`.
 
 Replies are matched by what was asked (the request body, the SQL), never by order, so concurrent
 agents replay correctly, and never by account, so a run recorded on one account replays anywhere.
-A question that wasn't recorded is refused rather than invented.
+A question that wasn't recorded is refused rather than invented. When a stalled call was asked
+twice (a hedged request), the replay takes the copy that answered; a request that got no reply is
+recorded as such and fails the same way on replay; a model the recorded run never asked is
+skipped, since which models were busy depended on that run's timing.
 
 ## The examples
 

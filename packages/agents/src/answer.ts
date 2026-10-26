@@ -16,9 +16,11 @@ import {
 } from "./citations"
 import { type Recalled, recall } from "./memory"
 import {
+  inOrder,
   MODELS,
   type ModelChoice,
   model,
+  noFallback,
   type Role,
   reasoning,
   withFallback as runWithFallback,
@@ -188,13 +190,38 @@ const memoryBlock = (memories: Recalled[]) =>
         .join("\n")}\n\n`
     : ""
 
+/** Words that make a question a comparison when the Planner can't say so itself. */
+const COMPARING = /\b(agree|disagree|compare|comparison|differ|difference|versus|vs\.?|contradict)/i
+
+/**
+ * When every Planner model fails (a refusal, an empty account and a stall at once), the answer
+ * goes on with the person's own words: the question is searched as asked, which the first search
+ * does anyway, rather than the whole answer failing on the plan.
+ */
+function unplanned(input: AnswerInput, started: number, error: unknown) {
+  const out = {
+    standalone: input.question,
+    queries: [input.question],
+    needsLibrary: true,
+    compare: COMPARING.test(input.question),
+  }
+  input.tracer.log({
+    agent: "planner",
+    step: "plan",
+    action: "planned_without_model",
+    latencyMs: Math.round(performance.now() - started),
+    detail: { ...out, reason: (error as Error)?.message ?? String(error) },
+  })
+  return { ...out, model: "none" }
+}
+
 async function plan(input: AnswerInput, memories: Recalled[]) {
   const started = performance.now()
   const history = input.history
     .slice(-6)
     .map((m) => `${m.role === "user" ? "User" : "Assistant"}: ${m.text.slice(0, 1200)}`)
     .join("\n")
-  const { result, choice } = await withFallback("planner", input.tracer, "plan", (c) =>
+  const call = (c: ModelChoice) =>
     generateText({
       model: model(c),
       providerOptions: reasoning(c),
@@ -203,8 +230,15 @@ async function plan(input: AnswerInput, memories: Recalled[]) {
         "You are the Planner in a research assistant that answers from the user's own library of documents and recordings. If the latest question already stands alone, keep the user's own words as `standalone`; otherwise rewrite it minimally using the conversation. Then write search queries for the library: keywords and phrases its passages would contain, not questions.",
       prompt: `${memoryBlock(memories)}${history ? `Conversation so far:\n${history}\n\n` : ""}Latest question: ${input.question}`,
       abortSignal: input.abortSignal,
-    }),
-  )
+    })
+  let planned: Awaited<ReturnType<typeof withFallback<Awaited<ReturnType<typeof call>>>>>
+  try {
+    planned = await withFallback("planner", input.tracer, "plan", call)
+  } catch (error) {
+    if (noFallback(error) || input.abortSignal?.aborted) throw error
+    return unplanned(input, started, error)
+  }
+  const { result, choice } = planned
   const out = result.output
   input.tracer.log({
     agent: "planner",
@@ -243,7 +277,7 @@ async function replan(
   best: number,
 ) {
   const started = performance.now()
-  const { result, choice } = await withFallback("planner", input.tracer, "replan", (c) =>
+  const call = (c: ModelChoice) =>
     generateText({
       model: model(c),
       providerOptions: reasoning(c),
@@ -259,8 +293,16 @@ async function replan(
           .join("\n") || "- none"
       }`,
       abortSignal: input.abortSignal,
-    }),
-  )
+    })
+  let replanned: Awaited<ReturnType<typeof withFallback<Awaited<ReturnType<typeof call>>>>>
+  try {
+    replanned = await withFallback("planner", input.tracer, "replan", call)
+  } catch (error) {
+    if (noFallback(error) || input.abortSignal?.aborted) throw error
+    // No new queries: what the first search found is judged as it is.
+    return { queries: [] as string[], why: "The Planner couldn't be reached to broaden it." }
+  }
+  const { result, choice } = replanned
   const asked = new Set(planned.queries.map((q) => q.trim().toLowerCase()))
   const queries = result.output.queries.filter((q) => !asked.has(q.trim().toLowerCase()))
   input.tracer.log({
@@ -347,22 +389,24 @@ class RepetitionError extends Error {
 
 /**
  * Where the answer's sentences start repeating (the same sentence a third time, numbers and
- * markers aside): a model stuck in a loop, cut where the loop began. Only the body counts:
+ * markers aside): a model stuck in a loop, cut at its second copy. Only the body counts:
  * several source lines may rightly quote the same passage. -1 when it isn't looping.
  */
 function repeatAt(text: string) {
   const body = text.slice(0, bodyEnd(text, false))
-  const seen = new Map<string, { count: number; first: number }>()
+  const seen = new Map<string, { count: number; second: number }>()
   for (const match of body.matchAll(/[^.!?]+[.!?]+/g)) {
     const key = match[0]
       .replace(/\[\d+\]|\d+/g, "")
       .trim()
       .toLowerCase()
     if (key.length < 25) continue
-    const at = seen.get(key) ?? { count: 0, first: match.index }
+    const at = seen.get(key) ?? { count: 0, second: -1 }
     at.count++
-    // Cut where the loop began: the first time the repeated sentence appeared.
-    if (at.count >= 3) return at.first
+    if (at.count === 2) at.second = match.index
+    // Cut where the loop began, keeping one copy: a draft that opened with the sentence it then
+    // repeated still says it once.
+    if (at.count >= 3) return at.second
     seen.set(key, at)
   }
   return -1
@@ -385,10 +429,12 @@ async function write(
       : "")
   let streamed = false
   let attempts = 0
+  // As many attempts as the Writer has models to try right now (withFallback asks the same).
+  const tries = inOrder(MODELS.writer).length
   const { result, choice } = await withFallback("writer", input.tracer, "write", async (c) => {
-    // A loop on the first model goes to the fallback; on the last one, the answer keeps what came
-    // before the loop and the Verifier judges that.
-    const last = ++attempts > 1
+    // A loop goes to the next model; on the last one, the answer keeps what came before the loop
+    // and the Verifier judges that.
+    const last = ++attempts >= tries
     if (!onDelta) {
       const r = await generateText({
         model: model(c),
@@ -406,6 +452,7 @@ async function write(
     // A second attempt (the fallback) starts the reader's draft afresh.
     if (streamed) onRestart?.()
     const stop = new AbortController()
+    let failed: unknown
     const stream = streamText({
       model: model(c),
       providerOptions: reasoning(c),
@@ -415,8 +462,11 @@ async function write(
       abortSignal: input.abortSignal
         ? AbortSignal.any([input.abortSignal, stop.signal])
         : stop.signal,
-      // A failed stream rejects `usage` below, where the fallback takes it: no console noise.
-      onError: () => {},
+      // The text stream drops error parts: a stream that fails after some text is caught here,
+      // so it goes to the next model instead of passing as a short draft.
+      onError: ({ error }) => {
+        failed ??= error
+      },
     })
     // Only the answer streams: the caveat and the sources are read once the draft is done.
     let text = ""
@@ -439,6 +489,7 @@ async function write(
         streamed = true
       }
     }
+    if (failed && !looped) throw failed
     const end = bodyEnd(text, true)
     if (end > sent) onDelta(text.slice(sent, end))
     // A stream stopped for looping has no usage to report.
@@ -607,6 +658,8 @@ type Verdict = {
   sql: string
   zetarisMs: number
   model: string
+  /** The quotes (foundKey) this round's Zetaris statement checked. */
+  checked: Set<string>
 }
 
 /**
@@ -764,7 +817,7 @@ async function verify(
   if (zetaris.sql) Object.assign(memo, { sql: zetaris.sql, zetarisMs: zetaris.ms })
   if (support) {
     memo.model = support.choice.id
-    // A claim the model left out isn't held against it, and isn't remembered either.
+    // Only explicit verdicts are remembered; a claim the model left out is judged again next round.
     const byClaim = new Map(support.result.output.results.map((r) => [r.claim - 1, r]))
     for (const c of unjudged) {
       const r = byClaim.get(c.i)
@@ -772,12 +825,15 @@ async function verify(
     }
   }
   const unsupported = new Set<number>()
+  // Fails closed: a sentence the support check gave no verdict on counts as unsupported, so a
+  // reply that skips a claim (or answers with no results) can't pass it.
+  const NO_VERDICT = "the support check gave no verdict on it"
   for (const c of claims) {
-    const judged = memo.support.get(c.key)
-    if (judged && !judged.supported) {
+    const judged = memo.support.get(c.key) ?? { supported: false, reason: NO_VERDICT }
+    if (!judged.supported) {
       unsupported.add(c.i)
       supportReasons.set(c.i, judged.reason || "not supported by its passages")
-      reasons.push(`unsupported: "${c.text}" (${judged.reason})`)
+      reasons.push(`unsupported: "${c.text}" (${judged.reason || "not supported"})`)
     }
   }
   input.tracer.log({
@@ -831,6 +887,60 @@ async function verify(
     sql: zetaris.sql || memo.sql,
     zetarisMs: zetaris.sql ? zetaris.ms : memo.zetarisMs,
     model: support?.choice.id ?? memo.model,
+    checked: new Set(unchecked.map(({ line, source }) => foundKey(source.passageId, line.quote))),
+  }
+}
+
+/**
+ * The receipt shows one Zetaris statement for every quote the answer keeps. A later round checks
+ * only quotes it hasn't seen, so when the last statement doesn't cover them all, one more checks
+ * them together (and drops any it can't find).
+ */
+async function checkKept(
+  tracer: Tracer,
+  draft: ParsedAnswer,
+  verdict: Verdict,
+  sources: SourceRef[],
+): Promise<Verdict> {
+  const byLabel = new Map(sources.map((s) => [s.label, s]))
+  const lineByN = new Map(draft.sources.map((l) => [l.n, l]))
+  const kept = draft.sentences
+    .filter((_s, i) => !verdict.unsupported.has(i))
+    .flatMap((s) => s.cites)
+    .filter((n, i, all) => all.indexOf(n) === i && !verdict.badQuotes.has(n))
+    .flatMap((n) => {
+      const line = lineByN.get(n)
+      const source = line && byLabel.get(line.label)
+      return line && source ? [{ n, line, source }] : []
+    })
+  const keyOf = (q: (typeof kept)[number]) => foundKey(q.source.passageId, q.line.quote)
+  if (!kept.length || kept.every((q) => verdict.checked.has(keyOf(q)))) return verdict
+  const all = await checkQuotes(
+    kept.map(({ n, line, source }) => ({
+      qid: String(n),
+      fileId: source.fileId,
+      passageId: source.passageId,
+      quote: line.quote,
+      transcript: source.page == null,
+    })),
+  )
+  const badQuotes = new Set(verdict.badQuotes)
+  for (const q of kept) if (!all.found.has(String(q.n))) badQuotes.add(q.n)
+  tracer.log({
+    agent: "verifier",
+    step: "verify_final",
+    action: "queried_zetaris",
+    sqlHash: sqlHash(all.sql || "-"),
+    rowsReturned: all.rows,
+    latencyMs: all.ms,
+    verdict: `${kept.length - (badQuotes.size - verdict.badQuotes.size)}/${kept.length} quotes found`,
+  })
+  return {
+    ...verdict,
+    badQuotes,
+    sql: all.sql,
+    zetarisMs: all.ms,
+    checked: new Set(kept.map(keyOf)),
   }
 }
 
@@ -1171,6 +1281,7 @@ export async function answer(input: AnswerInput) {
     draft = bestRound.draft
     verdict = bestRound.verdict
   }
+  verdict = await checkKept(tracer, draft, verdict, sources)
   const final = finalise(draft, verdict, sources, rewrittenTexts)
   step(
     "verify",

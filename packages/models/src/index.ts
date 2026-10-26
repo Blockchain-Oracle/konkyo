@@ -3,13 +3,14 @@
  * self-hosted NIM), a rate limit per model in each process, and the tape for sample mode.
  */
 export { type EmbedAs, embed, embeddingKey } from "./embed"
-export { inOrder, isBusy, markBusy, markOutOfCredit } from "./health"
+export { inOrder, isBusy, markBusy, markOutOfCredit, outOfCredit } from "./health"
 export { limiterFor } from "./limiter"
 export {
   baseURL,
   ModelBusyError,
   ModelTimeoutError,
   model,
+  modelTrouble,
   noFallback,
   nvidia,
   OutOfCreditError,

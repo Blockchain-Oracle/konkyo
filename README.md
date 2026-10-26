@@ -30,7 +30,9 @@ handed back, and every step of Konkyo's own logic runs again on them
 (planning, citation parsing, the quote checks, the Verifier's verdicts and rewrites, the
 agree/disagree matrix, the World Model, the trace). It prints the cited answer and the path of the
 new trace in `logs/`. `pnpm konkyo samples` lists the five recorded questions; see
-[examples/](examples/README.md) for their outputs and traces.
+[examples/](examples/README.md) for their outputs and traces. They were recorded while the OpenAI
+account was out of credit, so they show the fallback path (Nemotron writes and checks; each switch
+is in the trace).
 
 ```
 $ pnpm konkyo ask --sample 2
@@ -41,20 +43,22 @@ What role do sleep spindles play in memory, and do these papers agree about it?
   ✓ Planning · What role do sleep spindles play in memory, and do these papers agree about it?
   ✓ Searching your library · 16 passages from 3 files
   ✓ Checking sources in Zetaris · 3 of 3 files confirmed
+  ✓ Comparing sources · 3 claims across 3 sources
   ✓ Writing
-  ✓ Verified 3 citations
-  ✓ Comparing sources · 1 claim across 2 sources
+  ↺ The Verifier sent back 1 sentence; rewriting (round 1)
+  ✓ Verified 5 citations
 
-Sleep spindles are implicated as phasic electrophysiological events that can display regionally
-specific associations with offline memory enhancement …
+Sleep spindles are associated with memory consolidation across studies [1]. The passages describe
+spindles as a defining electrophysiological signature of NREM sleep that may represent candidate
+triggers of synaptic potentiation leading to neural plasticity [1] and correlate with subsequent
+memory performance [2]. …
 …
-Sources (3)
+Sources (5)
 Each quote was found word for word in Zetaris's own reading of the source.
 
-[2] Muehlroth et al. · 2019, Precise Slow Oscillation–Spindle Coupling Promotes Memory
-    Consolidation in Younger and Older Adults, p. 1
-    “the tight precision of so–fast sp coupling promotes memory consolidation across younger and
-    older adults”
+[2] Diekelmann · 2014, Sleep for cognitive enhancement, p. 5
+    “the number and activity of sleep spindles correlates with subsequent memory performance
+    (e.g., Clemens et al., 2005; Nishida and Walker, 2007)”
 …
 ```
 
@@ -64,7 +68,7 @@ Students and researchers who read a lot and have to cite what they read: a thesi
 forty PDFs, a course's lecture recordings and slides, a reading group comparing papers. The
 problem is trust. General chat assistants answer fluently from memory, mix up sources and invent
 quotes; checking them takes as long as reading. Konkyo answers only from your library, says "Not
-in your library" when it can't, and makes every claim checkable in one click: the citation opens
+in your library" when it can't, and makes every cited claim checkable in one click: the citation opens
 the source at the passage, highlighted.
 
 ## How an answer is made
@@ -91,17 +95,19 @@ flowchart LR
 
 | Agent | Does | Model |
 |---|---|---|
-| Planner | Rewrites the question to stand alone, plans 1–3 searches, flags comparisons, reads the person's corrections from H-MEM first; when the first search comes back thin, replans from what it found and searches again before saying "Not in your library" | Nemotron 3 Ultra |
+| Planner | Rewrites the question to stand alone, plans 1–3 searches, flags comparisons, reads the person's corrections from H-MEM first; when the first search comes back thin, replans from what it found and searches again before saying "Not in your library"; if no Planner model answers, the question is searched as asked | Nemotron 3 Ultra |
 | Retriever | Hybrid search: pgvector cosine and Postgres full text per query, fused by Reciprocal Rank Fusion; questions embedded as queries, passages as passages | Nemotron 3.5 Embed |
 | Writer | One finding per sentence, each with a citation and an exact quote from its passage | OpenAI `gpt-6-luna` |
-| Verifier | Checks each quote in code, then all of them in **one Zetaris statement** against Zetaris's own reading of the PDF; judges whether each sentence's quotes support it; sends failures back with reasons (at most two rewrite rounds); anything that still fails is dropped, never shown as verified | OpenAI `gpt-6-luna` (low reasoning) |
+| Verifier | Checks each quote in code, then in **one Zetaris statement** against Zetaris's own reading of the PDF (a rewrite round checks only its new quotes; the quotes the answer keeps end up in one statement, the one its receipt shows); judges whether each sentence's quotes support it, and an uncited sentence passes only as a transition; a sentence it gives no verdict on fails; sends failures back with reasons (at most two rewrite rounds); anything that still fails is dropped, never shown as verified | OpenAI `gpt-6-luna` (low reasoning) |
 | Analyst | When a question weighs several sources: 3–6 specific claims × sources with agrees / disagrees / partly, each stance quoted and checked in Zetaris, recorded in the World Model. Also places each paper a watch finds: agrees with, disagrees with, or new to your sources, your passage quoted | OpenAI `gpt-6-luna` (low) |
 | Scout | Deep search: OpenAlex papers and web pages (OpenAI's web search, Wikipedia if it fails), screened in Markovian steps, imported and read before answering | Nemotron 3.5 Lightning plans, Nemotron 3 Ultra screens |
 | Tutor | Practice items from your passages, every answer key checked by the Verifier and every quote in Zetaris | OpenAI `gpt-6-luna` |
 
-OpenAI writes and judges; Nemotron plans, finds, screens and guards. Each role's fallback is on the
-other provider (OpenAI's on Nemotron 3 Ultra, Nemotron's on `gpt-6-luna`), so an outage, an empty
-account or NVIDIA's free tier filling up never stops an answer; the switch is logged. Public
+OpenAI writes and judges; Nemotron plans, finds, screens and guards. Each role has a fallback on
+the other provider (OpenAI's on Nemotron 3 Ultra, Nemotron's on `gpt-6-luna`) and a reserve on a
+third model, tried in turn, the ones answering first, so an outage, an empty account or NVIDIA's
+free tier filling up doesn't stop an answer while any of them can still answer; each switch is
+logged. Public
 questions, profiles and articles go through Nemotron 3.5 Content Safety first. The models were
 picked by measured benchmarks: OpenAI's on testing, Nemotron's on NVIDIA's API on testing, where
 Ultra with thinking off passed every test (0/10 false rejections, 6/6 planted errors caught, 9/9
@@ -109,8 +115,8 @@ quotes verbatim).
 
 ## Sponsor technology
 
-Each partner has a page on konkyo.xyz that follows one action into the code, with a live
-example: [Zetaris](https://konkyo.xyz/made-with/zetaris) (three quotes checked in one statement
+Each partner has a page on konkyo.xyz that follows one action into the code, with an
+example (live for Zetaris and OpenAlex): [Zetaris](https://konkyo.xyz/made-with/zetaris) (three quotes checked in one statement
 as you watch), [Meterless](https://konkyo.xyz/made-with/meterless),
 [NVIDIA Nemotron](https://konkyo.xyz/made-with/nvidia), [ElevenLabs](https://konkyo.xyz/made-with/elevenlabs)
 (a real two-voice brief), [Composio](https://konkyo.xyz/made-with/composio) and
@@ -146,7 +152,8 @@ place Konkyo calls any model.
 
 - **Nemotron 3.5 Embed** embeds every passage (as a passage) and every question (as a query) for
   pgvector search, at 1536 of its 2048 dimensions: every answer starts with it.
-- **Nemotron 3 Ultra** (550B, 55B active) plans each answer and screens deep-search finds in
+- **Nemotron 3 Ultra** (550B, 55B active) plans each answer (OpenAI stands in while it's busy) and
+  screens deep-search finds in
   Markovian steps, and stands in for the Writer, Verifier, Analyst, Tutor and Grader whenever
   OpenAI is down or out: with its thinking off it passed every test in our benchmark on NVIDIA's
   API (0/10 false rejections, 6/6 planted errors caught, 9/9 quotes verbatim).
@@ -154,10 +161,11 @@ place Konkyo calls any model.
   still talking, and summarises each file as it's read.
 - **Nemotron 3.5 Content Safety** checks questions in public spaces, public profiles and every
   article before it's published.
-- Run inside the free tier: a rate limit per model, shared by the web app and the worker; a
-  stalled call is asked again (a hedged request) and the first answer wins; a model that answers
-  429 goes second for a minute; every call has a deadline and a fallback on the other provider,
-  logged as `escalated_to_fallback`. [`provider.ts`](packages/models/src/provider.ts)
+- Run inside the free tier: a rate limit per model in each process (the web app and the worker
+  take shares that add up to NVIDIA's ~40 a minute); a stalled call is asked again (a hedged
+  request) and the first answer wins; a model that answers 429 goes second for a minute; every
+  call has a deadline, a fallback on the other provider and a reserve, logged as
+  `escalated_to_fallback`. [`provider.ts`](packages/models/src/provider.ts)
 
 ### Meterless: memory, world state and long-task reasoning
 
@@ -180,7 +188,8 @@ and driven from [`packages/agents`](packages/agents/src).
 
 - **Models and providers:** OpenAI (`gpt-6-luna` for the Writer, Verifier, Analyst, Tutor and
   Grader; `gpt-5-nano` running OpenAI's web search for deep search) and NVIDIA Nemotron on
-  NVIDIA's API, free tier (3 Ultra, 3.5 Lightning, 3.5 Embed 1B and 3.5 Content Safety, as above).
+  NVIDIA's API, free tier (3 Ultra, 3.5 Lightning, 3.5 Embed 1B and 3.5 Content Safety, as above,
+  and 3.5 Super VL as a reserve for the Writer, Analyst and Tutor).
   ElevenLabs for
   speech (Scribe `scribe_v2` and realtime for transcription; Flash v2.5 and Eleven v3 dialogue for
   read-aloud and audio briefs). No other AI model is called while Konkyo runs.
@@ -308,9 +317,10 @@ Zetaris statement (by hash), rows returned, verdicts (`approved`, `rejected_to_w
 
 ## Limits
 
-- **Two model providers, one fallback each.** OpenAI writes and judges; when it's down or out of
-  credit, Nemotron 3 Ultra takes over, slower on NVIDIA's free tier (about 40 requests a minute
-  for each model, split between the web app and the worker). Sample mode needs no key.
+- **Two model providers, a fallback and a reserve for each role.** OpenAI writes and judges; when
+  it's down or out of credit, Nemotron takes over, slower on NVIDIA's free tier (about 40 requests
+  a minute for each model, split between the web app and the worker). If every model of a role is
+  busy, the answer says so and asks you to try again. Sample mode needs no key.
 - **Live use needs Zetaris.** Nothing is marked verified without it, by design.
 - **Sample mode replays recorded questions only.** Any other question is refused, not invented.
 - **Fair-use caps** (no paywall): 300 answers, 20 deep searches and 300 files a day per account;

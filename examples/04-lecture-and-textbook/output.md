@@ -1,36 +1,32 @@
 # What are the stages of memory, and how does the lecture explain forgetting?
 
-The three stages of memory are sensory memory, short-term memory, and long-term memory [1]. Forgetting is explained by the Ebbinghaus forgetting curve, which shows memory for new information decays quickly and then levels out [2]. An average person loses 50% of memorized information after 20 minutes and 70% after 24 hours due to storage decay [2].
+The lecture explains forgetting as memory being fragile, where we forget things and where our memories get less accurate and distorted rather than being actual records of experience [1].
 
-**Caveat:** The sources do not detail other theories of forgetting beyond Ebbinghaus's storage decay model.
+**Caveat:** The sources name sensory memory and long-term memory explicitly but do not clearly identify the third stage beyond the repeated phrase "Sensory Memory Rehearsal."
 
-## Sources (2)
+## Sources (1)
 _Each quote was found word for word in Zetaris's own reading of the source._
 
-- [1] 8.1 How Memory Functions, p. 3
-  > “Sensory Memory, Short-Term Memory, and finally Long-Term Memory. These stages were first proposed by Richard Atkinson and Richard Shiffrin (1968).”
-- [2] 8.3 Problems with Memory, p. 8
-  > “Due to storage decay, an average person will lose 50% of the memorized information after 20 minutes and 70% of the information after 24 hours (Ebbinghaus, 1885/1964). Your memory for new information decays quickly and then eventually levels out.”
+- [1] Lecture 10: Memory I (transcript), p. 1
+  > “it turns out there's ways in which our memories get less accurate and distorted, are not actual records of our experience but rather interpretations or our memory of our memory. And we'll talk about experiments that reveal that.”
 
 ## What the Verifier sent back
-- Round 1: [2] quote was not found in the document in Zetaris: "The Three--Stage Model of Memory Sensory Memory Rehearsal Image by MIT OpenCourseWare."
-- Round 1: [10] quote was not found in the document in Zetaris: "Ebbinghaus’’ Curve of Forgetting Days since learning 9 hours 1 hour 20 minutes Immediate recall Image by MIT OpenCourseWare."
-- Round 2: [13] quote was not found in the document in Zetaris: "The Three--Stage Model of Memory Sensory Memory Rehearsal Image by MIT OpenCourseWare."
-- Round 2: [14] quote was not found in the document in Zetaris: "Ebbinghaus Curve of Forgetting Days since learning 9 hours 1 hour 20 minutes Immediate recall Image by MIT OpenCourseWare."
+- Round 1: [3] quote was not found in the document in Zetaris: "The Three--Stage Model of Memory Sensory Memory Rehearsal"
+- Round 1: unsupported: "The three stages of memory are sensory memory, rehearsal, and long-term memory [3]." (The cited passage [3] only provides the title "The Three--Stage Model of Memory Sensory Memory Rehearsal" and does not state or list the three stages as sensory memory, rehearsal, and long-term memory. The title mentions only sensory memory and rehearsal, and does not mention long-term memory. Therefore, the passage does not support the claim.)
+- Round 2: [3] quote was not found in the document in Zetaris: "The Three--Stage Model of Memory Sensory Memory Rehearsal"
+- Round 2: unsupported: "The three stages of memory are sensory memory, rehearsal, and long-term memory [3]." (The cited passage [3] only provides the title "The Three--Stage Model of Memory Sensory Memory Rehearsal" and does not state or list the three stages as sensory memory, rehearsal, and long-term memory. The title mentions only sensory memory and rehearsal, and does not mention long-term memory. Therefore, the passage does not support the claim.)
 
 ## Checks
-- 2 quotes from 2 sources checked in one Zetaris statement; verifying, rewrites included, took 48.1 s; 0 rewritten, 2 dropped; 57.7 s in all.
-- Models: planner nvidia/nemotron-3-ultra-550b-a55b, writer nvidia/nemotron-3-ultra-550b-a55b, verifier nvidia/nemotron-3-ultra-550b-a55b.
+- 1 quote from 1 source checked in one Zetaris statement; verifying, rewrites included, took 10.8 s; 0 rewritten, 1 dropped; 15.4 s in all.
+- Models: planner nvidia/nemotron-3.5-lightning-30b-a3b, writer nvidia/nemotron-3.5-super-vl-120b-a12b, verifier nvidia/nemotron-3.5-lightning-30b-a3b.
 
 The Zetaris statement that checked every quote:
 
 ```sql
 SELECT q.qid
 FROM VALUES
-    ('4', 'd04306b0-2fca-47fe-9f7b-e99072757a04', 'd04306b0-2fca-47fe-9f7b-e99072757a04:p3:1', 'sensorymemoryshorttermmemoryandfinallylongtermmemory.thesestageswerefirstproposedbyrichardatkinsonandrichardshiffrin1968.'),
-    ('2', 'cad1c0fd-6ade-4963-886d-e944829b137d', 'cad1c0fd-6ade-4963-886d-e944829b137d:p15:0', 'thethreestagemodelofmemorysensorymemoryrehearsalimagebymitopencourseware.'),
-    ('12', 'ba228fe2-4bcc-4d5f-9974-6cd2fe043f07', 'ba228fe2-4bcc-4d5f-9974-6cd2fe043f07:p8:0', 'duetostoragedecayanaveragepersonwilllose50ofthememorizedinformationafter20minutesand70oftheinformationafter24hoursebbinghaus18851964.yourmemoryfornewinformationdecaysquicklyandtheneventuallylevelsout.'),
-    ('10', 'cad1c0fd-6ade-4963-886d-e944829b137d', 'cad1c0fd-6ade-4963-886d-e944829b137d:p53:0', 'ebbinghauscurveofforgettingdayssincelearning9hours1hour20minutesimmediaterecallimagebymitopencourseware.')
+    ('3', 'cad1c0fd-6ade-4963-886d-e944829b137d', 'cad1c0fd-6ade-4963-886d-e944829b137d:p6:0', 'thethreestagemodelofmemorysensorymemoryrehearsal'),
+    ('4', '3132be8c-ec00-4973-a501-f9e7fa5e004e', '3132be8c-ec00-4973-a501-f9e7fa5e004e:p1:0', 'itturnsoutthereswaysinwhichourmemoriesgetlessaccurateanddistortedarenotactualrecordsofourexperiencebutratherinterpretationsorourmemoryofourmemory.andwelltalkaboutexperimentsthatrevealthat.')
   AS q(qid, doc, pid, qkey)
 JOIN konkyo.konkyo_pdf_text t ON t.doc_id = q.doc
 WHERE instr(t.p, q.qkey) > 0

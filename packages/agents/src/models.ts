@@ -1,14 +1,17 @@
 import { MODELS, type ModelChoice } from "@konkyo/config"
 import { inOrder, noFallback } from "@konkyo/models"
+import { isTapeMiss, tapeMode } from "@konkyo/tape"
 import type { TraceEvent, Tracer } from "./trace"
 
 export {
   inOrder,
   model,
+  modelTrouble,
   noFallback,
   nvidia,
   OutOfCreditError,
   openai,
+  outOfCredit,
   reasoning,
 } from "@konkyo/models"
 export type { ModelChoice }
@@ -35,6 +38,9 @@ export async function withFallback<T>(
     } catch (error) {
       if (noFallback(error)) throw error
       failure = error
+      // A replay skips, unlogged, a model the recorded run never asked: which models were busy
+      // depended on the recording's timing, not on Konkyo's logic.
+      if (tapeMode() === "replay" && isTapeMiss(error)) continue
       const next = order[i + 1]
       if (next)
         tracer?.log({

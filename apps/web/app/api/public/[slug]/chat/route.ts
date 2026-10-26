@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto"
-import { answer, type KonkyoMessage, moderate, Tracer } from "@konkyo/agents"
+import { answer, type KonkyoMessage, modelTrouble, moderate, Tracer } from "@konkyo/agents"
 import { PUBLIC } from "@konkyo/config"
 import { consumeStream, createUIMessageStream, createUIMessageStreamResponse } from "ai"
 import { NextResponse } from "next/server"
@@ -110,7 +110,7 @@ export async function POST(request: Request, ctx: { params: Promise<{ slug: stri
         action: "failed",
         detail: { message: (error as Error).message },
       })
-      return "Something went wrong while answering. Try again."
+      return modelTrouble(error) ?? "Something went wrong while answering. Try again."
     },
     onEnd: async () => {
       await tracer.flush()

@@ -144,6 +144,12 @@ export async function updateProfile(userId: string, patch: ProfilePatch): Promis
     const results = await Promise.all(checks.map((text) => moderate(text)))
     if (results.some((r) => r.flagged))
       throw new LibraryError("That can't go on a public page.", 400)
+    // Like an article, nothing goes on a public page unchecked.
+    if (results.some((r) => !r.checked))
+      throw new LibraryError(
+        "The content check couldn't run just now, so this wasn't saved. Try again in a minute.",
+        503,
+      )
   }
   if (patch.avatar === "photo" && !me.hasPhoto) throw new LibraryError("Add a photo first", 400)
   if (patch.avatar === "google" && !me.hasGoogle)

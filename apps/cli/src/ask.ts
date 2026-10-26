@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto"
 import { copyFile, mkdir, writeFile } from "node:fs/promises"
 import path from "node:path"
-import { type AnswerEvent, answer, type Scope, Tracer } from "@konkyo/agents"
+import { type AnswerEvent, answer, modelTrouble, type Scope, Tracer } from "@konkyo/agents"
 import { saveRecording, startRecording, startReplay } from "@konkyo/tape"
 import type { Example } from "./examples"
 import { collector, json, MARKDOWN, PLAIN, type Run, render, TERMINAL } from "./print"
@@ -77,6 +77,13 @@ export async function ask(options: Options) {
       onStep(event)
       onEvent(event)
     },
+  }).catch(async (error: unknown) => {
+    // The same words the app shows, and the trace of the steps that ran, instead of a stack.
+    await tracer.flush()
+    process.stderr.write(
+      `\n${modelTrouble(error) ?? `Something went wrong while answering: ${(error as Error)?.message ?? error}`}\nTrace: ${path.relative(root, tracer.file)}\n`,
+    )
+    process.exit(1)
   })
   await tracer.flush()
 

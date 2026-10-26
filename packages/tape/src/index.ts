@@ -70,14 +70,34 @@ export async function startReplay(file: string): Promise<TapeMeta> {
 
 export const tapeMode = () => state?.mode ?? null
 
-/** The first unused reply for this boundary and request (concurrent calls may come in any order). */
-function take(kind: string, key: string) {
+/** The replay asked for a reply the recording doesn't have, possibly wrapped by the SDK. */
+export function isTapeMiss(error: unknown) {
+  let e = error as { name?: string; cause?: unknown; lastError?: unknown } | undefined
+  for (let depth = 0; e && depth < 5; depth++) {
+    if (e.name === "TapeMiss") return true
+    e = (e.cause ?? e.lastError) as typeof e
+  }
+  return false
+}
+
+/**
+ * The first unused reply for this boundary and request (concurrent calls may come in any order).
+ * With `succeeded`, several replies to one request are a hedged call's copies: the replay takes
+ * one that succeeded, else the last one, the failure the caller saw once every copy had failed.
+ */
+function take(kind: string, key: string, succeeded?: (value: unknown) => boolean) {
   if (!state) throw new Error("No tape")
   const tape = state
-  const i = tape.entries.findIndex((e, n) => !tape.used.has(n) && e.kind === kind && e.key === key)
-  if (i < 0) throw new TapeMiss(kind)
+  const open = tape.entries.flatMap((e, n) =>
+    !tape.used.has(n) && e.kind === kind && e.key === key ? [n] : [],
+  )
+  if (!open.length) throw new TapeMiss(kind)
+  const value = (n: number) => (tape.entries[n] as Entry).value
+  const i = succeeded
+    ? (open.find((n) => succeeded(value(n))) ?? (open.at(-1) as number))
+    : (open[0] as number)
   tape.used.add(i)
-  return (tape.entries[i] as Entry).value
+  return value(i)
 }
 
 /**
@@ -99,7 +119,22 @@ export function taped<A extends unknown[], R>(
   }
 }
 
-type HttpReply = { path: string; status: number; contentType: string; body: string }
+type HttpReply = {
+  path: string
+  status: number
+  contentType: string
+  body: string
+  /** The request got no reply at all (a stall cut off by its deadline, a hedge that lost). */
+  error?: string
+}
+
+/** A recorded request that got no reply fails the same way on replay (never as a user's stop). */
+export class RecordedNoReply extends Error {
+  constructor(path: string, reason: string) {
+    super(`${path} gave no reply when this run was recorded (${reason})`)
+    this.name = "RecordedNoReply"
+  }
+}
 
 /** Replays a recorded body in its server-sent events, so a stream arrives as a stream. */
 function replayBody(text: string) {
@@ -115,7 +150,9 @@ function replayBody(text: string) {
 
 /**
  * `fetch` for a model provider: records each reply's status, type and body (never request
- * headers, so no key is written), keyed by method, path and request body.
+ * headers, so no key is written), keyed by method, path and request body. A hedged call sends
+ * the same request twice, and the losing copy may have failed (a 429) before the winner's reply
+ * came in; a replay is never hedged, so it hands back a reply that succeeded when there is one.
  */
 export const tapedFetch: typeof fetch = async (input, init) => {
   if (!state || inside.getStore()) return fetch(input, init)
@@ -124,14 +161,27 @@ export const tapedFetch: typeof fetch = async (input, init) => {
   const body = typeof init?.body === "string" ? init.body : ""
   const key = hash(`${method} ${url.pathname} ${body}`)
   if (state.mode === "replay") {
-    const reply = take("http", key) as HttpReply
+    const reply = take("http", key, (v) => {
+      const r = v as HttpReply
+      return !r.error && r.status < 400
+    }) as HttpReply
+    if (reply.error) throw new RecordedNoReply(reply.path, reply.error)
     return new Response(replayBody(reply.body), {
       status: reply.status,
       headers: { "content-type": reply.contentType },
     })
   }
-  const res = await fetch(input, init)
-  const text = await res.text()
+  const recordFailure = (error: unknown) => {
+    const reason = (error as Error)?.message ?? String(error)
+    state?.entries.push({
+      kind: "http",
+      key,
+      value: { path: url.pathname, status: 0, contentType: "", body: "", error: reason },
+    })
+    throw error
+  }
+  const res = await fetch(input, init).catch(recordFailure)
+  const text = await res.text().catch(recordFailure)
   const reply: HttpReply = {
     path: url.pathname,
     status: res.status,

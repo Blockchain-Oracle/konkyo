@@ -3,8 +3,8 @@ title: What Konkyo is built on
 description: Where Zetaris, Meterless, NVIDIA Nemotron, ElevenLabs, Composio and OpenAlex sit, and what each one does.
 ---
 
-Each partner also has a page on Konkyo that follows one action into the code, with a live
-example: [made with Zetaris](https://konkyo.xyz/made-with/zetaris),
+Each partner also has a page on Konkyo that follows one action into the code, with an example
+(live for Zetaris and OpenAlex): [made with Zetaris](https://konkyo.xyz/made-with/zetaris),
 [Meterless](https://konkyo.xyz/made-with/meterless),
 [NVIDIA Nemotron](https://konkyo.xyz/made-with/nvidia),
 [ElevenLabs](https://konkyo.xyz/made-with/elevenlabs),
@@ -20,8 +20,8 @@ Remove Zetaris and nothing can be marked verified.
   of it: a second extraction, independent of Konkyo's. A file is marked Ready only after Zetaris
   answers for it. (`packages/zetaris/src/evidence.ts`)
 - **Pre-check** that retrieved documents are present. (`checks.ts`)
-- **Quote verification**: every quote of an answer in one Spark SQL statement, a `VALUES` list
-  joined to Zetaris's text. The same check covers the Analyst's matrix, study items, lecture notes
+- **Quote verification**: every quote an answer keeps, in one Spark SQL statement, a `VALUES`
+  list joined to Zetaris's text (a rewrite round checks only its new quotes first). The same check covers the Analyst's matrix, study items, lecture notes
   and audio briefs.
 - **Topic watches**: each is a Lightning `REST` table over OpenAlex; new papers are found with one
   `LEFT ANTI JOIN` against the DOIs already seen. (`watch.ts`) If Zetaris can't answer, that run
@@ -49,7 +49,8 @@ the rest, and stands in for OpenAI whenever it is down or out.
 
 - **Nemotron 3.5 Embed** finds the passages: every passage is embedded as a passage and every
   question as a query, at 1536 of its 2048 dimensions, beside Postgres full-text search.
-- **Nemotron 3 Ultra** (550B, 55B active) plans each answer and screens deep-search finds in
+- **Nemotron 3 Ultra** (550B, 55B active) plans each answer (OpenAI stands in while it's busy) and
+  screens deep-search finds in
   Markovian steps; with its thinking off it passed every test in our benchmark on NVIDIA's API, so
   it is the fallback for every OpenAI role.
 - **Nemotron 3.5 Lightning** (30B, 3B active) plans deep searches, reads a spoken ask, and
@@ -58,9 +59,9 @@ the rest, and stands in for OpenAI whenever it is down or out.
   every article before it's published.
 - **Thinking is a switch per role**, sent through Nemotron's chat template (`enable_thinking`,
   `low_effort`, `reasoning_budget`).
-- **Inside the free tier**: a rate limit per model, shared by the web app and the worker; a
-  stalled call is asked again and the first answer wins; a model that answers 429 is tried second
-  for a minute.
+- **Inside the free tier**: a rate limit per model in each process (the web app's and the worker's
+  shares add up to NVIDIA's ~40 a minute); a stalled call is asked again and the first answer
+  wins; a model that answers 429 is tried second for a minute.
 - **Your own GPUs instead**: `MODEL_BASE_URL` sends the Nemotron calls to a self-hosted NVIDIA NIM
   serving the same model ids.
 

@@ -1,4 +1,5 @@
 import "server-only"
+import { modelTrouble } from "@konkyo/agents"
 import { NextResponse } from "next/server"
 import { type ZodType, z } from "zod"
 import { LibraryError } from "./library"
@@ -13,8 +14,8 @@ function failure(error: unknown) {
   }
   if (error instanceof LibraryError)
     return NextResponse.json({ error: error.message }, { status: error.status })
-  if ((error as Error)?.name === "OutOfCreditError")
-    return NextResponse.json({ error: (error as Error).message }, { status: 503 })
+  const trouble = modelTrouble(error)
+  if (trouble) return NextResponse.json({ error: trouble }, { status: 503 })
   console.error("[api]", error)
   return NextResponse.json({ error: "Something went wrong on our side" }, { status: 500 })
 }

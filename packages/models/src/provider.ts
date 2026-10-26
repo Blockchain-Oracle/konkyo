@@ -128,15 +128,35 @@ async function begin(open: () => PromiseLike<LanguageModelV4StreamResult>): Prom
 }
 
 /** The begun stream again, from its first part. */
-function resume({ reader, head }: Started): ReadableStream<LanguageModelV4StreamPart> {
+/**
+ * The begun stream again, from its first part, with an idle deadline: a stream that goes quiet
+ * mid-answer fails (and its role's fallback takes over) instead of holding the answer forever.
+ */
+function resume(
+  { reader, head }: Started,
+  idle: () => Error,
+): ReadableStream<LanguageModelV4StreamPart> {
   return new ReadableStream({
     start(controller) {
       for (const part of head) controller.enqueue(part)
     },
     async pull(controller) {
-      const { value, done } = await reader.read()
-      if (done) controller.close()
-      else controller.enqueue(value)
+      let timer: ReturnType<typeof setTimeout> | undefined
+      try {
+        const next = await Promise.race([
+          reader.read(),
+          new Promise<never>((_, reject) => {
+            timer = setTimeout(() => reject(idle()), MODEL_API.streamIdleTimeoutMs)
+          }),
+        ])
+        if (next.done) controller.close()
+        else controller.enqueue(next.value)
+      } catch (error) {
+        void reader.cancel(error).catch(() => undefined)
+        controller.error(error)
+      } finally {
+        clearTimeout(timer)
+      }
     },
     cancel: (reason) => reader.cancel(reason),
   })
@@ -144,6 +164,25 @@ function resume({ reader, head }: Started): ReadableStream<LanguageModelV4Stream
 
 const hedgeLog = (id: string, ms: number) => () =>
   console.info(`[hedge] ${id}: no answer after ${ms} ms, asked again`)
+
+const BUSY = "Konkyo's models are busy right now. Try again in a minute."
+
+/**
+ * What to tell the person when no model could answer (every one busy, stalled or out of credit),
+ * or null for any other failure.
+ */
+export function modelTrouble(error: unknown): string | null {
+  const name = (error as Error)?.name
+  if (name === "OutOfCreditError") return (error as Error).message
+  if (
+    name === "ModelBusyError" ||
+    name === "ModelTimeoutError" ||
+    name === "AI_RetryError" ||
+    name === "AI_NoOutputGeneratedError"
+  )
+    return BUSY
+  return null
+}
 
 /**
  * A failure a fallback model can't fix: the person stopped it. (An empty account can: every
@@ -179,7 +218,7 @@ export function model(choice: ModelChoice): LanguageModel {
             signal: due.signal,
             onHedge,
             attempt: (signal) =>
-              limiter.run(() => inner.doGenerate({ ...params, abortSignal: signal })),
+              limiter.run(() => inner.doGenerate({ ...params, abortSignal: signal }), signal),
           })
         } catch (error) {
           const timeout = new ModelTimeoutError(choice.id, answerMs)
@@ -196,10 +235,16 @@ export function model(choice: ModelChoice): LanguageModel {
             signal: due.signal,
             onHedge,
             attempt: (signal) =>
-              begin(() => limiter.run(() => inner.doStream({ ...params, abortSignal: signal }))),
+              begin(() =>
+                limiter.run(() => inner.doStream({ ...params, abortSignal: signal }), signal),
+              ),
             discard: ({ reader }) => void reader.cancel().catch(() => undefined),
           })
-          return { ...started.result, stream: resume(started) }
+          const idle = () => {
+            markBusy(choice.id)
+            return new ModelTimeoutError(choice.id, MODEL_API.streamIdleTimeoutMs)
+          }
+          return { ...started.result, stream: resume(started, idle) }
         } catch (error) {
           const timeout = new ModelTimeoutError(choice.id, firstTokenMs)
           throw settle(choice.id, due.timedOut() ? timeout : error)

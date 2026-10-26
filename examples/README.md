@@ -1,7 +1,10 @@
 # Examples
 
 Five real runs of Konkyo's answer pipeline, recorded on 2026 against a sample library
-of openly licensed sources (see [Sources and licences](#sources-and-licences)). Each folder holds:
+of openly licensed sources (see [Sources and licences](#sources-and-licences)). They were recorded
+while Konkyo's OpenAI account was out of credit, so they show the fallback path: Nemotron models
+planned, wrote and checked the answers, and each trace logs every switch as
+`escalated_to_fallback`. Each folder holds:
 
 | File | What it is |
 |---|---|

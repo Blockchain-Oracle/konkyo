@@ -218,11 +218,12 @@ async function searchLibrary(
   })
   // Reference lists and front matter embed close to the questions they cite (a bibliography of
   // spindle papers scored 0.63 for "what do spindles do for memory?"), but they hold no findings:
-  // the Writer once copied one title over and over (in testing). Prose comes first; they're kept only
-  // when nothing else matched (a question about a paper's references).
+  // the Writer once copied one title over and over (in testing). Prose comes first; they only fill
+  // the places prose leaves (a question about a paper's references still finds them).
   const prose = candidates.filter((c) => !looksLikeApparatus(c.text))
+  const apparatus = candidates.filter((c) => looksLikeApparatus(c.text))
   return {
-    candidates: (prose.length ? prose : candidates).slice(0, limit),
+    candidates: [...prose, ...apparatus].slice(0, limit),
     scopedFiles: files?.length ?? null,
   }
 }

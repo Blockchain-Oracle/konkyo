@@ -10,7 +10,7 @@
     "statement": "Build agents that investigate complex questions across multiple data sources, connect findings, and produce evidence-backed answers or recommendations."
   },
   "users": "Students and researchers who read many sources and must cite them: thesis students, course takers with lecture recordings and slides, reading groups comparing papers.",
-  "problem": "Chat assistants answer fluently from memory, mix up sources and invent quotes; checking them takes as long as reading. Konkyo answers only from the person's library, refuses when it can't, and makes every claim checkable at the passage.",
+  "problem": "Chat assistants answer fluently from memory, mix up sources and invent quotes; checking them takes as long as reading. Konkyo answers only from the person's library, refuses when it can't, and makes every cited claim checkable at the passage.",
   "entryPoints": {
     "sample": "pnpm konkyo ask --sample",
     "cli": "pnpm konkyo ask \"<question>\" [--folder <name>] [--compare] [--json]",
@@ -84,7 +84,7 @@
     },
     {
       "name": "Verifier",
-      "role": "Code check of each quote, one Zetaris statement for all quotes, support judgement; sends failures back (max 2 rounds), drops what still fails",
+      "role": "Code check of each quote, one Zetaris statement for the quotes an answer keeps, support judgement (no verdict fails); sends failures back (max 2 rounds), drops what still fails",
       "model": "gpt-6-luna, low reasoning (fallback nvidia/nemotron-3-ultra-550b-a55b)",
       "code": "packages/agents/src/answer.ts"
     },
@@ -175,12 +175,17 @@
         },
         {
           "model": "nvidia/nemotron-3-ultra-550b-a55b",
-          "use": "Plans every answer, screens deep-search finds in Markovian steps, and is the fallback for every OpenAI role (Writer, Verifier, Analyst, Tutor, Grader)",
+          "use": "Plans each answer (gpt-6-luna stands in while it's busy), screens deep-search finds in Markovian steps, and is the fallback for every OpenAI role (Writer, Verifier, Analyst, Tutor, Grader)",
           "code": "packages/config/src/index.ts"
         },
         {
           "model": "nvidia/nemotron-3.5-lightning-30b-a3b",
           "use": "Deep-search plans, spoken-ask intent, file summaries",
+          "code": "packages/config/src/index.ts"
+        },
+        {
+          "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+          "use": "Reserve (third model) for the Writer, Analyst and Tutor",
           "code": "packages/config/src/index.ts"
         },
         {

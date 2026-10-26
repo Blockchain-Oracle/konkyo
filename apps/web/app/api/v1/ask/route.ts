@@ -125,7 +125,11 @@ export async function POST(request: Request) {
     }
   }
 
-  if (!streaming) return NextResponse.json(await summary())
+  if (!streaming) {
+    // A run that failed (every model busy, a service down) says so in its status code too.
+    const done = await summary()
+    return NextResponse.json(done, { status: done.status === "failed" ? 503 : 200 })
+  }
   void summary().then((done) => {
     send({ type: "done", ...done })
     lines?.close()

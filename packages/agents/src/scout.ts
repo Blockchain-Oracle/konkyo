@@ -7,6 +7,7 @@ import {
   type ModelChoice,
   model,
   openai,
+  outOfCredit,
   reasoning,
   withFallback as runWithFallback,
 } from "./models"
@@ -254,6 +255,8 @@ async function searchWikipedia(query: string, tracer: Tracer, abortSignal?: Abor
  * fails or finds nothing readable (an outage, an empty account), so deep search always has both.
  */
 async function searchWeb(plan: SearchPlan, tracer: Tracer, abortSignal?: AbortSignal) {
+  // While OpenAI's account is out of credit, asking it would only fail: straight to Wikipedia.
+  if (outOfCredit(WEB_SEARCH.id)) return searchWikipedia(plan.topic, tracer, abortSignal)
   try {
     const pages = await searchOpenWeb(plan.webQuery, tracer, abortSignal)
     if (pages.length) return pages

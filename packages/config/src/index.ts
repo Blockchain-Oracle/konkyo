@@ -186,6 +186,8 @@ export const MODEL_API = {
    */
   answerTimeoutMs: 45_000,
   firstTokenTimeoutMs: 25_000,
+  /** A stream that has started but sends nothing for this long has stalled. */
+  streamIdleTimeoutMs: 30_000,
   /**
    * The most a call may write unless it sets its own: NVIDIA's default is 16,384, and a model
    * stuck in a loop would spend minutes reaching it.
@@ -301,7 +303,7 @@ export const MODELS = {
   planner: {
     primary: { ...ULTRA("none"), deadlineMs: 12_000, hedgeAfterMs: 5_000 },
     fallback: LUNA("low"),
-    reserve: { ...LIGHTNING("none"), hedgeAfterMs: 4_000 },
+    reserve: { ...LIGHTNING("none"), deadlineMs: 12_000, hedgeAfterMs: 4_000 },
   },
   /** Writes the cited answer: 9/9 quotes verbatim, first token in about 1 s. */
   writer: {
