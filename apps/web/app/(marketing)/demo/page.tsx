@@ -69,9 +69,9 @@ export default function DemoPage() {
               {/* The image is a dated capture of the real landing page, not a recording. */}
               <Image
                 src="/demo/landing-capture.jpg"
-                alt="Konkyo's live landing page showing a sample paper, a cited answer, and its checked quote"
+                alt="Konkyo's landing page: research agents that check every quote, beside a real space of three papers with a checked, cited answer"
                 width={1280}
-                height={720}
+                height={820}
                 priority
               />
               <figcaption>

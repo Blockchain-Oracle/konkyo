@@ -59,7 +59,7 @@ answer, Konkyo says **Not in your library** and offers a deep search.
 
 <p align="center">
   <a href="https://konkyo.xyz/demo">
-    <img src="apps/web/public/demo/cover.png" width="900" alt="Open the Konkyo demo page." />
+    <img src="apps/web/public/demo/cover.png" width="900" alt="Watch Konkyo check every quote: open the demo page and try the live answer." />
   </a>
 </p>
 
