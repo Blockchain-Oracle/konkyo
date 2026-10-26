@@ -1141,7 +1141,10 @@
 }
 @media (max-width: 420px) {
   .about-bar-links {
-    gap: 16px;
+    gap: 12px;
+  }
+  .about-docs-link {
+    display: none;
   }
 }
 @media (prefers-reduced-motion: reduce) {

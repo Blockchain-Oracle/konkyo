@@ -10,7 +10,7 @@ const { articles, profiles, user } = schema
 const SITEMAP_MAX = 5_000
 
 /**
- * What search engines may index (plan F57): the landing, demo, legal pages, every published
+ * What search engines may index (plan F57): the landing, demo, pitch, legal pages, every published
  * article and every person's page. Public spaces stay out (they're `noindex`). Read at request
  * time, so a new article is listed at once.
  */
@@ -34,6 +34,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     { url: APP.url, changeFrequency: "weekly", priority: 1 },
     { url: `${APP.url}/demo`, changeFrequency: "weekly", priority: 0.8 },
+    { url: `${APP.url}/pitch`, changeFrequency: "weekly", priority: 0.7 },
     { url: `${APP.url}/privacy`, changeFrequency: "yearly", priority: 0.2 },
     { url: `${APP.url}/terms`, changeFrequency: "yearly", priority: 0.2 },
     ...published.map((a) => ({

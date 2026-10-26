@@ -12,6 +12,8 @@
   &nbsp;·&nbsp;
   <a href="https://konkyo.xyz/demo"><b>Demo</b></a>
   &nbsp;·&nbsp;
+  <a href="https://konkyo.xyz/pitch"><b>Pitch</b></a>
+  &nbsp;·&nbsp;
   <a href="https://docs.konkyo.xyz"><b>Documentation</b></a>
   &nbsp;·&nbsp;
   <a href="https://konkyo.xyz/made-with/zetaris"><b>How quotes are checked</b></a>

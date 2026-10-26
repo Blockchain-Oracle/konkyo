@@ -30,7 +30,10 @@ export default function DemoPage() {
           <Link href="/demo" className="about-back" aria-current="page">
             demo
           </Link>
-          <a href={APP.docs ?? "https://docs.konkyo.xyz"} className="about-back">
+          <Link href="/pitch" className="about-back">
+            pitch
+          </Link>
+          <a href={APP.docs ?? "https://docs.konkyo.xyz"} className="about-back about-docs-link">
             docs
           </a>
           <Link href="/sign-in" className="about-back">
