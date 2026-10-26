@@ -41,6 +41,7 @@ import { useSourceAccess } from "@/lib/source-access"
 import { useHighlights } from "@/lib/use-highlights"
 import { type SourcePassage, usePassages } from "@/lib/use-source"
 import { boxesFor, CitationLayer, MarkLayer } from "./citation-layer"
+import { LinkLayer } from "./link-layer"
 import { SelectionToolbar } from "./selection-toolbar"
 
 /** Served from /public by scripts/vendor.mjs (no third-party CDN at runtime). */
@@ -80,8 +81,8 @@ export type PdfTarget = { page?: number; passage?: SourcePassage; quote?: string
 
 /**
  * The source viewer: EmbedPDF renders only the pages near the viewport, so a 500-page
- * PDF scrolls like a short one. Cited passages are marked on top of the page in amber, and a
- * selection offers the toolbar's actions.
+ * PDF scrolls like a short one. Cited passages are marked on top of the page in amber, the file's
+ * own links are clickable, and a selection offers the toolbar's actions.
  */
 export function PdfViewer({
   url,
@@ -124,6 +125,7 @@ export function PdfViewer({
     <EmbedPDF engine={engine} plugins={plugins}>
       <DocumentLoader
         key={attempt}
+        engine={engine}
         url={url}
         fileId={fileId}
         title={title}
@@ -136,11 +138,13 @@ export function PdfViewer({
 
 function DocumentLoader({
   onRetry,
+  engine,
   url,
   fileId,
   title,
   target,
 }: {
+  engine: PdfEngine
   url: string
   fileId: string
   title: string
@@ -180,6 +184,7 @@ function DocumentLoader({
           </ViewerMessage>
         ) : isLoaded && activeDocumentId ? (
           <LoadedDocument
+            engine={engine}
             documentId={activeDocumentId}
             fileId={fileId}
             title={title}
@@ -195,12 +200,14 @@ function DocumentLoader({
 }
 
 function LoadedDocument({
+  engine,
   documentId,
   fileId,
   title,
   target,
   layoutReady,
 }: {
+  engine: PdfEngine
   documentId: string
   fileId: string
   title: string
@@ -210,7 +217,8 @@ function LoadedDocument({
   const { state: scroll, provides: scroller } = useScroll(documentId)
   const { state: zoom, provides: zoomer } = useZoom(documentId)
   const { activeDocument } = useActiveDocument()
-  const pages = activeDocument?.document?.pages
+  const doc = activeDocument?.document
+  const pages = doc?.pages
   const [dim, setDim] = useState(false)
   const scale = zoom.currentZoomLevel
   const { owner } = useSourceAccess()
@@ -239,9 +247,19 @@ function LoadedDocument({
     })
   }, [target, scroller, layoutReady])
 
+  // A link inside the file that points at one of its own pages.
+  const goToPage = useCallback(
+    (pageNumber: number) => {
+      if (pageNumber >= 1 && pageNumber <= (pages?.length ?? 0))
+        scroller?.scrollToPage({ pageNumber, behavior: "auto" })
+    },
+    [pages, scroller],
+  )
+
   const renderPage = useCallback(
     (page: PageLayout) => {
-      const intrinsic = (pages?.[page.pageIndex]?.rotation ?? 0) as Rotation
+      const pageObject = pages?.[page.pageIndex]
+      const intrinsic = (pageObject?.rotation ?? 0) as Rotation
       const cited =
         target?.passage && target.passage.page === page.pageNumber ? target.passage : undefined
       return (
@@ -287,6 +305,18 @@ function LoadedDocument({
                 scale={scale}
               />
             )}
+            {/* Under the selection layer, so its toolbar stays on top. A page the file itself
+                rotates is left out: the boxes are placed for an unrotated page. */}
+            {doc && pageObject && intrinsic === 0 && (
+              <LinkLayer
+                engine={engine}
+                doc={doc}
+                page={pageObject}
+                fileId={fileId}
+                scale={scale}
+                onGoto={goToPage}
+              />
+            )}
             <SelectionLayer
               documentId={documentId}
               pageIndex={page.pageIndex}
@@ -309,7 +339,20 @@ function LoadedDocument({
         </Rotate>
       )
     },
-    [documentId, fileId, title, pages, scale, target, dim, marksByPage, owner],
+    [
+      documentId,
+      fileId,
+      title,
+      engine,
+      doc,
+      pages,
+      goToPage,
+      scale,
+      target,
+      dim,
+      marksByPage,
+      owner,
+    ],
   )
 
   return (
