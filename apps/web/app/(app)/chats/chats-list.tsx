@@ -1,7 +1,6 @@
 "use client"
 
 import { SPACES } from "@konkyo/config"
-import { Button } from "@konkyo/ui/components/button"
 import { Input } from "@konkyo/ui/components/input"
 import { Skeleton } from "@konkyo/ui/components/skeleton"
 import { colorFor } from "@konkyo/ui/lib/space"
@@ -11,6 +10,7 @@ import { useMemo, useState } from "react"
 import { ChatMenu } from "@/components/chat/chat-menu"
 import { EmptyState } from "@/components/empty-state"
 import { sortChats, useChats } from "@/lib/use-chats"
+import { NewChatButton } from "./new-chat-button"
 
 const relative = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" })
 function ago(iso: string) {
@@ -82,11 +82,9 @@ export function ChatsList() {
         <EmptyState
           label="Chats"
           title="No chats yet"
-          description="Ask a question on Home. Every chat is saved here, with the sources it used."
+          description="Ask a question about your library. Every chat is saved here, with the sources it used."
         >
-          <Button render={<Link href="/home" />} nativeButton={false} variant="secondary">
-            Ask a question
-          </Button>
+          <NewChatButton />
         </EmptyState>
       </div>
     )

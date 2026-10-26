@@ -6,8 +6,7 @@ import { SPACES } from "@konkyo/config"
 import { useQueryClient } from "@tanstack/react-query"
 import { DefaultChatTransport } from "ai"
 import type { Route } from "next"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { OrbHint, orbHintWanted } from "@/components/voice/orb-hint"
 import { useVoiceBuild } from "@/components/voice/voice-build"
@@ -440,19 +439,36 @@ export function Dock() {
           </span>
         ) : null}
       </button>
-      <Link
-        href={"/chats" as Route}
-        onClick={() => sound("tap")}
-        className="action-dock-chat inline-flex min-h-[42px] items-center rounded-full"
-        title="Chats"
-      >
-        <svg viewBox="0 0 20 20" aria-hidden="true">
-          <path d="M3.5 5.5a2.5 2.5 0 0 1 2.5-2.5h8a2.5 2.5 0 0 1 2.5 2.5v5a2.5 2.5 0 0 1-2.5 2.5H9.2L5.6 16.4V13A2.5 2.5 0 0 1 3.5 10.5z" />
-        </svg>
-        <b className="action-dock-label">chats</b>
-      </Link>
+      <NewChatDock />
       <SoundsMenu />
     </nav>
+  )
+}
+
+/**
+ * A blank chat, one tap away. The old chats are already the "chats" tab at the top, so this
+ * button doesn't list them again: it opens a fresh chat (its id is new, so it has no rows yet and
+ * opens empty), looking at the whole library, with questions to start from.
+ */
+function NewChatDock() {
+  const router = useRouter()
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        sound("tap")
+        router.push(`/chats/${crypto.randomUUID()}` as Route)
+      }}
+      className="action-dock-chat inline-flex min-h-[42px] items-center rounded-full"
+      title="New chat"
+      aria-label="New chat"
+    >
+      <svg viewBox="0 0 20 20" aria-hidden="true">
+        <path d="M3.5 5.5a2.5 2.5 0 0 1 2.5-2.5h8a2.5 2.5 0 0 1 2.5 2.5v5a2.5 2.5 0 0 1-2.5 2.5H9.2L5.6 16.4V13A2.5 2.5 0 0 1 3.5 10.5z" />
+        <path d="M10 5.8v4.4M7.8 8h4.4" />
+      </svg>
+      <b className="action-dock-label">new chat</b>
+    </button>
   )
 }
 
