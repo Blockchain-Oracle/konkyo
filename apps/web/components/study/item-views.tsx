@@ -157,12 +157,14 @@ export function TrueFalseView({
   look: Look
 }) {
   const fixRef = useRef<HTMLTextAreaElement>(null)
+  // Stepping into the fix puts the caret at the end of the statement. Typing never moves it:
+  // the effect leaves a box that already has focus alone (and doesn't depend on the text).
   useEffect(() => {
-    if (stage === "fix" && look === "open") {
-      fixRef.current?.focus()
-      fixRef.current?.setSelectionRange(fix.length, fix.length)
-    }
-  }, [stage, look, fix.length])
+    const area = fixRef.current
+    if (stage !== "fix" || look !== "open" || !area || document.activeElement === area) return
+    area.focus()
+    area.setSelectionRange(area.value.length, area.value.length)
+  }, [stage, look])
   const done = settled(look)
   const choice = (value: boolean, key: string) => {
     const wasTried = tried.includes(value)
