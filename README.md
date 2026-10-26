@@ -30,7 +30,8 @@ handed back, and every step of Konkyo's own logic runs again on them
 (planning, citation parsing, the quote checks, the Verifier's verdicts and rewrites, the
 agree/disagree matrix, the World Model, the trace). It prints the cited answer and the path of the
 new trace in `logs/`. `pnpm konkyo samples` lists the five recorded questions; see
-[examples/](examples/README.md) for their outputs and traces. They were recorded while the OpenAI
+[examples/](examples/README.md) for their outputs and traces, and [data/](data/README.md) for the
+sample sources, their licences and how they reach Zetaris. They were recorded while the OpenAI
 account was out of credit, so they show the fallback path (Nemotron writes and checks; each switch
 is in the trace).
 
@@ -306,6 +307,7 @@ packages/ingest   conversion (Gotenberg), PDF text and boxes, OCR, transcription
 packages/db       Drizzle schema and migrations (Postgres + pgvector)
 packages/…        config, env, jobs, storage, notify, connectors, study (FSRS), ui
 examples/         five recorded runs: input, output, trace, tape
+data/             the sample sources: links, licences, sizes, how they reach Zetaris
 logs/             one JSONL trace per run
 ```
 
