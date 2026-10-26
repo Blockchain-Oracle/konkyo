@@ -185,7 +185,18 @@ function NameDialog({
   )
 }
 
-/** A web page, a link to a PDF, or a YouTube video, into the library or a folder. */
+const DOI = /^(?:doi:\s*|https?:\/\/(?:dx\.)?doi\.org\/)?(10\.\d{4,9}\/\S+)$/i
+
+/** What was pasted, if it is something to import: a DOI (as its doi.org link) or a web address. */
+export function importable(raw: string): { url: string; label: string } | null {
+  const text = raw.trim()
+  const doi = text.match(DOI)?.[1]
+  if (doi) return { url: `https://doi.org/${doi}`, label: `the paper with DOI ${doi}` }
+  if (/^https?:\/\/\S+\.\S+/i.test(text)) return { url: text, label: text }
+  return null
+}
+
+/** A web page, a link to a PDF, a YouTube video, or a DOI, into the library or a folder. */
 function ImportUrlDialog({
   open,
   folderId,
@@ -202,14 +213,15 @@ function ImportUrlDialog({
       <DialogContent className="sm:max-w-md">
         <DialogTitle className="text-subhead font-normal">Import by URL</DialogTitle>
         <DialogDescription className="text-ui text-ash-gray">
-          A web page, a link to a PDF, or a YouTube video. It's saved as a document you can cite.
+          A web page, a link to a PDF, a YouTube video, or a paper's DOI. It's saved as a document
+          you can cite.
         </DialogDescription>
         <form
           className="mt-1.5 flex flex-col gap-4"
           onSubmit={(event) => {
             event.preventDefault()
             importUrl.mutate(
-              { url, folderId },
+              { url: importable(url)?.url ?? url.trim(), folderId },
               {
                 onSuccess: () => {
                   toast.success("Importing. It'll be ready in a moment.")
@@ -222,13 +234,12 @@ function ImportUrlDialog({
         >
           <Input
             autoFocus
-            type="url"
             inputMode="url"
             required
-            placeholder="https://…"
+            placeholder="https://… or a DOI"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            aria-label="Address to import"
+            aria-label="Address or DOI to import"
             className="h-10 rounded-lg"
           />
           <DialogFooter className="gap-2">

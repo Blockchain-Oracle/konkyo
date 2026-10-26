@@ -109,7 +109,7 @@ export function AgentDialog({
   const save = async () => {
     setSaving(true)
     try {
-      const body = { ...draft, scope: draft.scope }
+      const body = { ...draft, scope: draft.scope, timeZone: zone }
       if (editing)
         await api(`/api/agents/${editing.id}`, {
           method: "PATCH",
@@ -118,6 +118,7 @@ export function AgentDialog({
             instructions: body.instructions,
             scope: body.scope,
             schedule: body.schedule,
+            timeZone: body.timeZone,
           },
         })
       else await api("/api/agents", { method: "POST", json: body })

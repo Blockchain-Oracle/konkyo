@@ -39,7 +39,7 @@ import { useFolders } from "@/lib/use-folders"
 import { useFileActions, useFiles } from "@/lib/use-library"
 import { useQuery } from "@/lib/use-query"
 import { MemberFace } from "../people/member-face"
-import { openConnectorImport, openImport, openNewFolder } from "./app-dialogs"
+import { importable, openConnectorImport, openImport, openNewFolder } from "./app-dialogs"
 
 const GO_TO = [...MAIN_NAV, ...FOOTER_NAV]
 
@@ -53,18 +53,8 @@ const SETTINGS: { label: string; href: Route }[] = [
   { label: "Usage and limits", href: "/settings#usage" as Route },
   { label: "What Konkyo knows (memory, sources)", href: "/knows" as Route },
 ]
-const DOI = /^(?:doi:\s*|https?:\/\/(?:dx\.)?doi\.org\/)?(10\.\d{4,9}\/\S+)$/i
 const RECENT = 5
 const MATCHES = 20
-
-/** What was pasted, if it is something to import: a DOI or a web address. */
-function importable(raw: string): { url: string; label: string } | null {
-  const text = raw.trim()
-  const doi = text.match(DOI)?.[1]
-  if (doi) return { url: `https://doi.org/${doi}`, label: `the paper with DOI ${doi}` }
-  if (/^https?:\/\/\S+\.\S+/i.test(text)) return { url: text, label: text }
-  return null
-}
 
 /** Every word typed appears in the title, in any order ("sleep memory" finds "Memory and sleep"). */
 const matches = (title: string, words: string[]) => {

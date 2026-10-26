@@ -16,6 +16,7 @@ const Patch = z.object({
     })
     .optional(),
   status: z.enum(["active", "paused"]).optional(),
+  timeZone: z.string().max(64).optional(),
 })
 
 /** Edit, pause or resume. */

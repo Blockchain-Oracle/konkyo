@@ -146,7 +146,10 @@ function AgentRow({ agent, onEdit }: { agent: AgentView; onEdit: () => void }) {
                   `/api/agents/${agent.id}`,
                   {
                     method: "PATCH",
-                    json: { status: agent.status === "active" ? "paused" : "active" },
+                    json: {
+                      status: agent.status === "active" ? "paused" : "active",
+                      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                    },
                   },
                   agent.status === "active" ? "Paused" : "Resumed",
                 )

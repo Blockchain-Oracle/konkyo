@@ -23,5 +23,6 @@ export const POST = route<Record<string, never>, AgentInput>(
     instructions: z.string().max(300),
     scope: Scope,
     schedule: Schedule,
+    timeZone: z.string().max(64).optional(),
   }),
 )

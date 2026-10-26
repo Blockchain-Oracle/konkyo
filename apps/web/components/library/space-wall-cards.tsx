@@ -92,6 +92,7 @@ export function AgentsCard({ spaceId, name }: { spaceId: string; name: string })
           instructions: name,
           scope: scopeOf(spaceId),
           schedule: { every: "week", weekday: 1, hour: 9 },
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         },
       })
       void queryClient.invalidateQueries({ queryKey: ["agents"] })

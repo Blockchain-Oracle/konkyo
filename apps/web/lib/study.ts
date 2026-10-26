@@ -67,7 +67,8 @@ async function savePrefs(
     .onConflictDoUpdate({ target: userSettings.userId, set: patch })
 }
 
-const validZone = (zone: string | undefined) => {
+/** A time zone the browser sent, if this runtime knows it. */
+export const validZone = (zone: string | undefined) => {
   if (!zone) return undefined
   try {
     new Intl.DateTimeFormat("en", { timeZone: zone })

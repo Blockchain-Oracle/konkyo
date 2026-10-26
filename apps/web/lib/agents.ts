@@ -6,6 +6,7 @@ import { describeSchedule, nextRunAt } from "@konkyo/jobs/schedule"
 import { dropWatchTable } from "@konkyo/zetaris"
 import { and, desc, eq, inArray } from "drizzle-orm"
 import { LibraryError } from "./library"
+import { validZone } from "./study"
 
 const { agents, agentRuns, userSettings } = schema
 
@@ -15,11 +16,32 @@ export type AgentInput = {
   instructions: string
   scope: AgentScope
   schedule: AgentSchedule
+  /** The browser's time zone: a schedule's hour is the person's own. */
+  timeZone?: string
 }
 
-async function timeZoneOf(ownerId: string) {
+/**
+ * The person's time zone. A change to an agent brings the browser's; when it isn't the saved one
+ * it is kept, and every active agent's next run moves to the person's hours.
+ */
+async function timeZoneOf(ownerId: string, sent?: string) {
   const row = await db.query.userSettings.findFirst({ where: eq(userSettings.userId, ownerId) })
-  return row?.timeZone ?? "UTC"
+  const zone = validZone(sent)
+  if (!zone || zone === row?.timeZone) return row?.timeZone ?? "UTC"
+  await db
+    .insert(userSettings)
+    .values({ userId: ownerId, timeZone: zone })
+    .onConflictDoUpdate({ target: userSettings.userId, set: { timeZone: zone } })
+  const active = await db
+    .select({ id: agents.id, schedule: agents.schedule })
+    .from(agents)
+    .where(and(eq(agents.ownerId, ownerId), eq(agents.status, "active")))
+  for (const a of active)
+    await db
+      .update(agents)
+      .set({ nextRunAt: nextRunAt(a.schedule, zone) })
+      .where(eq(agents.id, a.id))
+  return zone
 }
 
 function validate(input: AgentInput) {
@@ -85,7 +107,7 @@ export type AgentView = Awaited<ReturnType<typeof listAgents>>[number]
 /** A new agent (F34); its first run starts straight away, so it shows it works. */
 export async function createAgent(ownerId: string, input: AgentInput) {
   validate(input)
-  const tz = await timeZoneOf(ownerId)
+  const tz = await timeZoneOf(ownerId, input.timeZone)
   const [row] = await db
     .insert(agents)
     .values({
@@ -119,7 +141,7 @@ export async function updateAgent(
   const agent = await ownAgent(ownerId, id)
   const next = { ...agent, ...patch }
   validate({ ...next, scope: next.scope, schedule: next.schedule })
-  const tz = await timeZoneOf(ownerId)
+  const tz = await timeZoneOf(ownerId, patch.timeZone)
   // A new topic needs a new REST table: the old one is dropped and the next run makes it.
   const topicChanged =
     patch.instructions != null && patch.instructions.trim() !== agent.instructions

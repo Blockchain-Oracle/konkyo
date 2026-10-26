@@ -55,12 +55,18 @@ function ago(iso: string | null) {
 
 function statusLine(row: ConnectionRow | undefined) {
   if (!row) return null
-  if (row.status === "expired") return "Access ran out. Reconnect to keep imports current."
+  if (row.status === "expired")
+    return row.toolkit === "gmail"
+      ? "Access ran out. Reconnect to import from Gmail again."
+      : "Access ran out. Reconnect to keep imports current."
   if (row.status === "initiated") return "Waiting for you to finish signing in."
   const parts = [
     row.label ?? "Connected",
     `${row.imported} imported`,
-    row.syncedAt ? `checked ${ago(row.syncedAt)}` : null,
+    // an imported email doesn't change: Gmail is only checked for a watched search's new mail
+    row.syncedAt && (row.toolkit !== "gmail" || row.watchQuery)
+      ? `checked ${ago(row.syncedAt)}`
+      : null,
   ]
   return parts.filter(Boolean).join(" · ")
 }

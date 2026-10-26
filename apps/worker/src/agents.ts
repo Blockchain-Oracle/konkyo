@@ -90,7 +90,6 @@ async function runWatch(agent: Agent, tracer: Tracer): Promise<RunResult> {
     .select({ n: sql<number>`count(*)::int` })
     .from(agentSeen)
     .where(eq(agentSeen.agentId, agent.id))
-  const firstRun = !seenBefore?.n
   let found: WatchedWork[]
   let via = "zetaris"
   try {
@@ -128,12 +127,21 @@ async function runWatch(agent: Agent, tracer: Tracer): Promise<RunResult> {
     firstAuthor: w.firstAuthor && fixMojibake(w.firstAuthor),
     venue: w.venue && fixMojibake(w.venue),
   }))
-  if (found.length)
-    await db
-      .insert(agentSeen)
-      .values(found.map((w) => ({ agentId: agent.id, doi: w.doi })))
-      .onConflictDoNothing()
-  // The first run starts the watch: the newest few now, everything else counts as seen.
+  // Recording a paper as seen is what claims it: a run at the same moment (run now while the first
+  // run goes) gets back only the papers it recorded itself, so each is announced once.
+  const looked = found.length
+  const recorded = found.length
+    ? await db
+        .insert(agentSeen)
+        .values(found.map((w) => ({ agentId: agent.id, doi: w.doi })))
+        .onConflictDoNothing()
+        .returning({ doi: agentSeen.doi })
+    : []
+  const claimed = new Set(recorded.map((r) => r.doi))
+  found = found.filter((w) => claimed.has(w.doi))
+  // The first run starts the watch: the newest few now, everything else counts as seen. A run
+  // that found papers another run had just claimed didn't start it.
+  const firstRun = !seenBefore?.n && (found.length > 0 || looked === 0)
   const announce = found.slice(0, firstRun ? 3 : PER_RUN)
   // Each finding says where it stands against what the person has: agrees, disagrees, or new.
   const abstracts = await workAbstracts(announce.map((w) => w.openalexId)).catch(

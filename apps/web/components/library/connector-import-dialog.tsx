@@ -144,7 +144,9 @@ export function ConnectorImportDialog({
         ) : (
           <>
             <DialogDescription className="text-ui text-ash-gray">
-              Each one is saved as a document you can cite, and kept current when it changes.
+              {current?.toolkit === "gmail"
+                ? "Each email is saved as a document you can cite, with its attachments."
+                : "Each one is saved as a document you can cite, and kept current when it changes."}
             </DialogDescription>
             {active.length > 1 && (
               <ToggleGroup

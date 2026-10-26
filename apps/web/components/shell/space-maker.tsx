@@ -191,6 +191,7 @@ export function SpaceMaker({
         },
       })
       const scope = { fileIds: [], folderIds: [id] }
+      const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
       // The starting pieces, for real.
       const started: string[] = []
       if (pieces.includes("watch"))
@@ -202,6 +203,7 @@ export function SpaceMaker({
             instructions: spaceName,
             scope,
             schedule: { every: "week", weekday: 1, hour: 9 },
+            timeZone,
           },
         }).then(() => started.push("a weekly watch"))
       if (pieces.includes("quiz"))
@@ -213,6 +215,7 @@ export function SpaceMaker({
             instructions: "",
             scope,
             schedule: { every: "week", weekday: 1, hour: 8 },
+            timeZone,
           },
         }).then(() => started.push("a Monday quiz"))
       if (pieces.includes("brief"))
@@ -224,6 +227,7 @@ export function SpaceMaker({
             instructions: "",
             scope,
             schedule: { every: "week", weekday: 5, hour: 17 },
+            timeZone,
           },
         }).then(() => started.push("a Friday brief"))
       if (pieces.includes("find")) {

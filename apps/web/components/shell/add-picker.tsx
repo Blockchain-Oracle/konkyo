@@ -11,6 +11,7 @@ import { api } from "@/lib/fetcher"
 import { holdQuestion } from "@/lib/pending-question"
 import { sound } from "@/lib/sounds"
 import { useMakeBrief } from "@/lib/use-briefs"
+import { useQuery } from "@/lib/use-query"
 import { useStudyActions } from "@/lib/use-study"
 import { openConnectorImport, openImport, openRecorder } from "./app-dialogs"
 
@@ -75,6 +76,14 @@ export function AddPicker({ folderId, name }: { folderId?: string; name?: string
 
   const scope = { fileIds: [], folderIds: folderId ? [folderId] : [] }
   const topic = name ?? "my library"
+  // The space's own address, asked for once the tray opens: null when this server has no inbound
+  // email (and refused to someone who only reads), and then there's no tile for it.
+  const { data: mail } = useQuery({
+    queryKey: ["space-address", folderId],
+    queryFn: () => api<{ address: string | null }>(`/api/spaces/${folderId}/address`),
+    enabled: open && Boolean(folderId),
+  })
+  const address = mail?.address
 
   const tiles: Tile[] = [
     {
@@ -93,7 +102,7 @@ export function AddPicker({ folderId, name }: { folderId?: string; name?: string
     {
       id: "folder",
       label: "upload a folder",
-      line: "everything inside it, folders kept",
+      line: folderId ? "everything inside it, filed here" : "everything inside it, folders kept",
       art: (
         <span className="add-art add-art-folder">
           <i />
@@ -206,7 +215,7 @@ export function AddPicker({ folderId, name }: { folderId?: string; name?: string
         </span>
       ),
       run: async () => {
-        const { address } = await api<{ address: string }>(`/api/spaces/${folderId}/address`)
+        if (!address) return
         await navigator.clipboard.writeText(address).catch(() => {})
         toast(`Forward papers to ${address}`, {
           description:
@@ -268,6 +277,7 @@ export function AddPicker({ folderId, name }: { folderId?: string; name?: string
             instructions: topic,
             scope,
             schedule: { every: "week", weekday: 1, hour: 9 },
+            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           },
         })
         void queryClient.invalidateQueries({ queryKey: ["agents"] })
@@ -276,7 +286,7 @@ export function AddPicker({ folderId, name }: { folderId?: string; name?: string
         })
       },
     },
-  ].filter((tile) => !tile.spaceOnly || folderId)
+  ].filter((tile) => (!tile.spaceOnly || folderId) && (tile.id !== "email" || address))
 
   return (
     <>
