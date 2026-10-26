@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://konkyo.xyz">
-    <img src=".github/assets/banner.png" width="960" alt="Konkyo's landing page: Your sources. Your questions. Your grounds. A sample paper and its checked, cited answer appear on a purple space wall." />
+    <img src=".github/assets/banner.png" width="960" alt="Konkyo: Research agents that check every quote. Every answer shows its grounds. The landing page beside a real space of three papers and a checked, cited answer." />
   </a>
 </p>
 
@@ -12,368 +12,220 @@
   &nbsp;·&nbsp;
   <a href="https://konkyo.xyz/demo"><b>Demo</b></a>
   &nbsp;·&nbsp;
-  <a href="https://konkyo.xyz/pitch"><b>Pitch</b></a>
+  <a href="https://docs.konkyo.xyz"><b>Docs</b></a>
   &nbsp;·&nbsp;
-  <a href="https://docs.konkyo.xyz"><b>Documentation</b></a>
+  <a href="https://konkyo.xyz/made-with/zetaris"><b>Watch a quote get checked</b></a>
   &nbsp;·&nbsp;
-  <a href="https://konkyo.xyz/made-with/zetaris"><b>How quotes are checked</b></a>
+  <a href="examples/README.md"><b>Recorded runs</b></a>
 </p>
 
-Konkyo (根拠, "grounds" or "evidence"): Konkyo's agents search your papers, lectures and notes, write a cited answer, check every quote word for word in Zetaris, and show where your sources disagree. Unsupported sentences
-go back to be rewritten, and every answer comes with its receipt. Every answer comes with its receipt: the passages,
-the checks, and the SQL that ran them.
+Ask your papers, lectures and notes anything. A team of agents answers only from them, checks
+every quote word for word in **Zetaris**, remembers your corrections and who said what with
+**Meterless** engines, and shows where your sources disagree. **NVIDIA Nemotron** plans each
+answer, finds its passages and guards what's shared.
 
-Ask three real papers on the [landing page](https://konkyo.xyz/#ask), or walk in as a guest and
-bring your own sources. No account is needed for the sample question.
+Built for **Open Agent Hackathon 2026 · Track 02: The Agent That Can Explain Why**
+([how it meets the track](#how-konkyo-meets-the-hackathon)). *Konkyo* (根拠) is Japanese for
+"grounds" or "evidence".
 
-Open Agent Hackathon 2026, **Track 02: The Agent That Can Explain Why**:
-*"Build agents that investigate complex questions across multiple data sources, connect findings,
-and produce evidence-backed answers or recommendations."*
+## One question, start to finish
 
-## Try it in one minute (no keys, no services)
+Three open-access papers on sleep, and one question: *What role do sleep spindles play in
+memory, and do these papers agree about it?*
 
-```bash
-corepack enable && pnpm install
-pnpm konkyo ask --sample        # or: SAMPLE_MODE=true pnpm konkyo
-```
+<p align="center">
+  <img src=".github/assets/journey-answer.jpg" width="900" alt="A Konkyo answer: each sentence names its paper and carries a ticked citation, with an agree/disagree table across the three papers below it." />
+</p>
 
-Run these commands from a checkout of this repository.
+**The answer names each paper, and every citation is ticked** because its quote was found in
+the source. The Analyst lays the papers side by side: where they agree, disagree or partly do.
 
-No `.env`, keys, database or Docker are needed. Sample mode replays a run recorded against real
-services: the replies OpenAI, Nemotron (on NVIDIA's API), Zetaris and the library search gave are
-handed back, and every step of Konkyo's own logic runs again on them
-(planning, citation parsing, the quote checks, the Verifier's verdicts and rewrites, the
-agree/disagree matrix, the World Model, the trace). It prints the cited answer and the path of the
-new trace in `logs/`. `pnpm konkyo samples` lists the five recorded questions; see
-[examples/](examples/README.md) for their outputs and traces, and [data/](data/README.md) for the
-sample sources, their licences and how they reach Zetaris. They were recorded while the OpenAI
-account was out of credit, so they show the fallback path (Nemotron writes and checks; each switch
-is in the trace).
+<p align="center">
+  <img src=".github/assets/journey-citation.jpg" width="900" alt="Clicking citation 1 opens the Nishida and Walker paper at page 4 with the quoted passage highlighted." />
+</p>
 
-```
-$ pnpm konkyo ask --sample 2
-Sample mode: replaying the replies OpenAI, Nemotron, Zetaris and the library search gave on 2026-10-21.
-No keys and no services: every agent step below runs again on those replies.
+**Click a citation and the paper opens at the page**, the passage highlighted.
 
-What role do sleep spindles play in memory, and do these papers agree about it?
-  ✓ Planning · What role do sleep spindles play in memory, and do these papers agree about it?
-  ✓ Searching your library · 16 passages from 3 files
-  ✓ Checking sources in Zetaris · 3 of 3 files confirmed
-  ✓ Comparing sources · 3 claims across 3 sources
-  ✓ Writing
-  ↺ The Verifier sent back 1 sentence; rewriting (round 1)
-  ✓ Verified 5 citations
+<p align="center">
+  <img src=".github/assets/journey-receipt.jpg" width="720" alt="The answer's receipt: each agent step, the model that ran it, and the SQL statement Zetaris used to find every quote in its own reading of the PDFs." />
+</p>
 
-Sleep spindles are associated with memory consolidation across studies [1]. The passages describe
-spindles as a defining electrophysiological signature of NREM sleep that may represent candidate
-triggers of synaptic potentiation leading to neural plasticity [1] and correlate with subsequent
-memory performance [2]. …
-…
-Sources (5)
-Each quote was found word for word in Zetaris's own reading of the source.
-
-[2] Diekelmann · 2014, Sleep for cognitive enhancement, p. 5
-    “the number and activity of sleep spindles correlates with subsequent memory performance
-    (e.g., Clemens et al., 2005; Nishida and Walker, 2007)”
-…
-```
-
-## Who it's for
-
-Students and researchers who read a lot and have to cite what they read: a thesis student with
-forty PDFs, a course's lecture recordings and slides, a reading group comparing papers. The
-problem is trust. General chat assistants answer fluently from memory, mix up sources and invent
-quotes; checking them takes as long as reading. Konkyo answers only from your library, says "Not
-in your library" when it can't, and makes every cited claim checkable in one click: the citation opens
-the source at the passage, highlighted.
+**Every answer has a receipt:** each step, the model that ran it, and the one SQL statement
+Zetaris used to find every quote in its own reading of the PDFs. A sentence the Verifier can't
+back goes back to be rewritten; anything that still fails is dropped. When your library has no
+answer, Konkyo says **Not in your library** and offers a deep search.
 
 ## Demo video
 
 <p align="center">
   <a href="https://konkyo.xyz/demo">
-    <img src="apps/web/public/demo/cover.png" width="960" alt="Open the Konkyo demo page: a dated capture of the real landing page with a play symbol and a clear recording-coming-soon label." />
+    <img src="apps/web/public/demo/cover.png" width="900" alt="Open the Konkyo demo page." />
   </a>
 </p>
 
-The walkthrough recording is in progress. [Open the demo page](https://konkyo.xyz/demo) to try
-the live three-paper question now; it links to the [recorded sample run](https://docs.konkyo.xyz/sample-mode)
-and explains what to inspect in the answer. The cover is based on an actual landing-page capture
-from 2026. It is an editorial cover, not a video frame or evidence that a new answer
-was verified.
+Follow the proof on the live site, no account needed:
 
-The [filming script](docs/demo/2026-10-22-konkyo-demo-script.md) follows a new guest from the
-sample question through a highlighted citation, the receipt, Study, Write, sharing and the
-underlying sponsor technology. It is a guide for recording, not a claim that the video is live.
+1. On [konkyo.xyz](https://konkyo.xyz/#ask), ask the three-paper space a question.
+2. Click a numbered citation: the paper opens at the passage.
+3. See [one Zetaris statement check three quotes](https://konkyo.xyz/made-with/zetaris) as you watch.
 
-## How an answer is made
+## How it works
 
-```mermaid
-flowchart LR
-  Q[Question] --> M[H-MEM: your corrections]
-  M --> P[Planner]
-  P --> R[Retriever: pgvector + full text, fused]
-  R -- best match weak --> P2[Planner replans: broader terms, the papers' own words]
-  P2 --> R
-  R --> Z1[Zetaris pre-check: are these documents in the evidence store?]
-  R --> W[Writer: cited draft, streamed]
-  R --> A[Analyst: claims × sources, when comparing]
-  W --> V{Verifier}
-  Z1 --> V
-  V -- every quote in one Zetaris statement --> V
-  V -- unsupported sentences, with reasons --> W2[Writer rewrites those sentences]
-  W2 --> V
-  V --> F[Answer: only what passed]
-  A --> ZA[Zetaris checks the matrix quotes] --> WM[World Model: sources, claims, stances, provenance]
-  F --> T[Receipt + trace in logs/]
-```
+<p align="center">
+  <a href="https://docs.konkyo.xyz/architecture">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset=".github/assets/system-dark.png" />
+      <img src=".github/assets/system-light.png" width="900" alt="Konkyo's system: the web app and worker on one server, with Postgres and pgvector, publish every file to Zetaris, use three Meterless engines, and call NVIDIA Nemotron and OpenAI with a fallback and a reserve for every call." />
+    </picture>
+  </a>
+</p>
 
-| Agent | Does | Model |
+[Open the architecture](https://docs.konkyo.xyz/architecture) · [Edit the Mermaid source](.github/diagrams/readme-system.mmd)
+
+<p align="center">
+  <a href="https://docs.konkyo.xyz/how-answers-are-checked">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset=".github/assets/answer-dark.png" />
+      <img src=".github/assets/answer-light.png" width="520" alt="One answer: the Planner reads H-MEM and plans searches, the Retriever finds passages, the Writer drafts one finding per sentence, the Verifier checks every quote in Zetaris in one SQL statement and sends unsupported sentences back, the Analyst records agreement in the World Model, and only what passed is answered, with its receipt." />
+    </picture>
+  </a>
+</p>
+
+[How an answer is checked](https://docs.konkyo.xyz/how-answers-are-checked) · [Edit the Mermaid source](.github/diagrams/readme-answer.mmd)
+
+| Agent | Its job | Model |
 |---|---|---|
-| Planner | Rewrites the question to stand alone, plans 1–3 searches, flags comparisons, reads the person's corrections from H-MEM first; when the first search comes back thin, replans from what it found and searches again before saying "Not in your library"; if no Planner model answers, the question is searched as asked | Nemotron 3 Ultra |
-| Retriever | Hybrid search: pgvector cosine and Postgres full text per query, fused by Reciprocal Rank Fusion; questions embedded as queries, passages as passages | Nemotron 3.5 Embed |
-| Writer | One finding per sentence, each with a citation and an exact quote from its passage | OpenAI `gpt-6-luna` |
-| Verifier | Checks each quote in code, then in **one Zetaris statement** against Zetaris's own reading of the PDF (a rewrite round checks only its new quotes; the quotes the answer keeps end up in one statement, the one its receipt shows); judges whether each sentence's quotes support it, and an uncited sentence passes only as a transition; a sentence it gives no verdict on fails; sends failures back with reasons (at most two rewrite rounds); anything that still fails is dropped, never shown as verified | OpenAI `gpt-6-luna` (low reasoning) |
-| Analyst | When a question weighs several sources: 3–6 specific claims × sources with agrees / disagrees / partly, each stance quoted and checked in Zetaris, recorded in the World Model. Also places each paper a watch finds: agrees with, disagrees with, or new to your sources, your passage quoted | OpenAI `gpt-6-luna` (low) |
-| Scout | Deep search: OpenAlex papers and web pages (OpenAI's web search, Wikipedia if it fails), screened in Markovian steps, imported and read before answering | Nemotron 3.5 Lightning plans, Nemotron 3 Ultra screens |
-| Tutor | Practice items from your passages, every answer key checked by the Verifier and every quote in Zetaris | OpenAI `gpt-6-luna` |
+| Planner | Reads your corrections, plans 1–3 searches, replans when results are thin | Nemotron 3 Ultra |
+| Retriever | Searches by meaning and by words at once, and fuses the two | Nemotron 3.5 Embed |
+| Writer | One finding per sentence, each with an exact quote | OpenAI `gpt-6-luna` |
+| Verifier | Finds every quote in Zetaris, judges support, sends failures back | OpenAI `gpt-6-luna` |
+| Analyst | Claims × sources: agrees, disagrees, partly, each quote checked | OpenAI `gpt-6-luna` |
+| Scout | Deep search: finds open papers, screens them in Markovian steps, reads them | Nemotron 3.5 Lightning + 3 Ultra |
+| Tutor | Practice from your passages, every answer key checked | OpenAI `gpt-6-luna` |
 
-OpenAI writes and judges; Nemotron plans, finds, screens and guards. Each role has a fallback on
-the other provider (OpenAI's on Nemotron 3 Ultra, Nemotron's on `gpt-6-luna`) and a reserve on a
-third model, tried in turn, the ones answering first, so an outage, an empty account or NVIDIA's
-free tier filling up doesn't stop an answer while any of them can still answer; each switch is
-logged. Public
-questions, profiles and articles go through Nemotron 3.5 Content Safety first. The models were
-picked by measured benchmarks: OpenAI's on testing, Nemotron's on NVIDIA's API on testing, where
-Ultra with thinking off passed every test (0/10 false rejections, 6/6 planted errors caught, 9/9
-quotes verbatim).
+Every role has a fallback on the other provider and a reserve on a third model, and each switch
+is logged.
 
-## Sponsor technology
+### Built on
 
-Each partner has a page on konkyo.xyz that follows one action into the code, with an
-example (live for Zetaris and OpenAlex): [Zetaris](https://konkyo.xyz/made-with/zetaris) (three quotes checked in one statement
-as you watch), [Meterless](https://konkyo.xyz/made-with/meterless),
-[NVIDIA Nemotron](https://konkyo.xyz/made-with/nvidia), [ElevenLabs](https://konkyo.xyz/made-with/elevenlabs)
-(a real two-voice brief), [Composio](https://konkyo.xyz/made-with/composio) and
-[OpenAlex](https://konkyo.xyz/made-with/openalex) (a live search). Their "follow it in the code"
-excerpts are copied from this repository by `pnpm made-with:code`.
+| Partner | What it does in Konkyo | In the code |
+|---|---|---|
+| **Zetaris** | The evidence store: every passage, and Zetaris's own reading of every PDF. One SQL statement checks every quote of an answer. Topic watches are REST tables over OpenAlex. | [`packages/zetaris`](packages/zetaris/src) |
+| **Meterless · H-MEM** | Your corrections, read by the Planner before every answer | [`memory.ts`](packages/agents/src/memory.ts) |
+| **Meterless · World Model** | Which source says what, with the passage it was read from | [`analyst.ts`](packages/agents/src/analyst.ts) |
+| **Meterless · Markovian** | Long deep searches in bounded steps that carry only the shortlist | [`scout.ts`](packages/agents/src/scout.ts) |
+| **NVIDIA Nemotron** | 3 Ultra plans and screens; 3.5 Embed finds passages; 3.5 Lightning reads spoken asks; 3.5 Content Safety guards public pages; the fallback for every OpenAI role | [`packages/models`](packages/models/src) |
+| **ElevenLabs** | Lecture transcripts cited to the second, read-aloud, two-voice audio briefs | [`packages/ingest`](packages/ingest/src) |
+| **OpenAlex · Composio** | Open papers for deep search and watches · Gmail, Drive and Notion imports | [`scout.ts`](packages/agents/src/scout.ts) · [`connectors`](packages/connectors/src) |
 
-### Zetaris: the evidence store every claim is checked against
+Each partner has a page on konkyo.xyz that follows one action into the code:
+[Zetaris](https://konkyo.xyz/made-with/zetaris) · [Meterless](https://konkyo.xyz/made-with/meterless) ·
+[NVIDIA](https://konkyo.xyz/made-with/nvidia) · [ElevenLabs](https://konkyo.xyz/made-with/elevenlabs) ·
+[Composio](https://konkyo.xyz/made-with/composio) · [OpenAlex](https://konkyo.xyz/made-with/openalex).
 
-Konkyo's answers are only as good as the check, and the check is Zetaris. Remove it and nothing
-can be marked verified.
+## How Konkyo meets the hackathon
 
-- **Evidence store.** When a file is read, the worker publishes its passages as JSON to a Zetaris
-  `FILESTORE` table (`konkyo.konkyo_passages`), hands Zetaris the PDF rendition, and keeps
-  **Zetaris's own PDFBox reading** of it (`konkyo.konkyo_pdf_text`), a second extraction
-  independent of Konkyo's. A file is marked Ready only after Zetaris answers for it.
-  [`packages/zetaris/src/evidence.ts`](packages/zetaris/src/evidence.ts)
-- **Pre-check.** Before the Writer's draft is checked, one statement confirms the retrieved
-  documents are in the evidence store. [`checks.ts`](packages/zetaris/src/checks.ts)
-- **Quote verification.** Every quote of an answer is checked in **one** Spark SQL statement: a
-  `VALUES` list joined to Zetaris's PDF text (recordings: to the stored transcript passages), a
-  quote counting only if its normalised words appear verbatim. The same check runs for the
-  Analyst's matrix, study items, lecture notes and audio briefs. The statement is shown in the
-  app's receipt ("Show SQL") and in [examples/](examples/02-agree-disagree/output.md).
-- **Agents that watch a topic.** A watch is a Zetaris Lightning `REST` table over OpenAlex; each
-  run refreshes it and finds new papers with one `LEFT ANTI JOIN` against the DOIs already seen.
-  [`watch.ts`](packages/zetaris/src/watch.ts)
-- Every Zetaris call is in the trace as `queried_zetaris` with the statement's hash and rows.
+Track 02: *"Build agents that investigate complex questions across multiple data sources, connect
+findings, and produce evidence-backed answers or recommendations."*
 
-### NVIDIA Nemotron: planning, search, safety, and every fallback
+| Requirement or criterion | How Konkyo meets it | Check it |
+|---|---|---|
+| "investigate complex questions across multiple data sources" | The Planner turns a question into searches across your papers, lectures and notes; deep search adds open papers and the web | [answer.ts](packages/agents/src/answer.ts) · [scout.ts](packages/agents/src/scout.ts) |
+| "connect findings" | The Analyst's claims × sources table, kept in the World Model | [Example 02](examples/02-agree-disagree/output.md) |
+| "evidence-backed answers" | Every quote found word for word in Zetaris before you see it; the citation opens the passage | [The journey above](#one-question-start-to-finish) |
+| Zetaris as the data layer | Every file is published to Zetaris; every answer's quotes are checked there | [made-with/zetaris](https://konkyo.xyz/made-with/zetaris) (live) |
+| "at least one Meterless Engine in a working feature" | H-MEM (corrections), World Model (stances), Markovian (deep search) | [made-with/meterless](https://konkyo.xyz/made-with/meterless) |
+| NVIDIA "wherever it contributes" | Nemotron plans, embeds, screens, guards, and stands in for every OpenAI role | [made-with/nvidia](https://konkyo.xyz/made-with/nvidia) |
+| "Evidence of how the system reached its output" | A receipt under every answer; a trace per run in `logs/` | [Proof](#proof) |
+| Logs show "which model handled each request" | Each trace step and the receipt name the model | [examples/](examples/README.md) |
+| A `SAMPLE_MODE=true` fallback | Replays recorded runs with no keys or services | [Try it](#try-it-with-no-keys) |
+| Impact (30) | Students and researchers who must cite what they read get quotes they can trust | [What Konkyo is](https://docs.konkyo.xyz) |
+| Technical (20) | Seven agents with distinct roles, a verify-and-rewrite loop, fallbacks, runs from a clean clone | [Agents and traces](https://docs.konkyo.xyz/agents-and-traces) |
+| Innovation (15) | Quotes checked against an independent reading of the source, in SQL | [How answers are checked](https://docs.konkyo.xyz/how-answers-are-checked) |
+| Product & UX (10) | Spaces, study, writing and voice, all built on the same check | [Everything else](#everything-else) |
 
-Nemotron runs on NVIDIA's API through [`packages/models`](packages/models/src/index.ts), the one
-place Konkyo calls any model.
-
-- **Nemotron 3.5 Embed** embeds every passage (as a passage) and every question (as a query) for
-  pgvector search, at 1536 of its 2048 dimensions: every answer starts with it.
-- **Nemotron 3 Ultra** (550B, 55B active) plans each answer (OpenAI stands in while it's busy) and
-  screens deep-search finds in
-  Markovian steps, and stands in for the Writer, Verifier, Analyst, Tutor and Grader whenever
-  OpenAI is down or out: with its thinking off it passed every test in our benchmark on NVIDIA's
-  API (0/10 false rejections, 6/6 planted errors caught, 9/9 quotes verbatim).
-- **Nemotron 3.5 Lightning** (30B, 3B active) plans deep searches, reads a spoken ask while you're
-  still talking, and summarises each file as it's read.
-- **Nemotron 3.5 Content Safety** checks questions in public spaces, public profiles and every
-  article before it's published.
-- Run inside the free tier: a rate limit per model in each process (the web app and the worker
-  take shares that add up to NVIDIA's ~40 a minute); a stalled call is asked again (a hedged
-  request) and the first answer wins; a model that answers 429 goes second for a minute; every
-  call has a deadline, a fallback on the other provider and a reserve, logged as
-  `escalated_to_fallback`. [`provider.ts`](packages/models/src/provider.ts)
-
-### Meterless: memory, world state and long-task reasoning
-
-The three engines are vendored unchanged (Apache-2.0) in [`packages/meterless`](packages/meterless/NOTICE)
-and driven from [`packages/agents`](packages/agents/src).
-
-- **H-MEM** ([`memory.ts`](packages/agents/src/memory.ts)): a 👎 with a reason, "wrong passage",
-  or "this item is wrong" becomes a correction in the person's memory, with provenance. The
-  Planner reads relevant corrections before every answer (H-MEM's hybrid ranking, then an
-  embedding gate); 👍/👎 on an answer adjusts the confidence of the memories it used. The knows
-  page shows them; cross one out and it's forgotten.
-- **World Model** ([`analyst.ts`](packages/agents/src/analyst.ts)): the Analyst records each
-  comparison as sources, claims and `supports` / `contradicts` / `qualifies` relations, each with
-  the passage it was read from, in one event-sourced model per person.
-- **Markovian** ([`scout.ts`](packages/agents/src/scout.ts)): deep search screens what it found
-  in bounded RESEARCH steps that carry only the shortlist forward; Markovian's own estimate of the
-  tokens saved is shown on the approval card and logged.
-
-## AI and model usage
-
-- **Models and providers:** OpenAI (`gpt-6-luna` for the Writer, Verifier, Analyst, Tutor and
-  Grader; `gpt-5-nano` running OpenAI's web search for deep search) and NVIDIA Nemotron on
-  NVIDIA's API, free tier (3 Ultra, 3.5 Lightning, 3.5 Embed 1B and 3.5 Content Safety, as above,
-  and 3.5 Super VL as a reserve for the Writer, Analyst and Tutor).
-  ElevenLabs for
-  speech (Scribe `scribe_v2` and realtime for transcription; Flash v2.5 and Eleven v3 dialogue for
-  read-aloud and audio briefs). No other AI model is called while Konkyo runs.
-- **Made once, shipped as files:** the illustrations (the looks, stickers and landing pictures)
-  were generated with OpenAI's image models (gpt-image-2; stickers gpt-image-1) by
-  [`scripts/make-images.mjs`](scripts/make-images.mjs), and the five study sounds with
-  ElevenLabs' sound-effects model.
-- **Frameworks:** the AI SDK 7 (`ai`, `@ai-sdk/openai`, and `@ai-sdk/openai-compatible` pointed at
-  NVIDIA's API),
-  Next.js 16, Postgres with pgvector, pg-boss, Better Auth; Zetaris and Meterless as above.
-- **Data:** your own uploads; OpenAlex, the web and Wikipedia for deep search and paper records; the
-  sample library is openly licensed papers (see [examples/](examples/README.md)).
-- **Development:** built with an AI coding assistant, disclosed here once as the event's AI usage policy asks. Cursor was not used.
-
-## Everything else it does
-
-- **Spaces:** each subject or project is a space with its own colour and wall: its sources,
-  pinned answers, notes, practice and audio brief in one place, made from a template (exam prep,
-  essay, literature review, reading group). Share one with an invite link or by email; members
-  are there live (who's here, sources landing as they're added, a space chat that can ask
-  @konkyo), pin answers to the wall and leave takes on sources. Each space has its own email
-  address: forward it a paper and it lands on the wall (mail from outside the space waits for the
-  owner's yes).
-- **Library:** PDF, Word, PowerPoint, Markdown, text, web pages, YouTube, audio and video
-  (transcribed with ElevenLabs Scribe, cited to the second). ⌘K, Trash, DOI import. Every
-  document gets a PDF rendition, so one viewer highlights any citation.
-- **Ask:** from the dock, over the whole library, a space or chosen files; the agree/disagree
-  matrix; the receipt with steps, sources, memories and SQL; "Not in your library" with Find
-  sources. **Catch me up** says what moved since your last visit.
-- **Voice:** talk to the orb (ElevenLabs Scribe Realtime); it answers on a card built while you
-  speak and says the short answer out loud.
-- **Deep search:** finds papers (OpenAlex, open access) and web pages, imports them, answers.
-- **Write:** notes with citation chips, "Find a source" for a sentence, "Check my draft"
-  (supported / partly / contradicted / not found), versions with a diff, export to Word in any
-  CSL style or to Google Docs, and **publish** as a public article whose every claim was checked
-  before it went out.
-- **Study:** quizzes and games from your sources with checked answer keys, hints that never give
-  the answer away, spaced repetition (FSRS) and streaks. **Live rounds:** play a quiz together in
-  a shared space with a join code; answers turn face up together with the passage.
-- **What it knows:** your corrections (H-MEM) and where your sources stand on each claim (World
-  Model), yours and each space's, readable and editable.
-- **Agents:** saved standing tasks: watch a topic for new papers, or quiz a folder on a schedule.
-- **Public spaces:** a read-only link anyone can read and ask, with moderation and caps.
-- **Audio brief:** two voices talk through a space (ElevenLabs), every line cited and checked.
-- **Connectors:** Gmail, Google Drive and Notion through Composio; imports resync when they
-  change.
-- **People:** profiles with handles, follows, and a guest entry that needs no account: keep it
-  later with Google or a code by email.
-- **Email** (Resend): sign-in codes, mail to a space, invites, and an opt-in weekly digest.
-
-## Entry points
-
-| | |
-|---|---|
-| Web app | `pnpm dev` → http://localhost:3210 (sign in with Google or as a guest) |
-| CLI | `pnpm konkyo ask "<question>" [--folder <name>] [--compare] [--json]` (see `pnpm konkyo help`) |
-| Sample mode | `pnpm konkyo ask --sample [n]`, no keys or services |
-| HTTP | `POST /api/v1/ask` with a key from Settings → API keys |
+## Try it with no keys
 
 ```bash
-curl -X POST http://localhost:3210/api/v1/ask \
-  -H "Authorization: Bearer $KONKYO_API_KEY" -H "content-type: application/json" \
-  -d '{"question": "How does sleep help memory?"}'
+corepack enable && pnpm install
+SAMPLE_MODE=true pnpm konkyo ask --sample 2
 ```
 
-It returns the answer, citations, matrix, receipt and the full trace as JSON; with
-`Accept: application/x-ndjson`, every agent step streams as a line. The question lands in Chats
-like any other.
+No `.env`, keys, database or Docker. Sample mode replays the replies OpenAI, Nemotron, Zetaris
+and the library search gave in a recorded run, and every step of Konkyo's own logic runs again on
+them: planning, the quote checks, the Verifier's rewrites, the matrix, the World Model and a new
+trace. `pnpm konkyo samples` lists the five recorded questions.
+
+## Proof
+
+- **[Five recorded runs](examples/README.md):** input, answer, trace and tape for a cited answer,
+  an agree/disagree table, a false premise corrected, a lecture with its textbook, and "Not in
+  your library".
+- **Traces:** every run writes `logs/<runId>.jsonl`: each agent's step, its model, the Zetaris
+  statement by hash, rows, verdicts (`approved`, `rejected_to_writer`, `escalated_to_fallback`),
+  latency and tokens.
+- **[The sample data](data/README.md):** eight openly licensed sources, their licences, and how
+  they reach Zetaris.
+
+## Everything else
+
+- **Spaces:** a wall per subject, shared live with an invite; a space chat that can ask @konkyo. [Spaces and sharing](https://docs.konkyo.xyz/spaces-and-sharing)
+- **Library:** PDF, Word, slides, web pages, YouTube, recordings and Gmail, Drive or Notion imports, each read and checked into Zetaris.
+- **Study:** quizzes and games with checked answer keys, hints, a "why" that opens the passage, spaced repetition, live rounds.
+- **Write:** citation chips, Find a source, Check my draft (supported, partly, contradicted, not found), Word and Google Docs export in any citation style, and articles published only after every claim was checked.
+- **Voice and audio:** talk to the orb; two-voice audio briefs of a space, every line cited.
+- **Agents:** watch a topic for new papers, each placed against what you have; quiz a folder on a schedule.
+- **CLI and API:** `pnpm konkyo ask`, and `POST /api/v1/ask` with streamed steps. [CLI and API](https://docs.konkyo.xyz/cli-and-api)
 
 ## Run it yourself
 
-Needs Node 22.18+, pnpm (via `corepack enable`), Docker, a Zetaris instance, an OpenAI API key and
-an NVIDIA API key (free at [build.nvidia.com](https://build.nvidia.com/settings/api-keys)).
+Needs Node 22.18+, pnpm, Docker, a Zetaris instance, and OpenAI and NVIDIA API keys.
 
 ```bash
-cp .env.example .env            # fill it in; every variable is described there
+cp .env.example .env       # every variable is described there
 pnpm install
-pnpm services:up                # Postgres + pgvector, RustFS (S3), Gotenberg
-pnpm services:check
+pnpm services:up           # Postgres + pgvector, object storage, Gotenberg
 pnpm db:migrate
-pnpm dev                        # web app on :3210, the worker, docs on :3211
+pnpm dev                   # web on :3210, the worker, docs on :3211
 ```
 
-**Zetaris:** the hackathon's instance (set `ZETARIS_REST_URL` and `ZETARIS_API_KEY`), or the local
-bundle (`ZETARIS_LOGIN_URL`, `ZETARIS_USERNAME`, `ZETARIS_PASSWORD`, `ZETARIS_ORG_ID`).
-`EVIDENCE_DIR` is where the worker writes evidence files and `ZETARIS_EVIDENCE_URI` is the same
-folder as Zetaris sees it. **ElevenLabs** is needed for recordings and audio briefs; **Google
-OAuth** for sign-in; **Composio** and **VAPID** keys are optional.
-
-**All in Docker** (what production runs): `infra/compose.prod.yaml` builds the web app, the
-worker (with OCRmyPDF and yt-dlp) and the docs from their Dockerfiles, and runs them with
-Postgres, RustFS and Gotenberg. Migrations run first; web and worker share one `/data` volume
-(traces, memory, World Model). Zetaris stays outside (set `ZETARIS_*`).
-
-```bash
-docker compose -f infra/compose.prod.yaml up -d --build
-```
-
-A sample library for the CLI: `pnpm konkyo seed --user you@example.com`, then
-`pnpm konkyo ask "Does a nap help motor learning?" --user you@example.com --folder "Essay starter: Sleep and learning"`.
-
-## Repository
+Docker for everything, Zetaris setup and every variable: [Self-hosting](https://docs.konkyo.xyz/self-hosting).
 
 ```
-apps/web          Next.js 16 app: UI, API routes, the chat's answer stream, /api/v1/ask
-apps/worker       pg-boss worker: ingest pipeline, deep search, study sets, agents, briefs, sync
+apps/web          Next.js 16 app, API routes, /api/v1/ask
+apps/worker       reading files, deep search, study sets, agents, briefs
 apps/cli          pnpm konkyo: ask, samples, seed
-apps/docs         the docs site (Fumadocs, static export)
-packages/agents   Planner, Retriever, Writer, Verifier, Analyst, Scout, Tutor; models; tracer
-packages/zetaris  Zetaris REST client, evidence store, quote checks, watch tables
-packages/meterless  H-MEM, World Model, Markovian (vendored, Apache-2.0)
+apps/docs         the docs site
+packages/agents   the agents, the tracer
+packages/models   every model call: providers, fallbacks, limits
+packages/zetaris  evidence store, quote checks, watch tables
+packages/meterless  H-MEM, World Model, Markovian (Apache-2.0)
 packages/tape     record and replay for sample mode
-packages/ingest   conversion (Gotenberg), PDF text and boxes, OCR, transcription, web capture
-packages/db       Drizzle schema and migrations (Postgres + pgvector)
-packages/…        config, env, jobs, storage, notify, connectors, study (FSRS), ui
-examples/         five recorded runs: input, output, trace, tape
-data/             the sample sources: links, licences, sizes, how they reach Zetaris
-logs/             one JSONL trace per run
+examples/ data/   recorded runs, sample sources
 ```
-
-## Traces
-
-Every run writes `logs/<runId>.jsonl`: which agent did what, with which model, against which
-Zetaris statement (by hash), rows returned, verdicts (`approved`, `rejected_to_writer`,
-`escalated_to_fallback`), latency and tokens. The app shows the same run as the receipt.
 
 ## Limits
 
-- **Two model providers, a fallback and a reserve for each role.** OpenAI writes and judges; when
-  it's down or out of credit, Nemotron takes over, slower on NVIDIA's free tier (about 40 requests
-  a minute for each model, split between the web app and the worker). If every model of a role is
-  busy, the answer says so and asks you to try again. Sample mode needs no key.
-- **Live use needs Zetaris.** Nothing is marked verified without it, by design.
-- **Sample mode replays recorded questions only.** Any other question is refused, not invented.
-- **Fair-use caps** (no paywall): 300 answers, 20 deep searches and 300 files a day per account;
-  guests get less (60, 3, 40). Settings → Usage shows them.
-- **Connectors** use Composio-managed Google auth, whose consent screen asks for wider Gmail
-  scopes than Konkyo uses (it only reads). A read-only auth config needs your own Google OAuth
-  client.
-- Scanned PDFs are read with OCRmyPDF (installed, or its Docker image); handwriting and complex
-  tables can come out imperfect.
+- Live answers need Zetaris: nothing is marked verified without it.
+- NVIDIA's free tier allows about 40 requests a minute per model, so the Nemotron fallback path is
+  slower. If every model for a role is busy, the answer says so.
+- Sample mode replays the recorded questions only; any other question is refused.
+- Fair-use caps: 300 answers, 20 deep searches and 300 files a day per account (guests get less).
+- Scanned pages are read with OCR, which can miss handwriting and complex tables.
 
+
+## AI usage
+
+Models while Konkyo runs: OpenAI `gpt-6-luna` and `gpt-5-nano`, NVIDIA Nemotron (3 Ultra,
+3.5 Lightning, 3.5 Embed, 3.5 Content Safety, 3.5 Super VL as a reserve) and ElevenLabs speech.
+The illustrations were made once with OpenAI's image models
+([`make-images.mjs`](scripts/make-images.mjs)). Built with an AI coding assistant, disclosed here
+as the event's AI usage policy asks.
 
 ## Licences and credits
 
-- **Third-party code and assets** are listed with their licences and copyright notices in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
-- **Interface sounds** (tap, place, check, promote) are from [Mixkit](https://mixkit.co/free-sound-effects/)
-  under the [Mixkit Sound Effects Free License](https://mixkit.co/license/#sfxFree), trimmed. The five study sounds were made once with ElevenLabs' sound
-  effects model ([`make-sounds.ts`](packages/ingest/scripts/make-sounds.ts)).
-- **Fonts:** Bricolage Grotesque and IBM Plex (SIL Open Font License).
-- **Code highlighting** on the made-with pages: [Shiki](https://shiki.style) (MIT), run at build.
-- The Meterless engines are Apache-2.0 ([NOTICE](packages/meterless/NOTICE)). The sample sources
-  are openly licensed (CC BY and CC BY-NC-SA); see [examples/](examples/README.md#sources-and-licences).
+Third-party code and assets, with their licences, are in
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). The Meterless engines are Apache-2.0
+([NOTICE](packages/meterless/NOTICE)). The sample sources are CC BY and CC BY-NC-SA
+([data/](data/README.md)). Interface sounds are from [Mixkit](https://mixkit.co/license/#sfxFree);
+fonts are Bricolage Grotesque and IBM Plex (SIL OFL).

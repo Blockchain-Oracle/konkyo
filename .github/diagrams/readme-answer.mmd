@@ -1,0 +1,12 @@
+flowchart TB
+  Q["Your question"] --> PLAN["Planner<br/>reads H-MEM first,<br/>then plans 1–3 searches"]
+  PLAN --> RET["Retriever<br/>meaning + words, fused"]
+  RET -->|"thin? replan"| PLAN
+  RET --> WRITE["Writer<br/>one finding per sentence,<br/>each with its exact quote"]
+  RET --> ANA["Analyst<br/>claims × sources"]
+  WRITE --> VER{"Verifier"}
+  VER <-->|"every quote,<br/>one SQL statement"| ZET[("Zetaris<br/>its own reading of the PDF")]
+  VER -->|"unsupported:<br/>rewrite these"| WRITE
+  ANA --> WM["World Model<br/>agrees · disagrees · partly"]
+  VER --> ANS["Answer: only what passed<br/>+ receipt with the SQL"]
+  WM --> ANS

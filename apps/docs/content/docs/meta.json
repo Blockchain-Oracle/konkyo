@@ -2,6 +2,7 @@
   "title": "Konkyo",
   "pages": [
     "index",
+    "architecture",
     "how-answers-are-checked",
     "agents-and-traces",
     "sponsor-tech",

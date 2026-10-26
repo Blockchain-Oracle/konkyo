@@ -1,0 +1,42 @@
+---
+title: Architecture
+description: One server, three partners doing real work, and a fallback for every model call.
+---
+
+<Diagram name="system" alt="Konkyo's system: the web app and worker on one server, with Postgres and pgvector, publish every file to Zetaris, use three Meterless engines, and call NVIDIA Nemotron and OpenAI with a fallback and a reserve for every call." />
+
+## The pieces
+
+| Piece | What it does | In the code |
+|---|---|---|
+| **Web app** | The app, its API (`/api/v1/ask`), and the answers, streamed as the agents work | `apps/web` |
+| **Worker** | Reads every file, runs deep searches, makes study sets, runs agents and audio briefs | `apps/worker` |
+| **Postgres + pgvector** | Passages with their Nemotron vectors and full-text index, chats, runs, study cards | `packages/db` |
+| **Object storage** | Every file and its PDF rendition, so one viewer can highlight any citation | `packages/storage` |
+| **Zetaris** | The evidence store: every passage, Zetaris's own reading of every PDF, and the SQL that checks every quote | `packages/zetaris` |
+| **Meterless** | H-MEM (your corrections), World Model (which source says what), Markovian (long deep searches) | `packages/meterless`, `packages/agents` |
+| **Models** | One place for every model call: a fallback on the other provider, a reserve, a deadline, a rate limit | `packages/models` |
+
+## One answer
+
+<Diagram name="answer" width={520} alt="One answer: the Planner reads H-MEM and plans searches, the Retriever finds passages, the Writer drafts one finding per sentence, the Verifier checks every quote in Zetaris in one SQL statement and sends unsupported sentences back, the Analyst records agreement in the World Model, and only what passed is answered, with its receipt." />
+
+Step by step, with the models: [How an answer is checked](/how-answers-are-checked).
+
+## Where a file goes
+
+1. **Upload or import:** a PDF, Word file, slides, web page, YouTube link, recording, or a Gmail,
+   Drive or Notion item.
+2. **One PDF for everything:** Gotenberg converts it; scanned pages get OCR; recordings are
+   transcribed with ElevenLabs Scribe, cited to the second.
+3. **Passages:** split with their page and position, embedded with Nemotron 3.5 Embed, summarised
+   with Nemotron 3.5 Lightning.
+4. **Into Zetaris:** the passages and the PDF are published; Zetaris reads the PDF itself.
+5. **Ready:** only once Zetaris answers for it. From then on, every quote from it is checked there.
+
+## Where it runs
+
+One Coolify server runs the web app, the worker, Postgres, object storage, Gotenberg and this
+docs site (a static export), with Zetaris beside them. [konkyo.xyz](https://konkyo.xyz) and
+[docs.konkyo.xyz](https://docs.konkyo.xyz) are what's described here. To run your own:
+[Self-hosting](/self-hosting).

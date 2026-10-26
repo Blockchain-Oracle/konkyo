@@ -3,11 +3,18 @@ title: What Konkyo is
 description: Research agents that check every quote. Ask your papers, lectures and notes anything, and every quote is checked word for word before you see it.
 ---
 
-Konkyo (根拠, "grounds" or "evidence"): Konkyo's agents search your papers, lectures and notes, write a cited answer, check every quote word for word in Zetaris, and show where your sources disagree. Anything it can't support is sent back and rewritten.
+**Every answer shows its grounds.** Ask your papers, lectures and notes anything. A team of
+agents answers only from them, checks every quote word for word in Zetaris, remembers your
+corrections with Meterless engines, and shows where your sources disagree. Anything it can't back
+is sent back and rewritten; what still fails is dropped. *Konkyo* (根拠) means "grounds" or
+"evidence".
+
+<Diagram name="system" alt="Konkyo's system: the web app and worker on one server publish every file to Zetaris, use three Meterless engines, and call NVIDIA Nemotron and OpenAI with a fallback and a reserve for every call." />
 
 ## Start here
 
 <Cards>
+  <Card title="Architecture" href="/architecture" description="One server, three partners doing real work, and a fallback for every model call." />
   <Card title="How an answer is checked" href="/how-answers-are-checked" description="The path from a question to an answer whose every quote was found in its source." />
   <Card title="The agents and their trace" href="/agents-and-traces" description="Who does what, with which model, and how to read the trace." />
   <Card title="What Konkyo is built on" href="/sponsor-tech" description="Zetaris, Meterless, NVIDIA Nemotron, ElevenLabs, Composio and OpenAlex, and where each sits." />
