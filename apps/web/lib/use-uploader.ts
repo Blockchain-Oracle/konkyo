@@ -4,6 +4,7 @@ import { STORAGE } from "@konkyo/config"
 import { useQueryClient } from "@tanstack/react-query"
 import AwsS3 from "@uppy/aws-s3"
 import Uppy, { type Meta, type UppyFile } from "@uppy/core"
+import GoldenRetriever from "@uppy/golden-retriever"
 import { useUppyEvent, useUppyState } from "@uppy/react"
 import { useCallback, useState } from "react"
 import { toast } from "sonner"
@@ -26,8 +27,8 @@ export type UploadState = { percent: number; failed: boolean }
  */
 export function useUploader() {
   const queryClient = useQueryClient()
-  const [uppy] = useState(() =>
-    new Uppy<UploadMeta>({
+  const [uppy] = useState(() => {
+    const uppy = new Uppy<UploadMeta>({
       autoProceed: true,
       restrictions: { maxFileSize: STORAGE.maxUploadBytes },
     }).use(AwsS3, {
@@ -44,8 +45,26 @@ export function useUploader() {
             partNumber: "partNumber" in request ? request.partNumber : undefined,
           },
         }),
-    }),
-  )
+    })
+    // An upload survives a reload or a closed tab (F01): Golden Retriever keeps each file's state,
+    // and its bytes up to 10 MiB in this browser's IndexedDB, then resumes. Browser only.
+    if (typeof window !== "undefined") {
+      uppy.on("restored", () => {
+        const files = uppy.getFiles()
+        // A larger file's bytes weren't kept: it can't resume, so say so instead of waiting.
+        for (const ghost of files.filter((f) => f.isGhost)) {
+          uppy.removeFile(ghost.id)
+          toast(`${ghost.name} didn't finish uploading`, {
+            description: "It's too big to keep in this browser across a reload. Add it again.",
+          })
+        }
+        // No dashboard asks "restore?": the person already chose these files, so they go on.
+        if (files.some((f) => !f.isGhost)) uppy.emit("restore-confirmed")
+      })
+      uppy.use(GoldenRetriever, { serviceWorker: false })
+    }
+    return uppy
+  })
 
   const refresh = useCallback(
     () => queryClient.invalidateQueries({ queryKey: qk.files.all }),

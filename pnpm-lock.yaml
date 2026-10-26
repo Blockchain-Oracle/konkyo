@@ -244,6 +244,9 @@ importers:
       '@uppy/core':
         specifier: 6.2.0
         version: 6.2.0
+      '@uppy/golden-retriever':
+        specifier: 6.0.0
+        version: 6.0.0(@uppy/core@6.2.0)
       '@uppy/react':
         specifier: 6.0.0
         version: 6.0.0(@uppy/core@6.2.0)(@uppy/google-drive-picker@2.0.0(@uppy/core@6.2.0))(@uppy/google-photos-picker@2.0.0(@uppy/core@6.2.0))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -3362,6 +3365,11 @@ packages:
 
   '@uppy/core@6.2.0':
     resolution: {integrity: sha512-GujQtHazyHM2jjoNZyZlB+R3mUf1bynx0D+sPRt4IfLEfV09LbqA1kzwabL+WEKFdfqls15T+a/4u3XGV4n/oQ==}
+
+  '@uppy/golden-retriever@6.0.0':
+    resolution: {integrity: sha512-j3GrBdQla8soBc7xFk0Xc7uGekNo9JcczO66OYmu5Nvg9dHti9/1+0YfZbpG91rxqkbhZM1tJ4/Iu2TKiQTLSQ==}
+    peerDependencies:
+      '@uppy/core': ^6.0.0
 
   '@uppy/google-drive-picker@2.0.0':
     resolution: {integrity: sha512-i3XPwEWPCZJtHM9bYRIQ89cjIrSx6dqm3C81bb63Z0H3bet9Yz8E5BJS7ofyppJiOiJg19Vec4evx5QOCZ45aQ==}
@@ -8670,6 +8678,11 @@ snapshots:
       preact: 10.29.8
     transitivePeerDependencies:
       - preact-render-to-string
+
+  '@uppy/golden-retriever@6.0.0(@uppy/core@6.2.0)':
+    dependencies:
+      '@uppy/core': 6.2.0
+      lodash: 4.18.1
 
   '@uppy/google-drive-picker@2.0.0(@uppy/core@6.2.0)':
     dependencies:
