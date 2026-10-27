@@ -589,6 +589,30 @@
   color: var(--about-muted);
   font-size: 15px;
 }
+/* The wait, shown: the scout's black box, wide, under the hero. */
+.about-crawl {
+  padding-block: 4px 84px;
+}
+.about-crawl-stage {
+  margin: 0;
+}
+.about-crawl-stage > div {
+  border-color: var(--about-rule);
+  box-shadow: 0 10px 0 rgb(255 255 255 / 0.06);
+}
+.about-crawl-stage figcaption {
+  margin-top: 22px;
+  max-width: 70ch;
+  color: var(--about-muted);
+  font-size: 13px;
+}
+@media (max-width: 800px) {
+  .about-crawl .about-section-heading {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+}
 .about-room-list {
   border-top: 1px solid var(--about-rule);
 }

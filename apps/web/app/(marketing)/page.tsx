@@ -8,6 +8,7 @@ import type { CSSProperties } from "react"
 import { Suspense } from "react"
 import { BrandMark } from "@/components/brand-mark"
 import { HeroBoard } from "@/components/landing/hero-board"
+import { LandingScout } from "@/components/landing/landing-scout"
 import { LazyLiveAnswer } from "@/components/landing/live-answer-lazy"
 import { LiveCounts } from "@/components/landing/live-counts"
 import { type Vendor, VendorLogo } from "@/components/landing/vendor-logo"
@@ -258,6 +259,23 @@ export default function LandingPage() {
             </p>
           </div>
           <HeroBoard />
+        </section>
+
+        {/* The wait, shown: a deep search replayed on real papers, the scout crawling them. */}
+        <section className="about-wrap about-crawl" aria-labelledby="crawl-title">
+          <div className="about-section-heading">
+            <h2 id="crawl-title">
+              Searching isn't a spinner.
+              <br />
+              Watch it <span>read.</span>
+            </h2>
+            <p>
+              When your library runs out, a scout crawls open papers and the web, screens every
+              source, and shows you the shortlist before anything comes in. The same scout works on
+              every answer and every comparison.
+            </p>
+          </div>
+          <LandingScout />
         </section>
 
         {/* The problem, in the README's words, right under the promise. */}
