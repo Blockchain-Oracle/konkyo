@@ -16,6 +16,7 @@ import { CitedIn } from "./citation-chip"
 import { DeepRun } from "./deep-run"
 import { MessageActions } from "./message-actions"
 import { LiveSteps, RunReceipt } from "./run-receipt"
+import { ScoutAnswer } from "./scout-answer"
 
 /**
  * An answer: live steps and the streaming draft while the run works, then the
@@ -188,6 +189,8 @@ export function AssistantMessage({
   }
   return (
     <div>
+      {/* The wait, as the scout: planning, reading the passages, then checking each quote. */}
+      <ScoutAnswer steps={steps} sources={sources} matrix={matrix} />
       {steps.length > 0 && <LiveSteps steps={steps} />}
       {body && (
         <div className="mt-5">
