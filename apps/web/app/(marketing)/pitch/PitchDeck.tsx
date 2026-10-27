@@ -1,11 +1,72 @@
 "use client"
 
+import type { Route } from "next"
 import Image from "next/image"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { BrandMark } from "@/components/brand-mark"
-import { MILESTONES, PITCH } from "./copy"
+import { PITCH, type Picture, type Slide } from "./copy"
 import styles from "./page.module.css"
+
+function Photo({ picture, priority }: { picture: Picture; priority?: boolean }) {
+  return (
+    <Image
+      src={picture.src}
+      alt={picture.alt}
+      width={picture.width}
+      height={picture.height}
+      sizes="(max-width: 700px) 100vw, 55vw"
+      priority={priority}
+    />
+  )
+}
+
+/** The right-hand side of a slide: whatever shows the point, as a picture or a list of cards. */
+function Visual({ slide, priority }: { slide: Slide; priority: boolean }) {
+  const visual = slide.visual
+  switch (visual.kind) {
+    case "capture":
+      return (
+        <figure className={styles.capture}>
+          <Photo picture={visual.picture} priority={priority} />
+          <figcaption>{visual.picture.caption}</figcaption>
+        </figure>
+      )
+    case "picture":
+      return (
+        <figure className={styles.picture}>
+          <Photo picture={visual.picture} priority={priority} />
+          <figcaption>{visual.picture.caption}</figcaption>
+        </figure>
+      )
+    case "cards":
+      return (
+        <ol
+          className={styles.cards}
+          data-columns={visual.columns ?? 1}
+          data-dense={visual.dense ? "" : undefined}
+        >
+          {visual.items.map((item) => (
+            <li key={`${item.label}${item.text}`}>
+              <span>{item.label}</span>
+              <strong>{item.text}</strong>
+            </li>
+          ))}
+        </ol>
+      )
+    case "shots":
+      return (
+        <div className={styles.shots}>
+          {visual.pictures.map((picture) => (
+            <figure key={picture.src}>
+              <Photo picture={picture} />
+              <figcaption>{picture.caption}</figcaption>
+            </figure>
+          ))}
+        </div>
+      )
+  }
+}
 
 export function PitchDeck() {
   const [index, setIndex] = useState(0)
@@ -31,6 +92,9 @@ export function PitchDeck() {
     return () => window.removeEventListener("keydown", onKey)
   }, [])
 
+  if (!slide) return null
+  const [first, ...rest] = slide.links ?? []
+
   return (
     <main className={styles.deck} data-theme={slide.theme} aria-label="Konkyo pitch">
       <div className={styles.frame}>
@@ -52,74 +116,39 @@ export function PitchDeck() {
           <article
             key={slide.id}
             className={styles.slide}
+            data-layout={slide.layout}
             aria-label={`Slide ${index + 1}: ${slide.label}`}
           >
             <div className={styles.copy}>
               <p className={styles.eyebrow}>{slide.eyebrow}</p>
-              <h1>{slide.title}</h1>
+              <h1 data-long={slide.title.length > 20 ? "" : undefined}>{slide.title}</h1>
               <p className={styles.body}>{slide.body}</p>
-              {slide.id === "demo" ? (
-                <Link href="/demo" className={styles.cta}>
-                  open the demo <span aria-hidden>↗</span>
-                </Link>
-              ) : null}
-              {slide.id === "product" ? (
+              {first ? (
                 <div className={styles.links}>
-                  <Link href="/#ask" className={styles.cta}>
-                    try three real papers <span aria-hidden>↗</span>
-                  </Link>
-                  <a href="https://docs.konkyo.xyz/how-answers-are-checked">
-                    how the check works ↗
-                  </a>
+                  {first.external ? (
+                    <a href={first.href} className={styles.cta}>
+                      {first.text} <span aria-hidden>↗</span>
+                    </a>
+                  ) : (
+                    <Link href={first.href as Route} className={styles.cta}>
+                      {first.text} <span aria-hidden>↗</span>
+                    </Link>
+                  )}
+                  {rest.map((link) =>
+                    link.external ? (
+                      <a key={link.href} href={link.href}>
+                        {link.text} ↗
+                      </a>
+                    ) : (
+                      <Link key={link.href} href={link.href as Route}>
+                        {link.text} ↗
+                      </Link>
+                    ),
+                  )}
                 </div>
               ) : null}
             </div>
-
-            {slide.id === "demo" ? (
-              <figure className={styles.capture}>
-                <Image
-                  src="/demo/landing-capture.jpg"
-                  alt="Konkyo landing page with a sample paper and its cited answer"
-                  width={1280}
-                  height={720}
-                  priority
-                />
-                <figcaption>Live product · recording pending</figcaption>
-              </figure>
-            ) : null}
-            {slide.id === "problem" ? (
-              <div className={styles.questions}>
-                <span>01 / Which source?</span>
-                <span>02 / Which exact words?</span>
-                <span>03 / How do they support the answer?</span>
-              </div>
-            ) : null}
-            {slide.id === "product" ? (
-              <ol className={styles.steps}>
-                <li>
-                  <span>01 / ASK</span>
-                  <strong>Your library is the starting point.</strong>
-                </li>
-                <li>
-                  <span>02 / CHECK</span>
-                  <strong>Each quote is checked in Zetaris.</strong>
-                </li>
-                <li>
-                  <span>03 / OPEN</span>
-                  <strong>The passage and receipt are one click away.</strong>
-                </li>
-              </ol>
-            ) : null}
-            {slide.id === "milestones" ? (
-              <ol className={styles.milestones}>
-                {MILESTONES.map((milestone) => (
-                  <li key={milestone.label}>
-                    <span>{milestone.label}</span>
-                    <strong>{milestone.text}</strong>
-                  </li>
-                ))}
-              </ol>
-            ) : null}
+            <Visual slide={slide} priority={index === 0} />
           </article>
         </section>
 

@@ -85,9 +85,7 @@
 .folio,
 .eyebrow,
 .footerHint,
-.questions span,
-.steps span,
-.milestones span {
+.cards span {
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 600;
@@ -208,9 +206,14 @@
   font-size: 12px;
 }
 
-.questions,
-.steps,
-.milestones {
+/* A long title steps down so it still fits beside its picture. */
+.copy h1[data-long] {
+  max-width: 16ch;
+  font-size: clamp(2.5rem, 4.4vw, 4.7rem);
+}
+
+/* A list of short cards: a small label, then one plain sentence. */
+.cards {
   display: grid;
   gap: 12px;
   margin: 0;
@@ -218,52 +221,147 @@
   list-style: none;
 }
 
-.questions span,
-.steps li,
-.milestones li {
+.cards[data-columns="2"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.cards li {
   display: block;
   border: 1px solid var(--pitch-panel-rule);
   border-radius: 16px;
-  padding: clamp(20px, 2.5vw, 34px);
+  padding: clamp(18px, 2.2vw, 30px);
   background: var(--pitch-panel);
 }
 
-.questions span:nth-child(2),
-.steps li:nth-child(2),
-.milestones li:nth-child(2) {
+.cards li:nth-child(2) {
   background: #6347d9;
   color: #fff;
 }
 
-.questions span {
-  font-size: clamp(14px, 1.6vw, 22px);
-  letter-spacing: 0;
-  text-transform: none;
-}
-
-.steps span,
-.milestones span {
+.cards span {
   display: block;
-  margin-bottom: 13px;
+  margin-bottom: 12px;
   color: var(--pitch-accent);
 }
 
-.steps li:nth-child(2) span,
-.milestones li:nth-child(2) span {
+.cards li:nth-child(2) span {
   color: #e6dfff;
 }
 
-.steps strong,
-.milestones strong {
+.cards strong {
   display: block;
   font-family: var(--font-display);
-  font-size: clamp(20px, 2vw, 29px);
-  line-height: 1.15;
+  font-size: clamp(18px, 1.8vw, 26px);
+  font-weight: 700;
+  line-height: 1.2;
 }
 
-.milestones strong {
-  max-width: 28ch;
-  font-size: clamp(18px, 1.65vw, 24px);
+.cards[data-dense] li {
+  padding: clamp(14px, 1.5vw, 20px);
+}
+
+.cards[data-dense] span {
+  margin-bottom: 8px;
+}
+
+.cards[data-dense] strong {
+  font-size: clamp(15px, 1.35vw, 20px);
+}
+
+/* A real screenshot, straight, with what it shows underneath. */
+.picture {
+  overflow: hidden;
+  margin: 0;
+  border: 1px solid var(--pitch-panel-rule);
+  border-radius: 18px;
+  background: var(--pitch-panel);
+}
+
+.picture img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: calc(100dvh - 250px);
+  object-fit: contain;
+}
+
+.picture figcaption,
+.shots figcaption {
+  padding: 10px 15px;
+  color: var(--pitch-soft);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* Four screenshots at once. */
+.shots {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+.shots figure {
+  overflow: hidden;
+  margin: 0;
+  border: 1px solid var(--pitch-panel-rule);
+  border-radius: 14px;
+  background: var(--pitch-panel);
+}
+
+.shots img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.shots figcaption {
+  padding: 8px 12px 10px;
+}
+
+/* A wide picture (the system map) sits under the words instead of beside them. */
+.slide[data-layout="wide"] {
+  grid-template-columns: minmax(0, 1fr);
+  align-content: center;
+  gap: 26px;
+}
+
+.slide[data-layout="wide"] .copy {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: clamp(24px, 4vw, 60px);
+  align-items: end;
+}
+
+.slide[data-layout="wide"] .eyebrow {
+  grid-column: 1 / -1;
+}
+
+.slide[data-layout="wide"] .copy h1 {
+  grid-row: 2 / span 2;
+  max-width: 14ch;
+  font-size: clamp(2.4rem, 3.8vw, 4rem);
+}
+
+.slide[data-layout="wide"] .body {
+  grid-column: 2;
+  max-width: 52ch;
+  margin: 0;
+  font-size: clamp(1rem, 1.25vw, 1.15rem);
+}
+
+.slide[data-layout="wide"] .links {
+  grid-column: 2;
+}
+
+.slide[data-layout="wide"] .links a:not(.cta),
+.slide[data-layout="wide"] .cta {
+  margin-top: 18px;
+}
+
+.slide[data-layout="wide"] .picture img {
+  max-height: calc(100dvh - 505px);
+  min-height: 180px;
 }
 
 .footer {
@@ -322,9 +420,29 @@
     max-width: 13ch;
     font-size: clamp(3.2rem, 9vw, 5rem);
   }
+  .copy h1[data-long] {
+    max-width: 16ch;
+    font-size: clamp(2.4rem, 8vw, 3.6rem);
+  }
   .capture {
     max-width: 650px;
     transform: none;
+  }
+  .cards[data-columns="2"],
+  .shots {
+    grid-template-columns: 1fr;
+  }
+  .picture img {
+    max-height: none;
+  }
+  .slide[data-layout="wide"] .copy {
+    display: block;
+  }
+  .slide[data-layout="wide"] .body {
+    margin-top: 20px;
+  }
+  .slide[data-layout="wide"] .picture img {
+    max-height: none;
   }
 }
 
