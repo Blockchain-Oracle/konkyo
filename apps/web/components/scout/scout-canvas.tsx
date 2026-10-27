@@ -15,11 +15,14 @@ export function ScoutCanvas({
   input,
   epoch = 0,
   className,
+  ambient = false,
 }: {
   input: ScoutInput
   epoch?: number
   /** Gives the box its height. */
   className?: string
+  /** No box: a backdrop that lets everything over it be pressed, and watches the pointer from the window. */
+  ambient?: boolean
 }) {
   const canvas = useRef<HTMLCanvasElement>(null)
   const scout = useRef<Scout | null>(null)
@@ -58,13 +61,33 @@ export function ScoutCanvas({
     scout.current?.set(input)
   }, [input])
 
+  // A backdrop sits under the page's own content, so it hears the pointer from the window.
+  useEffect(() => {
+    const el = canvas.current
+    if (!ambient || !el) return
+    const move = (e: PointerEvent) => {
+      const box = el.getBoundingClientRect()
+      const inside =
+        e.clientX >= box.left &&
+        e.clientX <= box.right &&
+        e.clientY >= box.top &&
+        e.clientY <= box.bottom
+      scout.current?.pointer(inside ? e.clientX - box.left : null, e.clientY - box.top)
+    }
+    window.addEventListener("pointermove", move)
+    return () => window.removeEventListener("pointermove", move)
+  }, [ambient])
+
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-card border border-border bg-sticker",
+        ambient
+          ? "pointer-events-none relative"
+          : "relative overflow-hidden rounded-card border border-border bg-sticker",
         className,
       )}
       onPointerMove={(e) => {
+        if (ambient) return
         const box = e.currentTarget.getBoundingClientRect()
         scout.current?.pointer(e.clientX - box.left, e.clientY - box.top)
       }}

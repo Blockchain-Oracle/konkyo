@@ -79,11 +79,25 @@
   translate: -4px 0;
 }
 .about-hero {
+  position: relative;
   display: grid;
   grid-template-columns: 1fr 1.05fr;
   gap: 48px;
   align-items: center;
   padding-block: 64px 76px;
+}
+/* The scout behind the hero: across the content, dimmed so the words win, fading into the page. */
+.about-hero-scout {
+  position: absolute;
+  inset: -28px -40px;
+  z-index: 0;
+  opacity: 0.8;
+  pointer-events: none;
+  mask-image: radial-gradient(ellipse 70% 78% at 50% 50%, black 45%, transparent 100%);
+}
+.about-hero > :not(.about-hero-scout) {
+  position: relative;
+  z-index: 1;
 }
 .about-intro {
   color: var(--about-muted);

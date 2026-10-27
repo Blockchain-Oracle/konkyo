@@ -8,7 +8,7 @@ import type { CSSProperties } from "react"
 import { Suspense } from "react"
 import { BrandMark } from "@/components/brand-mark"
 import { HeroBoard } from "@/components/landing/hero-board"
-import { LandingScout } from "@/components/landing/landing-scout"
+import { HeroScout, LandingScout } from "@/components/landing/landing-scout"
 import { LazyLiveAnswer } from "@/components/landing/live-answer-lazy"
 import { LiveCounts } from "@/components/landing/live-counts"
 import { type Vendor, VendorLogo } from "@/components/landing/vendor-logo"
@@ -231,6 +231,10 @@ export default function LandingPage() {
 
       <main id="main">
         <section className="about-wrap about-hero">
+          {/* The scout, behind the hero: the same replayed search, dimmed so the words win. */}
+          <div className="about-hero-scout" aria-hidden>
+            <HeroScout />
+          </div>
           <div className="about-hero-copy">
             <p className="about-intro">every answer shows its grounds.</p>
             <h1>

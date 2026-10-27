@@ -98,3 +98,9 @@ export function LandingScout() {
     </figure>
   )
 }
+
+/** The same search, behind the hero: no box, fading into the page, the pointer still tempting it. */
+export function HeroScout() {
+  const { input, epoch } = useScoutScript()
+  return <ScoutCanvas input={input} epoch={epoch} ambient className="size-full" />
+}
