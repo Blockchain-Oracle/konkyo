@@ -1,15 +1,20 @@
 /*
- * The scout: a small procedural spider that crawls a deep search's sources on one 2D canvas.
+ * The scout: a small procedural spider that crawls a run's sources on one 2D canvas, the wait
+ * on a deep search, an answer and a comparison alike.
  * Its body is the brand's outlined triangle; its eight legs are two-bone IK chains that plant
  * on the ground and step when the body leaves them behind, so it walks rather than slides.
  * Everything it does is driven by the run's real events: each source found appears as a node, the
  * scout walks to the nearest unread one and stamps its title, every screening step sends a
- * sweep across the field, and the shortlist lights up and closes into a web.
+ * sweep across the field, the shortlist lights up and closes into a web, and in a comparison
+ * each source takes the colour of where it stands (agrees, disagrees, partly).
  */
 
 export type ScoutSource = { key: string; kind: "paper" | "web"; title: string; detail: string }
 
 export type ScoutPhase = "plan" | "search" | "screen" | "hold" | "import"
+
+/** Where a source stands in a comparison. */
+export type ScoutTone = "agrees" | "disagrees" | "partly"
 
 export type ScoutInput = {
   found: readonly ScoutSource[]
@@ -20,10 +25,16 @@ export type ScoutInput = {
   shortlist: ReadonlySet<string> | null
   /** How many times the person has steered the run. */
   steers: number
+  /** What the corner readout says, when the phase's own words aren't the right ones. */
+  caption?: string
+  /** A comparison's verdict per source, once the Analyst has one. */
+  tones?: ReadonlyMap<string, ScoutTone> | null
 }
 
 export type Scout = {
   set: (input: ScoutInput) => void
+  /** Back to an empty field, for a demo that plays again. */
+  reset: () => void
   resize: () => void
   /** Where the pointer is over the stage (CSS pixels), or null once it leaves. */
   pointer: (x: number | null, y?: number) => void
@@ -115,6 +126,10 @@ export function createScout(canvas: HTMLCanvasElement): Scout | null {
     soft: pick("--color-room-soft", "#dcd2d9"),
     muted: pick("--color-room-muted", "#b4a9b1"),
     ink: pick("--color-ink", "#111114"),
+    // A comparison's stances, as everywhere else in the app: teal, pink, orange.
+    agrees: pick("--color-verified", "#4dd9b1"),
+    disagrees: pick("--color-contradicts", "#ff5fb4"),
+    partly: pick("--color-partly", "#ff7c42"),
   }
   const family = css.fontFamily || "ui-monospace, monospace"
   const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches
@@ -321,6 +336,29 @@ export function createScout(canvas: HTMLCanvasElement): Scout | null {
     buildWeb()
     if (web.length && !had) webAt = time
     if (still) settle()
+  }
+
+  const reset = () => {
+    order.length = 0
+    nodes.clear()
+    edges.length = 0
+    stamps.length = 0
+    pulses.length = 0
+    trail.length = 0
+    web = []
+    webAt = 0
+    input = { found: [], phase: "plan", screening: null, shortlist: null, steers: 0 }
+    seenPhase = null
+    seenSteps = 0
+    seenSteers = 0
+    spider.x = w / 2
+    spider.y = h / 2
+    spider.speed = 0
+    spider.dwell = 0
+    spider.sonar = 0
+    spider.last = null
+    buildLegs()
+    draw()
   }
 
   const resize = () => {
@@ -573,13 +611,16 @@ export function createScout(canvas: HTMLCanvasElement): Scout | null {
       const age = time - n.born
       const pop = age < 0.4 ? outBack(age / 0.4) : 1
       const chosen = short?.has(n.key) ?? false
+      const tone = input.tones?.get(n.key)
       const r = (n.seen !== null ? 5.4 : 4.4) * s * Math.max(0.01, pop)
       ctx.globalAlpha = short && !chosen ? 0.2 : 1
       tri(n.x, n.y, r, (n.spin * Math.PI) / 180)
-      if (chosen) {
-        ctx.fillStyle = color.lime
+      if (chosen || tone) {
+        // Chosen sources go lime; in a comparison each takes the colour of where it stands.
+        const mark = tone ? color[tone] : color.lime
+        ctx.fillStyle = mark
         ctx.fill()
-        ctx.strokeStyle = color.lime
+        ctx.strokeStyle = mark
         ctx.lineWidth = 1
         ctx.globalAlpha = 0.35
         ctx.beginPath()
@@ -736,7 +777,8 @@ export function createScout(canvas: HTMLCanvasElement): Scout | null {
     const kept = input.shortlist?.size ?? 0
     const sc = input.screening
     const text =
-      input.phase === "plan"
+      input.caption ??
+      (input.phase === "plan"
         ? "planning the search"
         : input.phase === "search"
           ? `crawling ${read}/${order.length}`
@@ -746,7 +788,7 @@ export function createScout(canvas: HTMLCanvasElement): Scout | null {
               : `screening ${order.length} sources`
             : input.phase === "hold"
               ? `shortlist ${kept} of ${order.length}`
-              : `reading ${kept} sources`
+              : `reading ${kept} sources`)
     ctx.font = `500 10px ${family}`
     ctx.textBaseline = "alphabetic"
     ctx.fillStyle = color.muted
@@ -779,6 +821,7 @@ export function createScout(canvas: HTMLCanvasElement): Scout | null {
 
   return {
     set,
+    reset,
     resize,
     pointer: (x, y) => {
       pointerAt = x == null || y == null || still ? null : { x, y, at: time }
