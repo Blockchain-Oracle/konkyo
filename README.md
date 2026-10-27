@@ -30,6 +30,26 @@ Built for **Open Agent Hackathon 2026 · Track 02: The Agent That Can Explain Wh
 ([how it meets the track](#how-konkyo-meets-the-hackathon)). *Konkyo* (根拠) is Japanese for
 "grounds" or "evidence".
 
+## In plain words
+
+Konkyo answers your questions from *your own* files, and then proves each answer. Three partners
+make that work:
+
+- **Zetaris is the fact-checker.** Every file you add is also read by Zetaris, in its own way.
+  When the AI writes an answer, we ask Zetaris one question in SQL: are these exact words in the
+  original? A quote only gets a tick if Zetaris finds it. If it doesn't, the sentence is fixed or
+  dropped. ([`packages/zetaris`](packages/zetaris/src))
+- **Meterless is the memory.** Three of its engines each do one job. *H-MEM* remembers what you
+  correct and reads it before every new answer. *World Model* keeps a map of which source says
+  what, which is how the agree and disagree table works. *Markovian* reads a long list of found
+  papers in small steps, so a deep search stays focused. ([`packages/agents`](packages/agents/src))
+- **NVIDIA is the planner and the back-up.** Nemotron plans each answer, finds the right passages
+  by meaning, understands spoken questions, checks public pages for safety, and takes over every
+  OpenAI job when OpenAI is busy. ([`packages/models`](packages/models/src))
+
+The tables further down give the technical detail, and each partner has a page on the live site
+that follows one real action into the code.
+
 ## The problem
 
 A student revising for an exam, or anyone writing an essay, reads across many sources at once:
