@@ -51,7 +51,7 @@ export const PITCH: readonly Slide[] = [
     },
     links: [
       { href: "/#ask", text: "try three real papers" },
-      { href: "/demo", text: "the demo" },
+      { href: "/demo", text: "watch the demo video" },
     ],
   },
   {
@@ -334,7 +334,7 @@ export const PITCH: readonly Slide[] = [
     visual: {
       kind: "cards",
       items: [
-        { label: "NEXT", text: "Share the demo video, and listen to what researchers say." },
+        { label: "NEXT", text: "Put Konkyo in front of researchers, and listen to what they say." },
         {
           label: "SOON",
           text: "Read scanned pages better. Handwriting and tricky tables can still be missed.",

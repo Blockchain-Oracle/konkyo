@@ -4,6 +4,7 @@ export const SITE = {
   url: "https://docs.konkyo.xyz",
   app: "https://konkyo.xyz",
   repo: "https://github.com/Blockchain-Oracle/konkyo",
+  video: "https://youtu.be/laqNF7q-IJI",
   motto: "Every answer shows its grounds.",
   headline: "Everything you study, in one library. Agents check every answer.",
   description:

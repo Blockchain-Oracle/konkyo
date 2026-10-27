@@ -1,6 +1,5 @@
 import { APP } from "@konkyo/config"
 import type { Metadata } from "next"
-import Image from "next/image"
 import Link from "next/link"
 import { BrandMark } from "@/components/brand-mark"
 import styles from "./page.module.css"
@@ -8,12 +7,8 @@ import styles from "./page.module.css"
 export const metadata: Metadata = {
   title: "Demo",
   description:
-    "See how Konkyo answers from real papers, checks each quote, and lets you inspect the source and receipt.",
+    "Watch Konkyo answer from real papers, check each quote, and open the source and receipt behind it.",
 }
-
-// Add the official recording's YouTube ID when it is published. Until then the page explicitly
-// presents the live product and recorded sample evidence, without suggesting the still is a video.
-const DEMO_YOUTUBE_ID = ""
 
 export default function DemoPage() {
   return (
@@ -55,32 +50,17 @@ export default function DemoPage() {
         </section>
 
         <section className={`about-wrap ${styles.feature}`} aria-label="Demo video">
-          {DEMO_YOUTUBE_ID ? (
-            <div className={styles.player}>
-              <iframe
-                src={`https://www.youtube-nocookie.com/embed/${DEMO_YOUTUBE_ID}`}
-                title="Konkyo product demo"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-              />
-            </div>
-          ) : (
-            <figure className={styles.still}>
-              {/* The image is a dated capture of the real landing page, not a recording. */}
-              <Image
-                src="/demo/landing-capture.jpg"
-                alt="Konkyo's landing page: everything you study, in one library, with agents that check every answer, beside a real space of three papers and a checked, cited answer"
-                width={1280}
-                height={820}
-                priority
-              />
-              <figcaption>
-                The video walkthrough is being recorded. This is the live product.
-              </figcaption>
-            </figure>
-          )}
+          <div className={styles.player}>
+            <iframe
+              src={`https://www.youtube-nocookie.com/embed/${APP.video.id}?rel=0`}
+              title="Konkyo product demo"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allowFullScreen
+            />
+          </div>
           <div className={styles.next}>
-            <p className={styles.nextLabel}>Try the product now</p>
+            <p className={styles.nextLabel}>Then try it yourself</p>
             <p>
               The landing page lets you ask three real papers without an account. You can also enter
               as a guest and follow an answer from question to highlighted passage.
@@ -92,6 +72,14 @@ export default function DemoPage() {
               <Link href="/sign-in" className={styles.secondary}>
                 step into the library <span aria-hidden>↗</span>
               </Link>
+              <a
+                href={APP.video.url}
+                className={styles.secondary}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                open on YouTube <span aria-hidden>↗</span>
+              </a>
             </div>
           </div>
         </section>

@@ -10,7 +10,7 @@
 <p align="center">
   <a href="https://konkyo.xyz"><b>Open Konkyo</b></a>
   &nbsp;·&nbsp;
-  <a href="https://konkyo.xyz/demo"><b>Demo</b></a>
+  <a href="https://youtu.be/laqNF7q-IJI"><b>Watch the demo</b></a>
   &nbsp;·&nbsp;
   <a href="https://docs.konkyo.xyz"><b>Docs</b></a>
   &nbsp;·&nbsp;
@@ -111,13 +111,14 @@ Konkyo says **This isn't in your library yet.** and offers a deep search.
 ## Demo video
 
 <p align="center">
-  <a href="https://konkyo.xyz/demo">
-    <img src="apps/web/public/demo/cover.png" width="900" alt="The demo page: the walkthrough video is being recorded; try the live answer now." />
+  <a href="https://youtu.be/laqNF7q-IJI">
+    <img src="https://i.ytimg.com/vi/laqNF7q-IJI/maxresdefault.jpg" width="900" alt="The Konkyo demo video on YouTube: click to watch the walkthrough." />
   </a>
 </p>
 
-The walkthrough video is being recorded. Until it's up, follow the proof on the live site, no
-account needed:
+[Watch the walkthrough on YouTube](https://youtu.be/laqNF7q-IJI), or play it on the
+[demo page](https://konkyo.xyz/demo). To follow the proof yourself on the live site, no account
+needed:
 
 1. On [konkyo.xyz](https://konkyo.xyz/#ask), ask the three-paper space a question.
 2. Click a numbered citation: the paper opens at the passage.

@@ -120,6 +120,14 @@ export default function HomePage() {
             >
               See a real run
             </Link>
+            <a
+              href={SITE.video}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-2 text-[15px] font-medium text-fd-muted-foreground underline-offset-4 hover:text-fd-foreground hover:underline"
+            >
+              Watch the demo
+            </a>
           </div>
         </div>
         <div className="relative mx-auto flex w-full max-w-[34rem] items-end justify-center">

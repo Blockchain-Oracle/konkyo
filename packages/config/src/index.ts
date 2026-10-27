@@ -19,6 +19,8 @@ export const APP = {
   /** The live app and its docs site (apps/docs). */
   url: "https://konkyo.xyz",
   docs: "https://docs.konkyo.xyz" as string | null,
+  /** The walkthrough on YouTube: the demo page embeds it, the pitch and README link to it. */
+  video: { id: "laqNF7q-IJI", url: "https://youtu.be/laqNF7q-IJI" },
 } as const
 
 /** Local development ports, chosen to avoid the Zetaris bundle (3001, 8888) and other projects. */
