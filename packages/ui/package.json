@@ -11,7 +11,7 @@
     "@konkyo/config": "workspace:*",
     "class-variance-authority": "0.7.1",
     "cmdk": "1.1.1",
-    "cn": "0.4.0",
+    "cn": "0.5.0",
     "lucide-react": "1.57.0",
     "motion": "14.2.0",
     "react-resizable-panels": "4.14.5",
